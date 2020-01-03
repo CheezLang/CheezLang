@@ -200,6 +200,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return result;
             }
 
+            if (cc.Name.Name == "any_from_pointers")
+            {
+                var typePtr = GenerateExpression(cc.Arguments[0], true);
+                typePtr = builder.CreatePointerCast(typePtr, rttiTypeInfo.GetPointerTo(), "");
+
+                var valuePtr = GenerateExpression(cc.Arguments[1], true);
+                var result = builder.CreateInsertValue(LLVM.GetUndef(CheezTypeToLLVMType(CheezType.Any)), typePtr, 0, "");
+                result = builder.CreateInsertValue(result, valuePtr, 1, "");
+                return result;
+            }
+
             if (cc.Name.Name == "type_info")
             {
                 return typeInfoTable[cc.Arguments[0].Expr.Value as CheezType];

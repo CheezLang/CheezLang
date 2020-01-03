@@ -230,7 +230,8 @@ namespace Cheez
                 {
                     if (impl.Parameters.Count != polies.Count)
                     {
-                        // @TODO: provide location
+                        //return InstantiatePolyImplPartial(impl, polies);
+                        //@TODO: provide location
                         ReportError("failed to infer all impl parameters");
                         return null;
                     }

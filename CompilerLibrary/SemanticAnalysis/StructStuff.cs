@@ -51,27 +51,6 @@ namespace Cheez
 
             // not polymorphic
             expr.Extendable = expr.HasDirective("extendable");
-            if (expr.TryGetDirective("extend", out var dir))
-            {
-                if (dir.Arguments.Count != 1)
-                    ReportError(dir, $"Must have one type argument");
-                else
-                {
-                    var arg = dir.Arguments[0];
-                    arg.AttachTo(expr);
-                    arg = ResolveTypeNow(arg, out var type);
-
-                    if (type is StructType str)
-                    {
-                        if (str.Declaration.Extendable)
-                            expr.Extends = str;
-                        else
-                            ReportError(arg, $"Type '{str}' is not extendable");
-                    }
-                    else if (!type.IsErrorType)
-                        ReportError(arg, $"Argument must be a struct type");
-                }
-            }
 
             foreach (var decl in expr.Declarations)
             {
@@ -94,6 +73,27 @@ namespace Cheez
                 return;
             expr.Members = new List<AstStructMemberNew>();
 
+            if (expr.TryGetDirective("extend", out var dir))
+            {
+                if (dir.Arguments.Count != 1)
+                    ReportError(dir, $"Must have one type argument");
+                else
+                {
+                    var arg = dir.Arguments[0];
+                    arg.AttachTo(expr);
+                    arg = ResolveTypeNow(arg, out var type);
+
+                    if (type is StructType str)
+                    {
+                        if (str.Declaration.Extendable)
+                            expr.Extends = str;
+                        else
+                            ReportError(arg, $"Type '{str}' is not extendable");
+                    }
+                    else if (!type.IsErrorType)
+                        ReportError(arg, $"Argument must be a struct type");
+                }
+            }
             if (expr.Extendable || expr.Extends != null)
             {
                 var mem = mCompiler.ParseStatement(

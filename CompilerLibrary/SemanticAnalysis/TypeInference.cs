@@ -2126,6 +2126,21 @@ namespace Cheez
                         return id;
                     }
 
+                case "any_from_pointers":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr.Location, "@any_from_pointers takes 2 arguments");
+                            return expr;
+                        }
+
+                        var ptr = InferArg(0, PointerType.GetPointerType(CheezType.Void));
+                        var len = InferArg(1, PointerType.GetPointerType(CheezType.Void));
+
+                        expr.Type = CheezType.Any;
+                        return expr;
+                    }
+
                 case "string_from_ptr_and_length":
                     {
                         if (expr.Arguments.Count != 2)
@@ -2404,6 +2419,69 @@ namespace Cheez
                             stmt.Scope.DefineLocalSymbol(new ConstSymbol(nameParam.Name.Name, CheezType.StringLiteral, member.Name));
                             stmt.Scope.DefineLocalSymbol(new TypeSymbol(typeParam.Name.Name, member.Type));
                             stmt.Scope.DefineLocalSymbol(new ConstSymbol(offsetParam.Name.Name, IntType.LiteralType, NumberData.FromBigInt(member.Offset)));
+                            stmt = AnalyseStatement(stmt, out var s);
+                            Debug.Assert(s == null || s.Count == 0);
+
+                            statements.Add(stmt);
+
+                            index++;
+                        }
+
+                        var block = new AstBlockExpr(statements, Location: expr);
+                        block.Replace(expr);
+                        block.Type = CheezType.Void;
+                        return block;
+                    }
+
+                case "for_trait_impls":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr.Location, "@for_trait_impls takes 2 arguments");
+                            return expr;
+                        }
+
+                        var traitTypeArg = InferArg(0, CheezType.Type);
+                        if (traitTypeArg.Type != CheezType.Type)
+                        {
+                            ReportError(traitTypeArg, $"First argument must be a type, but is {traitTypeArg.Type}");
+                            return expr;
+                        }
+                        var trait = traitTypeArg.Value as TraitType;
+                        if (trait == null)
+                        {
+                            ReportError(traitTypeArg, $"First argument must be a trait type, but is {traitTypeArg.Value}");
+                            return expr;
+                        }
+
+                        var lambdaArg = expr.Arguments[1].Expr;
+                        if (!(lambdaArg is AstLambdaExpr lambda))
+                        {
+                            ReportError(lambdaArg, "Second argument must be a lambda");
+                            return expr;
+                        }
+
+                        if (lambda.Parameters.Count != 1)
+                        {
+                            ReportError(lambda, "Lambda must take exactly one argument");
+                            return expr;
+                        }
+
+                        var typeParam = lambda.Parameters[0];
+
+                        var statements = new List<AstStatement>();
+
+                        UpdateTypeImplMap();
+                        int index = 0;
+                        GetSizeOfType(trait);
+                        foreach (var (type, impl) in trait.Declaration.Implementations)
+                        {
+                            AstStatement stmt = new AstExprStmt(lambda.Body.Clone(), lambda.Body.Location);
+
+                            stmt.Scope = new Scope("for_trait_impls", expr.Scope);
+                            //stmt.Scope.DefineLocalSymbol(new ConstSymbol(nameParam.Name.Name, CheezType.StringLiteral, member.Name));
+                            stmt.Scope.DefineLocalSymbol(new TypeSymbol(typeParam.Name.Name, type));
+                            //stmt.Scope.DefineLocalSymbol(new ConstSymbol(offsetParam.Name.Name, IntType.LiteralType, NumberData.FromBigInt(member.Offset)));
                             stmt = AnalyseStatement(stmt, out var s);
                             Debug.Assert(s == null || s.Count == 0);
 
@@ -4161,6 +4239,28 @@ namespace Cheez
 
                             @string.Replace(expr);
                             return InferTypeHelper(@string, expected, context);
+                        }
+                        else if (targetType == CheezType.Any)
+                        {
+                            if (expr.Arguments.Count != 2)
+                            {
+                                ReportError(expr.Location, "Cast requires exactly two arguments!");
+                                return expr;
+                            }
+
+                            var typePtr = expr.Arguments[0].Expr;
+                            var valuePtr = expr.Arguments[1].Expr;
+
+                            var any = new AstCompCallExpr(
+                                new AstIdExpr("any_from_pointers", false, expr.FunctionExpr.Location),
+                                new List<AstArgument> {
+                                    new AstArgument(typePtr, Location: typePtr.Location),
+                                    new AstArgument(valuePtr, Location: valuePtr.Location),
+                                },
+                                expr.Location);
+
+                            any.Replace(expr);
+                            return InferTypeHelper(any, expected, context);
                         }
                         else if (expr.Arguments.Count != 1)
                         {
