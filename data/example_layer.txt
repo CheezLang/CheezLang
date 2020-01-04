@@ -1,0 +1,98 @@
+[
+    {
+        id          = 1
+        dead        = false
+        active      = true
+        position    = {x=0, y=0, z=0}
+        size        = {x=0.5, y=0.5, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=0, y=0.294118, z=1}
+            }
+            PlayerControlComponent {
+                speed = 10.1235
+            }
+        ]
+    }
+    {
+        id          = 2
+        dead        = false
+        active      = true
+        position    = {x=-5, y=-5, z=0}
+        size        = {x=1, y=1, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=1, y=1, z=1}
+            }
+            BasicMoveComponent {
+                velocity = {x=1, y=0, z=0}
+                speed = 1
+            }
+            PlayerControlComponent {
+                speed = 1
+            }
+        ]
+    }
+    {
+        id          = 3
+        dead        = false
+        active      = true
+        position    = {x=5, y=-5, z=0}
+        size        = {x=1, y=1, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=1, y=0.99999, z=0.99999}
+            }
+            BasicMoveComponent {
+                velocity = {x=0, y=1, z=0}
+                speed = 1
+            }
+            PlayerControlComponent {
+                speed = 1
+            }
+        ]
+    }
+    {
+        id          = 4
+        dead        = false
+        active      = true
+        position    = {x=5, y=5, z=0}
+        size        = {x=1, y=1, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=1, y=0.99999, z=0.99999}
+            }
+            BasicMoveComponent {
+                velocity = {x=-1, y=0, z=0}
+                speed = 1
+            }
+            PlayerControlComponent {
+                speed = 1
+            }
+        ]
+    }
+    {
+        id          = 5
+        dead        = false
+        active      = true
+        position    = {x=-5, y=5, z=0}
+        size        = {x=1, y=1, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=1, y=0.99999, z=0.99999}
+            }
+            BasicMoveComponent {
+                velocity = {x=0, y=-1, z=0}
+                speed = 1
+            }
+            PlayerControlComponent {
+                speed = 1
+            }
+        ]
+    }
+]

@@ -53,32 +53,12 @@ impl EntityLayerCallbacks for Test {
     init :: (ref Self, layer: ref EntityLayer) -> bool {
         self.layer = &layer
 
-        e := layer.new_entity()
-
-        e.get().add_component(layer.new_component(KillRandomEntityComponent()))
-        // e.get().add_component(KillRandomEntityComponent())
-        // e.get().add_component(CreateEntityComponent(color = color, entities_per_second = cast entities_per_second))
-        for 0..15 {
-            e := layer.new_entity()
-
-            e.get().add_component(layer.new_component(QuadComponent(color)))
-
-            dir := vec3(
-                f32(rand.PseudoRandom.next_double() - 0.5)
-                f32(rand.PseudoRandom.next_double() - 0.5)
-            ).normalized()
-            speed := f32(rand.PseudoRandom.next_double())
-            e.get().add_component(layer.new_component(BasicMoveComponent(dir, speed)))
-        }
-
+        layer.engine.save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))
 
         return true
     }
 
     update :: (ref Self, dt: float) {
-        // if input.key_pressed(glfw.GLFW_KEY_SPACE)  then io.print("v")
-        // if input.key_down(glfw.GLFW_KEY_SPACE)     then io.print(".")
-        // if input.key_released(glfw.GLFW_KEY_SPACE) then io.println("^")
     }
 
     render :: (ref Self, renderer: ref Renderer) {
@@ -116,6 +96,6 @@ Main :: () {
 
     shmup_engine := ShmupEngine.new()
     shmup_engine.push_entity_layer(String.from_string("test layer"), test)
-    // shmup_engine.push_entity_layer(String.from_string("layer 2"), test2)
+    shmup_engine.push_entity_layer(String.from_string("layer 2"), test2)
     shmup_engine.start()
 }

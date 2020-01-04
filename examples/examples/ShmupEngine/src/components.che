@@ -1,3 +1,4 @@
+use import std.string
 use import std.array
 use import std.math
 use import std.rc
@@ -7,7 +8,9 @@ io   :: import std.io
 fmt  :: import std.fmt
 C    :: import std.c
 
-
+use import compiler.lexer
+use import compiler.error_handler
+serpa :: import serpa.serpa
 glfw :: import glfw.glfw3
 
 use import main
@@ -29,6 +32,7 @@ Component :: trait {
     update          :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float);
     render          :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer);
     get_type_info   :: (ref Self) -> &TypeInfo;
+    serialize       :: (ref Self, stream: ref String);
 }
 
 ComponentData :: struct {
@@ -70,6 +74,11 @@ impl Component for BasicMoveComponent {
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
     }
+
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                velocity = ``{x={}, y={}, z={}}`n", (self.velocity.x, self.velocity.y, self.velocity.z))
+        stream.appendf("                speed = {}`n", self.speed)
+    }
 }
 
 PlayerControlComponent :: struct {
@@ -97,6 +106,10 @@ impl Component for PlayerControlComponent {
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
     }
+
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                speed = {}`n", self.speed)
+    }
 }
 
 QuadComponent :: struct {
@@ -112,6 +125,10 @@ impl Component for QuadComponent {
     }
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
+    }
+
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                color = ``{x={}, y={}, z={}}`n", (self.color.x, self.color.y, self.color.z))
     }
 }
 
@@ -129,6 +146,10 @@ impl Component for KillComponent {
     }
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
+    }
+
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                key = {}`n", self.key)
     }
 }
 
@@ -188,6 +209,11 @@ impl Component for KillRandomEntityComponent {
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
     }
+
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                timer               = {}`n", self.timer)
+        stream.appendf("                entities_per_second = {}`n", self.entities_per_second)
+    }
 }
 
 CreateEntityComponent :: struct {
@@ -217,5 +243,52 @@ impl Component for CreateEntityComponent {
     }
     get_type_info   :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
+    }
+
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                timer               = {}`n", self.timer)
+        stream.appendf("                entities_per_second = {}`n", self.entities_per_second)
+        stream.appendf("                color           = ``{x={}, y={}, z={}}`n", (self.color.x, self.color.y, self.color.z))
+    }
+}
+
+
+
+
+impl serpa.IParser[ComponentData] for ComponentData {
+    parse :: (parser: ref serpa.Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[ComponentData] {
+        eat_token :: (typ: TokenType) #macro {
+            if (ok, t) := @link(lexer).expect_token(typ), ok {
+                t
+            } else {
+                @link(error_handler).report_errorf(t.location, "Expected '{}', got {}", [typ, t.ttype])
+                return None
+            }
+        }
+
+        name_token := eat_token(TokenType.Identifier)
+        struct_name := name_token.data.String
+
+        // io.printfln("parsing component {}", struct_name)
+        @for_trait_impls(Component, (T) => {
+            // io.printfln("trying with type {}", @typename(T))
+            if streq(@typename(T), struct_name) {
+                result := mem.alloc(T)
+                if !parser.parse_struct_into(result, lexer, error_handler) {
+                    mem.free(result)
+                    return None
+                }
+
+                ptr := Rc[T].from_pointer(result, true)
+                return Some(ComponentData(
+                    ptr.get()
+                    ptr.change_type(())
+                    @type_info(T)
+                ))
+            }
+        })
+
+        error_handler.report_errorf(name_token.location, "'{}' is not a valid component", [struct_name])
+        return None
     }
 }

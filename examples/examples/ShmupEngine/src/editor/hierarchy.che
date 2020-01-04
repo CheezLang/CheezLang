@@ -38,7 +38,11 @@ impl Hierarchy {
             return
         }
         match layer.get_base() {
-            EntityLayer($el) -> render_entity_list(el)
+            EntityLayer($el) -> {
+                render_entity_list(el)
+
+                el.remove_dead_entities()
+            }
         }
     }
 
@@ -51,6 +55,8 @@ impl Hierarchy {
             entity_index := current_entity_index
             for e, i : layer.entities {
                 ImGui.PushIDInt(i32(i))
+                ImGui.BeginGroup()
+
                 name := fmt.format("Entity {} ({})", [e.get().id, e.count()])
 
                 list_entry_size := ImGui.ImVec2(0, 0)
@@ -62,8 +68,62 @@ impl Hierarchy {
                     ImGui.SameLine()
                     ImGui.Text(" - inactive")
                 }
+                
+                {
+                    rmin := ImGui.GetItemRectMin()
+                    rmax := ImGui.GetItemRectMax()
+                    height := i32(rmax.y - rmin.y)
+                    if ImGui.IsMouseHoveringRect(rmin, rmax) {
+                        Point :: struct {
+                            x : i32 = 0
+                            y : i32 = 0
+                        }
+                        SetCursorPos :: (x: i32, y: i32) -> i32 #stdcall;
+                        GetCursorPos :: (pos: &Point) -> i32 #stdcall;
 
+                        cursor_pos := Point()
+                        GetCursorPos(&cursor_pos)
+
+                        if i > 0 and ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGui.ImGuiKey_.UpArrow)) {
+                            layer.swap_entities(i, i - 1)
+                            SetCursorPos(cursor_pos.x, cursor_pos.y - height)
+
+                            if entity_index == i32(i) {
+                                entity_index = entity_index - 1
+                            } else if entity_index == i32(i) - 1 {
+                                entity_index = entity_index + 1
+                            }
+                        }
+                        if i < layer.entities.get_length() - 1 and ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGui.ImGuiKey_.DownArrow)) {
+                            layer.swap_entities(i, i + 1)
+                            SetCursorPos(cursor_pos.x, cursor_pos.y + height)
+                            if entity_index == i32(i) {
+                                entity_index = entity_index + 1
+                            } else if entity_index == i32(i) + 1 {
+                                entity_index = entity_index - 1
+                            }
+                        }
+                    }   
+                }
+                ImGui.EndGroup()
                 ImGui.PopID()
+
+                if ImGui.BeginPopupContextItem(name.as_cstring()) {
+                    defer ImGui.EndPopup()
+                    if ImGui.MenuItem("Active", null, e.get().active, true) {
+                        e.get().active = !e.get().active
+                    }
+                    if ImGui.MenuItem("Clone Entity", null, false, true) {
+                        layer.clone_entity(e.clone())
+                    }
+
+                    ImGui.Separator()
+
+                    if ImGui.MenuItem("Delete", null, false, true) {
+                        e.get().active = false
+                        e.get().dead = true
+                    }
+                }
             }
 
             entity_index = clamp(entity_index, 0i32, i32(layer.entities.get_length() - 1))
@@ -72,6 +132,13 @@ impl Hierarchy {
                 current_entity_index = entity_index
                 current_entity := layer.entities[int(current_entity_index)].clone()
                 engine.inspector.set_entity(current_entity)
+            }
+
+            if ImGui.BeginPopupContextWindow("test", _also_over_items = false) {
+                defer ImGui.EndPopup()
+                if ImGui.MenuItem("Create Entity", null, false, true) {
+                    layer.new_entity()
+                }
             }
         }
         ImGui.End()

@@ -7,6 +7,7 @@ use import std.mem.std_heap_allocator
 mem :: import std.mem.allocator
 fmt :: import std.fmt
 io  :: import std.io
+fs  :: import std.io.fs
 C   :: import std.c
 
 use import glfw.glfw3
@@ -41,7 +42,7 @@ PropertyEdit :: enum #copy {
 EngineMode :: trait {
     reset_input     :: (ref Self);
     release_input   :: (ref Self);
-    init            :: (ref Self);
+    init            :: (ref Self) -> bool;
     update          :: (ref Self, dt: float);
     render          :: (ref Self, renderer: ref Renderer);
     imgui_render    :: (ref Self);
@@ -67,16 +68,46 @@ impl EngineMode for EditMode {
 
     }
 
-    init :: (ref Self) {
+    init :: (ref Self) -> bool {
         for layer : layer_stack {
             if !layer.init() {
-                return
+                io.println("[ERROR] failed to init layer")
+                return false
             }
         }
+
+        return true
     }
 
     update :: (ref Self, dt: float) {
+        if engine.global_input.key_pressed(GLFW_KEY_F1) {
+            match ref engine.save_file {
+                Some($file) -> {
+                    for layer : layer_stack {
+                        layer.load_from_file(file.slice())
+                    }
+                }
 
+                None -> {
+                    io.println("[ERROR] Trying to load layers from file but no file name was specified")
+                }
+            }
+        }
+        if engine.global_input.key_pressed(GLFW_KEY_F2) {
+            match ref engine.save_file {
+                Some($file_name) -> {
+                    file_content := String.empty()
+                    for layer : layer_stack {
+                        layer.save_to_file(ref file_content)
+                    }
+                    fs.write_file(file_name.slice(), file_content.slice())
+                }
+
+                None -> {
+                    io.println("[ERROR] Trying to load layers from file but no file name was specified")
+                }
+            }
+        }
     }
 
     render :: (ref Self, renderer: ref Renderer) {
@@ -119,12 +150,14 @@ impl EngineMode for PlayMode {
         for layer : layer_stack do layer.get_input().release_all_keys()
     }
 
-    init :: (ref Self) {
+    init :: (ref Self) -> bool {
         for layer : layer_stack {
             if !layer.init() {
-                return
+                return false
             }
         }
+
+        return true
     }
 
     update :: (ref Self, dt: float) {
@@ -195,6 +228,7 @@ ShmupEngine :: struct {
     console             := Rc[Console].empty()
     editor_edit_mode_color := vec3()
     editor_play_mode_color := vec3(0.027f, 0.2f, 0.047f)
+    save_file           := Option[String].None
 
     // window stuff
     glfw_window         : &GLFWwindow = null
@@ -392,7 +426,10 @@ impl ShmupEngine {
 
     render_loop :: (ref Self) {
         self.register_builtin_components()
-        current_engine_mode.init()
+        if !current_engine_mode.init() {
+            io.println("[ERROR] Failed to initialize edit/play mode")
+            return
+        }
 
         last_frame_time := get_time_microseconds()
 

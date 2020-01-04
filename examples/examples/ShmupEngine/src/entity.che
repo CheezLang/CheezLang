@@ -55,11 +55,11 @@ impl Entity {
         components.add(entry)
     }
 
-    add_component3 :: (ref Self, vtable: &void, rc: Rc[()]) {
+    add_component3 :: (ref Self, vtable: &void, rc: Rc[()], type_info: &TypeInfo) {
         entry := ComponentData(
             component = Traits.from_vtable_and_pointer(Component, vtable, &rc.get())
             value     = rc
-            type_info = @type_info(void)
+            type_info = type_info
         )
         components.add(entry)
     }

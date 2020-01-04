@@ -2,13 +2,18 @@ use import std.array
 use import std.string
 use import std.rc
 use import std.math
+fs   :: import std.io.fs
 mem  :: import std.mem.allocator
 util :: import std.util
 fmt  :: import std.fmt
 io   :: import std.io
 C    :: import std.c
 
+use import compiler.lexer
+use import compiler.string_database
+use import compiler.error_handler
 use import glfw.glfw3
+serpa :: import serpa.serpa
 ImGui :: import imgui.imgui_binding
 
 use import math
@@ -29,15 +34,17 @@ EntityLayerCallbacks :: trait {
 
 
 Layer :: trait {
-    get_name     :: (ref Self) -> c_string;
-    get_base     :: (ref Self) -> ref LayerBase;
-    get_input    :: (ref Self) -> ref Input;
-    init         :: (ref Self) -> bool;
-    update       :: (ref Self, dt: float);
-    render       :: (ref Self, renderer: ref Renderer);
-    imgui_render :: (ref Self);
-    on_key_event :: (ref Self, key: int, action: int) -> bool;
-    clone        :: (ref Self) -> Option[Layer];
+    get_name        :: (ref Self) -> c_string;
+    get_base        :: (ref Self) -> ref LayerBase;
+    get_input       :: (ref Self) -> ref Input;
+    init            :: (ref Self) -> bool;
+    update          :: (ref Self, dt: float);
+    render          :: (ref Self, renderer: ref Renderer);
+    imgui_render    :: (ref Self);
+    on_key_event    :: (ref Self, key: int, action: int) -> bool;
+    clone           :: (ref Self) -> Option[Layer];
+    load_from_file  :: (ref Self, file: string);
+    save_to_file    :: (ref Self, file: ref String);
 }
 
 LayerBase :: struct #extendable {
@@ -89,6 +96,44 @@ impl EntityLayer {
         ptr := mem.alloc_raw(u8, cast ti.size)
         C.memset(ptr, 0, cast ti.size)
         return Rc[()].from_pointer(cast ptr, false)
+    }
+
+    remove_dead_entities :: (ref Self) {
+        while i := 0, i < entities.get_length(), i += 1 {
+            e := ref entities[i].get()
+            if !e.dead then continue
+
+            // try to delete e
+            rc_count := entities[i].count()
+            if rc_count != 1 {
+                // there are more rc pointing to this entity
+                // so don't actually destroy it, just deactivate it
+                e.active = false
+                io.printfln("[ERROR] Trying destroy entity {}, but there are still {} references to it", (e.id, rc_count - 1))
+            } else {
+                // io.printfln("i: {}, cei: {}, e.len: {}", (i, current_entity_index, entities.get_length()))
+                if i == entities.get_length() - 1 {
+                    // deleting last entity
+                    entities.pop()
+                } else {
+                    // deleting entity somewhere in the middle
+                    last := entities.pop()
+                    // entities[i].drop()a
+                    entities[i] = last
+                }
+
+                // next iteration of loop on same index
+                i -= 1
+            }
+        }
+    }
+
+    swap_entities :: (ref Self, i0: int, i1: int) {
+        @assert(i0 != i1 and i0 >= 0 and i0 < entities.get_length() and i1 >= 0 and i1 < entities.get_length())
+        e0 := entities[i0].clone()
+        e1 := entities[i1].clone()
+        entities[i1] = e0
+        entities[i0] = e1
     }
 }
 
@@ -177,21 +222,82 @@ impl Layer for EntityLayer {
         <<result = EntityLayer.new(name.clone(), callbacks, engine, input)
 
         for e : entities {
-            e_new := result.new_entity_with_id(e.get().id)
-            e_new.get().active      = e.get().active
-            e_new.get().position    = e.get().position
-            e_new.get().size        = e.get().size
-            e_new.get().angle       = e.get().angle
-
-            for e.get().components {
-                type_info := it.component.get_type_info()
-                vtable    := Traits.get_trait_object_vtable(it.component)
-                rc        := self.new_component2(type_info)
-                C.memcpy(&rc.get(), &it.value.get(), cast type_info.size)
-                e_new.get().add_component3(vtable, rc)
-            }
+            e_new := result.clone_entity_with_id(e.clone(), e.get().id)
         }
 
         return Some(<<result)
+    }
+
+    clone_entity :: (ref Self, template: Rc[Entity]) -> Rc[Entity] {
+        return clone_entity_with_id(template, next_entity_id)
+    }
+
+    clone_entity_with_id :: (ref Self, template: Rc[Entity], id: int) -> Rc[Entity] {
+        e_new := self.new_entity_with_id(id)
+        e_new.get().active      = template.get().active
+        e_new.get().position    = template.get().position
+        e_new.get().size        = template.get().size
+        e_new.get().angle       = template.get().angle
+
+        for template.get().components {
+            type_info := it.type_info
+            vtable    := Traits.get_trait_object_vtable(it.component)
+            rc        := self.new_component2(type_info)
+            C.memcpy(&rc.get(), &it.value.get(), cast type_info.size)
+            e_new.get().add_component3(vtable, rc, type_info)
+        }
+
+        return e_new
+    }
+
+    load_from_file :: (ref Self, file: string) {
+        console_error_handler := ConsoleErrorHandler.new(null)
+        string_db := StringDatabase.new()
+
+        lexer := try_with(
+            Lexer.from_file(file, string_db)
+            {
+                io.println("Failed to read layer from file")
+                return
+            })
+        console_error_handler.text_provider = lexer
+
+        parser := serpa.Parser(expect_struct_name=false)
+        result := parser.parse(Array[Rc[Entity]], lexer, console_error_handler)
+
+        match result {
+            Some($entities) -> {
+                self.entities = entities
+                self.next_entity_id = self.entities.get_length()
+            }
+            None -> {
+                io.println("[ERROR] Failed to parse layer file")
+            }
+        }
+    }
+
+    save_to_file :: (ref Self, file: ref String) {
+        file.append_string("[`n")
+        for rc : entities {
+            e := ref rc.get()
+            file.append_string("    {`n")
+            file.appendf("        id          = {}`n", e.id)
+            file.appendf("        dead        = {}`n", e.dead)
+            file.appendf("        active      = {}`n", e.active)
+            file.appendf("        position    = ``{x={}, y={}, z={}}`n", (e.position.x, e.position.y, e.position.z))
+            file.appendf("        size        = ``{x={}, y={}, z={}}`n", (e.size.x, e.size.y, e.size.z))
+            file.appendf("        angle       = {}`n", e.angle)
+            file.appendf("        components  = [`n", ())
+
+            for cd : e.components {
+                file.appendf("            {} ``{`n", cd.type_info.kind.Struct.name)
+                cd.component.serialize(file)
+                file.append_string("            }`n")
+            }
+
+            file.appendf("        ]`n", ())
+            file.append_string("    }`n")
+        }
+        file.append_string("]")
     }
 }
