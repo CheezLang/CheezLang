@@ -1174,6 +1174,7 @@ namespace Cheez
                         if (call.FunctionExpr.Type != CheezType.Type)
                             break;
                         var type = call.FunctionExpr.Value as CheezType;
+                        ComputeTypeMembers(type);
                         switch (type)
                         {
                             case StructType str when value.Type is ReferenceType r && r.TargetType == str.Declaration.Extends:
