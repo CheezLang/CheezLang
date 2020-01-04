@@ -1,0 +1,61 @@
+#test_expect_output("
+6
+6
+
+001
+010
+100
+11
+
+011
+101
+110
+111
+
+true
+true
+false")
+
+Bar :: enum #flags #copy {
+    None
+    A
+    B
+    C
+    D = 6
+    E = 7
+    F = 16
+    G
+}
+
+io :: import std.io
+
+Main :: () {
+    io.println("")
+
+    a := Bar.A
+    b := Bar.B
+    c := Bar.C
+
+    d := Bar.A or b
+
+
+    x : int = Bar.B or Bar.C
+    y : Bar = Bar.B or Bar.C
+    io.println(x)
+    io.println(int(x))
+    io.println("")
+
+    io.printfln("00{:b}", int(a))
+    io.printfln("0{:b}", int(b))
+    io.printfln("{:b}", int(c))
+    io.printfln("{:b}", int(d))
+    io.println("")
+    io.printfln("0{:b}", int(a or b))
+    io.printfln("{:b}", int(a or c))
+    io.printfln("{:b}", int(b or c))
+    io.printfln("{:b}", int(a or b or c))
+    io.println("")
+    io.printfln("{}", d and a)
+    io.printfln("{}", d and b)
+    io.printfln("{}", d and c)
+}
