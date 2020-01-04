@@ -20,8 +20,3 @@ we should report an error at the import location
 
 - improve error messages when type of const argument doesn't match type of const parameter (location shown is from param)
 - return in match as expression
-
-- auto generate Drop implementation for enums if any variant has a value that implements drop
-- call drop for temp values
-- call destructors in correct order
-- generate default destructors for structs
