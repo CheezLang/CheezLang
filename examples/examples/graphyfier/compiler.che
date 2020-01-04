@@ -32,13 +32,19 @@ get_precedence :: (op: OpCode) -> int {
     }
 }
 
+impl TextProvider for string {
+    get_text :: (ref Self, filename: string) -> string {
+        return self
+    }
+}
+
 compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]] {
     res := Array[OpCode].create()
 
     error_handler := ConsoleErrorHandler.new(null)
     string_db := StringDatabase.new()
     lexer := Lexer.from_raw_string(expr, string_db)
-    error_handler.text_provider = lexer
+    error_handler.text_provider = expr
 
     op_stack := Array[OpCode].create()
 

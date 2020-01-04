@@ -1,5 +1,3 @@
-use import std.compiler.lexer
-use import std.compiler.string_database
 use import std.stack
 use import std.array
 use import std.string
@@ -8,6 +6,9 @@ use import std.mem.std_heap_allocator
 use import std.mem.allocator
 use import std.os.windows_functions
 io :: import std.io
+
+use import compiler.lexer
+use import compiler.string_database
 
 impl TokenType {
     get_precedence :: (Self) -> int {
@@ -59,7 +60,7 @@ pop_ops_while :: (new_order: ref Array[Token], stack: ref Stack[Token], preceden
 }
 
 infix_to_postfix :: (str: String, calculate: bool) -> (postfix: String, result: double) {
-    string_db := StringDatabase.create()
+    string_db := StringDatabase.new()
     lexer := Lexer.from_string(str, string_db)
 
     stack := Stack[Token].create()
@@ -205,8 +206,8 @@ Main :: () {
 
     for infix : args {
         if it_index < start_index then continue
-        io.print(infix)
-        (postfix, result) := infix_to_postfix(infix, calculate)
+        io.print(infix.slice())
+        (postfix, result) := infix_to_postfix(infix.clone(), calculate)
         io.printf(" -> {}", postfix)
         if calculate {
             io.printfln(" = {}", result)

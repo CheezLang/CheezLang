@@ -379,7 +379,7 @@ ShowExampleMenuFile :: () {
         ImGui.MenuItem_2("Enabled", "", &enabled)
 
         size := ImGui.ImVec2(0, 60)
-        ImGui.BeginChild("child", size, true)
+        ImGui.BeginChildStr("child", size, true)
 
         for i : 0..10 {
             text := fmt.format("Scrolling Text {}", [i])

@@ -1,3 +1,4 @@
+// examples which should be working
 // import examples.trait_function_call_performance
 // import examples.glfw3_example
 // import examples.graphyfier.graphyfier
@@ -8,15 +9,16 @@
 // import examples.pathtracer
 // import examples.command_line_parser
 // import examples.ShmupEngine.src.main
-// import examples.CBindingGenerator.src.main
 // import compiler.cli
 // import compiler.compiler_test
 
+// examples which are not working currently
 // import examples.postfix
 // import examples.image_processing
 // import examples.clox.main
 // import examples.lua_example
 
+// tests
 // import "tests/language/match"
 // import tests.language.match3
 // import tests.library.hash_table1
@@ -26,8 +28,52 @@
 
 // import "../Tools/Bindings/imgui_binding"
 
+Foo :: enum {
+    A, B, C
+}
 
-//*
+Bar :: enum #flags #copy {
+    None
+    A
+    B
+    C
+    D = 6
+    E = 7
+    F = 16
+    G
+}
+
+io :: import std.io
+
+Main :: () {
+    a := Bar.A
+    b := Bar.B
+    c := Bar.C
+
+    d := Bar.A or b
+
+
+    x : int = Bar.B or Bar.C
+    y : Bar = Bar.B or Bar.C
+    io.println(x)
+    io.println(int(x))
+
+    io.printfln("00{:b}", int(a))
+    io.printfln("0{:b}", int(b))
+    io.printfln("{:b}", int(c))
+    io.printfln("{:b}", int(d))
+    io.println("")
+    io.printfln("0{:b}", int(a or b))
+    io.printfln("{:b}", int(a or c))
+    io.printfln("{:b}", int(b or c))
+    io.printfln("{:b}", int(a or b or c))
+    io.println("")
+    io.printfln("{}", d and a)
+    io.printfln("{}", d and b)
+    io.printfln("{}", d and c)
+}
+
+/*
 #test_expect_output("")
 
 // use import std.os.windows_functions

@@ -1,6 +1,5 @@
 use import std.math
-use import opengl.functions
-use import opengl.constants
+use import opengl.glad_binding
 
 #export_scope
 

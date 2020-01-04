@@ -156,19 +156,6 @@ impl Printable for TypeInfo {
     }
 }
 
-impl(T: type) Printable for Array[T] if T : Printable {
-    print :: (ref Self, str: ref String, format: string) {
-        str.append_string("[")
-
-        for self.slice() {
-            if it_index > 0 then str.append_string(", ")
-            str.appendf("{}", Printable(it))
-        }
-
-        str.append_string("]")
-    }
-}
-
 #file_scope
 printf_int_to_string :: (str: ref String, i: $T, format: string) {
     base := if streq("b", format) then 2

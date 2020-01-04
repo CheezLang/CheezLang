@@ -77,11 +77,11 @@ CompileFiber :: struct {
 
 Compiler :: struct {
     exprs   := Array[Expr].create()
-    expr_q  := RingQueue[&Expr].create()
+    expr_q  := RingQueue[&Expr].new()
 
     fibers  := Array[&CompileFiber].create(1024)
-    fiber_q := RingQueue[&CompileFiber].create()
-    fiber_q2:= RingQueue[&CompileFiber].create()
+    fiber_q := RingQueue[&CompileFiber].new()
+    fiber_q2:= RingQueue[&CompileFiber].new()
 
     mutex   : Mutex
     threads : Array[Thread]

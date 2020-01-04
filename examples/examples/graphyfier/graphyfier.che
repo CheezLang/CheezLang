@@ -128,13 +128,7 @@ impl Game for MyGame {
         profile_function()
         io.println("reloading...")
 
-        function = match ref function {
-            Some($f) -> {
-                Memory.drop(f)
-                None
-            }
-            None -> None
-        }
+        function = None
 
         match load_file("function.txt") {
             Ok($content) -> {

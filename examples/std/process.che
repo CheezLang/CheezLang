@@ -43,7 +43,7 @@ run_process :: (program: string, args: []string, working_dir: string) -> bool {
     ok := 0 != CreateProcessA(null, cast command_line.get_raw(), null, null, 0, 0, null, cast current_directory.get_raw(), &si, &pi)
 
     if !ok {
-        lastError := GetLastError();
+        lastError := GetLastError()
         io.println(fmt.format("failed to create process: 0x{:x}", [lastError]))
         return false
     }

@@ -9,9 +9,7 @@ use import std.time
 io :: import std.io
 
 use import glfw.glfw3
-use import opengl.opengl
-use import opengl.functions
-use import opengl.constants
+use import opengl.glad_binding
 
 Direction :: enum #copy {
     None
