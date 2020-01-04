@@ -1,6 +1,7 @@
 use import std.array
 use import std.string
 use import std.unicode
+use import std.rc
 util:: import std.util
 mem :: import std.mem.allocator
 fmt :: import std.fmt
@@ -241,8 +242,18 @@ impl IParser[String] for String {
     }
 }
 
+// rc
+impl(T: type) IParser[Rc[T]] for Rc[T] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+        return match parser.parse(T, lexer, error_handler) {
+            Some($i) -> Some(Rc[T].new(i))
+            None -> None
+        }
+    }
+}
+
 // array
-impl(T: type) IParser[Array[T]] for Array[T] if T : IParser[T] {
+impl(T: type) IParser[Array[T]] for Array[T] {
     parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Array[T]] {
         result := Array[T].create()
 
@@ -294,11 +305,18 @@ impl(T: type) IParser[Array[T]] for Array[T] if T : IParser[T] {
 parse_data_float :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
     lexer.skip_newlines_and_comments()
     token := lexer.next_token()
+
+    sign : T = 1
+    if token.ttype == TokenType.Minus {
+        sign = -1
+        token = lexer.next_token()
+    }
+
     return match token.ttype {
         TokenType.NumberLiteral -> {
             match token.data {
-                TokenData.Integer($v) -> Some(T(v))
-                TokenData.Double($v)  -> Some(T(v))
+                TokenData.Integer($v) -> Some(T(v) * sign)
+                TokenData.Double($v)  -> Some(T(v) * sign)
                 _ -> {
                     msg := fmt.format("Can't parse non-number literal into an {}", [@typename(T)])
                     error_handler.report_error(token.location, msg.slice())
@@ -342,10 +360,17 @@ parse_data_char :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> 
 parse_data_int :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
     lexer.skip_newlines_and_comments()
     token := lexer.next_token()
+
+    sign : T = 1
+    if token.ttype == TokenType.Minus {
+        sign = -1
+        token = lexer.next_token()
+    }
+
     return match token.ttype {
         TokenType.NumberLiteral -> {
             match token.data {
-                TokenData.Integer($v) -> Some(T(v))
+                TokenData.Integer($v) -> Some(T(v) * sign)
                 _ -> {
                     msg := fmt.format("Can't parse non-integer literal into an {}", [@typename(T)])
                     error_handler.report_error(token.location, msg.slice())
