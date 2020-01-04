@@ -6,6 +6,7 @@ using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using Cheez.Util;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
@@ -140,8 +141,18 @@ namespace Cheez
                 }
             }
 
+            var enumType = new EnumType(expr, isCopy);
+
+            if (expr.HasDirective("flags"))
+            {
+                expr.IsFlags = true;
+                expr.IsReprC = true;
+                expr.Scope.DefineBinaryOperator(new EnumFlagsCompineOperator(enumType));
+                expr.Scope.DefineBinaryOperator(new EnumFlagsTestOperator(enumType));
+            }
+
             expr.Type = CheezType.Type;
-            expr.Value = new EnumType(expr, isCopy);
+            expr.Value = enumType;
             return expr;
         }
 
@@ -217,9 +228,24 @@ namespace Cheez
 
                 if (memDecl.Type != null)
                     ComputeTypeMembers(memDecl.Type);
+
+                if (expr.IsFlags && memDecl.Initializer == null && value != 0 && !value.IsPowerOfTwo())
+                {
+                    ReportError(memDecl, $"Member would have a value of '{value}', but this is not a power of two, so please provide a custom value for this member");
+                }
                 mem.Value = NumberData.FromBigInt(value);
 
-                value += 1;
+                if (expr.IsFlags)
+                {
+                    if (value == 0)
+                        value += 1;
+                    else if (value.IsPowerOfTwo())
+                        value *= 2;
+                }
+                else
+                {
+                    value += 1;
+                }
             }
 
             if (expr.IsReprC)

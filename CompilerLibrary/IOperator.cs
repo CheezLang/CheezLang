@@ -101,6 +101,86 @@ namespace Cheez
         }
     }
 
+    public class BuiltInEnumCompareOperator : IBinaryOperator
+    {
+        public CheezType LhsType => null;
+        public CheezType RhsType => null;
+        public CheezType ResultType => CheezType.Bool;
+
+        public string Name { get; private set; }
+
+        public BuiltInEnumCompareOperator(string name)
+        {
+            this.Name = name;
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            if (lhs is EnumType f1 && rhs is EnumType f2 && f1 == f2)
+                return 0;
+            return -1;
+        }
+
+        public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class EnumFlagsCompineOperator : IBinaryOperator
+    {
+        public EnumType EnumType { get; }
+        public CheezType LhsType => EnumType;
+        public CheezType RhsType => EnumType;
+        public CheezType ResultType => EnumType;
+
+        public string Name => "or";
+
+        public EnumFlagsCompineOperator(EnumType type)
+        {
+            EnumType = type;
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            if (lhs == rhs && lhs == EnumType)
+                return 0;
+            return -1;
+        }
+
+        public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class EnumFlagsTestOperator : IBinaryOperator
+    {
+        public EnumType EnumType { get; }
+        public CheezType LhsType => EnumType;
+        public CheezType RhsType => EnumType;
+        public CheezType ResultType => CheezType.Bool;
+
+        public string Name => "and";
+
+        public EnumFlagsTestOperator(EnumType type)
+        {
+            EnumType = type;
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            if (lhs == rhs && lhs == EnumType)
+                return 0;
+            return -1;
+        }
+
+        public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class BuiltInFunctionOperator : IBinaryOperator
     {
         public CheezType LhsType => null;

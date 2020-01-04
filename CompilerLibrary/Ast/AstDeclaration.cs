@@ -608,6 +608,7 @@ namespace Cheez.Ast.Statements
         public bool MembersComputed { get; set; } = false;
 
         public bool IsReprC { get; set; }
+        public bool IsFlags { get; set; }
 
         public AstEnumTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Location)

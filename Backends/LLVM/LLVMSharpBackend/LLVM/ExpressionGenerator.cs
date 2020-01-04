@@ -1196,6 +1196,61 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var val = bo(GetRawBuilder(), left, right, "");
                 return val;
             }
+            else if (bin.ActualOperator is BuiltInEnumCompareOperator eo)
+            {
+                var left = GenerateExpression(bin.Left, true);
+                var right = GenerateExpression(bin.Right, true);
+
+                left = builder.CreateExtractValue(left, 0, "left.tag");
+                right = builder.CreateExtractValue(right, 0, "right.tag");
+
+                var op = eo.Name switch {
+                    "==" => LLVMIntPredicate.LLVMIntEQ,
+                    "!=" => LLVMIntPredicate.LLVMIntNE,
+                    _ => throw new Exception()
+                };
+                var result = builder.CreateICmp(op, left, right, "");
+                return result;
+            }
+            else if (bin.ActualOperator is EnumFlagsCompineOperator eco)
+            {
+                var llvmEnumType = CheezTypeToLLVMType(bin.Type);
+
+                var left = GenerateExpression(bin.Left, true);
+                var right = GenerateExpression(bin.Right, true);
+
+                if (!eco.EnumType.Declaration.IsReprC)
+                {
+                    left = builder.CreateExtractValue(left, 0, "left.tag");
+                    right = builder.CreateExtractValue(right, 0, "right.tag");
+                }
+
+                var result = builder.CreateOr(left, right, "result.tag");
+
+                if (!eco.EnumType.Declaration.IsReprC)
+                {
+                    result = builder.CreateInsertValue(LLVM.GetUndef(llvmEnumType), result, 0, "result.enum");
+                }
+                return result;
+            }
+            else if (bin.ActualOperator is EnumFlagsTestOperator eto)
+            {
+                var llvmEnumType = CheezTypeToLLVMType(bin.Type);
+                var llvmTagType = CheezTypeToLLVMType(eto.EnumType.Declaration.TagType);
+
+                var left = GenerateExpression(bin.Left, true);
+                var right = GenerateExpression(bin.Right, true);
+
+                if (!eto.EnumType.Declaration.IsReprC)
+                {
+                    left = builder.CreateExtractValue(left, 0, "left.tag");
+                    right = builder.CreateExtractValue(right, 0, "right.tag");
+                }
+
+                var result = builder.CreateAnd(left, right, "result.tag");
+                result = builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, result, LLVM.ConstInt(llvmTagType, 0, false), "result.bool");
+                return result;
+            }
             else if (bin.ActualOperator is BuiltInTraitNullOperator tno)
             {
                 var left = GenerateExpression(bin.Left, true);

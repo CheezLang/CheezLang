@@ -428,6 +428,8 @@ namespace Cheez
             DefineBinaryOperator(new BuiltInTraitNullOperator("!="));
             DefineBinaryOperator(new BuiltInFunctionOperator("=="));
             DefineBinaryOperator(new BuiltInFunctionOperator("!="));
+            DefineBinaryOperator(new BuiltInEnumCompareOperator("=="));
+            DefineBinaryOperator(new BuiltInEnumCompareOperator("!="));
         }
 
         private void DefineUnaryOperator(string name, CheezType type, BuiltInUnaryOperator.ComptimeExecution exe)
@@ -581,7 +583,7 @@ namespace Cheez
             }
         }
 
-        private void DefineBinaryOperator(IBinaryOperator op)
+        public void DefineBinaryOperator(IBinaryOperator op)
         {
             List<IBinaryOperator> list;
             if (mBinaryOperatorTable.ContainsKey(op.Name))

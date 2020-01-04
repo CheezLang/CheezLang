@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text.RegularExpressions;
 
 namespace Cheez.Util
@@ -203,6 +204,11 @@ namespace Cheez.Util
             { }
 
             return null;
+        }
+
+        public static bool IsPowerOfTwo(this BigInteger self)
+        {
+            return (self & (self - 1)) == 0 && self != 0;
         }
     }
 }
