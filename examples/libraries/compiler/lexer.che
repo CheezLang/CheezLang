@@ -1,4 +1,5 @@
 use import string_database
+use import error_handler
 
 use import std.string
 use import std.unicode
@@ -49,6 +50,12 @@ Lexer :: struct {
     KwDo       : string
     KwMut      : string
     KwImport   : string
+}
+
+impl TextProvider for Lexer {
+    get_text :: (ref Self, filename: string) -> string {
+        return text
+    }
 }
 
 impl Lexer {
@@ -166,6 +173,7 @@ impl Lexer {
             location = location
             suffix = None
         )
+
         token.location.byte_length = 0
 
         if location.byte_index >= text.bytes.length {
