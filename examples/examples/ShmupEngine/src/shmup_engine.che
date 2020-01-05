@@ -56,7 +56,6 @@ EngineModeBase :: struct #extendable {
     engine              : &ShmupEngine = null
     layer_stack         := Array[Layer].create()
     projection_matrix   := mat4.id()
-    aspect_ratio_axis   := 1.0f
 }
 
 EditMode :: struct #extend(EngineModeBase) {
@@ -112,13 +111,13 @@ impl EngineMode for EditMode {
             }
         }
 
+        //
         for view : engine.active_game_views {
-            view.update(false, engine.world_size, aspect_ratio_axis)
+            view.update(false, engine.world_size)
         }
     }
 
     render :: (ref Self, renderer: ref Renderer) {
-
         for view : engine.active_game_views {
             render_gizmos := view.begin_render(false, engine.world_size, renderer)
             for layer : layer_stack {
@@ -182,10 +181,10 @@ impl EngineMode for PlayMode {
             paused = !paused
         }
 
+        //
         update_layers := false
-
         for view : engine.active_game_views {
-            if view.update(!paused, engine.world_size, aspect_ratio_axis) {
+            if view.update(!paused, engine.world_size) {
                 update_layers = true
             }
         }

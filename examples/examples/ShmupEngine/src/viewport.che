@@ -23,10 +23,10 @@ use import shmup_engine
 #export_scope
 
 GameView :: trait {
-    initialize   :: (ref Self, max_size: vec2i) -> bool;
-    update :: (ref Self, is_playing: bool, world_size: vec3, aspect_ratio_axis: float) -> bool;
-    begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool;
-    end_render   :: (ref Self);
+    initialize      :: (ref Self, max_size: vec2i) -> bool;
+    update          :: (ref Self, is_playing: bool, world_size: vec3) -> bool;
+    begin_render    :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool;
+    end_render      :: (ref Self);
 }
 
 WindowBase :: struct #extendable {
@@ -47,7 +47,7 @@ impl GameView for GameWindow {
         return viewport.initialize(max_size)
     }
 
-    update :: (ref Self, is_playing: bool, world_size: vec3, aspect_ratio_axis: float) -> bool {
+    update :: (ref Self, is_playing: bool, world_size: vec3) -> bool {
         // set window properties of viewport
         ImGui.Begin("Game", null, @bin_or(
             ImGui.ImGuiWindowFlags_.NoScrollbar,
@@ -77,7 +77,7 @@ impl GameView for GameWindow {
 
         ImGui.End()
 
-        viewport.update_projection_matrix(world_size, aspect_ratio_axis)
+        viewport.update_projection_matrix(world_size)
 
         if viewport.is_focused {
             engine.game_viewport = &self.viewport
@@ -95,6 +95,15 @@ impl GameView for GameWindow {
 
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
         glClear(GL_COLOR_BUFFER_BIT)
+
+        // set aspect_ratio_axis so that the game world always fits on screen
+        viewport_ar := viewport.size.x / viewport.size.y
+        world_ar    := world_size.x / world_size.y
+        if viewport_ar > world_ar {
+            viewport.aspect_ratio_axis = 1
+        } else {
+            viewport.aspect_ratio_axis = 0
+        }
 
         // render mode
         renderer.begin_scene(viewport.projection_matrix)
@@ -121,7 +130,12 @@ impl GameView for GameWindow {
 }
 
 EditorWindow :: struct #extend(WindowBase) {
+    camera_pos  := vec3()
+    zoom        := 1.0f
 
+    camera_anchor  := vec3()
+    mouse_anchor   := vec3()
+    last_mouse_pos := vec3()
 }
 
 impl GameView for EditorWindow {
@@ -129,7 +143,7 @@ impl GameView for EditorWindow {
         return viewport.initialize(max_size)
     }
 
-    update :: (ref Self, is_playing: bool, world_size: vec3, aspect_ratio_axis: float) -> bool {
+    update :: (ref Self, is_playing: bool, world_size: vec3) -> bool {
         ImGui.Begin("Scene", null, @bin_or(
             ImGui.ImGuiWindowFlags_.NoScrollbar,
             ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
@@ -158,7 +172,60 @@ impl GameView for EditorWindow {
 
         ImGui.End()
 
-        viewport.update_projection_matrix(world_size, aspect_ratio_axis)
+        // update projection matrices
+        {
+
+            // if viewport.is_focused 
+            mouse_pos := {
+                im_pos := ImGui.GetMousePos()
+                vec3(im_pos.x, im_pos.y, 0)
+            }
+            mouse_pos_world := viewport.screen_to_world(mouse_pos)
+            if ImGui.IsMouseClicked(ImGui.ImGuiMouseButton_.Left) {
+                camera_anchor   = camera_pos
+                mouse_anchor    = mouse_pos_world
+            }
+
+            // mouse_delta := mouse_pos_world - last_mouse_pos
+            // last_mouse_pos = mouse_pos_world
+
+            if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Left) {
+                io.println(fmt.format("{}, {}", [camera_anchor, mouse_anchor]))
+
+                mouse_delta := mouse_pos_world - mouse_anchor
+                // camera_pos -= mouse_delta
+                camera_pos = camera_anchor - mouse_delta
+            }
+
+            // mouse_scroll := int(ImGui.GetIO().MouseWheel)
+            // while mouse_scroll > 0, mouse_scroll -= 1 {
+            //     zoom *= 1.1f
+            // }
+            // while mouse_scroll < 0, mouse_scroll += 1 {
+            //     zoom /= 1.1f
+            // }
+
+            // if zoom < 0.1f {
+            //     zoom = 0.1f
+            // }
+            size    := world_size
+            width   := size.y * viewport.size.x / viewport.size.y
+
+            projection_matrix := mat4.orthographic(-width * 0.5, width * 0.5, -size.y * 0.5, size.y * 0.5, -10, 10)
+            viewport.projection_matrix = projection_matrix * mat4.from_translation(-camera_pos)
+            viewport.projection_inverse = mat4.from_translation(camera_pos) * projection_matrix.invert_orthographic()
+
+            // continue zoom
+            // mouse_pos_world = viewport.screen_to_world(mouse_pos)
+            // mouse_delta = mouse_pos_world - last_mouse_pos
+            // last_mouse_pos = mouse_pos_world
+            // camera_pos -= mouse_delta
+
+            // camera_translation          = mat4.from_translation(-camera_pos)
+            // viewport.projection_matrix  = mat4.orthographic(-width * 0.5, width * 0.5, -size.y * 0.5, size.y * 0.5, -10, 10)
+            // viewport.projection_matrix  = viewport.projection_matrix * camera_translation
+            // viewport.projection_inverse = viewport.projection_matrix.invert_orthographic()
+        }
 
         // update mode
         return false
@@ -207,7 +274,7 @@ impl GameView for GameAndEditorWindow {
         return viewport.initialize(max_size)
     }
 
-    update :: (ref Self, is_playing: bool, world_size: vec3, aspect_ratio_axis: float) -> bool {
+    update :: (ref Self, is_playing: bool, world_size: vec3) -> bool {
         ImGui.Begin("GameScene", null, @bin_or(
             ImGui.ImGuiWindowFlags_.NoScrollbar,
             ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
@@ -236,7 +303,7 @@ impl GameView for GameAndEditorWindow {
 
         ImGui.End()
 
-        viewport.update_projection_matrix(world_size, aspect_ratio_axis)
+        viewport.update_projection_matrix(world_size)
 
         if viewport.is_focused {
             engine.game_viewport = &self.viewport
@@ -254,6 +321,19 @@ impl GameView for GameAndEditorWindow {
 
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
         glClear(GL_COLOR_BUFFER_BIT)
+
+        // set aspect_ratio_axis so that the game world always fits on screen
+        if is_playing {
+            viewport_ar := viewport.size.x / viewport.size.y
+            world_ar    := world_size.x / world_size.y
+            if viewport_ar > world_ar {
+                viewport.aspect_ratio_axis = 1
+            } else {
+                viewport.aspect_ratio_axis = 0
+            }
+        } else {
+            viewport.aspect_ratio_axis = 1.0f
+        }
 
         // render mode
         renderer.begin_scene(viewport.projection_matrix)
@@ -285,6 +365,7 @@ Viewport :: struct {
     size                    := vec3()
     size_max                := vec3()
 
+    aspect_ratio_axis       := 1.0f
     projection_matrix       := mat4()
     projection_inverse      := mat4()
 
@@ -361,7 +442,7 @@ impl Viewport {
         return projection_inverse * (((pos - self.pos) / size * 2.0f - vec3(1, 1, 0)) * vec3(1, -1, 0))
     }
 
-    update_projection_matrix :: (ref Self, world_size: vec3, aspect_ratio_axis: float) {
+    update_projection_matrix :: (ref Self, world_size: vec3) {
         // io.println(fmt.format("update_projection_matrix  {}  {}", [world_size, aspect_ratio_axis]))
         height1 := world_size.y
         width1  := height1 * size.x / size.y
@@ -374,14 +455,5 @@ impl Viewport {
 
         projection_matrix = mat4.orthographic(-width * 0.5, width * 0.5, -height * 0.5, height * 0.5, -10, 10)
         projection_inverse = projection_matrix.invert_orthographic()
-        // io.println("=======")
-        // io.println(fmt.format("{}", [projection_matrix]))
-        // io.println("=======")
-        // io.println(fmt.format("{}", [projection_inverse]))
-        // io.println("
-        
-        
-        
-        // ")
     }
 }

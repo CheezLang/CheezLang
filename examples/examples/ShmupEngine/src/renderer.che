@@ -98,21 +98,6 @@ impl Renderer {
         glBindVertexArray(0)
     }
 
-    draw_quad :: (ref Self, pos: vec3, size: vec3, angle: float, line_thickness: float, color: vec3 = vec3(1, 1, 1)) {
-        offset := size * 0.5f - vec3(line_thickness, line_thickness) * 0.5f
-
-        sin_a := sinf(-angle)
-        cos_a := cosf(-angle)
-
-        offset_x := vec3(cos_a, -sin_a) * offset.x
-        offset_y := vec3(sin_a, cos_a) * offset.y
-
-        self.fill_quad(pos - offset_x, vec3(line_thickness, size.y, 0), angle, color, Origin.Center)
-        self.fill_quad(pos + offset_x, vec3(line_thickness, size.y, 0), angle, color, Origin.Center)
-        self.fill_quad(pos - offset_y, vec3(size.x, line_thickness, 0), angle, color, Origin.Center)
-        self.fill_quad(pos + offset_y, vec3(size.x, line_thickness, 0), angle, color, Origin.Center)
-    }
-
     fill_quad :: (ref Self, pos: vec3, size: vec3, angle: float, color: vec3 = vec3(1, 1, 1), origin: Origin = Origin.Center) {
         color_shader.bind()
         model_matrix := {
@@ -125,6 +110,21 @@ impl Renderer {
         color_shader.set_uniform_vec3("color", color)
 
         draw_indexed(filled_quad_va)
+    }
+
+    draw_quad :: (ref Self, pos: vec3, size: vec3, angle: float, thickness: float, color: vec3 = vec3(1, 1, 1), origin: Origin = Origin.Center) {
+        pos, size = match origin {
+            Origin.Center       -> pos - size * 0.5f, size
+            Origin.BottomLeft   -> pos, size
+            Origin.BottomRight  -> pos - vec3(size.x, 0), size
+            Origin.TopLeft      -> pos - vec3(0, size.y), size
+            Origin.TopRight     -> pos - vec3(size.x, size.y), size
+        }
+
+        draw_line(pos, pos + vec3(size.x, 0), color, thickness)
+        draw_line(pos + vec3(size.x, 0), pos + size, color, thickness)
+        draw_line(pos + size, pos + vec3(0, size.y), color, thickness)
+        draw_line(pos + vec3(0, size.y), pos, color, thickness)
     }
 
     draw_line :: (ref Self, pos0: vec3, pos1: vec3, color: vec3 = vec3(1, 1, 1), thickness: float = 1.0f) {
