@@ -69,6 +69,28 @@ impl(T: type) Matrix4[T] {
         ])
     }
 
+    invert_orthographic :: (ref Self) -> Self {
+        return Self([
+            1 / values[0]   , 0             , 0                 , -values[3]
+            0               , 1 / values[5] , 0                 , -values[7]
+            0               , 0             , 1 / values[10]    , -values[11]
+            0               , 0             , 0                 , 1
+        ])
+    }
+
+    orthographic_inverse :: (left: T, right: T, bottom: T, top: T, near: T, far: T) -> Self {
+        width  := right - left
+        height := top - bottom
+        depth  := far - near
+
+        return Self([
+            width / 2.0f, 0             , 0             , (right + left) / width
+            0           , height / 2.0f , 0             , (top + bottom) / height
+            0           , 0             , depth / -2.0f , (far + near)   / depth 
+            0           , 0             , 0             , 1
+        ])
+    }
+
     data :: (ref Self) -> &T {
         return values.data
     }
@@ -109,6 +131,24 @@ impl(T: type) Matrix4[T] {
             }
         }
         return result
+    }
+
+    mulmv :: (ma: Matrix4[T], v: Vector3[T]) -> Vector3[T] #operator("*") {
+        a : []T = ma.values
+        return Vector3[T](
+            x = a[0] * v.x + a[1] * v.y + a[2]  * v.z + a[3]
+            y = a[4] * v.x + a[5] * v.y + a[6]  * v.z + a[7]
+            z = a[8] * v.x + a[9] * v.y + a[10] * v.z + a[11]
+        )
+    }
+
+    mulv :: (ma: ref Matrix4[T], v: Vector3[T], w: T = 1) -> Vector3[T] {
+        a : []T = ma.values
+        return Vector3[T](
+            x = a[0] * v.x + a[1] * v.y + a[2]  * v.z + a[3]  * w
+            y = a[4] * v.x + a[5] * v.y + a[6]  * v.z + a[7]  * w
+            z = a[8] * v.x + a[9] * v.y + a[10] * v.z + a[11] * w
+        )
     }
 }
 

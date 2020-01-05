@@ -93,16 +93,22 @@ VertexBuffer :: struct {
 }
 
 impl VertexBuffer {
-    create :: (vertices: []vec3) -> &VertexBuffer {
+    create :: (vertices: []vec3, static: bool = true) -> &VertexBuffer {
         vbo : u32 = 0
         glGenBuffers(1, &vbo)
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
-        glBufferData(GL_ARRAY_BUFFER, @sizeof(vec3) * vertices.length, vertices.data, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, @sizeof(vec3) * vertices.length, vertices.data, if static then GL_STATIC_DRAW else GL_DYNAMIC_DRAW)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
         buff := mem.alloc(VertexBuffer)
         <<buff = VertexBuffer(vbo, BufferLayout())
         return buff
+    }
+
+    set_data :: (ref Self, vertices: []vec3) {
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        glBufferData(GL_ARRAY_BUFFER, @sizeof(vec3) * vertices.length, vertices.data, GL_DYNAMIC_DRAW)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
     }
 
     bind :: (ref Self) {
@@ -163,7 +169,7 @@ VertexArray :: struct {
 }
 
 impl VertexArray {
-    create :: () -> &VertexArray {
+    new :: () -> &VertexArray {
         vao : u32 = 0
         glGenVertexArrays(1, &vao)
 

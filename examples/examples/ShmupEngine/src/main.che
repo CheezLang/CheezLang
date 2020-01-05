@@ -28,25 +28,10 @@ use import components
 max_entities :: 1024
 
 Test :: struct {
-    entities_per_second : int
-    color : vec3
-
     layer : &EntityLayer = null
 
-    alpha := 0.5f
-    count := 2
-
-    offset := vec3(0, 0, 0)
-    scale  := 0.9f
-    angle  := 0.0f
-
-    entities        := Array[Rc[Entity]].create()
-    next_entity_id  := 0
-
-    current_entity_index        : i32     = 0
-    current_entity              : &Entity = null
-    current_selected_component  : i32     = 0
-    component_infos             := Array[ComponentInfo].create()
+    e               := Option[Rc[Entity]].None
+    mouse_pos_world := vec3()
 }
 
 impl EntityLayerCallbacks for Test {
@@ -59,43 +44,46 @@ impl EntityLayerCallbacks for Test {
     }
 
     update :: (ref Self, dt: float) {
+        mouse_pos := {
+            im_pos := ImGui.GetMousePos()
+            vec3(im_pos.x, im_pos.y, 0)
+        }
+
+        self.e = layer.find_entity(1)
+
+        mouse_pos_world = layer.engine.game_viewport.screen_to_world(mouse_pos)
+
     }
 
     render :: (ref Self, renderer: ref Renderer) {
         // set aspect_ratio_axis so that the game world always fits on screen
-        if (float(layer.engine.viewport_size.x) / float(layer.engine.viewport_size.y)) > (layer.engine.world_size.x / layer.engine.world_size.y) {
+        viewport_ar := float(layer.engine.game_viewport.size.x) / float(layer.engine.game_viewport.size.y)
+        world_ar    := layer.engine.world_size.x / layer.engine.world_size.y
+        if viewport_ar > world_ar {
             layer.engine.aspect_ratio_axis = 1
         } else {
             layer.engine.aspect_ratio_axis = 0
         }
 
-        for(inclusive=true) y : 0 .. count {
-            for(inclusive=true) x : 0 .. count {
-                rotation := mat4.from_rotation_z(angle / 360.0f * (3.1415f * 2.0f))
-
-                renderer.draw_quad(vec3i(x - count / 2, y - count / 2, 0).change_type(f32) + offset, vec3(scale, scale, 0), angle / 360.0f * (3.1415f * 2.0f), 0.1, color)
-            }
+        line_start_pos := match ref e {
+            Some($e) -> e.get().position
+            None -> vec3(-5, 0, 0)
         }
+
+        renderer.draw_line(line_start_pos, mouse_pos_world, color = vec3(0, 1, 0), thickness = 2)
     }
 
     imgui_render :: (ref Self) {
     }
 }
 
-impl Drop for Test {
-    drop :: (ref Self) {
-        io.printfln("dropping test, {} entities", entities.get_length())
-    }
-}
-
 Main :: () {
     rand.PseudoRandom.init()
 
-    test  := Test(5, vec3(1, 0, 0))
-    test2 := Test(10, vec3(0, 1, 0))
+    test  := Test()
+    test2 := Test()
 
     shmup_engine := ShmupEngine.new()
     shmup_engine.push_entity_layer(String.from_string("test layer"), test)
-    shmup_engine.push_entity_layer(String.from_string("layer 2"), test2)
     shmup_engine.start()
 }

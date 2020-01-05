@@ -1,0 +1,387 @@
+use import std.string
+use import std.array
+use import std.math
+use import std.time
+use import std.rc
+use import std.mem.std_heap_allocator
+mem :: import std.mem.allocator
+fmt :: import std.fmt
+io  :: import std.io
+fs  :: import std.io.fs
+C   :: import std.c
+
+use import glfw.glfw3
+use import opengl.glad_binding
+ImGui :: import imgui.imgui_binding
+
+use import opengl_utils
+use import matrix
+use import renderer
+use import math
+use import shmup_engine
+
+#export_scope
+
+GameView :: trait {
+    initialize   :: (ref Self, max_size: vec2i) -> bool;
+    update :: (ref Self, is_playing: bool, world_size: vec3, aspect_ratio_axis: float) -> bool;
+    begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool;
+    end_render   :: (ref Self);
+}
+
+WindowBase :: struct #extendable {
+    engine      : &ShmupEngine  = null
+    viewport    : Viewport      = default
+    clear_color : vec4          = default
+}
+
+impl GameWindow {
+
+}
+
+GameWindow :: struct #extend(WindowBase) {
+}
+
+impl GameView for GameWindow {
+    initialize :: (ref Self, max_size: vec2i) -> bool {
+        return viewport.initialize(max_size)
+    }
+
+    update :: (ref Self, is_playing: bool, world_size: vec3, aspect_ratio_axis: float) -> bool {
+        // set window properties of viewport
+        ImGui.Begin("Game", null, @bin_or(
+            ImGui.ImGuiWindowFlags_.NoScrollbar,
+            ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
+            ImGui.ImGuiWindowFlags_.NoCollapse
+        ))
+
+        { // calculate focused state
+            was_focused := viewport.is_focused
+            viewport.is_focused = ImGui.IsWindowFocused()
+            viewport.lost_focused = was_focused and !viewport.is_focused
+            // @todo: send focus event to layer_stack
+        }
+
+        { // get size of viewport window
+            min           := ImGui.GetWindowContentRegionMin()
+            max           := ImGui.GetWindowContentRegionMax()
+            size          := ImGui.ImVec2(max.x - min.x, max.y - min.y)
+            viewport_size := vec2i(int(size.x), int(size.y)).clamped(0, int.max)
+
+            window_min := ImGui.GetWindowPos()
+
+            viewport.pos  = vec3(window_min.x + min.x, window_min.y + min.y, 0)
+            viewport.size = vec3(cast viewport_size.x, cast viewport_size.y, 1)
+            // io.println(fmt.format("+ {}", [viewport.size]))
+        }
+
+        ImGui.End()
+
+        viewport.update_projection_matrix(world_size, aspect_ratio_axis)
+
+        if viewport.is_focused {
+            engine.game_viewport = &self.viewport
+        }
+
+        // update mode
+        return is_playing
+    }
+
+    begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
+        // render game
+        size := viewport.size.change_type(i32)
+        (glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer))
+        GL(glViewport(0, 0, size.x, size.y))
+
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        // render mode
+        renderer.begin_scene(viewport.projection_matrix)
+
+        return false
+    }
+
+    end_render :: (ref Self) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        // renderer.end_scene()
+
+        // draw viewport window
+        ImGui.Begin("Game")
+        if viewport.size.x > 0 and viewport.size.y > 0 {
+            size    := ImGui.ImVec2(viewport.size.x, viewport.size.y)
+            uv0     := ImGui.ImVec2(0, size.y / viewport.size_max.y)
+            uv1     := ImGui.ImVec2(size.x / viewport.size_max.x, 0)
+            tint    := ImGui.ImVec4(1, 1, 1, 1)
+            border  := ImGui.ImVec4(0, 0, 0, 0)
+            ImGui.Image(cast viewport.render_texture, size, uv0, uv1, tint, border)
+        }
+        ImGui.End()
+    }
+}
+
+EditorWindow :: struct #extend(WindowBase) {
+
+}
+
+impl GameView for EditorWindow {
+    initialize :: (ref Self, max_size: vec2i) -> bool {
+        return viewport.initialize(max_size)
+    }
+
+    update :: (ref Self, is_playing: bool, world_size: vec3, aspect_ratio_axis: float) -> bool {
+        ImGui.Begin("Scene", null, @bin_or(
+            ImGui.ImGuiWindowFlags_.NoScrollbar,
+            ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
+            ImGui.ImGuiWindowFlags_.NoCollapse
+        ))
+
+        { // calculate focused state
+            was_focused := viewport.is_focused
+            viewport.is_focused = ImGui.IsWindowFocused()
+            viewport.lost_focused = was_focused and !viewport.is_focused
+            // @todo: send focus event to layer_stack
+        }
+
+        { // get size of viewport window
+            min           := ImGui.GetWindowContentRegionMin()
+            max           := ImGui.GetWindowContentRegionMax()
+            size          := ImGui.ImVec2(max.x - min.x, max.y - min.y)
+            viewport_size := vec2i(int(size.x), int(size.y)).clamped(0, int.max)
+
+            window_min := ImGui.GetWindowPos()
+
+            viewport.pos  = vec3(window_min.x + min.x, window_min.y + min.y, 0)
+            viewport.size = vec3(cast viewport_size.x, cast viewport_size.y, 1)
+            // io.println(fmt.format("+ {}", [viewport.size]))
+        }
+
+        ImGui.End()
+
+        viewport.update_projection_matrix(world_size, aspect_ratio_axis)
+
+        // update mode
+        return false
+    }
+
+    begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
+        // render game
+        size := viewport.size.change_type(i32)
+        (glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer))
+        GL(glViewport(0, 0, size.x, size.y))
+
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        // render mode
+        renderer.begin_scene(viewport.projection_matrix)
+        // renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.05)
+        
+        return true
+    }
+
+    end_render :: (ref Self) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        // renderer.end_scene()
+
+        // draw viewport window
+        ImGui.Begin("Scene")
+        if viewport.size.x > 0 and viewport.size.y > 0 {
+            size    := ImGui.ImVec2(viewport.size.x, viewport.size.y)
+            uv0     := ImGui.ImVec2(0, size.y / viewport.size_max.y)
+            uv1     := ImGui.ImVec2(size.x / viewport.size_max.x, 0)
+            tint    := ImGui.ImVec4(1, 1, 1, 1)
+            border  := ImGui.ImVec4(0, 0, 0, 0)
+            ImGui.Image(cast viewport.render_texture, size, uv0, uv1, tint, border)
+        }
+        ImGui.End()
+    }
+}
+
+GameAndEditorWindow :: struct #extend(WindowBase) {
+
+}
+
+impl GameView for GameAndEditorWindow {
+    initialize :: (ref Self, max_size: vec2i) -> bool {
+        return viewport.initialize(max_size)
+    }
+
+    update :: (ref Self, is_playing: bool, world_size: vec3, aspect_ratio_axis: float) -> bool {
+        ImGui.Begin("GameScene", null, @bin_or(
+            ImGui.ImGuiWindowFlags_.NoScrollbar,
+            ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
+            ImGui.ImGuiWindowFlags_.NoCollapse
+        ))
+
+        { // calculate focused state
+            was_focused := viewport.is_focused
+            viewport.is_focused = ImGui.IsWindowFocused()
+            viewport.lost_focused = was_focused and !viewport.is_focused
+            // @todo: send focus event to layer_stack
+        }
+
+        { // get size of viewport window
+            min           := ImGui.GetWindowContentRegionMin()
+            max           := ImGui.GetWindowContentRegionMax()
+            size          := ImGui.ImVec2(max.x - min.x, max.y - min.y)
+            viewport_size := vec2i(int(size.x), int(size.y)).clamped(0, int.max)
+
+            window_min := ImGui.GetWindowPos()
+
+            viewport.pos  = vec3(window_min.x + min.x, window_min.y + min.y, 0)
+            viewport.size = vec3(cast viewport_size.x, cast viewport_size.y, 1)
+            // io.println(fmt.format("+ {}", [viewport.size]))
+        }
+
+        ImGui.End()
+
+        viewport.update_projection_matrix(world_size, aspect_ratio_axis)
+
+        if viewport.is_focused {
+            engine.game_viewport = &self.viewport
+        }
+
+        // update mode
+        return is_playing
+    }
+
+    begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
+        // render game
+        size := viewport.size.change_type(i32)
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer))
+        GL(glViewport(0, 0, size.x, size.y))
+
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        // render mode
+        renderer.begin_scene(viewport.projection_matrix)
+        // renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.05)
+
+        return (!is_playing)
+    }
+
+    end_render :: (ref Self) {
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        // renderer.end_scene()
+
+        // draw viewport window
+        ImGui.Begin("GameScene")
+        if viewport.size.x > 0 and viewport.size.y > 0 {
+            size    := ImGui.ImVec2(viewport.size.x, viewport.size.y)
+            uv0     := ImGui.ImVec2(0, size.y / viewport.size_max.y)
+            uv1     := ImGui.ImVec2(size.x / viewport.size_max.x, 0)
+            tint    := ImGui.ImVec4(1, 1, 1, 1)
+            border  := ImGui.ImVec4(0, 0, 0, 0)
+            ImGui.Image(cast viewport.render_texture, size, uv0, uv1, tint, border)
+        }
+        ImGui.End()
+    }
+}
+
+Viewport :: struct {
+    pos                     := vec3()
+    size                    := vec3()
+    size_max                := vec3()
+
+    projection_matrix       := mat4()
+    projection_inverse      := mat4()
+
+    // 
+    frame_buffer   : u32 = 0
+    render_texture : u32 = 0
+    depth_texture  : u32 = 0
+    is_focused     := false
+    lost_focused   := false
+}
+
+impl Viewport {
+    initialize :: (ref Self, max_size: vec2i) -> bool {
+        max_size := max_size.change_type(i32)
+        self.size_max = vec3(float(max_size.x), float(max_size.y), 1)
+        texture_width := i32(max_size.x)
+        texture_height := i32(max_size.y)
+
+        // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
+        (glGenFramebuffers(1, &frame_buffer))
+        (glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer))
+
+        // The texture we're going to render to
+        GL(glGenTextures(1, &render_texture))
+
+        // "Bind" the newly created texture : all future texture functions will modify this texture
+        GL(glBindTexture(GL_TEXTURE_2D, render_texture))
+
+        // Give an empty image to OpenGL ( the last "null" )
+        GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_width, texture_height, 0, GL_RGB, GL_UNSIGNED_BYTE, null))
+
+        // Poor filtering. Needed !
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST))
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST))
+
+        // The depth buffer
+        GL(glGenRenderbuffers(1, &depth_texture))
+        GL(glBindRenderbuffer(GL_RENDERBUFFER, depth_texture))
+        GL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, texture_width, texture_height))
+        GL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_texture))
+
+        // Set "render_texture" as our colour attachement #0
+        GL(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0))
+
+        // Set the list of draw buffers.
+        draw_buffers := [u32(GL_COLOR_ATTACHMENT0)]
+        GL(glDrawBuffers(1, draw_buffers.data)) // "1" is the size of draw_buffers
+
+        // Always check that our framebuffer is ok
+        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
+            return false
+        }
+
+        glBindTexture(GL_TEXTURE_2D, 0)
+        glBindRenderbuffer(GL_RENDERBUFFER, 0)
+        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        return true
+    }
+
+    screen_to_local :: (ref Self, pos: vec3) -> vec3 {
+        return pos - self.pos
+    }
+
+    local_to_clip :: (ref Self, pos: vec3) -> vec3 {
+        return (pos / size * 2.0f - vec3(1, 1, 0)) * vec3(1, -1, 0)
+    }
+
+    clip_to_world :: (ref Self, projection_inverse: mat4, pos: vec3) -> vec3 {
+        return projection_inverse * pos
+    }
+
+    screen_to_world :: (ref Self, pos: vec3) -> vec3 {
+        // io.println(fmt.format("{}", [projection_inverse]))
+        return projection_inverse * (((pos - self.pos) / size * 2.0f - vec3(1, 1, 0)) * vec3(1, -1, 0))
+    }
+
+    update_projection_matrix :: (ref Self, world_size: vec3, aspect_ratio_axis: float) {
+        // io.println(fmt.format("update_projection_matrix  {}  {}", [world_size, aspect_ratio_axis]))
+        height1 := world_size.y
+        width1  := height1 * size.x / size.y
+
+        width2  := world_size.x
+        height2 := width2 * size.y / size.x
+
+        width   := aspect_ratio_axis * width1  + (1 - aspect_ratio_axis) * width2
+        height  := aspect_ratio_axis * height1 + (1 - aspect_ratio_axis) * height2
+
+        projection_matrix = mat4.orthographic(-width * 0.5, width * 0.5, -height * 0.5, height * 0.5, -10, 10)
+        projection_inverse = projection_matrix.invert_orthographic()
+        // io.println("=======")
+        // io.println(fmt.format("{}", [projection_matrix]))
+        // io.println("=======")
+        // io.println(fmt.format("{}", [projection_inverse]))
+        // io.println("
+        
+        
+        
+        // ")
+    }
+}

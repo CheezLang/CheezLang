@@ -87,6 +87,7 @@ PlayerControlComponent :: struct {
 
 impl Component for PlayerControlComponent {
     update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+        // if layer.engine.global_input.key_down(glfw.GLFW_KEY_LEFT) {
         if layer.get_input().key_down(glfw.GLFW_KEY_LEFT) {
             entity.position += vec3(-1, 0) * speed * dt
         }

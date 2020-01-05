@@ -16,12 +16,14 @@ ImGui :: import imgui.imgui_binding
 
 use import opengl_utils
 use import layer
+use import matrix
 use import math
 use import renderer
 use import input
 use import entity
 use import components
 use import command
+use import viewport
 use import editor.inspector
 use import editor.hierarchy
 use import editor.console
@@ -29,7 +31,7 @@ use import editor.console
 #export_scope
 EnabledEditors :: struct {
     editor      := true
-    stats       := true
+    stats       := false
     demo_window := true
 }
 
@@ -47,6 +49,7 @@ EngineMode :: trait {
     render          :: (ref Self, renderer: ref Renderer);
     imgui_render    :: (ref Self);
     on_key_event    :: (ref Self, key: int, action: int);
+    on_enable       :: (ref Self);
 }
 
 EngineModeBase :: struct #extendable {
@@ -108,11 +111,20 @@ impl EngineMode for EditMode {
                 }
             }
         }
+
+        for view : engine.active_game_views {
+            view.update(false, engine.world_size, aspect_ratio_axis)
+        }
     }
 
     render :: (ref Self, renderer: ref Renderer) {
-        for layer : layer_stack {
-            layer.render(renderer)
+
+        for view : engine.active_game_views {
+            render_gizmos := view.begin_render(false, engine.world_size, renderer)
+            for layer : layer_stack {
+                layer.render(render_gizmos, renderer)
+            }
+            view.end_render()
         }
     }
 
@@ -122,9 +134,14 @@ impl EngineMode for EditMode {
 
     on_key_event :: (ref Self, key: int, action: int) {
     }
+
+    on_enable :: (ref Self) {
+
+    }
 }
 
 PlayMode :: struct #extend(EngineModeBase) {
+    paused := false
 }
 
 impl PlayMode {
@@ -161,14 +178,32 @@ impl EngineMode for PlayMode {
     }
 
     update :: (ref Self, dt: float) {
-        for layer : layer_stack {
-            layer.update(dt)
+        if engine.global_input.key_pressed(GLFW_KEY_F6) {
+            paused = !paused
+        }
+
+        update_layers := false
+
+        for view : engine.active_game_views {
+            if view.update(!paused, engine.world_size, aspect_ratio_axis) {
+                update_layers = true
+            }
+        }
+
+        if update_layers {
+            for layer : layer_stack {
+                layer.update(dt)
+            }
         }
     }
 
     render :: (ref Self, renderer: ref Renderer) {
-        for layer : layer_stack {
-            layer.render(renderer)
+        for view : engine.active_game_views {
+            render_gizmos := view.begin_render(!paused, engine.world_size, renderer)
+            for layer : layer_stack {
+                layer.render(render_gizmos, renderer)
+            }
+            view.end_render()
         }
     }
 
@@ -177,7 +212,7 @@ impl EngineMode for PlayMode {
     }
 
     on_key_event :: (ref Self, key: int, action: int) {
-        if engine.viewport_is_focused {
+        if engine.game_viewport.is_focused {
             match (action, key) {
                 (GLFW_PRESS, $keycode) -> {
                     engine.game_input.set_key_state(keycode, true)
@@ -198,11 +233,17 @@ impl EngineMode for PlayMode {
             }
         }
     }
+
+    on_enable :: (ref Self) {
+        paused = false
+    }
+}
+
+Editor :: struct {
 }
 
 ShmupEngine :: struct {
     // engine stuff
-    // layer_stack         := Array[Layer].create()
     projection_matrix   := mat4.id()
     aspect_ratio_axis   := 1.0f
     world_size          := vec3(10, 10, 0)
@@ -217,6 +258,7 @@ ShmupEngine :: struct {
     game_input          : &Input = null
 
     // editor stuff
+    editor              : Editor = default
     enabled_editors     : EnabledEditors = default
     current_fps         := 0
     current_frame_time  := 0.0
@@ -230,22 +272,23 @@ ShmupEngine :: struct {
     editor_play_mode_color := vec3(0.027f, 0.2f, 0.047f)
     save_file           := Option[String].None
 
+    game_and_editor_window  : GameAndEditorWindow = default
+    game_window             : GameWindow          = default
+    editor_window           : EditorWindow        = default
+    game_viewport           : &Viewport           = null
+
+    game_views              : [3]GameView = default
+    active_game_views       : []GameView  = default
+
     // window stuff
     glfw_window         : &GLFWwindow = null
     vsync_enabled       := true
     window_size         := vec2i(0, 0)
 
-    // viewport stuff
-    viewport_size_max       := vec2i(0, 0)
-    viewport_size           := vec2i(0, 0)
-    viewport_frame_buffer   : u32 = 0
-    viewport_render_texture : u32 = 0
-    viewport_depth_texture  : u32 = 0
-    viewport_is_focused     := false
-    viewport_lost_focused   := false
-
     // rendering stuff
     renderer : &Renderer = null
+
+    viewport_size_max : vec2i = default
 }
 
 impl ShmupEngine {
@@ -355,47 +398,22 @@ impl ShmupEngine {
     }
 
     initialize_viewport :: (ref Self) -> bool {
-        texture_width := i32(viewport_size_max.x)
-        texture_height := i32(viewport_size_max.y)
+        game_and_editor_window.engine = &self
+        game_window.engine            = &self
+        editor_window.engine          = &self
+        game_views[0] = game_and_editor_window
+        game_views[1] = game_window
+        game_views[2] = editor_window
+        game_viewport = &game_window.viewport
 
-        // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
-        GL(glGenFramebuffers(1, &viewport_frame_buffer))
-        GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport_frame_buffer))
+        active_game_views = @cast([]GameView, game_views)[0..3]
 
-        // The texture we're going to render to
-        GL(glGenTextures(1, &viewport_render_texture))
-
-        // "Bind" the newly created texture : all future texture functions will modify this texture
-        GL(glBindTexture(GL_TEXTURE_2D, viewport_render_texture))
-
-        // Give an empty image to OpenGL ( the last "null" )
-        GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_width, texture_height, 0, GL_RGB, GL_UNSIGNED_BYTE, null))
-
-        // Poor filtering. Needed !
-        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST))
-        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST))
-
-        // The depth buffer
-        GL(glGenRenderbuffers(1, &viewport_depth_texture))
-        GL(glBindRenderbuffer(GL_RENDERBUFFER, viewport_depth_texture))
-        GL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, texture_width, texture_height))
-        GL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, viewport_depth_texture))
-
-        // Set "viewport_render_texture" as our colour attachement #0
-        GL(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, viewport_render_texture, 0))
-
-        // Set the list of draw buffers.
-        draw_buffers := [u32(GL_COLOR_ATTACHMENT0)]
-        GL(glDrawBuffers(1, draw_buffers.data)) // "1" is the size of draw_buffers
-
-        // Always check that our framebuffer is ok
-        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
-            return false
+        for view : @cast([]GameView, game_views) {
+            if !view.initialize(viewport_size_max) {
+                return false
+            }
         }
 
-        glBindTexture(GL_TEXTURE_2D, 0)
-        glBindRenderbuffer(GL_RENDERBUFFER, 0)
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
         return true
     }
 
@@ -430,6 +448,8 @@ impl ShmupEngine {
             io.println("[ERROR] Failed to initialize edit/play mode")
             return
         }
+
+        self.push_gizmos_layer(String.from_string("Gizmos"))
 
         last_frame_time := get_time_microseconds()
 
@@ -467,28 +487,28 @@ impl ShmupEngine {
     }
 
     frame_without_editor :: (ref Self, delta_time: float) {
-        // handle events and input
-        global_input.reset()
-        game_input.reset()
-        current_engine_mode.reset_input()
-        glfwPollEvents()
+        // // handle events and input
+        // global_input.reset()
+        // game_input.reset()
+        // current_engine_mode.reset_input()
+        // glfwPollEvents()
 
-        viewport_size = window_size
-        GL(glViewport(0, 0, cast viewport_size.x, cast viewport_size.y))
+        // viewport_size = window_size
+        // GL(glViewport(0, 0, cast viewport_size.x, cast viewport_size.y))
 
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
-        glClear(GL_COLOR_BUFFER_BIT)
+        // glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+        // glClear(GL_COLOR_BUFFER_BIT)
 
-        self.update_projection_matrix(viewport_size.change_type(f32))
+        // self.update_projection_matrix(viewport_size.change_type(f32))
         
-        // update mode
-        current_engine_mode.update(delta_time)
+        // // update mode
+        // current_engine_mode.update(delta_time)
 
-        // render mode
-        renderer.begin_scene(projection_matrix)
-        current_engine_mode.render(<<renderer)
-        renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
-        // renderer.end_scene()
+        // // render mode
+        // renderer.begin_scene(projection_matrix)
+        // current_engine_mode.render(<<renderer)
+        // renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
+        // // renderer.end_scene()
     }
 
     frame_with_editor :: (ref Self, delta_time: float) {
@@ -498,26 +518,12 @@ impl ShmupEngine {
 
         create_dock_space()
 
-        // set window properties of viewport
-        ImGui.Begin("Viewport", null, @bin_or(
-            ImGui.ImGuiWindowFlags_.NoScrollbar,
-            ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
-            ImGui.ImGuiWindowFlags_.NoCollapse
-        ))
-        { // calculate focused state
-            was_focused := viewport_is_focused
-            viewport_is_focused = ImGui.IsWindowFocused()
-            viewport_lost_focused = was_focused and !viewport_is_focused
-            // @todo: send focus event to layer_stack
-        }
-        ImGui.End()
-
         // handle events and input
         global_input.reset()
         game_input.reset()
         current_engine_mode.reset_input()
         glfwPollEvents()
-        if viewport_lost_focused {
+        if game_viewport.lost_focused {
             // release all keys in all layers
             game_input.release_all_keys()
             current_engine_mode.release_input()
@@ -527,56 +533,19 @@ impl ShmupEngine {
         render_menu_bar()
         render_editor()
 
-        { // get size of viewport window
-            ImGui.Begin("Viewport")
-            min := ImGui.GetWindowContentRegionMin()
-            max := ImGui.GetWindowContentRegionMax()
-            ImGui.End()
-            size := ImGui.ImVec2(max.x - min.x, max.y - min.y)
-            viewport_size = vec2i(int(size.x), int(size.y)).clamped(0, int.max)
-        }
+        current_engine_mode.update(delta_time)
+        current_engine_mode.render(<<renderer)
 
-        // render game
-        {
-            size := viewport_size.change_type(i32)
-            GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport_frame_buffer))
-            GL(glViewport(0, 0, size.x, size.y))
-
-            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
-            glClear(GL_COLOR_BUFFER_BIT)
-
-            self.update_projection_matrix(viewport_size.change_type(f32))
-            
-            properties_to_edit.clear()
-
-            // update mode
-            current_engine_mode.update(delta_time)
-
-            // render mode
-            renderer.begin_scene(projection_matrix)
-            current_engine_mode.render(<<renderer)
-            renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
-            // renderer.end_scene()
-
-            glBindFramebuffer(GL_FRAMEBUFFER, 0)
-        }
-
-        // for layer : layer_stack {
-        //     layer.imgui_render()
+        // for view : active_game_views {
+        //     // io.println(fmt.format("{}", [game_viewport.projection_matrix]))
+        //     if view.update(true, world_size, aspect_ratio_axis) {
+        //         current_engine_mode.update(delta_time)
+        //     }
+        //     view.begin_render(world_size, <<renderer)
+        //     // renderer.begin_scene(projection_matrix)
+        //     current_engine_mode.render(<<renderer)
+        //     view.end_render()
         // }
-
-        { // draw viewport window
-            ImGui.Begin("Viewport")
-            if viewport_size.x > 0 and viewport_size.y > 0 {
-                size    := ImGui.ImVec2(f32(viewport_size.x), f32(viewport_size.y))
-                uv0     := ImGui.ImVec2(0, size.y / f32(viewport_size_max.y))
-                uv1     := ImGui.ImVec2(size.x / f32(viewport_size_max.x), 0)
-                tint    := ImGui.ImVec4(1, 1, 1, 1)
-                border  := ImGui.ImVec4(0, 0, 0, 0)
-                ImGui.Image(cast viewport_render_texture, size, uv0, uv1, tint, border)
-            }
-            ImGui.End()
-        }
 
         // end frame
         imgui_end_frame()
@@ -626,9 +595,9 @@ impl ShmupEngine {
                 ImGui.ImGuiWindowFlags_.NoNav)
             if ImGui.Begin("Stats", &enabled_editors.stats, overlay_flags) {
                 // viewport dimensions
-                dimensions := fmt.format("{} x {}", [viewport_size.x, viewport_size.y])
+                dimensions := fmt.format("{} x {}", [game_viewport.size.x, game_viewport.size.y])
                 ImGui.LabelText("Viewport Dimensions", dimensions.as_cstring())
-                ImGui.LabelText("Viewport focused", if viewport_is_focused then "true" else "false")
+                ImGui.LabelText("Viewport focused", if game_viewport.is_focused then "true" else "false")
                 ImGui.Separator()
 
                 // show fps
@@ -720,6 +689,12 @@ impl ShmupEngine {
         current_mode_base.layer_stack.add(<<ptr)
     }
 
+    push_gizmos_layer :: (ref Self, name: String) {
+        ptr := mem.alloc(GizmosLayer)
+        <<ptr = GizmosLayer.new(name, null, self, <<Input.new())
+        current_mode_base.layer_stack.add(<<ptr)
+    }
+
     update_projection_matrix :: (ref Self, viewport_size: vec2) {
         size    := viewport_size.change_type(f32)
 
@@ -773,6 +748,7 @@ impl ShmupEngine {
         play_mode.initialize(edit_mode)
         current_engine_mode = play_mode
         current_mode_base = cast &play_mode
+        current_engine_mode.on_enable()
 
         set_editor_background_color(editor_play_mode_color)
     }
@@ -786,6 +762,7 @@ impl ShmupEngine {
         console.get().log(String.from_string("Exiting play mode"))
         current_engine_mode = edit_mode
         current_mode_base = cast &edit_mode
+        current_engine_mode.on_enable()
 
         set_editor_background_color(editor_edit_mode_color)
     }
