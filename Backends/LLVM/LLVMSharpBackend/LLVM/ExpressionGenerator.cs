@@ -526,6 +526,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var matchingReference = valueType is ReferenceType;
             switch (pattern)
             {
+                case AstBoolExpr b:
+                    {
+                        value = builder.CreateLoad(value, "");
+                        var v = GenerateExpression(b, true);
+                        return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, value, v, "");
+                    }
             }
 
             throw new NotImplementedException();

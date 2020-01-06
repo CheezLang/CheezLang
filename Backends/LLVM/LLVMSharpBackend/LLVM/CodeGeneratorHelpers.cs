@@ -493,6 +493,26 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var memTypes = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type));
 
                         LLVM.StructSetBody(llvmType, memTypes.ToArray(), false);
+
+                        foreach (var m in s.Declaration.Members) {
+                            int myOffset = m.Offset;
+                            int llvmOffset = (int)LLVM.OffsetOfElement(targetData, llvmType, (uint)m.Index);
+
+                            if (myOffset != llvmOffset) {
+                                System.Console.WriteLine($"[ERROR] {s.Declaration.Name}: offset mismatch at {m.Index}: cheez {myOffset}, llvm {llvmOffset}");
+                            }
+                        }
+
+                        if (targetData.SizeOfTypeInBits(llvmType) / 8ul != (ulong)s.GetSize())
+                        {
+                            System.Console.WriteLine($"[ERROR] {s.Declaration.Name}: struct size mismatch: cheez {s.GetSize()}, llvm {targetData.SizeOfTypeInBits(llvmType) / 8}");
+                        }
+
+                        if (targetData.AlignmentOfType(llvmType) != (uint)s.GetAlignment())
+                        {
+                            System.Console.WriteLine($"[ERROR] {s.Declaration.Name}: struct alignment mismatch: cheez {s.GetAlignment()}, llvm {targetData.AlignmentOfType(llvmType)}");
+                        }
+
                         return llvmType;
                     }
 
@@ -1127,6 +1147,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             //
             var off = LLVM.OffsetOfElement(targetData, CheezTypeToLLVMType(s), (uint)m.Index);
+            off = (ulong)m.Offset;
             return LLVM.ConstNamedStruct(rttiTypeInfoStructMember, new LLVMValueRef[]
             {
                 LLVM.ConstInt(LLVM.Int64Type(), off, true),

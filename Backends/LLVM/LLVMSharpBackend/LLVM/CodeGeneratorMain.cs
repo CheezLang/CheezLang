@@ -142,7 +142,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             module = new Module("test-module");
             module.SetTarget(targetTriple);
-
+            module.SetDataLayout("e-i64:64-n8:16:32:64");
 
             LLVM.EnablePrettyStackTrace();
 
@@ -152,8 +152,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             rawBuilder = LLVM.CreateBuilder();
 
             pointerType = LLVM.Int8Type().GetPointerTo();
-            var pointerSize = pointerType.SizeOf();
-            var size = LLVM.SizeOfTypeInBits(targetData, pointerType);
 
             //{ // check attributes
             //    for (int i = 1; i < 100; i++)
