@@ -4,6 +4,9 @@ use import windows_constants
 #export_scope
 
 // new, incomplete
+GetCursorPos :: (pos: &POINT) -> i32 #stdcall;
+SetCursorPos :: (x: i32, y: i32) -> i32 #stdcall;
+
 MultiByteToWideChar :: (
   CodePage       : u32,
   dwFlags        : DWORD,

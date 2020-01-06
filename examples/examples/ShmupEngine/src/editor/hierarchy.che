@@ -8,6 +8,9 @@ fmt  :: import std.fmt
 io   :: import std.io
 C    :: import std.c
 
+use import std.os.windows_types
+use import std.os.windows_functions
+
 use import glfw.glfw3
 ImGui :: import imgui.imgui_binding
 
@@ -74,14 +77,7 @@ impl Hierarchy {
                     rmax := ImGui.GetItemRectMax()
                     height := i32(rmax.y - rmin.y)
                     if ImGui.IsMouseHoveringRect(rmin, rmax) {
-                        Point :: struct {
-                            x : i32 = 0
-                            y : i32 = 0
-                        }
-                        SetCursorPos :: (x: i32, y: i32) -> i32 #stdcall;
-                        GetCursorPos :: (pos: &Point) -> i32 #stdcall;
-
-                        cursor_pos := Point()
+                        cursor_pos := POINT()
                         GetCursorPos(&cursor_pos)
 
                         if i > 0 and ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGui.ImGuiKey_.UpArrow)) {

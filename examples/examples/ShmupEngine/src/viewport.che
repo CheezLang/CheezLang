@@ -44,6 +44,8 @@ GameWindow :: struct #extend(WindowBase) {
 
 impl GameView for GameWindow {
     initialize :: (ref Self, max_size: vec2i) -> bool {
+        viewport.set_scale(1)
+        viewport.set_translation(vec3())
         return viewport.initialize(max_size)
     }
 
@@ -59,6 +61,7 @@ impl GameView for GameWindow {
             was_focused := viewport.is_focused
             viewport.is_focused = ImGui.IsWindowFocused()
             viewport.lost_focused = was_focused and !viewport.is_focused
+            viewport.is_hovered = ImGui.IsWindowHovered()
             // @todo: send focus event to layer_stack
         }
 
@@ -78,6 +81,8 @@ impl GameView for GameWindow {
         ImGui.End()
 
         viewport.update_projection_matrix(world_size)
+        viewport.set_scale(1)
+        viewport.set_translation(vec3())
 
         if viewport.is_focused {
             engine.game_viewport = &self.viewport
@@ -133,13 +138,13 @@ EditorWindow :: struct #extend(WindowBase) {
     camera_pos  := vec3()
     zoom        := 1.0f
 
-    camera_anchor  := vec3()
-    mouse_anchor   := vec3()
-    last_mouse_pos := vec3()
+    last_mouse_pos_s := vec3()
 }
 
 impl GameView for EditorWindow {
     initialize :: (ref Self, max_size: vec2i) -> bool {
+        viewport.set_scale(1)
+        viewport.set_translation(vec3())
         return viewport.initialize(max_size)
     }
 
@@ -154,6 +159,7 @@ impl GameView for EditorWindow {
             was_focused := viewport.is_focused
             viewport.is_focused = ImGui.IsWindowFocused()
             viewport.lost_focused = was_focused and !viewport.is_focused
+            viewport.is_hovered = ImGui.IsWindowHovered()
             // @todo: send focus event to layer_stack
         }
 
@@ -167,64 +173,49 @@ impl GameView for EditorWindow {
 
             viewport.pos  = vec3(window_min.x + min.x, window_min.y + min.y, 0)
             viewport.size = vec3(cast viewport_size.x, cast viewport_size.y, 1)
-            // io.println(fmt.format("+ {}", [viewport.size]))
         }
 
         ImGui.End()
 
-        // update projection matrices
-        {
+        viewport.update_projection_matrix(world_size)
 
-            // if viewport.is_focused 
-            mouse_pos := {
+        // update projection matrices
+        if viewport.is_hovered {
+            mouse_pos_s := {
                 im_pos := ImGui.GetMousePos()
                 vec3(im_pos.x, im_pos.y, 0)
             }
-            mouse_pos_world := viewport.screen_to_world(mouse_pos)
-            if ImGui.IsMouseClicked(ImGui.ImGuiMouseButton_.Left) {
-                camera_anchor   = camera_pos
-                mouse_anchor    = mouse_pos_world
+            mouse_pos_w      := viewport.screen_to_world(mouse_pos_s)
+            last_mouse_pos_w := viewport.screen_to_world(last_mouse_pos_s)
+            last_mouse_pos_s = mouse_pos_s
+
+            { // move with mouse
+                if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Left) {
+                    camera_pos -= mouse_pos_w - last_mouse_pos_w
+                }
+                viewport.set_translation(-camera_pos)
+                last_mouse_pos_w = viewport.screen_to_world(mouse_pos_s)
             }
 
-            // mouse_delta := mouse_pos_world - last_mouse_pos
-            // last_mouse_pos = mouse_pos_world
-
-            if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Left) {
-                io.println(fmt.format("{}, {}", [camera_anchor, mouse_anchor]))
-
-                mouse_delta := mouse_pos_world - mouse_anchor
-                // camera_pos -= mouse_delta
-                camera_pos = camera_anchor - mouse_delta
+            { // zoom
+                mouse_scroll := int(ImGui.GetIO().MouseWheel)
+                while mouse_scroll > 0, mouse_scroll -= 1 {
+                    zoom *= 1.1f
+                }
+                while mouse_scroll < 0, mouse_scroll += 1 {
+                    zoom /= 1.1f
+                }
+                if zoom < 0.1f {
+                    zoom = 0.1f
+                }
+                viewport.set_scale(zoom)
             }
 
-            // mouse_scroll := int(ImGui.GetIO().MouseWheel)
-            // while mouse_scroll > 0, mouse_scroll -= 1 {
-            //     zoom *= 1.1f
-            // }
-            // while mouse_scroll < 0, mouse_scroll += 1 {
-            //     zoom /= 1.1f
-            // }
-
-            // if zoom < 0.1f {
-            //     zoom = 0.1f
-            // }
-            size    := world_size
-            width   := size.y * viewport.size.x / viewport.size.y
-
-            projection_matrix := mat4.orthographic(-width * 0.5, width * 0.5, -size.y * 0.5, size.y * 0.5, -10, 10)
-            viewport.projection_matrix = projection_matrix * mat4.from_translation(-camera_pos)
-            viewport.projection_inverse = mat4.from_translation(camera_pos) * projection_matrix.invert_orthographic()
-
-            // continue zoom
-            // mouse_pos_world = viewport.screen_to_world(mouse_pos)
-            // mouse_delta = mouse_pos_world - last_mouse_pos
-            // last_mouse_pos = mouse_pos_world
-            // camera_pos -= mouse_delta
-
-            // camera_translation          = mat4.from_translation(-camera_pos)
-            // viewport.projection_matrix  = mat4.orthographic(-width * 0.5, width * 0.5, -size.y * 0.5, size.y * 0.5, -10, 10)
-            // viewport.projection_matrix  = viewport.projection_matrix * camera_translation
-            // viewport.projection_inverse = viewport.projection_matrix.invert_orthographic()
+            { // move camera after zoom so we zoom to the cursor
+                mouse_pos_w = viewport.screen_to_world(mouse_pos_s)
+                camera_pos -= mouse_pos_w - last_mouse_pos_w
+                viewport.set_translation(-camera_pos)
+            }
         }
 
         // update mode
@@ -241,7 +232,8 @@ impl GameView for EditorWindow {
         glClear(GL_COLOR_BUFFER_BIT)
 
         // render mode
-        renderer.begin_scene(viewport.projection_matrix)
+        view_projection := viewport.projection_matrix * viewport.view_matrix
+        renderer.begin_scene(view_projection)
         // renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.05)
         
         return true
@@ -266,11 +258,16 @@ impl GameView for EditorWindow {
 }
 
 GameAndEditorWindow :: struct #extend(WindowBase) {
+    camera_pos  := vec3()
+    zoom        := 1.0f
 
+    last_mouse_pos_s := vec3()
 }
 
 impl GameView for GameAndEditorWindow {
     initialize :: (ref Self, max_size: vec2i) -> bool {
+        viewport.set_scale(1)
+        viewport.set_translation(vec3())
         return viewport.initialize(max_size)
     }
 
@@ -285,6 +282,7 @@ impl GameView for GameAndEditorWindow {
             was_focused := viewport.is_focused
             viewport.is_focused = ImGui.IsWindowFocused()
             viewport.lost_focused = was_focused and !viewport.is_focused
+            viewport.is_hovered = ImGui.IsWindowHovered()
             // @todo: send focus event to layer_stack
         }
 
@@ -304,6 +302,54 @@ impl GameView for GameAndEditorWindow {
         ImGui.End()
 
         viewport.update_projection_matrix(world_size)
+
+        // movement
+        if is_playing {
+            viewport.set_translation(vec3())
+            viewport.set_scale(1.0f)
+        } else if viewport.is_hovered {
+            viewport.set_scale(zoom)
+            viewport.set_translation(-camera_pos)
+
+            mouse_pos_s := {
+                im_pos := ImGui.GetMousePos()
+                vec3(im_pos.x, im_pos.y, 0)
+            }
+            mouse_pos_w      := viewport.screen_to_world(mouse_pos_s)
+            last_mouse_pos_w := viewport.screen_to_world(last_mouse_pos_s)
+            last_mouse_pos_s = mouse_pos_s
+
+            { // move with mouse
+                if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Left) {
+                    camera_pos -= mouse_pos_w - last_mouse_pos_w
+                }
+                viewport.set_translation(-camera_pos)
+                last_mouse_pos_w = viewport.screen_to_world(mouse_pos_s)
+            }
+
+            { // zoom
+                mouse_scroll := int(ImGui.GetIO().MouseWheel)
+                while mouse_scroll > 0, mouse_scroll -= 1 {
+                    zoom *= 1.1f
+                }
+                while mouse_scroll < 0, mouse_scroll += 1 {
+                    zoom /= 1.1f
+                }
+                if zoom < 0.1f {
+                    zoom = 0.1f
+                }
+                viewport.set_scale(zoom)
+            }
+
+            { // move camera after zoom so we zoom to the cursor
+                mouse_pos_w = viewport.screen_to_world(mouse_pos_s)
+                camera_pos -= mouse_pos_w - last_mouse_pos_w
+                viewport.set_translation(-camera_pos)
+            }
+        } else {
+            viewport.set_scale(zoom)
+            viewport.set_translation(-camera_pos)
+        }
 
         if viewport.is_focused {
             engine.game_viewport = &self.viewport
@@ -336,8 +382,8 @@ impl GameView for GameAndEditorWindow {
         }
 
         // render mode
-        renderer.begin_scene(viewport.projection_matrix)
-        // renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.05)
+        view_projection := viewport.projection_matrix * viewport.view_matrix
+        renderer.begin_scene(view_projection)
 
         return (!is_playing)
     }
@@ -366,8 +412,15 @@ Viewport :: struct {
     size_max                := vec3()
 
     aspect_ratio_axis       := 1.0f
+
+    translation_matrix      := mat4()
+    translation_matrix_inv  := mat4()
+    scale_matrix            := mat4()
+    scale_matrix_inv        := mat4()
+    view_matrix             := mat4()
     projection_matrix       := mat4()
     projection_inverse      := mat4()
+    view_projection_inv     := mat4()
 
     // 
     frame_buffer   : u32 = 0
@@ -375,6 +428,7 @@ Viewport :: struct {
     depth_texture  : u32 = 0
     is_focused     := false
     lost_focused   := false
+    is_hovered     := false
 }
 
 impl Viewport {
@@ -425,6 +479,20 @@ impl Viewport {
         return true
     }
 
+    set_translation :: (ref Self, offset: vec3) {
+        translation_matrix     = mat4.from_translation(offset)
+        translation_matrix_inv = mat4.from_translation(-offset)
+        view_matrix            = scale_matrix * translation_matrix
+        view_projection_inv    = translation_matrix_inv * scale_matrix_inv * projection_inverse
+    }
+
+    set_scale :: (ref Self, scale: float) {
+        scale_matrix        = mat4.from_scales(scale)
+        scale_matrix_inv    = mat4.from_scales(1 / scale)
+        view_matrix         = scale_matrix * translation_matrix
+        view_projection_inv = translation_matrix_inv * scale_matrix_inv * projection_inverse
+    }
+
     screen_to_local :: (ref Self, pos: vec3) -> vec3 {
         return pos - self.pos
     }
@@ -433,13 +501,13 @@ impl Viewport {
         return (pos / size * 2.0f - vec3(1, 1, 0)) * vec3(1, -1, 0)
     }
 
-    clip_to_world :: (ref Self, projection_inverse: mat4, pos: vec3) -> vec3 {
-        return projection_inverse * pos
+    clip_to_world :: (ref Self, pos: vec3) -> vec3 {
+        return view_projection_inv * pos
     }
 
     screen_to_world :: (ref Self, pos: vec3) -> vec3 {
         // io.println(fmt.format("{}", [projection_inverse]))
-        return projection_inverse * (((pos - self.pos) / size * 2.0f - vec3(1, 1, 0)) * vec3(1, -1, 0))
+        return view_projection_inv * (((pos - self.pos) / size * 2.0f - vec3(1, 1, 0)) * vec3(1, -1, 0))
     }
 
     update_projection_matrix :: (ref Self, world_size: vec3) {
