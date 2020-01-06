@@ -39,7 +39,8 @@ Layer :: trait {
     get_input       :: (ref Self) -> ref Input;
     init            :: (ref Self) -> bool;
     update          :: (ref Self, dt: float);
-    render          :: (ref Self, is_playing: bool, renderer: ref Renderer);
+    render          :: (ref Self, render_gizmos: bool, renderer: ref Renderer);
+    render_gizmos   :: (ref Self, renderer: ref Renderer);
     imgui_render    :: (ref Self);
     on_key_event    :: (ref Self, key: int, action: int) -> bool;
     clone           :: (ref Self) -> Option[Layer];
@@ -201,6 +202,14 @@ impl Layer for EntityLayer {
         }
     }
 
+    render_gizmos :: (ref Self, renderer: ref Renderer) {
+        for e : entities {
+            if e.get().active {
+                e.get().render_gizmos(engine, renderer)
+            }
+        }
+    }
+
     imgui_render :: (ref Self) {
         callbacks.imgui_render()
     }
@@ -335,9 +344,9 @@ impl Layer for GizmosLayer {
     }
 
     render :: (ref Self, render_gizmos: bool, renderer: ref Renderer) {
-        if !render_gizmos {
-            return
-        }
+    }
+
+    render_gizmos :: (ref Self, renderer: ref Renderer) {
         renderer.draw_quad(vec3(0, 0, 0), engine.world_size, 0, 0.05)
     }
 

@@ -8,17 +8,20 @@
         angle       = 0
         components  = [
             PathFollowComponent {
-                speed  = 5
-                next   = 0
+                speed  = 1
                 loops  = true
+                pos    = 0
                 points = [
-                    {x=0, y=0, z=0}
-                    {x=3, y=0, z=0}
-                    {x=3, y=3, z=0}
-                    {x=0, y=5, z=0}
-                    {x=-3, y=3, z=0}
-                    {x=0, y=3, z=0}
-                    {x=-3, y=0, z=0}
+                    {x=4.91944, y=-1.9757, z=0}
+                    {x=1.43222, y=4.16624, z=0}
+                    {x=-3.71611, y=3.23018, z=0}
+                    {x=-1.57801, y=-2.1867, z=0}
+                ]
+                dirs = [
+                    {x=1.50256, y=4.46675, z=0}
+                    {x=-2, y=0, z=0}
+                    {x=-1, y=-1, z=0}
+                    {x=1, y=0, z=0}
                 ]
             }
             QuadComponent {
@@ -45,7 +48,7 @@
     {
         id          = 2
         dead        = false
-        active      = true
+        active      = false
         position    = {x=-5, y=-5, z=0}
         size        = {x=1, y=1, z=1}
         angle       = 0
@@ -58,13 +61,19 @@
             }
             PathFollowComponent {
                 speed  = 1
-                next   = 0
                 loops  = true
+                pos    = 0
                 points = [
-                    {x=-5, y=-5, z=0}
-                    {x=5, y=-5, z=0}
-                    {x=5, y=5, z=0}
-                    {x=-5, y=5, z=0}
+                    {x=-3, y=-3, z=0}
+                    {x=3, y=-3, z=0}
+                    {x=3, y=3, z=0}
+                    {x=-3, y=3, z=0}
+                ]
+                dirs = [
+                    {x=1, y=-1, z=0}
+                    {x=1, y=1, z=0}
+                    {x=-1, y=1, z=0}
+                    {x=-1, y=-1, z=0}
                 ]
             }
         ]
@@ -72,7 +81,7 @@
     {
         id          = 3
         dead        = false
-        active      = true
+        active      = false
         position    = {x=5, y=-5, z=0}
         size        = {x=1, y=1, z=1}
         angle       = 0
@@ -85,13 +94,19 @@
             }
             PathFollowComponent {
                 speed  = 2
-                next   = 0
                 loops  = true
+                pos    = 0
                 points = [
-                    {x=5, y=-5, z=0}
-                    {x=5, y=5, z=0}
-                    {x=-5, y=5, z=0}
-                    {x=-5, y=-5, z=0}
+                    {x=3, y=-3, z=0}
+                    {x=3, y=3, z=0}
+                    {x=-3, y=3, z=0}
+                    {x=-3, y=-3, z=0}
+                ]
+                dirs = [
+                    {x=2, y=2, z=0}
+                    {x=-2, y=2, z=0}
+                    {x=-2, y=-2, z=0}
+                    {x=2, y=-2, z=0}
                 ]
             }
         ]
@@ -99,7 +114,7 @@
     {
         id          = 4
         dead        = false
-        active      = true
+        active      = false
         position    = {x=5, y=5, z=0}
         size        = {x=1, y=1, z=1}
         angle       = 0
@@ -112,13 +127,19 @@
             }
             PathFollowComponent {
                 speed  = 4
-                next   = 0
                 loops  = true
+                pos    = 0
                 points = [
-                    {x=5, y=5, z=0}
-                    {x=-5, y=5, z=0}
-                    {x=-5, y=-5, z=0}
-                    {x=5, y=-5, z=0}
+                    {x=3, y=3, z=0}
+                    {x=-3, y=3, z=0}
+                    {x=-3, y=-3, z=0}
+                    {x=3, y=-3, z=0}
+                ]
+                dirs = [
+                    {x=-4, y=4, z=0}
+                    {x=-4, y=-4, z=0}
+                    {x=4, y=-4, z=0}
+                    {x=4, y=4, z=0}
                 ]
             }
         ]
@@ -126,7 +147,7 @@
     {
         id          = 5
         dead        = false
-        active      = true
+        active      = false
         position    = {x=-5, y=5, z=0}
         size        = {x=1, y=1, z=1}
         angle       = 0
@@ -139,13 +160,19 @@
             }
             PathFollowComponent {
                 speed  = 8
-                next   = 0
                 loops  = true
+                pos    = 0
                 points = [
-                    {x=-5, y=5, z=0}
-                    {x=-5, y=-5, z=0}
-                    {x=5, y=-5, z=0}
-                    {x=5, y=5, z=0}
+                    {x=-3, y=3, z=0}
+                    {x=-3, y=-3, z=0}
+                    {x=3, y=-3, z=0}
+                    {x=3, y=3, z=0}
+                ]
+                dirs = [
+                    {x=-8, y=-8, z=0}
+                    {x=8, y=-8, z=0}
+                    {x=8, y=8, z=0}
+                    {x=-8, y=8, z=0}
                 ]
             }
         ]

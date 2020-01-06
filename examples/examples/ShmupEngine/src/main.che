@@ -49,10 +49,11 @@ impl EntityLayerCallbacks for Test {
             vec3(im_pos.x, im_pos.y, 0)
         }
 
-        self.e = layer.find_entity(1)
-
         mouse_pos_world = layer.engine.game_viewport.screen_to_world(mouse_pos)
 
+
+        mouse_pos_screen := layer.engine.game_viewport.world_to_screen(mouse_pos_world)
+        // io.println(fmt.format_any(mouse_pos_screen))
     }
 
     render :: (ref Self, renderer: ref Renderer) {

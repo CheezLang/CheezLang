@@ -269,15 +269,17 @@ impl EntityInspector {
                         v := ref arr[i]
                         str := String.empty()
                         str.appendf("{}", i)
-                        ImGui.PushIDInt(i32(i))
+                        ImGui.PushIDPtr(&v)
                         imgui_input_property(str, &v, @type_info(vec3), m)
-                        ImGui.PopID()
                         ImGui.SameLine()
 
                         if ImGui.SmallButton("-") {
+                            io.println("remove")
                             arr.remove_at(i)
                             i -= 1
                         }
+
+                        ImGui.PopID()
                     }
 
                     if ImGui.SmallButton("+") {

@@ -3601,7 +3601,7 @@ PushID :: (_str_id: &char8) {
 PushID_2 :: (_str_id_begin: &char8, _str_id_end: &char8) {
     __c__PushID_2(_str_id_begin, _str_id_end)
 }
-PushID_3 :: (_ptr_id: &void) {
+PushIDPtr :: (_ptr_id: &void) {
     __c__PushID_3(_ptr_id)
 }
 PushIDInt :: (_int_id: i32) {

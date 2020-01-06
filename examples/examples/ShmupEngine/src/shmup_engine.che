@@ -48,7 +48,7 @@ EngineMode :: trait {
     update          :: (ref Self, dt: float);
     render          :: (ref Self, renderer: ref Renderer);
     imgui_render    :: (ref Self);
-    on_key_event    :: (ref Self, key: int, action: int);
+    on_key_event    :: (ref Self, key: int, action: int, modifiers: int);
     on_enable       :: (ref Self);
 }
 
@@ -82,35 +82,6 @@ impl EngineMode for EditMode {
     }
 
     update :: (ref Self, dt: float) {
-        if engine.global_input.key_pressed(GLFW_KEY_F1) {
-            match ref engine.save_file {
-                Some($file) -> {
-                    for layer : layer_stack {
-                        layer.load_from_file(file.slice())
-                    }
-                }
-
-                None -> {
-                    io.println("[ERROR] Trying to load layers from file but no file name was specified")
-                }
-            }
-        }
-        if engine.global_input.key_pressed(GLFW_KEY_F2) {
-            match ref engine.save_file {
-                Some($file_name) -> {
-                    file_content := String.empty()
-                    for layer : layer_stack {
-                        layer.save_to_file(ref file_content)
-                    }
-                    fs.write_file(file_name.slice(), file_content.slice())
-                }
-
-                None -> {
-                    io.println("[ERROR] Trying to load layers from file but no file name was specified")
-                }
-            }
-        }
-
         //
         for view : engine.active_game_views {
             view.update(false, engine.world_size)
@@ -123,6 +94,11 @@ impl EngineMode for EditMode {
             for layer : layer_stack {
                 layer.render(render_gizmos, renderer)
             }
+            if render_gizmos {
+                for layer : layer_stack {
+                    layer.render_gizmos(renderer)
+                }
+            }
             view.end_render()
         }
     }
@@ -131,7 +107,42 @@ impl EngineMode for EditMode {
 
     }
 
-    on_key_event :: (ref Self, key: int, action: int) {
+    on_key_event :: (ref Self, key: int, action: int, modifiers: int) {
+        match key, action, modifiers {
+            (GLFW_KEY_L, GLFW_PRESS, GLFW_MOD_CONTROL) -> {
+                match ref engine.save_file {
+                    Some($file) -> {
+                        for layer : layer_stack {
+                            layer.load_from_file(file.slice())
+                        }
+                        engine.console.get().log("Loading layers")
+                    }
+
+                    None -> {
+                        engine.console.get().log_error("[ERROR] Trying to load layers from file but no file name was specified")
+                        io.println("[ERROR] Trying to load layers from file but no file name was specified")
+                    }
+                }
+            }
+            (GLFW_KEY_S, GLFW_PRESS, GLFW_MOD_CONTROL) -> {
+                match ref engine.save_file {
+                    Some($file_name) -> {
+                        file_content := String.empty()
+                        for layer : layer_stack {
+                            layer.save_to_file(ref file_content)
+                        }
+                        fs.write_file(file_name.slice(), file_content.slice())
+
+                        engine.console.get().log("Saving layers")
+                    }
+
+                    None -> {
+                        engine.console.get().log_error("[ERROR] Trying to save layers to file but no file name was specified")
+                        io.println("[ERROR] Trying to save layers to file but no file name was specified")
+                    }
+                }
+            }
+        }
     }
 
     on_enable :: (ref Self) {
@@ -202,6 +213,11 @@ impl EngineMode for PlayMode {
             for layer : layer_stack {
                 layer.render(render_gizmos, renderer)
             }
+            if render_gizmos {
+                for layer : layer_stack {
+                    layer.render_gizmos(renderer)
+                }
+            }
             view.end_render()
         }
     }
@@ -210,7 +226,7 @@ impl EngineMode for PlayMode {
 
     }
 
-    on_key_event :: (ref Self, key: int, action: int) {
+    on_key_event :: (ref Self, key: int, action: int, modifiers: int) {
         if engine.game_viewport.is_focused {
             match (action, key) {
                 (GLFW_PRESS, $keycode) -> {
@@ -275,6 +291,7 @@ ShmupEngine :: struct {
     game_window             : GameWindow          = default
     editor_window           : EditorWindow        = default
     game_viewport           : &Viewport           = null
+    editor_viewport         : &Viewport           = null
 
     game_views              : [3]GameView = default
     active_game_views       : []GameView  = default
@@ -438,7 +455,7 @@ impl ShmupEngine {
             }
         }
 
-        engine.current_engine_mode.on_key_event(int(key), int(action))
+        engine.current_engine_mode.on_key_event(int(key), int(action), int(mods))
     }
 
     render_loop :: (ref Self) {
@@ -737,10 +754,10 @@ impl ShmupEngine {
 
     enter_play_mode :: (ref Self) {
         if int(current_mode_base) == int(&play_mode) {
-            console.get().log(String.from_string("Already in play mode"))
+            console.get().log("Already in play mode")
             return
         }
-        console.get().log(String.from_string("Entering play mode"))
+        console.get().log("Entering play mode")
 
         play_mode.initialize(edit_mode)
         current_engine_mode = play_mode
@@ -752,11 +769,11 @@ impl ShmupEngine {
 
     exit_play_mode :: (ref Self) {
         if int(current_mode_base) == int(&edit_mode) {
-            console.get().log(String.from_string("Already in edit mode"))
+            console.get().log("Already in edit mode")
             return
         }
 
-        console.get().log(String.from_string("Exiting play mode"))
+        console.get().log("Exiting play mode")
         current_engine_mode = edit_mode
         current_mode_base = cast &edit_mode
         current_engine_mode.on_enable()
@@ -802,6 +819,7 @@ init_imgui :: (window: &GLFWwindow) -> bool {
     }
 
     imgui_io := ref ImGui.GetIO()
+    imgui_io.ConfigWindowsMoveFromTitleBarOnly = true
     imgui_io.ConfigFlags = @bin_or(
         imgui_io.ConfigFlags,
         i32(ImGui.ImGuiConfigFlags_.DockingEnable),
