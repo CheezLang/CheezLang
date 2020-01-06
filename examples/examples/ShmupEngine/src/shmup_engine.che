@@ -324,13 +324,13 @@ impl ShmupEngine {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
         glfwWindowHint(GLFW_VISIBLE, 0)
-        glfwWindowHint(GLFW_MAXIMIZED, 0)
+        glfwWindowHint(GLFW_MAXIMIZED, 1)
         glfwWindowHint(GLFW_RESIZABLE, 1)
 
         vidmode := glfwGetVideoMode(glfwGetPrimaryMonitor())
         io.printfln("[LOG] primary monitor size: {} x {}", (vidmode.width, vidmode.height))
-        // glfw_window = glfwCreateWindow(vidmode.width, vidmode.height, "Hello World", null, null)
-        glfw_window = glfwCreateWindow(1280, 720, "Hello World", null, null)
+        glfw_window = glfwCreateWindow(vidmode.width, vidmode.height, "Hello World", null, null)
+        // glfw_window = glfwCreateWindow(1280, 720, "Hello World", null, null)
         if glfw_window == null {
             io.println("[ERROR] Failed to create window")
             return
@@ -674,12 +674,10 @@ impl ShmupEngine {
 
 impl ShmupEngine {
     register_builtin_components :: (ref Self) {
+        self.inspector.register_component_info(PathFollowComponent())
         self.inspector.register_component_info(BasicMoveComponent(vec3(), 0))
         self.inspector.register_component_info(QuadComponent(vec3(1, 1, 1)))
         self.inspector.register_component_info(PlayerControlComponent(1))
-        self.inspector.register_component_info(KillComponent(0))
-        self.inspector.register_component_info(KillRandomEntityComponent())
-        self.inspector.register_component_info(CreateEntityComponent())
     }
 
     push_entity_layer :: (ref Self, name: String, callbacks: EntityLayerCallbacks) {

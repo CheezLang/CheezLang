@@ -152,7 +152,9 @@ impl EntityInspector {
                             ImGui.Separator()
 
                             for(by_ref=true) m : bi.type_info.kind.Struct.members {
-                                imgui_input_property(util.pointer_add(bi.value, m.offset), &m)
+                                name := String.with_capacity(m.name.bytes.length + 1)
+                                name.append_string(m.name)
+                                imgui_input_property(name, util.pointer_add(bi.value, m.offset), m.typ, &m)
                             }
                         }
 
@@ -206,8 +208,13 @@ impl EntityInspector {
                 rc_count_str := fmt.format_any(component_data.value.count())
                 ImGui.LabelText("RC count", rc_count_str.as_cstring())
             }
+
+            // io.println("==")
             for(by_ref=true) m : ti.kind.Struct.members {
-                imgui_input_property(util.pointer_add(&component_data.value.get(), m.offset), &m)
+                name := String.with_capacity(m.name.bytes.length + 1)
+                name.append_string(m.name)
+                ptr := util.pointer_add(&component_data.value.get(), m.offset)
+                imgui_input_property(name, ptr, m.typ, &m)
             }
         }
 
@@ -218,41 +225,64 @@ impl EntityInspector {
         return true
     }
 
-    imgui_input_property :: (ref Self, ptr: &void, m: &TypeInfoStructMember) {
-        name := String.with_capacity(m.name.bytes.length + 1)
-        name.append_string(m.name)
-
-        match m.typ.kind {
+    imgui_input_property :: (ref Self, name: ref String, ptr: &void, typ: &TypeInfo, m: &TypeInfoStructMember) {
+        match typ.kind {
             TypeInfoKind.Float -> {
-                match m.typ.size {
-                    4 -> {
-                        ImGui.InputFloat(name.as_cstring(), cast ptr)
-                    }
-                    8 -> {
-                        f := <<cast(&float)ptr
-                        ImGui.InputFloat(name.as_cstring(), &f)
-                        <<cast(&float)ptr = f
-                    }
+                match typ.size {
+                    4 -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.Float, cast ptr)
+                    8 -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.Double, cast ptr)
                 }
             }
             TypeInfoKind.Int($ti) -> {
-                match m.typ.size {
-                    4 -> {
-                        ImGui.InputInt(name.as_cstring(), cast ptr)
-                    }
-                    8 -> {
-                        f := <<cast(&i32)ptr
-                        ImGui.InputInt(name.as_cstring(), &f)
-                        <<cast(&i32)ptr = f
-                    }
+                match (typ.size, ti.signed) {
+                    (1, true) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.S8, ptr)
+                    (2, true) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.S16, ptr)
+                    (4, true) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.S32, ptr)
+                    (8, true) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.S64, ptr)
+                    (1, false) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.U8, ptr)
+                    (2, false) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.U16, ptr)
+                    (4, false) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.U32, ptr)
+                    (8, false) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.U64, ptr)
                 }
             }
 
-            _ if m.typ == @type_info(vec3) -> {
+            TypeInfoKind.Bool -> {
+                ptr := cast(&bool) ptr
+                ImGui.Checkbox(name.as_cstring(), ptr)
+            }
+
+            _ if typ == @type_info(vec3) -> {
                 if m.has_attribute("color") {
                     ImGui.ColorEdit3(name.as_cstring(), cast ptr)
                 } else {
                     ImGui.InputFloat3(name.as_cstring(), cast ptr)
+                }
+            }
+
+            _ if typ == @type_info(Array[vec3]) -> {
+                arr := ref <<cast(&Array[vec3]) ptr
+                open := true
+                ImGui.Text(name.as_cstring())
+                ImGui.SameLine()
+                if ImGui.CollapsingHeader_2(name.as_cstring(), &open) {
+                    while i := 0, i < arr.get_length(), i += 1 {
+                        v := ref arr[i]
+                        str := String.empty()
+                        str.appendf("{}", i)
+                        ImGui.PushIDInt(i32(i))
+                        imgui_input_property(str, &v, @type_info(vec3), m)
+                        ImGui.PopID()
+                        ImGui.SameLine()
+
+                        if ImGui.SmallButton("-") {
+                            arr.remove_at(i)
+                            i -= 1
+                        }
+                    }
+
+                    if ImGui.SmallButton("+") {
+                        arr.add(vec3())
+                    }
                 }
             }
         }

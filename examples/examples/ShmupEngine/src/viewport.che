@@ -95,8 +95,8 @@ impl GameView for GameWindow {
     begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
         // render game
         size := viewport.size.change_type(i32)
-        (glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer))
-        GL(glViewport(0, 0, size.x, size.y))
+        glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer)
+        glViewport(0, 0, size.x, size.y)
 
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
         glClear(GL_COLOR_BUFFER_BIT)
@@ -225,8 +225,8 @@ impl GameView for EditorWindow {
     begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
         // render game
         size := viewport.size.change_type(i32)
-        (glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer))
-        GL(glViewport(0, 0, size.x, size.y))
+        glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer)
+        glViewport(0, 0, size.x, size.y)
 
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
         glClear(GL_COLOR_BUFFER_BIT)
@@ -362,8 +362,8 @@ impl GameView for GameAndEditorWindow {
     begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
         // render game
         size := viewport.size.change_type(i32)
-        GL(glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer))
-        GL(glViewport(0, 0, size.x, size.y))
+        glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer)
+        glViewport(0, 0, size.x, size.y)
 
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
         glClear(GL_COLOR_BUFFER_BIT)

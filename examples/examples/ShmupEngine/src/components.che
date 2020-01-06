@@ -59,6 +59,73 @@ impl ComponentData {
     }
 }
 
+PathFollowComponent :: struct {
+    speed  := 1.0f
+    next   := 0
+    loops  := true
+    points := Array[vec3].create()
+}
+
+impl Component for PathFollowComponent {
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+        if points.get_length() < 2 or next < 0 {
+            return
+        }
+        if int(next) >= points.get_length() {
+            if loops {
+                next = 0
+            } else {
+                entity.active = false
+                return
+            }
+        }
+
+        target := points[int(next)]
+        dir := target - entity.position
+        if dir.mag() <= speed * dt {
+            entity.position = target
+            next += 1
+        } else {
+            dir.normalize()
+            dir *= speed
+            entity.position += dir * dt
+        }
+    }
+
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
+        if points.get_length() < 2 {
+            return
+        }
+
+        for i : 0 .. points.get_length() - 1 {
+            p0 := points[i]
+            p1 := points[i + 1]
+            renderer.draw_line(p0, p1, vec3(0, 1, 0))
+        }
+
+        if loops {
+            p0 := points[points.get_length() - 1]
+            p1 := points[0]
+            renderer.draw_line(p0, p1, vec3(0, 1, 0))
+        }
+    }
+
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                speed  = {}`n", speed)
+        stream.appendf("                next   = {}`n", next)
+        stream.appendf("                loops  = {}`n", loops)
+        stream.append_string("                points = [`n")
+        for p : points {
+            stream.appendf("                    ``{x={}, y={}, z={}}`n", (p.x, p.y, p.z))
+        }
+        stream.append_string("                ]`n", )
+    }
+}
+
 BasicMoveComponent :: struct {
     velocity : vec3
     speed    : float
@@ -132,129 +199,6 @@ impl Component for QuadComponent {
         stream.appendf("                color = ``{x={}, y={}, z={}}`n", (self.color.x, self.color.y, self.color.z))
     }
 }
-
-KillComponent :: struct {
-    key : int
-}
-
-impl Component for KillComponent {
-    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
-        if layer.get_input().key_pressed(key) {
-            entity.dead = true
-        }
-    }
-    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
-    }
-    get_type_info   :: (ref Self) -> &TypeInfo {
-        return @type_info(Self)
-    }
-
-    serialize :: (ref Self, stream: ref String) {
-        stream.appendf("                key = {}`n", self.key)
-    }
-}
-
-KillRandomEntityComponent :: struct {
-    // test := Rc[Entity].empty()
-    timer               := 0.0f
-    entities_per_second := 1.0f
-}
-
-impl Component for KillRandomEntityComponent {
-    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
-        timer += dt
-        // while timer >= 1.0f / entities_per_second {
-        if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_F1) {
-            timer -= 1.0f / entities_per_second
-
-            if layer.entities.get_length() <= 1 {
-                return
-            }
-            entity_to_kill_index := int(rand.PseudoRandom.next_double() * double(layer.entities.get_length() - 1)) + 1
-            entity_to_kill_id    := layer.entities[entity_to_kill_index].get().id
-            match layer.find_entity(entity_to_kill_id) {
-                Some($e) -> {
-                    // @todo
-                    // usually i would just write
-                    // test = e.clone()
-                    // but for some reason the copiler doesn't add
-                    // a destructor call for test, so we just drop it
-                    // manually and replace it with 'e.clone()'
-                    // Memory.drop(test <- e.clone())
-                    e.get().dead = true
-                }
-            }
-        } else if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_F2) {
-            if layer.entities.get_length() <= 1 {
-                return
-            }
-            entity_to_kill_index := layer.entities.get_length() - 1
-            entity_to_kill_id    := layer.entities[entity_to_kill_index].get().id
-            match layer.find_entity(entity_to_kill_id) {
-                Some($e) -> {
-                    // @todo
-                    // usually i would just write
-                    // test = e.clone()
-                    // but for some reason the copiler doesn't add
-                    // a destructor call for test, so we just drop it
-                    // manually and replace it with 'e.clone()'
-                    // Memory.drop(test <- e.clone())
-                    e.get().dead = true
-                }
-            }
-        }
-
-    }
-    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
-    }
-    get_type_info   :: (ref Self) -> &TypeInfo {
-        return @type_info(Self)
-    }
-
-    serialize :: (ref Self, stream: ref String) {
-        stream.appendf("                timer               = {}`n", self.timer)
-        stream.appendf("                entities_per_second = {}`n", self.entities_per_second)
-    }
-}
-
-CreateEntityComponent :: struct {
-    timer               := 0.0f
-    entities_per_second := 1.0f
-    color               := vec3()
-}
-
-impl Component for CreateEntityComponent {
-    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
-        timer += dt
-        while timer >= 1.0f / entities_per_second {
-            timer -= 1.0f / entities_per_second
-
-            e := layer.new_entity()
-            e.get().add_component(layer.new_component(QuadComponent(color)))
-
-            dir := vec3(
-                f32(rand.PseudoRandom.next_double() - 0.5)
-                f32(rand.PseudoRandom.next_double() - 0.5)
-            ).normalized()
-            speed := f32(rand.PseudoRandom.next_double())
-            e.get().add_component(layer.new_component(BasicMoveComponent(dir, speed)))
-        }
-    }
-    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
-    }
-    get_type_info   :: (ref Self) -> &TypeInfo {
-        return @type_info(Self)
-    }
-
-    serialize :: (ref Self, stream: ref String) {
-        stream.appendf("                timer               = {}`n", self.timer)
-        stream.appendf("                entities_per_second = {}`n", self.entities_per_second)
-        stream.appendf("                color           = ``{x={}, y={}, z={}}`n", (self.color.x, self.color.y, self.color.z))
-    }
-}
-
-
-
 
 impl serpa.IParser[ComponentData] for ComponentData {
     parse :: (parser: ref serpa.Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[ComponentData] {

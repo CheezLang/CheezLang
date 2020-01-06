@@ -105,6 +105,19 @@ impl(T: type) Array[T] {
         }
     }
 
+    remove_at :: (ref Self, index: int) -> T {
+        @assert(index >= 0 and index < get_length())
+
+        result := data[length]
+        length -= 1
+
+        while i := index, i < length, i += 1 {
+            data[i] = data[i + 1]
+        }
+
+        return result
+    }
+
     access_unchecked :: (ref Self, index: int) -> ref T {
         return data[index]
     }
