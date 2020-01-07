@@ -5,16 +5,16 @@ io :: import std.io
 util :: import std.util
 
 CountingAllocator :: struct {
-    parent: Allocator
-    allocated: u64
-    freed: u64
+    parent    : &Allocator
+    allocated : u64
+    freed     : u64
 }
 
 newCountingAllocator :: () -> CountingAllocator {
-    return CountingAllocator(DEFAULT_STD_HEAP_ALLOCATOR, 0, 0)
+    return CountingAllocator(&DEFAULT_STD_HEAP_ALLOCATOR, 0, 0)
 }
 
-newCountingAllocator2 :: (alloc: Allocator) -> CountingAllocator {
+newCountingAllocator2 :: (alloc: &Allocator) -> CountingAllocator {
     return CountingAllocator(alloc, 0, 0)
 }
 

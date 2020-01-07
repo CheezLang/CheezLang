@@ -10,7 +10,7 @@ fmt :: import std.fmt
 ErrorHandler :: trait {
     has_errors :: (ref Self) -> bool;
     report_error :: (ref Self, location: ref Location, message: string);
-    report_errorf :: (ref Self, location: ref Location, message: string, args: []any);
+    report_errorf :: (ref Self, location: ref Location, message: string, args: []&any);
 }
 
 TextProvider :: trait {
@@ -18,7 +18,7 @@ TextProvider :: trait {
 }
 
 ConsoleErrorHandler :: struct {
-    text_provider     : TextProvider
+    text_provider     : &TextProvider
     error_count       := 0
     do_print_location := true
     code_color_error  := io.ConsoleColor.Red
@@ -26,7 +26,7 @@ ConsoleErrorHandler :: struct {
 }
 
 impl ConsoleErrorHandler {
-    new :: (text_provider: TextProvider) -> ConsoleErrorHandler {
+    new :: (text_provider: &TextProvider) -> ConsoleErrorHandler {
         return ConsoleErrorHandler(text_provider)
     }
 }
@@ -36,7 +36,7 @@ impl ErrorHandler for ConsoleErrorHandler {
         return error_count > 0
     }
 
-    report_errorf :: (ref Self, location: ref Location, message: string, args: []any) {
+    report_errorf :: (ref Self, location: ref Location, message: string, args: []&any) {
         msg := fmt.format(message, args)
         self.report_error(location, msg.slice())
     }

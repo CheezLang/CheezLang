@@ -54,7 +54,7 @@ EngineMode :: trait {
 
 EngineModeBase :: struct #extendable {
     engine              : &ShmupEngine = null
-    layer_stack         := Array[Layer].create()
+    layer_stack         := Array[&Layer].create()
     projection_matrix   := mat4.id()
 }
 
@@ -263,7 +263,7 @@ ShmupEngine :: struct {
     aspect_ratio_axis   := 1.0f
     world_size          := vec3(10, 10, 0)
 
-    current_engine_mode : EngineMode = null
+    current_engine_mode : &EngineMode = null
     current_mode_base   : &EngineModeBase = null
     edit_mode           := EditMode()
     play_mode           := PlayMode()
@@ -293,8 +293,8 @@ ShmupEngine :: struct {
     game_viewport           : &Viewport           = null
     editor_viewport         : &Viewport           = null
 
-    game_views              : [3]GameView = default
-    active_game_views       : []GameView  = default
+    game_views              : [3]&GameView = default
+    active_game_views       : []&GameView  = default
 
     // window stuff
     glfw_window         : &GLFWwindow = null
@@ -315,7 +315,7 @@ impl ShmupEngine {
         // setup modes
         ptr.edit_mode.engine = ptr
         ptr.play_mode.engine = ptr
-        ptr.current_engine_mode = ptr.edit_mode
+        ptr.current_engine_mode = &ptr.edit_mode
         ptr.current_mode_base = cast &ptr.edit_mode
 
         return ptr
@@ -417,14 +417,14 @@ impl ShmupEngine {
         game_and_editor_window.engine = &self
         game_window.engine            = &self
         editor_window.engine          = &self
-        game_views[0] = game_and_editor_window
-        game_views[1] = game_window
-        game_views[2] = editor_window
+        game_views[0] = &game_and_editor_window
+        game_views[1] = &game_window
+        game_views[2] = &editor_window
         game_viewport = &game_window.viewport
 
-        active_game_views = @cast([]GameView, game_views)[0..3]
+        active_game_views = @cast([]&GameView, game_views)[0..3]
 
-        for view : @cast([]GameView, game_views) {
+        for view : @cast([]&GameView, game_views) {
             if !view.initialize(viewport_size_max) {
                 return false
             }
@@ -697,16 +697,16 @@ impl ShmupEngine {
         self.inspector.register_component_info(PlayerControlComponent(1))
     }
 
-    push_entity_layer :: (ref Self, name: String, callbacks: EntityLayerCallbacks) {
+    push_entity_layer :: (ref Self, name: String, callbacks: &EntityLayerCallbacks) {
         ptr := mem.alloc(EntityLayer)
         <<ptr = EntityLayer.new(name, callbacks, self, <<Input.new())
-        current_mode_base.layer_stack.add(<<ptr)
+        current_mode_base.layer_stack.add(ptr)
     }
 
     push_gizmos_layer :: (ref Self, name: String) {
         ptr := mem.alloc(GizmosLayer)
         <<ptr = GizmosLayer.new(name, null, self, <<Input.new())
-        current_mode_base.layer_stack.add(<<ptr)
+        current_mode_base.layer_stack.add(ptr)
     }
 
     update_projection_matrix :: (ref Self, viewport_size: vec2) {
@@ -739,7 +739,7 @@ impl ShmupEngine {
             }
 
             $c -> {
-                io.println(fmt.format("Can't execute command {}", [c]))
+                io.println(fmt.format("Can't execute command {}", [&c]))
             }
         }
     }
@@ -758,9 +758,9 @@ impl ShmupEngine {
             return
         }
         console.get().log("Entering play mode")
-
+        
         play_mode.initialize(edit_mode)
-        current_engine_mode = play_mode
+        current_engine_mode = &play_mode
         current_mode_base = cast &play_mode
         current_engine_mode.on_enable()
 
@@ -774,7 +774,7 @@ impl ShmupEngine {
         }
 
         console.get().log("Exiting play mode")
-        current_engine_mode = edit_mode
+        current_engine_mode = &edit_mode
         current_mode_base = cast &edit_mode
         current_engine_mode.on_enable()
 

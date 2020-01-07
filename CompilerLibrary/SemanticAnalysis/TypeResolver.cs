@@ -423,14 +423,18 @@ namespace Cheez
                 //}
 
                 //remove constant params
+                instance.AddInstantiatedAt(location, currentFunction);
                 instance.Parameters = instance.Parameters.Where(p => !(p.Name?.IsPolymorphic ?? false)).ToList();
                 instance = InferTypeFuncExpr(instance) as AstFuncExpr;
 
                 if (instances != null)
                     instances.Add(instance);
             }
+            else
+            {
+                instance.AddInstantiatedAt(location, currentFunction);
+            }
 
-            instance.AddInstantiatedAt(location, currentFunction);
             return instance;
         }
 

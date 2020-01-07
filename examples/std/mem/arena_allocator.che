@@ -38,7 +38,7 @@ impl Bucket {
 }
 
 ArenaAllocator :: struct {
-    parent      : Allocator
+    parent      : &Allocator
 
     bucket_size : uint
     buckets     : Array[Bucket]
@@ -53,7 +53,7 @@ impl Drop for ArenaAllocator {
 }
 
 impl ArenaAllocator {
-    create :: (size: uint, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    create :: (size: uint, alloc: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         a := ArenaAllocator(
             parent      = alloc,
             bucket_size = size,

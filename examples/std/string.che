@@ -18,9 +18,9 @@ if const @is_os("windows") {
 #export_scope
 
 String :: struct {
-    data: []u8
-    length: int
-    allocator: Allocator
+    data      : []u8
+    length    : int
+    allocator : &Allocator
 }
 
 impl Drop for String {
@@ -34,11 +34,11 @@ impl Drop for String {
 }
 
 impl String {
-    empty :: (allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    empty :: (allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return String(null, 0, allocator)
     }
 
-    with_capacity :: (cap: int, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    with_capacity :: (cap: int, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         result := String(null, 0, allocator)
         result.reserve(cap)
         return result
@@ -50,13 +50,13 @@ impl String {
         return String(sl, 0, null)
     }
 
-    from_string :: (str: string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    from_string :: (str: string, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         s := Self.empty(allocator)
         s.append_string(str)
         return s
     }
 
-    from_cstring :: (str: c_string, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    from_cstring :: (str: c_string, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         s := Self.empty(allocator)
         s.append_cstring(str)
         return s
@@ -207,7 +207,7 @@ impl String {
 }
 
 impl String {
-    append_print :: (ref Self, pr: Printable) -> ref Self #operator("+=") {
+    append_print :: (ref Self, pr: &Printable) -> ref Self #operator("+=") {
         pr.print(self, "")
         return self
     }
@@ -215,17 +215,21 @@ impl String {
     appendf :: (ref Self, format: string, arguments: $T) {
         if const @is_tuple(T) {
             if const T.length == 0 {
-                args : [1]Printable = [arguments]
+                args : [1]&Printable = [&arguments]
             } else {
-                args : [T.length] Printable = default
+                args : [T.length]&Printable = default
                 @for_tuple_values(arguments, (v, i) => {
-                    args[i] = Printable(v)
+                    args[i] = &v
                 })
             }
         } else {
-            args : [1]Printable = [Printable(arguments)]
+            args : [1]&Printable = [&arguments]
         }
+        self.append_printables(format, args)
+    }
 
+
+    append_printables :: (ref Self, format: string, args: []&Printable) {
         formatSpecifier := {
             len :: 64
             String.from_raw_ptr(@alloca(u8, len), len)

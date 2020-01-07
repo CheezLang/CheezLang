@@ -9,7 +9,7 @@ Array :: struct(T: type) {
     data            : &T
     capacity        : int
     length          : int
-    allocator       : Allocator
+    allocator       : &Allocator
 }
 
 impl(T: type) Drop for Array[T] {
@@ -26,7 +26,7 @@ impl(T: type) Drop for Array[T] {
 }
 
 impl(T: type) Array[T] {
-    create :: (initial_capacity: int = 10, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    create :: (initial_capacity: int = 10, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         s := Array[T](null, 0, 0, allocator)
         s.reserve(initial_capacity)
         C.memset(cast s.get_raw(), 0, cast(uint) (s.get_capacity() * @sizeof(T)))

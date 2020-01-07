@@ -38,7 +38,7 @@ Component :: trait {
 }
 
 ComponentData :: struct {
-    component : Component
+    component : &Component
     value     : Rc[()]
     type_info : &TypeInfo
 }
@@ -50,8 +50,8 @@ impl ComponentData {
     }
 
     clone2 :: (ref Self, to: Rc[()]) -> ComponentData {
-        vtable    := Traits.get_trait_object_vtable(component)
-        value_ptr := Traits.get_trait_object_value(component, ())
+        value_ptr := @ptr_of_trait(component)
+        vtable    := @vtable_of_trait(component)
         C.memcpy(&to.get(), &value_ptr, cast type_info.size)
         return ComponentData.from_raw(type_info, vtable, to)
     }
@@ -319,7 +319,7 @@ impl Component for QuadComponent {
 }
 
 impl serpa.IParser[ComponentData] for ComponentData {
-    parse :: (parser: ref serpa.Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[ComponentData] {
+    parse :: (parser: ref serpa.Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[ComponentData] {
         eat_token :: (typ: TokenType) #macro {
             if (ok, t) := @link(lexer).expect_token(typ), ok {
                 t
@@ -344,7 +344,7 @@ impl serpa.IParser[ComponentData] for ComponentData {
 
                 ptr := Rc[T].from_pointer(result, true)
                 return Some(ComponentData(
-                    ptr.get()
+                    &ptr.get()
                     ptr.change_type(())
                     @type_info(T)
                 ))

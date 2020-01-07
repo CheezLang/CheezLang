@@ -1,3 +1,4 @@
+C    :: import std.c
 io   :: import std.io
 time :: import std.time
 
@@ -42,11 +43,11 @@ Main :: () {
     iterations := 100000000
     n := 8
 
-
+    C.puts("a")
     io.printf("iterations: {}, n: {}`n", (iterations, n))
 
     t  : Test = default
-    tt : TestTrait = t
+    tt : &TestTrait = &t
 
     // call normalFunction() on Test
     // t is implicitly passed by value

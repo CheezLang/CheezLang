@@ -96,10 +96,10 @@ impl Printable for Expr {
         match self {
             IdExpr($expr)     -> str.appendf("{}", expr.name)
             NumberExpr($expr) -> str.appendf("{}", expr.value)
-            BinaryExpr($expr) -> str.appendf("({} {} {})", (Printable(expr.left), expr.op, Printable(expr.right)))
-            UnaryExpr($expr)  -> str.appendf("{}{}", (expr.op, Printable(expr.sub)))
-            MoveExpr($expr)   -> str.appendf("({} <- {})", (Printable(expr.target), Printable(expr.source)))
-            PipeExpr($expr)   -> str.appendf("{} | {}", (Printable(expr.left), Printable(expr.right)))
+            BinaryExpr($expr) -> str.append_printables("({} {} {})", [&expr.left, &expr.op, &expr.right])
+            UnaryExpr($expr)  -> str.append_printables("{}{}", [&expr.op, &expr.sub])
+            MoveExpr($expr)   -> str.append_printables("({} <- {})", [&expr.target, &expr.source])
+            PipeExpr($expr)   -> str.append_printables("{} | {}", [&expr.left, &expr.right])
         }
     }
 }
@@ -108,11 +108,11 @@ impl Printable for Stmt {
     print :: (ref Self, str: ref String, format: string) {
         match self {
             DeclStmt($stmt) -> {
-                str.appendf("{} :", Printable(stmt.pattern))
+                str.append_printables("{} :", [&stmt.pattern])
 
                 match ref stmt.typ {
                     Some($expr) -> {
-                        str.appendf(" {} ", Printable(expr))
+                        str.append_printables(" {} ", [&expr])
                     }
                 }
 
@@ -120,13 +120,13 @@ impl Printable for Stmt {
 
                 match ref stmt.init {
                     Some($expr) -> {
-                        str.appendf(" {}", Printable(expr))
+                        str.append_printables(" {}", [&expr])
                     }
                 }
             }
 
             UseStmt($stmt) -> {
-                str.appendf("use {}", Printable(stmt.expr))
+                str.append_printables("use {}", [&stmt.expr])
             }
         }
     }

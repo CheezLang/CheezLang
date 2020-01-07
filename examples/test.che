@@ -28,6 +28,15 @@ import examples.ShmupEngine.src.main
 
 // import "../Tools/Bindings/imgui_binding"
 
+// C   :: import std.c
+// // io  :: import std.io
+
+// Main :: () {
+//     C.puts("test")
+//     // io.println("test")
+//     // io.printf("iterations: {}, n: {}`n", (iterations, n))
+// }
+
 /*
 #test_expect_output("")
 

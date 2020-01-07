@@ -171,12 +171,11 @@ impl EntityInspector {
                                 C.memcpy(ptr, bi.value, cast bi.type_info.size)
 
                                 Trait :: struct {
-                                    v_table : &void
                                     value   : &void
+                                    v_table : &void
                                 }
-                                b := Trait(bi.type_info.kind.Struct.get_trait_impl(Component).vtable, ptr)
-
-                                entity.add_component2(<<cast(&Component)&b)
+                                b := Traits.from_vtable_and_pointer(Component, bi.type_info.kind.Struct.get_trait_impl(Component).vtable, ptr)
+                                entity.add_component2(b)
                             }
 
                             ImGui.CloseCurrentPopup()

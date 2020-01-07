@@ -77,7 +77,7 @@ impl(T: type) Printable for Array[T] if T : Printable, #notyet {
                 str += ", "
             }
 
-            p := Printable(v)
+            p : &Printable = &v
             p.print(str, "")
         }
         str += "]"

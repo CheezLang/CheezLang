@@ -26,7 +26,7 @@ impl Into[String] for String {
 
 impl Into[String] for fs.FsError {
     into :: (ref Self) -> String {
-        return fmt.format("[ERROR] Failed to open file: {}", [self])
+        return fmt.format("[ERROR] Failed to open file: {}", [&self])
     }
 }
 

@@ -43,7 +43,7 @@ Layer :: trait {
     render_gizmos   :: (ref Self, renderer: ref Renderer);
     imgui_render    :: (ref Self);
     on_key_event    :: (ref Self, key: int, action: int) -> bool;
-    clone           :: (ref Self) -> Option[Layer];
+    clone           :: (ref Self) -> Option[&Layer];
     load_from_file  :: (ref Self, file: string);
     save_to_file    :: (ref Self, file: ref String);
 }
@@ -52,7 +52,7 @@ LayerBase :: struct #extendable {
     name        : String
     engine      : ref ShmupEngine
     input       : ref Input
-    callbacks   : EntityLayerCallbacks
+    callbacks   : &EntityLayerCallbacks
 }
 
 EntityLayer :: struct #extend(LayerBase) {
@@ -61,7 +61,7 @@ EntityLayer :: struct #extend(LayerBase) {
 }
 
 impl EntityLayer {
-    new :: (name: String, callbacks: EntityLayerCallbacks, engine: ref ShmupEngine, input: ref Input) -> EntityLayer {
+    new :: (name: String, callbacks: &EntityLayerCallbacks, engine: ref ShmupEngine, input: ref Input) -> EntityLayer {
         return EntityLayer(name, engine, input, callbacks)
     }
 
@@ -227,7 +227,7 @@ impl Layer for EntityLayer {
         return false
     }
 
-    clone :: (ref Self) -> Option[Layer] {
+    clone :: (ref Self) -> Option[&Layer] {
         result := mem.alloc(EntityLayer)
         <<result = EntityLayer.new(name.clone(), callbacks, engine, input)
 
@@ -235,7 +235,7 @@ impl Layer for EntityLayer {
             e_new := result.clone_entity_with_id(e.clone(), e.get().id)
         }
 
-        return Some(<<result)
+        return Some(result)
     }
 
     clone_entity :: (ref Self, template: Rc[Entity]) -> Rc[Entity] {
@@ -251,7 +251,7 @@ impl Layer for EntityLayer {
 
         for template.get().components {
             type_info := it.type_info
-            vtable    := Traits.get_trait_object_vtable(it.component)
+            vtable    := @vtable_of_trait(it.component)
             rc        := self.new_component2(type_info)
             C.memcpy(&rc.get(), &it.value.get(), cast type_info.size)
             e_new.get().add_component3(vtable, rc, type_info)
@@ -270,10 +270,10 @@ impl Layer for EntityLayer {
                 io.println("Failed to read layer from file")
                 return
             })
-        console_error_handler.text_provider = lexer
+        console_error_handler.text_provider = &lexer
 
         parser := serpa.Parser(expect_struct_name=false)
-        result := parser.parse(Array[Rc[Entity]], lexer, console_error_handler)
+        result := parser.parse(Array[Rc[Entity]], lexer, &console_error_handler)
 
         match result {
             Some($entities) -> {
@@ -318,7 +318,7 @@ GizmosLayer :: struct #extend(LayerBase) {
 }
 
 impl GizmosLayer {
-    new :: (name: String, callbacks: EntityLayerCallbacks, engine: ref ShmupEngine, input: ref Input) -> GizmosLayer {
+    new :: (name: String, callbacks: &EntityLayerCallbacks, engine: ref ShmupEngine, input: ref Input) -> GizmosLayer {
         return GizmosLayer(name, engine, input, callbacks)
     }
 }
@@ -366,10 +366,10 @@ impl Layer for GizmosLayer {
         return false
     }
 
-    clone :: (ref Self) -> Option[Layer] {
+    clone :: (ref Self) -> Option[&Layer] {
         result := mem.alloc(GizmosLayer)
         <<result = GizmosLayer.new(name.clone(), null, engine, input)
-        return Some(<<result)
+        return Some(result)
     }
 
     load_from_file :: (ref Self, file: string) {

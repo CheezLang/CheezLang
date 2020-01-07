@@ -10,13 +10,13 @@ RingQueue :: struct(T: type) {
     capacity    : int
     first       : int
     last        : int
-    allocator   : Allocator
+    allocator   : &Allocator
 }
 
 impl(T: type) RingQueue[T] {
-    new :: (init_size: int = 10, allocator: Allocator = null) -> Self {
+    new :: (init_size: int = 10, allocator: &Allocator = null) -> Self {
         if allocator == null {
-            allocator = DEFAULT_STD_HEAP_ALLOCATOR
+            allocator = &DEFAULT_STD_HEAP_ALLOCATOR
         }
 
         data := alloc_raw(T, cast init_size, allocator)

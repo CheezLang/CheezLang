@@ -8,34 +8,34 @@ Allocator :: trait {
     free :: (ref Self, mem: &void);
 }
 
-alloc :: ($T: type, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> &T {
+alloc :: ($T: type, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> &T {
     return alloc_raw(T, 1, allocator)
 }
 
-alloc_raw :: ($T: type, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> &T {
+alloc_raw :: ($T: type, count: uint, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> &T {
     return cast(&T)allocator.allocate(cast count, @sizeof(T), @alignof(T))
 }
 
-realloc_raw :: (mem: &$T, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> &T {
+realloc_raw :: (mem: &$T, count: uint, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> &T {
     return cast allocator.reallocate(cast mem, count, @sizeof(T), @alignof(T))
 }
 
-alloc_n :: ($T: type, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> []T {
+alloc_n :: ($T: type, count: uint, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> []T {
     mem : []T = cast(&T) allocator.allocate(count, @sizeof(T), @alignof(T))
     mem.length = cast count
     return mem
 }
 
-realloc_n :: (mem: []$T, count: uint, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> []T {
+realloc_n :: (mem: []$T, count: uint, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> []T {
     mem.data = cast allocator.reallocate(cast mem.data, count, @sizeof(T), @alignof(T))
     mem.length = cast count
     return mem
 }
 
-free :: (mem: &$T, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) {
+free :: (mem: &$T, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) {
     allocator.free(cast mem)
 }
 
-free_n :: (mem: []$T, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) {
+free_n :: (mem: []$T, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) {
     allocator.free(cast mem.data)
 }

@@ -52,11 +52,11 @@ impl(It: type, T: type) It if It : Iterator[T] {
     }
 
     take :: (ref Self, count: int) -> TakeIterator[T] {
-        return TakeIterator[T](self, count)
+        return TakeIterator[T](&self, count)
     }
 
     map :: (ref Self, mapFunc: fn (T) -> $X) -> MapIterator[T, X] {
-        return MapIterator[T, X](self, mapFunc)
+        return MapIterator[T, X](&self, mapFunc)
     }
 
     foreach :: (ref Self, func: fn (T)) {
@@ -83,7 +83,7 @@ impl(It: type, T: type) It if It : Iterator[T] {
 
 // take
 TakeIterator :: struct(T: type) {
-    it      : Iterator[T]
+    it      : &Iterator[T]
     count   : int
 }
 
@@ -100,7 +100,7 @@ impl(T: type) Iterator[T] for TakeIterator[T] {
 
 // map
 MapIterator :: struct(T: type, X: type) {
-    it      : Iterator[T]
+    it      : &Iterator[T]
     mapFunc : fn(T) -> X
 }
 

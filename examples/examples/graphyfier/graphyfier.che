@@ -133,7 +133,7 @@ impl Game for MyGame {
         match load_file("function.txt") {
             Ok($content) -> {
                 var_name_allocator.clear()
-                function = compile(content.slice(), var_name_allocator)
+                function = compile(content.slice(), &var_name_allocator)
             }
 
             Err($msg) -> {
@@ -378,7 +378,7 @@ Main :: () {
         var_name_allocator = ArenaAllocator.create(1024)
         variables = Variables.create(compare_strings)
     )
-    pge := PixelGameEngine.create(myGame, width, height)
+    pge := PixelGameEngine.create(&myGame, width, height)
     if pge != null {
         pge.start()
     } else {

@@ -38,13 +38,13 @@ impl TextProvider for string {
     }
 }
 
-compile :: (expr: string, var_name_allocator: Allocator) -> Option[Array[OpCode]] {
+compile :: (expr: string, var_name_allocator: &Allocator) -> Option[Array[OpCode]] {
     res := Array[OpCode].create()
 
     error_handler := ConsoleErrorHandler.new(null)
     string_db := StringDatabase.new()
     lexer := Lexer.from_raw_string(expr, string_db)
-    error_handler.text_provider = expr
+    error_handler.text_provider = &lexer
 
     op_stack := Array[OpCode].create()
 

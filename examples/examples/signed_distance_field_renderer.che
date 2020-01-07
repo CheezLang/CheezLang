@@ -22,13 +22,13 @@ mod :: (a: $T, b: T) -> T {
 ///////////////////////////////////////////////////////////
 
 Ray :: struct {
-    origin: Vec3
-    direction: Vec3
+    origin    : Vec3
+    direction : Vec3
 }
 
 DistanceShaderPair :: struct {
     distance : double
-    shader   : Shader
+    shader   : &Shader
 }
 
 ////////////////////////////////// SDF //////////////////////////////////////////////
@@ -40,7 +40,7 @@ SDF :: trait {
 
 Sphere :: struct {
     radius: double
-    shader: Shader
+    shader: &Shader
 }
 
 impl SDF for Sphere {
@@ -50,8 +50,8 @@ impl SDF for Sphere {
 }
 
 PlaneY :: struct {
-    location: double
-    shader: Shader
+    location : double
+    shader   : &Shader
 }
 
 impl SDF for PlaneY {
@@ -61,8 +61,8 @@ impl SDF for PlaneY {
 }
 
 Cube :: struct {
-    radius: double
-    shader: Shader
+    radius : double
+    shader : &Shader
 }
 
 impl SDF for Cube {
@@ -110,8 +110,8 @@ impl SDF for Cube {
 ///////////////////// transformations //////////////////////////
 
 TranslatedSDF :: struct {
-    sdf: SDF
-    translation: Vec3
+    sdf         : &SDF
+    translation : Vec3
 }
 
 impl SDF for TranslatedSDF {
@@ -121,8 +121,8 @@ impl SDF for TranslatedSDF {
 }
 
 ScaledSDF :: struct {
-    sdf: SDF
-    scale: Vec3
+    sdf   : &SDF
+    scale : Vec3
 }
 
 impl SDF for ScaledSDF {
@@ -132,18 +132,18 @@ impl SDF for ScaledSDF {
 }
 
 RotatedXSDF :: struct {
-    sdf: SDF
-    angle: double
+    sdf   : &SDF
+    angle : double
 }
 
 RotatedYSDF :: struct {
-    sdf: SDF
-    angle: double
+    sdf   : &SDF
+    angle : double
 }
 
 RotatedZSDF :: struct {
-    sdf: SDF
-    angle: double
+    sdf   : &SDF
+    angle : double
 }
 
 impl SDF for RotatedXSDF {
@@ -181,8 +181,8 @@ impl SDF for RotatedZSDF {
 
 ////////////////////// combinations ///////////////////////
 UnionSDF :: struct {
-    sdf1: SDF
-    sdf2: SDF
+    sdf1 : &SDF
+    sdf2 : &SDF
 }
 
 impl SDF for UnionSDF {
@@ -198,8 +198,8 @@ impl SDF for UnionSDF {
 }
 
 IntersectionSDF :: struct {
-    sdf1: SDF
-    sdf2: SDF
+    sdf1 : &SDF
+    sdf2 : &SDF
 }
 
 impl SDF for IntersectionSDF {
@@ -215,8 +215,8 @@ impl SDF for IntersectionSDF {
 }
 
 SubtractionSDF :: struct {
-    sdf1: SDF
-    sdf2: SDF
+    sdf1 : &SDF
+    sdf2 : &SDF
 }
 
 impl SDF for SubtractionSDF {
@@ -282,9 +282,9 @@ impl Shader for LambertianShader {
 }
 
 CheckerBoardShader :: struct {
-    size: double
-    shader1: Shader
-    shader2: Shader
+    size    : double
+    shader1 : &Shader
+    shader2 : &Shader
 }
 
 
@@ -316,9 +316,9 @@ impl Background {
 }
 
 Raymarcher :: struct {
-    sdf: SDF
-    background: Background
-    backgroundDistance: double = 1000
+    sdf                : &SDF
+    background         : Background
+    backgroundDistance : double = 1000
 }
 
 impl Raymarcher {
@@ -361,9 +361,9 @@ impl Raymarcher {
 
 
 PerspectiveCamera :: struct {
-    focalLength: double
-    sensorWidth: double
-    sensorHeight: double
+    focalLength  : double
+    sensorWidth  : double
+    sensorHeight : double
 }
 
 impl PerspectiveCamera {
@@ -381,9 +381,9 @@ impl PerspectiveCamera {
 }
 
 Film :: struct {
-    width: int
-    height: int
-    pixels: []Vec3
+    width  : int
+    height : int
+    pixels : []Vec3
 
     antiAliasingSteps: int
 }
@@ -439,7 +439,7 @@ impl Film {
 ///////////////////////////////////////////////////////////////////////////
 
 SDFAllocator :: struct {
-    allocator: StackAllocator
+    allocator : StackAllocator
 }
 
 impl SDFAllocator {
@@ -449,93 +449,93 @@ impl SDFAllocator {
 
     allocate :: (ref Self, $T: type) -> &T {
         t := cast(&T) allocator.allocate(1, @sizeof(T), @alignof(T))
-        io.printf("{}`n", (allocator))
+        io.printf("{}`n", (&allocator))
         return t
     }
 
-    sphere :: (ref Self, radius: double, shader: Shader) -> SDF {
-        s := alloc(Sphere, allocator)
+    sphere :: (ref Self, radius: double, shader: &Shader) -> &SDF {
+        s := alloc(Sphere, &allocator)
         s.radius = radius
         s.shader = shader
-        return cast(SDF) ref <<s
+        return s
     }
 
-    sphereT :: (ref Self, position: Vec3, radius: double, shader: Shader) -> SDF {
+    sphereT :: (ref Self, position: Vec3, radius: double, shader: &Shader) -> &SDF {
         return self.translate(self.sphere(radius, shader), position)
     }
 
-    planeY :: (ref Self, location: double, shader: Shader) -> SDF {
-        s := alloc(PlaneY, allocator)
+    planeY :: (ref Self, location: double, shader: &Shader) -> &SDF {
+        s := alloc(PlaneY, &allocator)
         s.location = location
         s.shader = shader
-        return cast(SDF) ref <<s
+        return s
     }
 
-    cube :: (ref Self, radius: double, shader: Shader) -> SDF {
-        s := alloc(Cube, allocator)
+    cube :: (ref Self, radius: double, shader: &Shader) -> &SDF {
+        s := alloc(Cube, &allocator)
         s.radius = radius
         s.shader = shader
-        return cast(SDF) ref <<s
+        return s
     }
 
-    cubeT :: (ref Self, position: Vec3, radius: double, shader: Shader) -> SDF {
+    cubeT :: (ref Self, position: Vec3, radius: double, shader: &Shader) -> &SDF {
         return self.translate(self.cube(radius, shader), position)
     }
 
-    translate :: (ref Self, sdf: SDF, translation: Vec3) -> SDF {
-        t := alloc(TranslatedSDF, allocator)
+    translate :: (ref Self, sdf: &SDF, translation: Vec3) -> &SDF {
+        t := alloc(TranslatedSDF, &allocator)
         t.sdf = sdf
         t.translation = translation
-        return cast(SDF) ref <<t
+        return t
     }
 
-    rotateX :: (ref Self, sdf: SDF, angle: double) -> SDF {
-        t := alloc(RotatedXSDF, allocator)
+    rotateX :: (ref Self, sdf: &SDF, angle: double) -> &SDF {
+        t := alloc(RotatedXSDF, &allocator)
         t.sdf = sdf
         t.angle = angle
-        return cast(SDF) ref <<t
+        return t
     }
 
-    rotateY :: (ref Self, sdf: SDF, angle: double) -> SDF {
-        t := alloc(RotatedYSDF, allocator)
+    rotateY :: (ref Self, sdf: &SDF, angle: double) -> &SDF {
+        t := alloc(RotatedYSDF, &allocator)
         t.sdf = sdf
         t.angle = angle
-        return cast(SDF) ref <<t
+        return t
     }
 
-    rotateZ :: (ref Self, sdf: SDF, angle: double) -> SDF {
-        t := alloc(RotatedZSDF, allocator)
+    rotateZ :: (ref Self, sdf: &SDF, angle: double) -> &SDF {
+        t := alloc(RotatedZSDF, &allocator)
         t.sdf = sdf
         t.angle = angle
-        return cast(SDF) ref <<t
+        return t
     }
 
-    scale :: (ref Self, sdf: SDF, x: double = 1, y: double = 1, z: double = 1) -> SDF {
-        t := alloc(ScaledSDF, allocator)
+    scale :: (ref Self, sdf: &SDF, x: double = 1, y: double = 1, z: double = 1) -> &SDF {
+        t := alloc(ScaledSDF, &allocator)
         t.sdf = sdf
         t.scale = Vec3(x, y, z)
-        return cast(SDF) ref <<t
+        return t
     }
 
-    add :: (ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
-        t := alloc(UnionSDF, allocator)
+    add :: (ref Self, sdf1: &SDF, sdf2: &SDF) -> &SDF {
+        t := alloc(UnionSDF, &allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return cast(SDF) ref <<t
+        return t
     }
 
-    intersect :: (ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
-        t := alloc(IntersectionSDF, allocator)
+    intersect :: (ref Self, sdf1: &SDF, sdf2: &SDF) -> &SDF {
+        t := alloc(IntersectionSDF, &allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return cast(SDF) ref <<t
+        return t
     }
 
-    subtract :: (ref Self, sdf1: SDF, sdf2: SDF) -> SDF {
-        t := alloc(SubtractionSDF, allocator)
+    subtract :: (ref Self, sdf1: &SDF, sdf2: &SDF) -> &SDF {
+        t := alloc(SubtractionSDF, &allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
-        return cast(SDF) ref <<t
+        return t
     }
 }
 
@@ -558,7 +558,7 @@ renderImage :: (film: ref Film) {
     //
     sChecker1    := LambertianShader(Vec3(0.9, 0.8, 0.8))
     sChecker2    := LambertianShader(Vec3(0.2, 0.1, 0.1))
-    sChecker  := CheckerBoardShader(1, sChecker1, sChecker2)
+    sChecker  := CheckerBoardShader(1, &sChecker1, &sChecker2)
 
     sWhite    := LambertianShader(Vec3(1, 1, 1))
     sBlack    := LambertianShader(Vec3(0, 0, 0))
@@ -567,14 +567,14 @@ renderImage :: (film: ref Film) {
     sBlue   := LambertianShader(Vec3(0, 0, 1))
 
     //
-    ground := all.planeY(-1.25, sWhite)
-    s1 := all.sphereT(Vec3(0, 0.5, 0), 1, sRed)
-    s2 := all.sphereT(Vec3(0, 0, 0), 0.3, sGreen)
-    c1 := all.cubeT(Vec3(0, 0.5, 0), 0.8, sBlue)
+    ground := all.planeY(-1.25, &sWhite)
+    s1 := all.sphereT(Vec3(0, 0.5, 0), 1, &sRed)
+    s2 := all.sphereT(Vec3(0, 0, 0), 0.3, &sGreen)
+    c1 := all.cubeT(Vec3(0, 0.5, 0), 0.8, &sBlue)
 
     sdf := {
         sdf := {
-            sdf: SDF
+            sdf: &SDF
             {
                 sdf = c1
                 sdf = all.subtract(sdf, s1)

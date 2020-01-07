@@ -33,7 +33,7 @@ namespace Cheez.Types.Complex
         public CheezType[] Arguments { get; }
 
         public TraitType(AstTraitTypeExpr decl, CheezType[] args = null)
-            : base(2 * PointerType.PointerSize, PointerType.PointerAlignment, true)
+            : base(0, 0, false)
         {
             Declaration = decl;
             Arguments = args ?? decl.Parameters?.Select(p => p.Value as CheezType)?.ToArray() ?? Array.Empty<CheezType>();

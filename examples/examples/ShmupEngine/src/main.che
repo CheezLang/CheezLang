@@ -82,9 +82,8 @@ Main :: () {
     rand.PseudoRandom.init()
 
     test  := Test()
-    test2 := Test()
 
     shmup_engine := ShmupEngine.new()
-    shmup_engine.push_entity_layer(String.from_string("test layer"), test)
+    shmup_engine.push_entity_layer(String.from_string("test layer"), &test)
     shmup_engine.start()
 }

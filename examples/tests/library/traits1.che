@@ -27,7 +27,7 @@ impl Printable for string {
     }
 }
 
-println :: (p: Printable) {
+println :: (p: &Printable) {
     p.print()
     C.puts("")
 }
@@ -36,7 +36,7 @@ Main :: () {
     five := 5
     hello := "hello"
     tru := true
-    println(five)
-    println(hello)
-    println(tru)
+    println(&five)
+    println(&hello)
+    println(&tru)
 }

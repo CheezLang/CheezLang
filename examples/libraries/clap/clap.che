@@ -227,7 +227,7 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
         if mem_info.set then continue
 
         default_value := mem_info.mem.value
-        if default_value.typ == null {
+        if @type_info_of_any(default_value) == null {
             io.printfln("[ERROR] please provide a value for option '{}'", mem_info.mem.name)
             return false
         }
@@ -280,8 +280,8 @@ get_help_message_struct :: (type_info: &TypeInfoStruct, result: ref String, inde
         help_text_att := mem.get_attribute("help")
         if help_text_att != null {
             @assert(help_text_att.args.length == 1)
-            @assert(help_text_att.args[0].typ == @type_info(string))
-            text := String.from_string(<<cast(&string) help_text_att.args[0].val)
+            @assert(@type_info_of_any(help_text_att.args[0]) == @type_info(string))
+            text := String.from_string(<<cast(&string) @ptr_of_any(help_text_att.args[0]))
 
             lines := text.split_at_char('`n', true)
 
@@ -335,8 +335,8 @@ get_help_message_enum :: (type_info: &TypeInfoEnum, result: ref String, indent: 
         help_text_att := mem.get_attribute("help")
         if help_text_att != null {
             @assert(help_text_att.args.length == 1)
-            @assert(help_text_att.args[0].typ == @type_info(string))
-            text := String.from_string(<<cast(&string) help_text_att.args[0].val)
+            @assert(@type_info_of_any(help_text_att.args[0]) == @type_info(string))
+            text := String.from_string(<<cast(&string) @ptr_of_any(help_text_att.args[0]))
 
             lines := text.split_at_char('`n', true)
 
@@ -410,9 +410,9 @@ get_help_message_member :: (result: ref String, type_info: &TypeInfo, name: stri
     }
 }
 
-assign_value_to_member :: (member: &TypeInfoStructMember, result: &void, value: any) -> bool {
-    if member.typ == value.typ {
-        C.memcpy(result, value.val, cast member.typ.size)
+assign_value_to_member :: (member: &TypeInfoStructMember, result: &void, value: &any) -> bool {
+    if member.typ == @type_info_of_any(value) {
+        C.memcpy(result, @ptr_of_any(value), cast member.typ.size)
         return true
     }
 
@@ -449,7 +449,7 @@ get_display_name_for_member :: (mem: ref $T) -> string {
     }
 
     @assert(name_att.args.length == 1)
-    @assert(name_att.args[0].typ == @type_info(string))
-    name := <<cast(&string)name_att.args[0].val
+    @assert(@type_info_of_any(name_att.args[0]) == @type_info(string))
+    name := <<cast(&string) @ptr_of_any(name_att.args[0])
     return name
 }

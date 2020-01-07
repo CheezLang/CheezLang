@@ -40,7 +40,7 @@ impl StringDatabase {
             None -> {
                 // create string in pool
                 str_in_pool := {
-                    mem := alloc_n(u8, cast str.bytes.length, pool)
+                    mem := alloc_n(u8, cast str.bytes.length, &pool)
                     string(mem.data, mem.length)
                 }
                 C.memcpy(str_in_pool.bytes.data, str.bytes.data, cast str.bytes.length)

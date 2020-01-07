@@ -54,11 +54,11 @@ format_int :: (buffer: ref String, val: $T, _base: int = 10) {
     }
 }
 
-format_any :: (arg: any) -> String {
+format_any :: (arg: &any) -> String {
     return format("{}", [arg])
 }
 
-format :: (text: string, args: []any) -> String {
+format :: (text: string, args: []&any) -> String {
     State :: enum #copy { Text, Format, Escape }
     use State
 
@@ -94,7 +94,8 @@ format :: (text: string, args: []any) -> String {
             Format -> {
                 if c == '}' {
                     state = Text
-                    value_to_print := args[argIndex]
+                    value := @ptr_of_any(args[argIndex])
+                    typ := @type_info_of_any(args[argIndex])
                     formatArg : string = ""
 
                     colon := formatSpecifier.index_of(':')
@@ -116,9 +117,9 @@ format :: (text: string, args: []any) -> String {
                     @assert(argIndex >= 0 and argIndex < args.length)
 
                     if streq(formatArg, "?") {
-                        format_any_into_string(result, value_to_print.val, value_to_print.typ, "", true)
+                        format_any_into_string(result, value, typ, "", true)
                     } else {
-                        format_any_into_string(result, value_to_print.val, value_to_print.typ, formatArg, false)
+                        format_any_into_string(result, value, typ, formatArg, false)
                     }
 
                     argIndex += 1
@@ -138,9 +139,9 @@ format :: (text: string, args: []any) -> String {
 
 format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, format: string, recursive: bool) {
     if !recursive {
-        trait_func := typ.get_trait_function(Printable, "print", fn(ref Printable, ref String, string))
+        trait_func := typ.get_trait_function(Printable, "print", fn(&void, ref String, string))
         if trait_func != null {
-            trait_func(<<cast(&Printable) data, result, "")
+            trait_func(data, result, "")
             return
         }
     }

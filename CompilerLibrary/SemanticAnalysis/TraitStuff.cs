@@ -216,5 +216,10 @@ namespace Cheez
             return instance;
         }
 
+        public bool TypeHasTrait(CheezType type, TraitType trait)
+        {
+            UpdateTypeImplMap();
+            return trait.Declaration.Implementations.ContainsKey(type);
+        }
     }
 }

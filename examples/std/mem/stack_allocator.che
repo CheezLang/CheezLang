@@ -21,12 +21,10 @@ impl Printable for StackAllocation {
 }
 
 StackAllocator :: struct {
-    parent: Allocator
-
-    memory: &void
-    capacity: u64
-
-    allocations: Array[StackAllocation]
+    parent      : &Allocator
+    memory      : &void
+    capacity    : u64
+    allocations : Array[StackAllocation]
 }
 
 impl Drop for StackAllocator {
@@ -43,7 +41,7 @@ impl Printable for StackAllocator {
             if i > 0 {
                 s += ", "
             }
-            s.appendf("{}", Printable(allocations[i]))
+            s.append_printables("{}", [&allocations[i]])
         }
         s += "]"
 
@@ -56,7 +54,7 @@ impl Printable for StackAllocator {
 }
 
 impl StackAllocator {
-    create :: (size: u64, alloc: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    create :: (size: u64, alloc: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         a := StackAllocator(
             parent = alloc
             memory = null
@@ -91,7 +89,7 @@ impl StackAllocator {
             if i > 0 {
                 s += ", "
             }
-            s.appendf("{}", Printable(allocations[i]))
+            s.append_printables("{}", [&allocations[i]])
         }
         s += "]"
 

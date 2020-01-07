@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cheez.Types.Complex;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -19,7 +20,7 @@ namespace Cheez.Types.Primitive
     {
         public static AnyType Intance { get; } = new AnyType();
 
-        private AnyType() : base(16, 8, false) { }
+        private AnyType() : base(0, 0, false) { }
 
         public override string ToString() => "any";
         public override bool IsPolyType => false;
@@ -201,10 +202,13 @@ namespace Cheez.Types.Primitive
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
         public static PointerType NullLiteralType { get; } = new PointerType(null);
 
-        private PointerType(CheezType target) : base(PointerSize, PointerAlignment, true)
+        private PointerType(CheezType target) : base((target is TraitType || target is AnyType) ? PointerSize * 2 : PointerSize, PointerAlignment, true)
         {
             TargetType = target;
+            IsFatPointer = target is TraitType || target is AnyType;
         }
+
+        public bool IsFatPointer { get; set; }
 
         public CheezType TargetType { get; set; }
         public override bool IsErrorType => TargetType?.IsErrorType ?? false;
@@ -265,10 +269,13 @@ namespace Cheez.Types.Primitive
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
 
-        private ReferenceType(CheezType target) : base(PointerType.PointerSize, PointerType.PointerAlignment, false)
+        private ReferenceType(CheezType target) : base((target is TraitType || target is AnyType) ? PointerType.PointerSize * 2 : PointerType.PointerSize, PointerType.PointerAlignment, false)
         {
             TargetType = target;
+            IsFatReference = target is TraitType || target is AnyType;
         }
+
+        public bool IsFatReference { get; set; }
 
         public static ReferenceType GetRefType(CheezType targetType)
         {

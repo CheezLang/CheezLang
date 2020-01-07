@@ -8,18 +8,18 @@ C :: import std.c
 #export_scope
 
 Table :: struct(K: type, V: type) {
-    max_load: double
-    count: uint
-    entries: []Entry[K, V]
-    allocator: Allocator
-    comparer: fn (K, K) -> bool
+    max_load  : double
+    count     : uint
+    entries   : []Entry[K, V]
+    allocator : &Allocator
+    comparer  : fn (K, K) -> bool
 }
 
 Entry :: struct(K: type, V: type) {
-    key: K
-    value: V
-    filled: bool
-    is_tombstone: bool
+    key          : K
+    value        : V
+    filled       : bool
+    is_tombstone : bool
 }
 
 impl(K: type, V: type) Drop for Table[K, V] {
@@ -31,7 +31,7 @@ impl(K: type, V: type) Drop for Table[K, V] {
 }
 
 impl(K: type, V: type) Table[K, V] {
-    create :: (comp: fn(K, K) -> bool, allocator: Allocator = DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    create :: (comp: fn(K, K) -> bool, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return Table[K, V](
             allocator   = allocator
             comparer    = comp

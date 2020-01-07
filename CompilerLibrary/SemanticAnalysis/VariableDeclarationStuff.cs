@@ -71,8 +71,23 @@ namespace Cheez
 
             switch (v.Type)
             {
-                case VoidType _:
-                case SumType _:
+                case IntType _:
+                case FloatType _:
+                case BoolType _:
+                case CharType _:
+                case SliceType _:
+                case StringType _:
+                case ArrayType _:
+                case StructType _:
+                case EnumType _:
+                case PointerType _:
+                case ReferenceType _:
+                case FunctionType _:
+                case TupleType _:
+                case RangeType _:
+                    break;
+
+                default:
                     ReportError(v, $"Variable can't have type {v.Type}");
                     break;
             }
@@ -99,25 +114,61 @@ namespace Cheez
                     break;
 
                 case AstTupleExpr t:
-                    v.Name = new AstIdExpr(GetUniqueName(t.ToString()), false, t);
-
-                    // create new declarations for sub patterns
-                    var index = 0;
-                    foreach (var subPattern in t.Values)
                     {
-                        var init = new AstArrayAccessExpr(
-                            new AstVariableRef(v, v.Initializer),
-                            new AstNumberExpr(NumberData.FromBigInt(index), Location: v.Initializer));
-                        var sub = new AstVariableDecl(subPattern, null, init, Location: v);
-                        sub.Scope = v.Scope;
-                        sub.SetFlags(v.GetFlags());
+                        v.Name = new AstIdExpr(GetUniqueName(t.ToString()), false, t);
+                        v.Pattern = v.Name;
 
-                        yield return sub;
-                        index += 1;
+                        //var initClone = v.Initializer.Clone();
+                        //initClone.AttachTo(v);
+                        //initClone.SetFlag(ExprFlags.ValueRequired, true);
+                        //initClone = InferType(initClone, null);
+
+                        //AstVariableDecl CreateSub(int index, string name)
+                        //{
+                        //    var init = mCompiler.ParseExpression(
+                        //        $"@{name}(§init)",
+                        //        new Dictionary<string, AstExpression>
+                        //        {
+                        //                { "init", new AstVariableRef(v, v.Initializer) }
+                        //        });
+                        //    var sub = new AstVariableDecl(t.Values[index], null, init, Location: v);
+                        //    sub.Scope = v.Scope;
+                        //    sub.SetFlags(v.GetFlags());
+                        //    return sub;
+                        //}
+                        //if (initClone.Type is PointerType pt1 && pt1.TargetType is AnyType)
+                        //{
+                        //    // create new declarations for sub patterns
+                        //    yield return CreateSub(0, "ptr_of_any");
+                        //    yield return CreateSub(1, "type_info_of_any");
+                        //    break;
+                        //}
+                        //else if (initClone.Type is PointerType pt2 && pt2.TargetType is TraitType)
+                        //{
+                        //    // create new declarations for sub patterns
+                        //    yield return CreateSub(0, "ptr_of_trait");
+                        //    yield return CreateSub(1, "vtable_of_trait");
+                        //    break;
+                        //}
+                        //else
+                        //{
+                            // create new declarations for sub patterns
+                            var index = 0;
+                            foreach (var subPattern in t.Values)
+                            {
+                                var init = new AstArrayAccessExpr(
+                                    new AstVariableRef(v, v.Initializer),
+                                    new AstNumberExpr(NumberData.FromBigInt(index), Location: v.Initializer));
+                                var sub = new AstVariableDecl(subPattern, null, init, Location: v);
+                                sub.Scope = v.Scope;
+                                sub.SetFlags(v.GetFlags());
+
+                                yield return sub;
+                                index += 1;
+                            }
+                            break;
+                        //}
                     }
-
-                    v.Pattern = v.Name;
-                    break;
 
                 default:
                     ReportError(v.Pattern, $"Invalid pattern in variable declaration");

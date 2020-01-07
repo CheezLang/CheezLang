@@ -122,7 +122,7 @@ impl(T: type) Printable for Option[T] if T: Printable {
     print :: (ref Self, str: ref String, format: string) {
         match self {
             Some($v) -> {
-                v_str := fmt.format("Some({})", [v])
+                v_str := fmt.format("Some({})", [&v])
                 str.append(v_str)
             }
             None -> str.append_string("None")

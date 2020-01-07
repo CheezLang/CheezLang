@@ -36,7 +36,7 @@ min_contribution    :: 0.2
 
 pi                  :: 3.14159265359
 
-create :: (val: $T, allocator: Allocator) -> &T {
+create :: (val: $T, allocator: &Allocator) -> &T {
     ptr := alloc(T, allocator)
     <<ptr = val
     return ptr
@@ -123,7 +123,7 @@ impl Object for Sphere {
 PathTracer :: struct {
     pge             : &PixelGameEngine      = null
     allocator       : ArenaAllocator
-    objects         : Array[Object]
+    objects         : Array[&Object]
     cam_fov         : float                 = 0
     cam_pos         : Vec3                  = default
     cam_dir         : Vec3                  = default
@@ -148,7 +148,7 @@ impl PathTracer {
     create :: () -> Self {
         return PathTracer(
             allocator   = ArenaAllocator.create(1024)
-            objects     = Array[Object].create()
+            objects     = Array[&Object].create()
             buffer      = {
                 b := alloc_n(Vec3, u64(width * height))
                 C.memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
@@ -158,9 +158,9 @@ impl PathTracer {
     }
 
     add_object :: (ref Self, obj: $T) {
-        dyn := alloc(T, allocator)
+        dyn := alloc(T, &allocator)
         <<dyn = obj
-        objects.add(ref <<dyn)
+        objects.add(dyn)
     }
 
     intersect :: (ref Self, ray: Ray) -> Option[HitInfo] {
@@ -350,15 +350,15 @@ impl Game for PathTracer {
         self.cam_right  = self.cam_right.normalized() * right_mag
 
         // create objects
-        m_red   := create(Material(Vec3(0.9, 0.2, 0.2)), allocator)
-        m_green := create(Material(Vec3(0.2, 0.9, 0.2)), allocator)
-        m_blue  := create(Material(Vec3(0.2, 0.2, 0.9)), allocator)
-        m_grey  := create(Material(Vec3(0.75, 0.75, 0.75)), allocator)
+        m_red   := create(Material(Vec3(0.9, 0.2, 0.2)), &allocator)
+        m_green := create(Material(Vec3(0.2, 0.9, 0.2)), &allocator)
+        m_blue  := create(Material(Vec3(0.2, 0.2, 0.9)), &allocator)
+        m_grey  := create(Material(Vec3(0.75, 0.75, 0.75)), &allocator)
 
-        m_mirror:= create(Material.reflective(Vec3(1, 1, 1)), allocator)
-        m_glass := create(Material.refrective(Vec3(1, 1, 1), 1.95), allocator)
+        m_mirror:= create(Material.reflective(Vec3(1, 1, 1)), &allocator)
+        m_glass := create(Material.refrective(Vec3(1, 1, 1), 1.95), &allocator)
 
-        m_light := create(Material(emission = Vec3(10, 10, 10)), allocator)
+        m_light := create(Material(emission = Vec3(10, 10, 10)), &allocator)
 
         self.add_object(Sphere(Vec3(-1000.0 - size / 2, 0, 0), 1000, m_red)) // left
         self.add_object(Sphere(Vec3(1000.0 + size / 2, 0, 0), 1000, m_green)) // right
@@ -542,7 +542,7 @@ Main :: () {
     thread_pool_mut = &m
 
     game := PathTracer.create()
-    pge := PixelGameEngine.create(game, width, height, 1, 1)
+    pge := PixelGameEngine.create(&game, width, height, 1, 1)
     if pge != null {
         pge.start()
     }

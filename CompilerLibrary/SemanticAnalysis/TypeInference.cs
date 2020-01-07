@@ -536,6 +536,34 @@ namespace Cheez
                 p.TypeExpr = ResolveTypeNow(p.TypeExpr, out var t);
                 p.Type = t;
 
+                switch (t)
+                {
+                    case IntType _:
+                    case FloatType _:
+                    case BoolType _:
+                    case CharType _:
+                    case StringType _:
+                    case SliceType _:
+                    case ArrayType _:
+                    case PointerType _:
+                    case ReferenceType _:
+                    case StructType _:
+                    case EnumType _:
+                    case TupleType _:
+                    case FunctionType _:
+                    case CodeType _:
+                    case RangeType _:
+                    case PolyType _:
+                    case CheezTypeType _:
+                        break;
+
+                    default:
+                        {
+                            ReportError(p.TypeExpr, $"Function parameter can't have type {t}");
+                            break;
+                        }
+                }
+
                 if (p.DefaultValue != null)
                     p.DefaultValue.Scope = func.Scope;
 
@@ -1411,8 +1439,15 @@ namespace Cheez
             p.Target = InferTypeHelper(p.Target, CheezType.Type, context);
             if (p.Target.Type == CheezType.Type)
             {
-                p.Type = CheezType.Type;
-                p.Value = SliceType.GetSliceType(p.Target.Value as CheezType);
+                if (p.Target.Value is TraitType || p.Target.Value is AnyType)
+                {
+                    ReportError(p, $"Can't create slice of traits or any, target type is {p.Target.Type}"); 
+                }
+                else
+                {
+                    p.Type = CheezType.Type;
+                    p.Value = SliceType.GetSliceType(p.Target.Value as CheezType);
+                }
             }
             else
             {
@@ -1428,8 +1463,15 @@ namespace Cheez
             p.Target = InferTypeHelper(p.Target, CheezType.Type, context);
             if (p.Target.Type == CheezType.Type)
             {
-                p.Type = CheezType.Type;
-                p.Value = SliceType.GetSliceType(p.Target.Value as CheezType);
+                if (p.Target.Value is TraitType || p.Target.Value is AnyType)
+                {
+                    ReportError(p, $"Can't create array of traits or any, target type is {p.Target.Type}");
+                }
+                else
+                {
+                    p.Type = CheezType.Type;
+                    p.Value = SliceType.GetSliceType(p.Target.Value as CheezType);
+                }
             }
             else
             {
@@ -1464,6 +1506,11 @@ namespace Cheez
                 func.ParameterTypes[i].SetFlag(ExprFlags.ValueRequired, true);
                 func.ParameterTypes[i] = ResolveType(func.ParameterTypes[i], context, out var t);
 
+
+                if (t is TraitType || t is AnyType)
+                {
+                    ReportError(func.ParameterTypes[i], $"Function paremeter can't have type {t}");
+                }
             }
 
             CheezType ret = CheezType.Void;
@@ -1474,6 +1521,10 @@ namespace Cheez
                 func.ReturnType.AttachTo(func);
                 func.ReturnType = ResolveType(func.ReturnType, context, out var t);
                 ret = t;
+                if (t is TraitType || t is AnyType)
+                {
+                    ReportError(func.ReturnType, $"Function return type can't be {t}");
+                }
             }
             
             if ((func.ReturnType?.Type?.IsErrorType ?? false) || func.ParameterTypes.Any(t => t.Type.IsErrorType))
@@ -1592,8 +1643,68 @@ namespace Cheez
             if (to == from)
                 return cast.SubExpression;
 
+            switch (to, from)
+            {
+                case (PointerType t, PointerType _) when t.TargetType == CheezType.Void:
+                    return cast;
+
+                case (PointerType t, PointerType f) when t.IsFatPointer && f.IsFatPointer:
+                    {
+                        ReportError(cast, $"Can't convert from {f} to {t}");
+                        return cast;
+                    }
+
+                case (PointerType t, PointerType f) when t.TargetType is TraitType trait:
+                    {
+                        if (!TypeHasTrait(f.TargetType, trait))
+                        {
+                            ReportError(cast, $"Can't convert from {f} to {t} because {f.TargetType} does not implement the trait {trait}");
+                            return cast;
+                        }
+                        else
+                        {
+                            return cast;
+                        }
+                    }
+
+                case (PointerType t, PointerType f) when t.TargetType is AnyType:
+                    {
+                        MarkTypeAsRequiredAtRuntime(f.TargetType);
+                        return cast;
+                    }
+
+                case (PointerType t, PointerType f) when f.TargetType is TraitType trait:
+                    {
+                        if (!TypeHasTrait(t.TargetType, trait))
+                        {
+                            ReportError(cast, $"Can't convert from {f} to {t} because {t.TargetType} does not implement the trait {trait}");
+                            return cast;
+                        }
+                        else
+                        {
+                            return cast;
+                        }
+                    }
+
+                case (PointerType t, PointerType f) when f.TargetType is AnyType:
+                    {
+                        MarkTypeAsRequiredAtRuntime(f.TargetType);
+                        return cast;
+                    }
+
+                case (PointerType _, PointerType _):
+                    return cast;
+
+                // cast(&any) T
+                case (PointerType t, CheezType c) when t.TargetType is AnyType:
+                    {
+                        MarkTypeAsRequiredAtRuntime(c);
+                        return cast;
+                    }
+            }
+
             // check for trait cast
-            if (to is TraitType t)
+            if (to is TraitType traitType)
             {
                 if (!cast.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
@@ -1605,12 +1716,12 @@ namespace Cheez
                     return cast;
                 }
 
-                if (t.Declaration.FindMatchingImplementation(from) != null)
+                if (traitType.Declaration.FindMatchingImplementation(from) != null)
                     return cast;
 
-                if (t.Declaration.IsPolyInstance)
+                if (traitType.Declaration.IsPolyInstance)
                 {
-                    var impls = GetImplsForType(from, t);
+                    var impls = GetImplsForType(from, traitType);
 
                     if (impls.Count == 0)
                     {
@@ -1626,12 +1737,12 @@ namespace Cheez
                 }
                 else
                 {
-                    var template = t.Declaration.FindMatchingImplementation(from);
+                    var template = traitType.Declaration.FindMatchingImplementation(from);
                     if (template == null)
                     {
                         if (from is StructType str && str.Declaration.Extends != null)
                         {
-                            template = t.Declaration.FindMatchingImplementation(str.Declaration.Extends);
+                            template = traitType.Declaration.FindMatchingImplementation(str.Declaration.Extends);
                         }
 
                         if (template == null)
@@ -2230,6 +2341,108 @@ namespace Cheez
 
                         ReportError(expr, "Not inside of macro");
                         return expr;
+                    }
+
+                case "ptr_of_any":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@ptr_of_any takes 1 argument");
+                            return expr;
+                        }
+
+                        var val = InferArg(0, null);
+
+                        switch (val.Type)
+                        {
+                            case PointerType p when p.TargetType is AnyType:
+                            case ReferenceType r when r.TargetType is AnyType:
+                                break;
+
+                            default:
+                                ReportError(val, $"Argument must be of type '&any' or 'ref any', but is '{val.Type}'");
+                                return expr;
+                        }
+
+                        expr.Type = PointerType.GetPointerType(CheezType.Void);
+                        break;
+                    }
+
+                case "type_info_of_any":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@type_info_of_any takes 1 argument");
+                            return expr;
+                        }
+
+                        var val = InferArg(0, null);
+
+                        switch (val.Type)
+                        {
+                            case PointerType p when p.TargetType is AnyType:
+                            case ReferenceType r when r.TargetType is AnyType:
+                                break;
+
+                            default:
+                                ReportError(val, $"Argument must be of type '&any' or 'ref any', but is '{val.Type}'");
+                                return expr;
+                        }
+
+                        var typeInfo = GlobalScope.GetSymbol("TypeInfo") as AstConstantDeclaration;
+                        var type = typeInfo.Value as CheezType;
+                        expr.Type = PointerType.GetPointerType(type);
+                        break;
+                    }
+
+                case "ptr_of_trait":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@ptr_of_trait takes 1 argument");
+                            return expr;
+                        }
+
+                        var val = InferArg(0, null);
+
+                        switch (val.Type)
+                        {
+                            case PointerType p when p.TargetType is TraitType:
+                            case ReferenceType r when r.TargetType is TraitType:
+                                break;
+
+                            default:
+                                ReportError(val, $"Argument must be of type '&trait' or 'ref trait', but is '{val.Type}'");
+                                return expr;
+                        }
+
+                        expr.Type = PointerType.GetPointerType(CheezType.Void);
+                        break;
+                    }
+
+                case "vtable_of_trait":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@vtable_of_trait takes 1 argument");
+                            return expr;
+                        }
+
+                        var val = InferArg(0, null);
+
+                        switch (val.Type)
+                        {
+                            case PointerType p when p.TargetType is TraitType:
+                            case ReferenceType r when r.TargetType is TraitType:
+                                break;
+
+                            default:
+                                ReportError(val, $"Argument must be of type '&trait' or 'ref trait', but is '{val.Type}'");
+                                return expr;
+                        }
+
+                        expr.Type = PointerType.GetPointerType(CheezType.Void);
+                        break;
                     }
 
                 case "type_info":
@@ -3680,25 +3893,6 @@ namespace Cheez
                         return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
                     }
 
-                case AnyType _:
-                    {
-                        var name = expr.Right.Name;
-                        switch (name)
-                        {
-                            case "typ":
-                                expr.Type = PointerType.GetPointerType(GlobalScope.GetStruct("TypeInfo").StructType);
-                                break;
-                            case "val":
-                                expr.Type = PointerType.GetPointerType(CheezType.Void);
-                                break;
-
-                            default:
-                                return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
-                        }
-
-                        return expr;
-                    }
-
                 case RangeType range:
                     {
                         var name = expr.Right.Name;
@@ -4028,6 +4222,31 @@ namespace Cheez
             else
             {
                 expr.Type = TupleType.GetTuple(members);
+
+                foreach (var m in expr.Values)
+                {
+                    switch (m.Type)
+                    {
+                        case IntType _:
+                        case FloatType _:
+                        case BoolType _:
+                        case CharType _:
+                        case SliceType _:
+                        case StringType _:
+                        case ArrayType _:
+                        case StructType _:
+                        case EnumType _:
+                        case PointerType _:
+                        case ReferenceType _:
+                        case FunctionType _:
+                        case TupleType _:
+                            break;
+
+                        default:
+                            ReportError(m, $"A tuple member can't have type '{m.Type}'");
+                            break;
+                    }
+                }
             }
 
             return expr;
@@ -4661,6 +4880,11 @@ namespace Cheez
             if (expr.Arguments.Any(a => a.Type?.IsErrorType ?? false))
                 return expr;
             
+            if (polyTypes.TryGetValue("T", out var t) && t is TraitType)
+            {
+
+            }
+
             // find or create instance
             var instance = InstantiatePolyFunction(func, polyTypes, constArgs, context.newPolyFunctions, expr);
 
@@ -5315,14 +5539,32 @@ namespace Cheez
 
             switch (to, from)
             {
-                // TODO: only do this for implicit casts
-                case (CheezType t, _) when t == CheezType.Any:
-                    return InferType(cast, to);
-
+                // cast(int) enum
                 case (IntType i, EnumType e) when e.Declaration.TagType == i && e.Declaration.IsReprC:
                     return InferType(cast, to);
 
+                // cast(enum) int
                 case (EnumType e, IntType i) when e.Declaration.TagType == i && e.Declaration.IsReprC:
+                    return InferType(cast, to);
+
+                // cast(&trait) T
+                case (PointerType t, PointerType f) when t.TargetType is TraitType trait && TypeHasTrait(f.TargetType, trait):
+                    return InferType(cast, to);
+
+                // cast(ref trait) T
+                case (ReferenceType t, ReferenceType f) when t.TargetType is TraitType trait && TypeHasTrait(f.TargetType, trait):
+                    return InferType(cast, to);
+
+                // cast(&any) T
+                case (PointerType t, CheezType _) when t.TargetType is AnyType:
+                    return InferType(cast, to);
+
+                // cast(&any) &T
+                case (PointerType t, PointerType _) when t.TargetType is AnyType:
+                    return InferType(cast, to);
+
+                // cast(ref any) ref T
+                case (ReferenceType t, ReferenceType _) when t.TargetType is AnyType:
                     return InferType(cast, to);
             }
 
@@ -5350,7 +5592,7 @@ namespace Cheez
             if (to is FunctionType && from is PointerType p3 && p3.TargetType == CheezType.Void)
                 return InferType(cast, to);
 
-            if (to is TraitType trait)
+            if (to is TraitType)
             {
                 return InferType(cast, to);
             }

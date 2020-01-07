@@ -25,7 +25,7 @@ Material :: trait {
 
 //
 Lambertian :: struct {
-    albedo: Texture
+    albedo : &Texture
 }
 
 impl Material for Lambertian {
@@ -105,12 +105,12 @@ impl Material for Dielectric {
 CheckerMaterial :: struct {
     size: real
     off : vec3
-    even: Material
-    odd : Material
+    even: &Material
+    odd : &Material
 }
 
 impl CheckerMaterial {
-    create :: (size: real, off: vec3, even: Material, odd: Material) -> Material {
+    create :: (size: real, off: vec3, even: &Material, odd: &Material) -> &Material {
         return create_object(Material, CheckerMaterial(size=size, off=off, even=even, odd=odd))
     }
 }
@@ -124,7 +124,7 @@ impl Material for CheckerMaterial {
 
 // isotropic
 Isotropic :: struct {
-    albedo: Texture
+    albedo: &Texture
 }
 
 impl Material for Isotropic {

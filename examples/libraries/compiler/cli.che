@@ -142,12 +142,6 @@ CommandFindToken :: struct {
     suffix : Option[String] = None
 }
 
-impl TextProvider for Lexer {
-    get_text :: (ref Self, filename: string) -> string {
-        return text
-    }
-}
-
 find_tokens_of_type :: (options: &CommandFindToken) {
     console_error_handler := ConsoleErrorHandler.new(null)
     console_error_handler.code_color_error  = io.ConsoleColor.Green
@@ -161,7 +155,7 @@ find_tokens_of_type :: (options: &CommandFindToken) {
                 io.printfln("Failed to open file '{}'", options.file.slice())
                 return
             })
-    console_error_handler.text_provider = lexer
+    console_error_handler.text_provider = &lexer
 
     suffix, filter_suffix := match ref options.suffix {
         Some($str) -> str.slice(), true
@@ -193,13 +187,13 @@ command_project_new :: (options: &CommandProjectNew) {
 }
 
 command_project_new_program :: (options: &CommandProjectNew) {
-    create_dir :: (dir_format: string, dir_args: []any) #macro {
+    create_dir :: (dir_format: string, dir_args: []&any) #macro {
         dir := fmt.format(dir_format, dir_args)
         // io.printfln("Creating directory '{}'", dir.slice())
         fs.create_directory(dir.slice())
     }
 
-    create_file :: (path_format: string, path_args: []any, content_format: string, content_args: []any) {
+    create_file :: (path_format: string, path_args: []&any, content_format: string, content_args: []&any) {
         path    := fmt.format(path_format, path_args)
         content := fmt.format(content_format, content_args)
         // io.printfln("Creating file '{}'", path.slice())
@@ -257,7 +251,7 @@ command_compile :: (options: &CommandCompile) {
         io.printfln("parsing {}...", file.slice())
         match Lexer.from_file("../examples/test.che", string_db) {
             Ok($l) -> {
-                console_error_handler.text_provider = l
+                console_error_handler.text_provider = &l
                 parser := Parser.create(compiler, l)
                 start := get_time_milliseconds()
                 while true {

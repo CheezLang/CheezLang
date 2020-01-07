@@ -206,11 +206,9 @@ namespace Cheez
                 case ArrayType _:
                 case StructType _:
                 case EnumType _:
-                case TraitType _:
                 case PointerType _:
                 case ReferenceType _:
                 case FunctionType _:
-                case AnyType _:
                 case TupleType _:
                     break;
 

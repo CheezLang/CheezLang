@@ -178,6 +178,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             // generate code
             {
+                InitTypeInfoLLVMTypes();
                 GenerateVTables();
                 GenerateTypeInfos();
 

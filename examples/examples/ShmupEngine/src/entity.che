@@ -51,8 +51,8 @@ impl Entity {
         components.add(entry)
     }
 
-    add_component2 :: (ref Self, c: Component) {
-        ptr     := Traits.get_trait_object_value(c, ())
+    add_component2 :: (ref Self, c: &Component) {
+        ptr   := cast(&()) @ptr_of_trait(c)
         entry := ComponentData(
             component = c
             value     = Rc[()].from_pointer(ptr, false)

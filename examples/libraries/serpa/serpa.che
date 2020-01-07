@@ -14,7 +14,7 @@ use import compiler.string_database
 #export_scope
 
 IParser :: trait(T: type) {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T];
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[T];
 }
 
 Parser :: struct {
@@ -22,7 +22,7 @@ Parser :: struct {
 }
 
 impl Parser {
-    parse :: (ref Self, $T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
+    parse :: (ref Self, $T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[T] {
         if const @type_has_trait(T, IParser[T]) {
             return T.parse(self, lexer, error_handler)
         } else if const @is_struct(T) {
@@ -32,7 +32,7 @@ impl Parser {
         }
     }
 
-    parse_struct_into :: (ref Self, result: &$T, lexer: ref Lexer, error_handler: ErrorHandler) -> bool {
+    parse_struct_into :: (ref Self, result: &$T, lexer: ref Lexer, error_handler: &ErrorHandler) -> bool {
         eat_token :: (typ: TokenType) #macro {
             if (ok, t) := @link(lexer).expect_token(typ), ok {
                 t
@@ -121,7 +121,7 @@ impl Parser {
         return true
     }
 
-    parse_struct :: (ref Self, $T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
+    parse_struct :: (ref Self, $T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[T] {
         result := mem.alloc(T)
         defer mem.free(result)
         if !parse_struct_into(result, lexer, error_handler) {
@@ -133,89 +133,89 @@ impl Parser {
 
 // integer types
 impl IParser[i8] for i8 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 impl IParser[i16] for i16 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 impl IParser[i32] for i32 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 impl IParser[i64] for i64 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 // unsigned
 impl IParser[u8] for u8 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 impl IParser[u16] for u16 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 impl IParser[u32] for u32 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 impl IParser[u64] for u64 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_int(Self, lexer, error_handler)
     }
 }
 
 // char types
 impl IParser[char8] for char8 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_char(Self, lexer, error_handler)
     }
 }
 
 impl IParser[char16] for char16 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_char(Self, lexer, error_handler)
     }
 }
 
 impl IParser[char32] for char32 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_char(Self, lexer, error_handler)
     }
 }
 
 // float types
 impl IParser[f32] for f32 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_float(Self, lexer, error_handler)
     }
 }
 
 impl IParser[f64] for f64 {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_float(Self, lexer, error_handler)
     }
 }
 
 // bool
 impl IParser[bool] for bool {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         lexer.skip_newlines_and_comments()
         token := lexer.next_token()
         return match token.ttype {
@@ -231,20 +231,20 @@ impl IParser[bool] for bool {
 
 // strings
 impl IParser[string] for string {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_string(Self, lexer, error_handler)
     }
 }
 
 impl IParser[String] for String {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return parse_data_string(Self, lexer, error_handler)
     }
 }
 
 // rc
 impl(T: type) IParser[Rc[T]] for Rc[T] {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return match parser.parse(T, lexer, error_handler) {
             Some($i) -> Some(Rc[T].new(i))
             None -> None
@@ -254,7 +254,7 @@ impl(T: type) IParser[Rc[T]] for Rc[T] {
 
 // array
 impl(T: type) IParser[Array[T]] for Array[T] {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Array[T]] {
+    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Array[T]] {
         result := Array[T].create()
 
         lexer.skip_newlines_and_comments()
@@ -302,7 +302,7 @@ impl(T: type) IParser[Array[T]] for Array[T] {
 }
 
 #file_scope
-parse_data_float :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
+parse_data_float :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[T] {
     lexer.skip_newlines_and_comments()
     token := lexer.next_token()
 
@@ -332,7 +332,7 @@ parse_data_float :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) ->
     }
 }
 
-parse_data_char :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
+parse_data_char :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[T] {
     lexer.skip_newlines_and_comments()
     token := lexer.next_token()
     return match token.ttype {
@@ -357,7 +357,7 @@ parse_data_char :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> 
     }
 }
 
-parse_data_int :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
+parse_data_int :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[T] {
     lexer.skip_newlines_and_comments()
     token := lexer.next_token()
 
@@ -386,7 +386,7 @@ parse_data_int :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> O
     }
 }
 
-parse_data_string :: ($T: type, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[T] {
+parse_data_string :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[T] {
     lexer.skip_newlines_and_comments()
     token := lexer.next_token()
     return match token.ttype {

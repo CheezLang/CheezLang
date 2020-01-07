@@ -1,6 +1,6 @@
 use import std.string
 use import std.printable
-c   :: import std.c
+C   :: import std.c
 fmt :: import std.fmt
 
 use import std.os.windows

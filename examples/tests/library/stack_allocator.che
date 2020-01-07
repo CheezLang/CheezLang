@@ -12,7 +12,7 @@ Main :: () {
     sa := StackAllocator.create(1024)
     sa.print_diagnostics()
     
-    pa := alloc(int, sa)
+    pa := alloc(int, &sa)
     sa.print_diagnostics()
 
     <<pa = 5
@@ -21,7 +21,7 @@ Main :: () {
     io.println(<<pa)
 
     for i : 0..100 {
-        alloc(int, sa)
+        alloc(int, &sa)
     }
     sa.print_diagnostics()
 }

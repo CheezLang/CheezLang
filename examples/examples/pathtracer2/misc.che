@@ -9,10 +9,10 @@ use import std.random.mt
 
 #export_scope
 
-create_object :: ($T: type, val: $V) -> T {
+create_object :: ($T: type, val: $V) -> &T {
     mem := alloc(V)
     <<mem = val
-    return T(<<mem)
+    return mem
 }
 
 vec3 :: Vector3[real]

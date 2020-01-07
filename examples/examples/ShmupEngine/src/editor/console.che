@@ -60,11 +60,11 @@ impl Console {
         )
     }
 
-    log :: (ref Self, format: string, args: []any = []) {
+    log :: (ref Self, format: string, args: []&any = []) {
         add_entry(MessageType.Log, fmt.format(format, args))
     }
 
-    log_error :: (ref Self, format: string, args: []any = []) {
+    log_error :: (ref Self, format: string, args: []&any = []) {
         add_entry(MessageType.Error, fmt.format(format, args))
     }
 

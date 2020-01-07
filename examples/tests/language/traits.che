@@ -67,7 +67,7 @@ impl Test for S2 {
     }
 }
 
-test :: (t: Test) {
+test :: (t: &Test) {
     t.foo(123)
     t.print()
     C.puts("")
@@ -82,7 +82,7 @@ Main :: () {
 
     {
         tmp := S(5)
-        t : Test = tmp
+        t : &Test = &tmp
         t.foo(7)
         t.print()
         C.puts("")
@@ -90,7 +90,7 @@ Main :: () {
     
     {
         tmp := S(5)
-        t : Test2 = tmp
+        t : &Test2 = &tmp
         t.bar()
         t.print()
         C.puts("")
@@ -98,7 +98,7 @@ Main :: () {
     
     {
         tmp := S2("hello")
-        t : Test = tmp
+        t : &Test = &tmp
         t.foo(23)
         t.print()
         C.puts("")
@@ -107,11 +107,11 @@ Main :: () {
     {
         {
             tmp := S(1)
-            test(tmp)
+            test(&tmp)
         }
         {
             tmp := S2("zwei")
-            test(tmp)
+            test(&tmp)
         }
     }
 }

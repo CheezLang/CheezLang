@@ -25,12 +25,12 @@ use import "../shmup_engine"
 
 Hierarchy :: struct {
     engine                  : &ShmupEngine = null
-    layer                   : Layer = null
+    layer                   : &Layer = null
     current_entity_index    : i32 = 0
 }
 
 impl Hierarchy {
-    set_layer :: (ref Self, l: Layer) {
+    set_layer :: (ref Self, l: &Layer) {
         layer = l
     }
 
