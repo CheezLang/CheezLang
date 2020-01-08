@@ -29,9 +29,6 @@ max_entities :: 1024
 
 Test :: struct {
     layer : &EntityLayer = null
-
-    e               := Option[Rc[Entity]].None
-    mouse_pos_world := vec3()
 }
 
 impl EntityLayerCallbacks for Test {
@@ -44,34 +41,9 @@ impl EntityLayerCallbacks for Test {
     }
 
     update :: (ref Self, dt: float) {
-        mouse_pos := {
-            im_pos := ImGui.GetMousePos()
-            vec3(im_pos.x, im_pos.y, 0)
-        }
-
-        mouse_pos_world = layer.engine.game_viewport.screen_to_world(mouse_pos)
-
-
-        mouse_pos_screen := layer.engine.game_viewport.world_to_screen(mouse_pos_world)
-        // io.println(fmt.format_any(mouse_pos_screen))
     }
 
     render :: (ref Self, renderer: ref Renderer) {
-        // set aspect_ratio_axis so that the game world always fits on screen
-        viewport_ar := float(layer.engine.game_viewport.size.x) / float(layer.engine.game_viewport.size.y)
-        world_ar    := layer.engine.world_size.x / layer.engine.world_size.y
-        if viewport_ar > world_ar {
-            layer.engine.aspect_ratio_axis = 1
-        } else {
-            layer.engine.aspect_ratio_axis = 0
-        }
-
-        line_start_pos := match ref e {
-            Some($e) -> e.get().position
-            None -> vec3(-5, 0, 0)
-        }
-
-        renderer.draw_line(line_start_pos, mouse_pos_world, color = vec3(0, 1, 0), thickness = 2)
     }
 
     imgui_render :: (ref Self) {

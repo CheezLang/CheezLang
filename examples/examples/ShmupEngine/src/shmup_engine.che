@@ -95,9 +95,11 @@ impl EngineMode for EditMode {
                 layer.render(render_gizmos, renderer)
             }
             if render_gizmos {
+                view.begin_gizmos()
                 for layer : layer_stack {
                     layer.render_gizmos(renderer)
                 }
+                view.end_gizmos()
             }
             view.end_render()
         }
@@ -193,14 +195,11 @@ impl EngineMode for PlayMode {
         }
 
         //
-        update_layers := false
         for view : engine.active_game_views {
-            if view.update(!paused, engine.world_size) {
-                update_layers = true
-            }
+            view.update(!paused, engine.world_size)
         }
 
-        if update_layers {
+        if !paused {
             for layer : layer_stack {
                 layer.update(dt)
             }
@@ -214,9 +213,11 @@ impl EngineMode for PlayMode {
                 layer.render(render_gizmos, renderer)
             }
             if render_gizmos {
+                view.begin_gizmos()
                 for layer : layer_stack {
                     layer.render_gizmos(renderer)
                 }
+                view.end_gizmos()
             }
             view.end_render()
         }
@@ -259,8 +260,6 @@ Editor :: struct {
 
 ShmupEngine :: struct {
     // engine stuff
-    projection_matrix   := mat4.id()
-    aspect_ratio_axis   := 1.0f
     world_size          := vec3(10, 10, 0)
 
     current_engine_mode : &EngineMode = null
@@ -277,7 +276,6 @@ ShmupEngine :: struct {
     enabled_editors     : EnabledEditors = default
     current_fps         := 0
     current_frame_time  := 0.0
-    clear_color         := vec4(0, 0, 0, 1)
     properties_to_edit  := Array[PropertyEdit].create()
     inspector           : EntityInspector = default
     hierarchy           : Hierarchy = default
@@ -341,19 +339,37 @@ impl ShmupEngine {
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3)
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE)
         glfwWindowHint(GLFW_VISIBLE, 0)
-        glfwWindowHint(GLFW_MAXIMIZED, 1)
+        glfwWindowHint(GLFW_MAXIMIZED, 0)
         glfwWindowHint(GLFW_RESIZABLE, 1)
 
-        vidmode := glfwGetVideoMode(glfwGetPrimaryMonitor())
+        
+        monitor, monitor_pos := {
+            count := 0i32
+            monitors := glfwGetMonitors(&count)
+            if count == 0 {
+                io.println("[ERROR] No monitors found")
+                return
+            }
+
+            // use last monitor
+            monitor := monitors[count - 1]
+
+            monitor_pos := Vector2[i32]()
+            glfwGetMonitorPos(monitor, &monitor_pos.x, &monitor_pos.y)
+
+            monitor, monitor_pos
+        }
+        vidmode := glfwGetVideoMode(monitor)
         io.printfln("[LOG] primary monitor size: {} x {}", (vidmode.width, vidmode.height))
         glfw_window = glfwCreateWindow(vidmode.width, vidmode.height, "Hello World", null, null)
-        // glfw_window = glfwCreateWindow(1280, 720, "Hello World", null, null)
+        // glfw_window = glfwCreateWindow(100, 100, "Hello World", null, null)
         if glfw_window == null {
             io.println("[ERROR] Failed to create window")
             return
         }
         defer glfwDestroyWindow(glfw_window)
 
+        glfwSetWindowPos(glfw_window, monitor_pos.x + 100, monitor_pos.y + 100)
         glfwMakeContextCurrent(glfw_window)
         glfwSetWindowUserPointer(glfw_window, &self)
         glfwSwapInterval(if vsync_enabled then 1 else 0)
@@ -368,6 +384,7 @@ impl ShmupEngine {
         }
 
         glfwShowWindow(glfw_window)
+        glfwMaximizeWindow(glfw_window)
 
         // get initial size
         {
@@ -422,7 +439,7 @@ impl ShmupEngine {
         game_views[2] = &editor_window
         game_viewport = &game_window.viewport
 
-        active_game_views = @cast([]&GameView, game_views)[0..3]
+        active_game_views = @cast([]&GameView, game_views)[1..3]
 
         for view : @cast([]&GameView, game_views) {
             if !view.initialize(viewport_size_max) {
@@ -633,14 +650,12 @@ impl ShmupEngine {
                 if ImGui.Checkbox("VSync", &vsync_enabled) {
                     glfwSwapInterval(if vsync_enabled then 1 else 0)
                 }
-                ImGui.ColorEdit3("clear color", &clear_color.x, 0)
                 ImGui.ColorEdit3("play mode editor background", &editor_play_mode_color.x, 0)
                 ImGui.Separator()
 
                 // camera settings
                 ImGui.Text("Camera Settings")
                 ImGui.InputFloat2("World Size", &world_size.x)
-                ImGui.SliderFloat("Camera Aspect Ratio Axis", &aspect_ratio_axis, 0, 1)
             }
             ImGui.End()
         }
@@ -709,23 +724,12 @@ impl ShmupEngine {
         current_mode_base.layer_stack.add(ptr)
     }
 
-    update_projection_matrix :: (ref Self, viewport_size: vec2) {
-        size    := viewport_size.change_type(f32)
-
-        height1 := world_size.y
-        width1  := height1 * size.x / size.y
-
-        width2  := world_size.x
-        height2 := width2 * size.y / size.x
-
-        width   := aspect_ratio_axis * width1  + (1 - aspect_ratio_axis) * width2
-        height  := aspect_ratio_axis * height1 + (1 - aspect_ratio_axis) * height2
-
-        projection_matrix = mat4.orthographic(-width * 0.5, width * 0.5, -height * 0.5, height * 0.5, -10, 10)
-    }
-
     on_command :: (ref Self, cmd: ref Command) {
         match cmd {
+            Command.Echo($msg) -> {
+                console.get().log(msg.slice())
+            }
+
             Command.Quit -> {
                 glfwSetWindowShouldClose(glfw_window, 1)
             }
@@ -736,6 +740,17 @@ impl ShmupEngine {
 
             Command.StopPlayMode -> {
                 exit_play_mode()
+            }
+
+            Command.SetEditorMode($m) -> {
+                match m {
+                    CommandEditorMode.Single -> {
+                        active_game_views = @cast([]&GameView, game_views)[0..1]
+                    }
+                    CommandEditorMode.Double -> {
+                        active_game_views = @cast([]&GameView, game_views)[1..3]
+                    }
+                }
             }
 
             $c -> {

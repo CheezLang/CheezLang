@@ -164,7 +164,6 @@ impl Component for PathFollowComponent {
         }
 
 
-        ImGui.Begin("Scene")
         for i : 0 .. points.get_length() {
             p0 := points[i]
             d0 := dirs[i]
@@ -192,7 +191,6 @@ impl Component for PathFollowComponent {
                 ImGui.GetForegroundDrawList().AddRectFilled(min, max, ImGui.Color32(255, 0, 255))
             }
         }
-        ImGui.End()
     }
 
     get_type_info   :: (ref Self) -> &TypeInfo {

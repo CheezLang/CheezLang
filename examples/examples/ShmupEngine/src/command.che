@@ -1,4 +1,4 @@
-
+use import std.string
 
 
 #export_scope
@@ -19,4 +19,22 @@ Command :: enum {
     #name("stop")
     #help("Stop play mode")
     StopPlayMode
+
+    #name("set-editor-mode")
+    #help("Change the editor mode between two windows or one window")
+    SetEditorMode : CommandEditorMode
+
+    #name("echo")
+    #help("Prints the argument to the console")
+    Echo : String
+}
+
+CommandEditorMode :: enum {
+    #name("single")
+    #help("Only one game/scene view. In play mode when not paused it behaves like a game view, otherwise like a scene view")
+    Single
+
+    #name("double")
+    #help("Two separate game/scene views")
+    Double
 }
