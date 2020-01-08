@@ -62,12 +62,16 @@ glfwCreateWindow                :: (width: i32, height: i32, title: c_string, mo
 glfwDestroyWindow               :: (window: &GLFWwindow);
 glfwSetWindowShouldClose        :: (_window: &GLFWwindow, _value: i32) -> void;
 glfwShowWindow                  :: (windows: &GLFWwindow);
+glfwMaximizeWindow              :: (windows: &GLFWwindow);
 glfwWindowShouldClose           :: (window: &GLFWwindow) -> bool;
 glfwPollEvents                  :: ();
 glfwSwapBuffers                 :: (window: &GLFWwindow);
 glfwSwapInterval                :: (interval: i32);
 glfwGetVideoMode                :: (monitor: &GLFWmonitor) -> &GLFWvidmode;
 glfwGetPrimaryMonitor           :: () -> &GLFWmonitor;
+glfwGetMonitors                 :: (count: &i32) -> &&GLFWmonitor;
+glfwGetMonitorPos               :: (monitor: &GLFWmonitor, x: &i32, y: &i32);
+glfwSetWindowPos                :: (monitor: &GLFWwindow, x: i32, y: i32);
 glfwSetWindowTitle              :: (window: &GLFWwindow, title: c_string);
 glfwMakeContextCurrent          :: (window: &GLFWwindow);
 glfwGetCurrentContext           :: () -> &GLFWwindow;
