@@ -815,14 +815,14 @@ namespace Cheez
                         var args = new List<(CheezType type, object value)>();
 
                         // collect poly types
-                        var pt = new Dictionary<string, CheezType>();
+                        var pt = new Dictionary<string, (CheezType type, object value)>();
                         CollectPolyTypes(expr.Member.AssociatedType, expr.Argument.Type, pt);
 
                         foreach (var param in g.Declaration.Parameters)
                         {
                             if (pt.TryGetValue(param.Name.Name, out var t))
                             {
-                                args.Add((CheezType.Type, t));
+                                args.Add((CheezType.Type, t.value));
                             }
                         }
 
@@ -914,13 +914,13 @@ namespace Cheez
 
                 if (CheezType.TypesMatch(matchType, casType))
                 {
-                    var polyTypes = new Dictionary<string, CheezType>();
+                    var polyTypes = new Dictionary<string, (CheezType type, object value)>();
                     CollectPolyTypes(casType, matchType, polyTypes);
 
                     var subScope = new Scope("~", expr.Scope, expr.Scope);
-                    foreach (var (name, type) in polyTypes)
+                    foreach (var (name, value) in polyTypes)
                     {
-                        subScope.DefineLocalSymbol(new TypeSymbol(name, type));
+                        subScope.DefineLocalSymbol(new ConstSymbol(name, value.type, value.value));
                     }
                     cas.Body.Replace(expr, subScope);
                     return InferTypeHelper(cas.Body, expected, context);
@@ -1765,7 +1765,7 @@ namespace Cheez
                         }
                     }
 
-                    var polyTypes = new Dictionary<string, CheezType>();
+                    var polyTypes = new Dictionary<string, (CheezType type, object value)>();
                     CollectPolyTypes(template.TargetType, from, polyTypes);
                     if (polyTypes.Count > 0)
                         InstantiatePolyImplNew(template, polyTypes);
@@ -4518,15 +4518,21 @@ namespace Cheez
                 arg.SetFlag(ExprFlags.ValueRequired, true);
                 expr.Arguments[i] = arg = InferTypeHelper(arg, CheezType.Type, context);
 
-                if (arg.Type == CheezType.Type)
+                switch (arg.Type)
                 {
-                    var argType = arg.Value as CheezType;
-                    if (argType.IsPolyType) anyArgIsPoly = true;
-                }
-                else
-                {
-                    ReportError(arg, $"Non type arguments in poly struct type not implemented yet.");
-                    return expr;
+                    case IntType _:
+                    case FloatType _:
+                    case BoolType _:
+                    case CharType _:
+                        break;
+
+                    case CheezTypeType _:
+                        if ((arg.Value as CheezType).IsPolyType) anyArgIsPoly = true;
+                        break;
+
+                    default:
+                        ReportError(arg, $"Type {arg.Type} is not allowedin poly type instantiation");
+                        return expr;
                 }
             }
 
@@ -4805,7 +4811,7 @@ namespace Cheez
             }
 
             // collect polymorphic types and const arguments
-            var polyTypes = new Dictionary<string, CheezType>();
+            var polyTypes = new Dictionary<string, (CheezType type, object value)>();
             var constArgs = new Dictionary<string, (CheezType type, object value)>();
             var newArgs = new List<AstArgument>();
 
@@ -5700,6 +5706,10 @@ namespace Cheez
         {
             switch (type)
             {
+                case IntType _: return true;
+                case FloatType _: return true;
+                case BoolType _: return true;
+                case CharType _: return true;
                 case CheezTypeType _: return true;
 
                 default:

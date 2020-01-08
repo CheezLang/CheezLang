@@ -61,7 +61,7 @@ namespace Cheez
             return expr;
         }
 
-        public static void CollectPolyTypes(CheezType param, CheezType arg, Dictionary<string, CheezType> result)
+        public static void CollectPolyTypes(CheezType param, CheezType arg, Dictionary<string, (CheezType type, object value)> result)
         {
             switch (param)
             {
@@ -69,9 +69,9 @@ namespace Cheez
                     if (i.IsDeclaring && !result.ContainsKey(i.Name))
                     {
                         if (arg is ReferenceType r)
-                            result[i.Name] = r.TargetType;
+                            result[i.Name] = (CheezType.Type, r.TargetType);
                         else
-                            result[i.Name] = arg;
+                            result[i.Name] = (CheezType.Type, arg);
                     }
                     break;
 
@@ -121,7 +121,8 @@ namespace Cheez
                             {
                                 for (var i = 0; i < str.Arguments.Length; i++)
                                 {
-                                    CollectPolyTypes(str.Arguments[i], tt.Arguments[i], result);
+                                    if (str.Arguments[i] is CheezType a && tt.Arguments[i] is CheezType b)
+                                        CollectPolyTypes(a, b, result);
                                 }
                             }
                         }
@@ -136,7 +137,7 @@ namespace Cheez
                             {
                                 for (var i = 0; i < str.Arguments.Length; i++)
                                 {
-                                    CollectPolyTypes(str.Arguments[i], tt.Arguments[i], result);
+                                    CollectPolyTypes(str.Arguments[i] as CheezType, tt.Arguments[i] as CheezType, result);
                                 }
                             }
                         }
@@ -151,7 +152,7 @@ namespace Cheez
                             {
                                 for (var i = 0; i < str.Arguments.Length; i++)
                                 {
-                                    CollectPolyTypes(str.Arguments[i], tt.Arguments[i], result);
+                                    CollectPolyTypes(str.Arguments[i] as CheezType, tt.Arguments[i] as CheezType, result);
                                 }
                             }
                         }
@@ -206,8 +207,13 @@ namespace Cheez
         }
 
         // impl
-        private AstImplBlock InstantiatePolyImplNew(AstImplBlock decl, Dictionary<string, CheezType> args, ILocation location = null)
+        private AstImplBlock InstantiatePolyImplNew(AstImplBlock decl, Dictionary<string, (CheezType type, object value)> args, ILocation location = null)
         {
+            if (decl.Trait?.ToString() == "Iterator")
+            {
+
+            }
+
             AstImplBlock instance = null;
 
             // check for existing instance
@@ -249,7 +255,7 @@ namespace Cheez
 
                 foreach (var kv in args)
                 {
-                    instance.SubScope.DefineTypeSymbol(kv.Key, kv.Value);
+                    instance.SubScope.DefineConstant(kv.Key, kv.Value.type, kv.Value.value);
                 }
 
 
@@ -269,7 +275,7 @@ namespace Cheez
         // struct
         private AstFuncExpr InstantiatePolyImplFunction(
             GenericFunctionType func,
-            Dictionary<string, CheezType> polyTypes,
+            Dictionary<string, (CheezType type, object value)> polyTypes,
             ILocation location = null)
         {
             var impl = func.Declaration.ImplBlock;
@@ -279,7 +285,7 @@ namespace Cheez
 
         private AstFuncExpr InstantiatePolyFunction(
             GenericFunctionType func,
-            Dictionary<string, CheezType> polyTypes,
+            Dictionary<string, (CheezType type, object value)> polyTypes,
             Dictionary<string, (CheezType type, object value)> constArgs,
             List<AstFuncExpr> instances = null,
             ILocation location = null)
@@ -325,7 +331,7 @@ namespace Cheez
                     }
                     foreach (var pt in polyTypes)
                     {
-                        if (!(pi.PolymorphicTypes.TryGetValue(pt.Key, out var t) && t == pt.Value))
+                        if (!(pi.PolymorphicTypes.TryGetValue(pt.Key, out var t) && t.value == pt.Value.value))
                         {
                             eq = false;
                             break;
@@ -360,19 +366,14 @@ namespace Cheez
                 if (instance.ImplBlock != null)
                 {
                     var targetType = instance.ImplBlock.TargetType;
-                    var inst = InstantiatePolyType(targetType, polyTypes, location);
+                    var inst = InstantiatePolyType(targetType, polyTypes, location) as CheezType;
                     instance.ConstScope.DefineTypeSymbol("Self", inst);
                 }
 
                 foreach (var pt in constArgs)
-                {
                     instance.ConstScope.DefineConstant(pt.Key, pt.Value.type, pt.Value.value);
-                }
-
                 foreach (var pt in polyTypes)
-                {
-                    instance.ConstScope.DefineTypeSymbol(pt.Key, pt.Value);
-                }
+                    instance.ConstScope.DefineConstant(pt.Key, pt.Value.type, pt.Value.value);
 
                 foreach (var p in instance.Parameters)
                 {
@@ -440,28 +441,28 @@ namespace Cheez
             return instance;
         }
 
-        private CheezType InstantiatePolyType(CheezType poly, Dictionary<string, CheezType> concreteTypes, ILocation location)
+        private object InstantiatePolyType(object poly, Dictionary<string, (CheezType type, object value)> concreteTypes, ILocation location)
         {
-            if (!poly.IsPolyType)
+            if (poly is CheezType ttt && !ttt.IsPolyType)
                 return poly;
 
             switch (poly)
             {
                 case PolyType p:
-                    if (concreteTypes.TryGetValue(p.Name, out var t)) return t;
+                    if (concreteTypes.TryGetValue(p.Name, out var t)) return t.value;
                     return p;
 
                 case TupleType tuple:
                     {
-                        var args = tuple.Members.Select(m => (m.name, InstantiatePolyType(m.type, concreteTypes, location)));
+                        var args = tuple.Members.Select(m => (m.name, InstantiatePolyType(m.type, concreteTypes, location) as CheezType));
                         return TupleType.GetTuple(args.ToArray());
                     }
 
                 case StructType s:
                     {
-                        if (s.Declaration.Template != null)
-                            throw new Exception("must be null");
-                        var args = s.Arguments.Select(a => (CheezType.Type, (object)InstantiatePolyType(a, concreteTypes, location))).ToList();
+                        //if (s.Declaration.Template != null)
+                        //    throw new Exception("must be null");
+                        var args = s.Arguments.Select(a => (CheezType.Type, InstantiatePolyType(a, concreteTypes, location))).ToList();
                         //var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
                         var instance = InstantiatePolyStruct(s.Declaration, args, location: location);
                         return instance.StructType;
@@ -469,8 +470,8 @@ namespace Cheez
 
                 case TraitType s:
                     {
-                        if (s.Declaration.Template != null)
-                            throw new Exception("must be null");
+                        //if (s.Declaration.Template != null)
+                        //    throw new Exception("must be null");
 
                         if (s.Arguments.Count() != s.Declaration.Parameters.Count())
                             throw new Exception("argument count must match");
@@ -484,15 +485,18 @@ namespace Cheez
 
                 case EnumType s:
                     {
-                        if (s.Declaration.Template != null)
-                            throw new Exception("must be null");
-                        var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
+                        //if (s.Declaration.Template != null)
+                        //    throw new Exception("must be null");
+                        var args = s.Declaration.Parameters.Select(p => (p.Type, concreteTypes[p.Name.Name].value)).ToList();
                         var instance = InstantiatePolyEnum(s.Declaration, args, location: location);
                         return instance.EnumType;
                     }
 
                 case PointerType p:
-                    return PointerType.GetPointerType(InstantiatePolyType(p.TargetType, concreteTypes, location));
+                    return PointerType.GetPointerType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType);
+
+                case ReferenceType p:
+                    return ReferenceType.GetRefType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType);
 
                 default: throw new NotImplementedException();
             }

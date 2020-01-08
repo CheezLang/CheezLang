@@ -707,6 +707,10 @@ namespace Cheez
 
         public (bool ok, ILocation? other) DefineSymbol(ISymbol symbol, string? name = null)
         {
+            if (symbol is ConstSymbol c && !(c.Value is CheezType))
+            {
+
+            }
             if (TransparentParent != null)
                 return TransparentParent.DefineSymbol(symbol, name);
 
@@ -721,6 +725,10 @@ namespace Cheez
 
         public (bool ok, ILocation? other) DefineConstant(string name, CheezType type, object value)
         {
+            if (name == "Tuiae")
+            {
+
+            }
             return DefineSymbol(new ConstSymbol(name, type, value));
         }
 

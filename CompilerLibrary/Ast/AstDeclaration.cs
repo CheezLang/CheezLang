@@ -156,7 +156,7 @@ namespace Cheez.Ast.Statements
         public AstFuncExpr TraitFunction { get; internal set; }
         public ILocation ParameterLocation { get; internal set; }
 
-        public Dictionary<string, CheezType> PolymorphicTypes { get; internal set; }
+        public Dictionary<string, (CheezType type, object value)> PolymorphicTypes { get; internal set; }
         public Dictionary<string, (CheezType type, object value)> ConstParameters { get; internal set; }
 
         public bool IsGeneric { get; set; } = false; // @todo: remove or rename this?

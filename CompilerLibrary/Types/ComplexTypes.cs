@@ -27,16 +27,16 @@ namespace Cheez.Types.Complex
         public AstTraitTypeExpr Declaration { get; }
         public AstTraitTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
-        public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
-        public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
+        public override bool IsErrorType => Arguments.Any(a => (a as CheezType).IsErrorType);
+        public override bool IsPolyType => Arguments.Any(a => (a as CheezType).IsPolyType);
 
-        public CheezType[] Arguments { get; }
+        public object[] Arguments { get; }
 
-        public TraitType(AstTraitTypeExpr decl, CheezType[] args = null)
+        public TraitType(AstTraitTypeExpr decl, object[] args = null)
             : base(0, 0, false)
         {
             Declaration = decl;
-            Arguments = args ?? decl.Parameters?.Select(p => p.Value as CheezType)?.ToArray() ?? Array.Empty<CheezType>();
+            Arguments = args ?? decl.Parameters?.Select(p => p.Value)?.ToArray() ?? Array.Empty<object>();
         }
         
         public override string ToString()
@@ -49,7 +49,7 @@ namespace Cheez.Types.Complex
             return $"{Declaration.Name}";
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is TraitType str)
             {
@@ -59,7 +59,7 @@ namespace Cheez.Types.Complex
                 int score = 0;
                 for (int i = 0; i < Arguments.Length; i++)
                 {
-                    int s = this.Arguments[i].Match(str.Arguments[i], polyTypes);
+                    int s = (this.Arguments[i] as CheezType).Match(str.Arguments[i] as CheezType, polyTypes);
                     if (s == -1)
                         return -1;
                     score += s;
@@ -150,18 +150,18 @@ namespace Cheez.Types.Complex
         //public AstStructDecl Declaration { get; }
         public string Name { get; }
         public AstStructTypeExpr Declaration { get; }
-        public CheezType[] Arguments { get; }
-        public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
-        public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
+        public object[] Arguments { get; }
+        public override bool IsErrorType => Arguments.Any(a => a is CheezType t && t.IsErrorType);
+        public override bool IsPolyType => Arguments.Any(a => a is CheezType t && t.IsPolyType);
         public override bool IsCopy { get; }
         public AstStructTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
-        public StructType(AstStructTypeExpr decl, bool isCopy, string name, CheezType[] args = null)
+        public StructType(AstStructTypeExpr decl, bool isCopy, string name, object[] args = null)
         {
             Declaration = decl;
             IsCopy = isCopy;
             Name = name;
-            Arguments = args ?? decl.Parameters.Select(p => p.Value as CheezType).ToArray();
+            Arguments = args ?? decl.Parameters.Select(p => p.Value).ToArray();
         }
 
         public override string ToString()
@@ -201,7 +201,7 @@ namespace Cheez.Types.Complex
             return false;
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is StructType str)
             {
@@ -211,7 +211,7 @@ namespace Cheez.Types.Complex
                 int score = 0;
                 for (int i = 0; i < Arguments.Length; i++)
                 {
-                    int s = this.Arguments[i].Match(str.Arguments[i], polyTypes);
+                    int s = (this.Arguments[i] as CheezType).Match(str.Arguments[i] as CheezType, polyTypes);
                     if (s == -1)
                         return -1;
                     score += s;
@@ -226,7 +226,7 @@ namespace Cheez.Types.Complex
         {
             var hashCode = 1624555593;
             hashCode = hashCode * -1521134295 + base.GetHashCode();
-            hashCode = hashCode * -1521134295 + EqualityComparer<CheezType[]>.Default.GetHashCode(Arguments);
+            hashCode = hashCode * -1521134295 + EqualityComparer<object[]>.Default.GetHashCode(Arguments);
             return hashCode;
         }
     }
@@ -237,19 +237,19 @@ namespace Cheez.Types.Complex
         //public AstEnumDecl Declaration { get; set; }
 
         //public Dictionary<string, long> Members { get; private set; }
-        public CheezType[] Arguments { get; }
-        public override bool IsErrorType => Arguments.Any(a => a.IsErrorType);
-        public override bool IsPolyType => Arguments.Any(a => a.IsPolyType);
+        public object[] Arguments { get; }
+        public override bool IsErrorType => Arguments.Any(a => (a as CheezType).IsErrorType);
+        public override bool IsPolyType => Arguments.Any(a => (a as CheezType).IsPolyType);
 
         public AstEnumTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
         public override bool IsCopy { get; }
 
-        public EnumType(AstEnumTypeExpr en, bool isCopy, CheezType[] args = null) : base(false)
+        public EnumType(AstEnumTypeExpr en, bool isCopy, object[] args = null) : base(false)
         {
             Declaration = en;
             IsCopy = isCopy;
-            Arguments = args ?? en.Parameters.Select(p => p.Value as CheezType).ToArray();
+            Arguments = args ?? en.Parameters.Select(p => p.Value).ToArray();
         }
 
         public override string ToString()
@@ -262,7 +262,7 @@ namespace Cheez.Types.Complex
             return $"{Declaration.Name}";
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is EnumType str)
             {
@@ -272,7 +272,7 @@ namespace Cheez.Types.Complex
                 int score = 0;
                 for (int i = 0; i < Arguments.Length; i++)
                 {
-                    int s = this.Arguments[i].Match(str.Arguments[i], polyTypes);
+                    int s = (this.Arguments[i] as CheezType).Match(str.Arguments[i] as CheezType, polyTypes);
                     if (s == -1)
                         return -1;
                     score += s;

@@ -121,7 +121,7 @@ namespace Cheez.Types
             return base.GetHashCode();
         }
 
-        public virtual int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public virtual int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ReferenceType r)
                 concrete = r.TargetType;
@@ -167,7 +167,7 @@ namespace Cheez.Types
                     return false;
                 for (int i = 0; i < sa.Arguments.Length; i++)
                 {
-                    if (!TypesMatch(sa.Arguments[i], sb.Arguments[i]))
+                    if (!TypesMatch(sa.Arguments[i] as CheezType, sb.Arguments[i] as CheezType))
                         return false;
                 }
 
@@ -181,7 +181,7 @@ namespace Cheez.Types
                     return false;
                 for (int i = 0; i < ta.Arguments.Length; i++)
                 {
-                    if (!TypesMatch(ta.Arguments[i], tb.Arguments[i]))
+                    if (!TypesMatch(ta.Arguments[i] as CheezType, tb.Arguments[i] as CheezType))
                         return false;
                 }
 
@@ -195,7 +195,7 @@ namespace Cheez.Types
                     return false;
                 for (int i = 0; i < ea.Arguments.Length; i++)
                 {
-                    if (!TypesMatch(ea.Arguments[i], eb.Arguments[i]))
+                    if (!TypesMatch(ea.Arguments[i] as CheezType, eb.Arguments[i] as CheezType))
                         return false;
                 }
 

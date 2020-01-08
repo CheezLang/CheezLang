@@ -300,7 +300,7 @@ namespace Cheez
 
         public int Accepts(CheezType sub)
         {
-            Dictionary<string, CheezType> polyTypes = null;
+            Dictionary<string, (CheezType type, object value)> polyTypes = null;
 
             // TODO: necessary?
             //if (SubExprType.IsPolyType)
@@ -338,11 +338,11 @@ namespace Cheez
 
         public int Accepts(CheezType lhs, CheezType rhs)
         {
-            Dictionary<string, CheezType> polyTypes = null;
+            Dictionary<string, (CheezType type, object value)> polyTypes = null;
 
             if (LhsType.IsPolyType || RhsType.IsPolyType)
             {
-                polyTypes = new Dictionary<string, CheezType>();
+                polyTypes = new Dictionary<string, (CheezType type, object value)>();
                 Workspace.CollectPolyTypes(LhsType, lhs, polyTypes);
                 Workspace.CollectPolyTypes(RhsType, rhs, polyTypes);
             }
@@ -382,7 +382,7 @@ namespace Cheez
             if (types.Length != ArgTypes.Length)
                 return -1;
 
-            var polyTypes = new Dictionary<string, CheezType>();
+            var polyTypes = new Dictionary<string, (CheezType type, object value)>();
 
             for (int i = 0; i < ArgTypes.Length; i++)
             {

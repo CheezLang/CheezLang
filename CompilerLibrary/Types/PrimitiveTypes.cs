@@ -71,7 +71,7 @@ namespace Cheez.Types.Primitive
             return (Signed ? "i" : "u") + (GetSize() * 8);
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ReferenceType r)
                 concrete = r.TargetType;
@@ -143,7 +143,7 @@ namespace Cheez.Types.Primitive
             return "f" + (GetSize() * 8);
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ReferenceType r)
                 concrete = r.TargetType;
@@ -242,7 +242,7 @@ namespace Cheez.Types.Primitive
             return false;
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ReferenceType r)
                 concrete = r.TargetType;
@@ -301,7 +301,7 @@ namespace Cheez.Types.Primitive
             return $"ref {TargetType}";
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ReferenceType p)
                 return this.TargetType.Match(p.TargetType, polyTypes);
@@ -366,7 +366,7 @@ namespace Cheez.Types.Primitive
             return PointerType.GetPointerType(TargetType);
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ArrayType p && Length == p.Length)
                 return this.TargetType.Match(p.TargetType, polyTypes);
@@ -429,7 +429,7 @@ namespace Cheez.Types.Primitive
             return PointerType.GetPointerType(TargetType);
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ReferenceType r)
                 concrete = r.TargetType;
@@ -487,7 +487,7 @@ namespace Cheez.Types.Primitive
             return $"{TargetType}..{TargetType}";
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is RangeType p)
                 return this.TargetType.Match(p.TargetType, polyTypes);
@@ -548,7 +548,7 @@ namespace Cheez.Types.Primitive
             return "char" + (GetSize() * 8);
         }
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ReferenceType r)
                 concrete = r.TargetType;

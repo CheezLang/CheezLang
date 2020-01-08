@@ -300,6 +300,10 @@ namespace Cheez
             // instatiate type
             if (instance == null)
             {
+                if (decl.Name == "Option")
+                {
+
+                }
                 instance = decl.Clone() as AstEnumTypeExpr;
                 instance.SubScope = new Scope($"enum {decl.Name}<poly>", instance.Scope);
                 instance.IsPolyInstance = true;
@@ -318,7 +322,7 @@ namespace Cheez
                     param.Value = arg.value;
 
                     // TODO: non type parameters
-                    instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
+                    instance.SubScope.DefineConstant(param.Name.Name, arg.type, arg.value);
                 }
 
                 instance = InferType(instance, null) as AstEnumTypeExpr;
