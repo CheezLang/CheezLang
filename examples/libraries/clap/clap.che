@@ -12,6 +12,70 @@ indent_size         :: 2
 
 #export_scope
 
+parse_arguments_from_string :: ($T: type, str: string) -> &T {
+    args := Array[String].create()
+
+    State :: enum #copy {
+        Unquoted, Whitespace, Escaped, Quoted
+    }
+    use State
+    state := Whitespace
+    start := 0
+
+    current := String.empty()
+
+    for c : str {
+        match state, c {
+            (Escaped, $c) -> {
+                state = Quoted
+                current += c
+            }
+
+            (Unquoted, $c) if char.is_whitespace(c) -> {
+                args.add(current.clone())
+                current.clear()
+                state = Whitespace
+            }
+            (Unquoted, $c) -> {
+                current += c
+            }
+
+            (Whitespace, '"') -> {
+                state = Quoted
+            }
+            (Whitespace, $c) if !char.is_whitespace(c) -> {
+                current += c
+                state = Unquoted
+            }
+
+            (Quoted, '"') -> {
+                args.add(current.clone())
+                current.clear()
+                state = Whitespace
+            }
+
+            (Quoted, '``') -> {
+                state = Escaped
+            }
+
+            (Quoted, $c) -> {
+                current += c
+            }
+        }
+    }
+
+    if state == Unquoted {
+        // bytes := str.bytes[start .. str.bytes.length]
+        // args.add(String.from_string(string(bytes.data, bytes.length)))
+        args.add(current.clone())
+        current.clear()
+    }
+
+    // io.println(fmt.format("===`n{}`n===", [args.slice()]))
+
+    return parse_arguments(T, args.slice())
+}
+
 parse_arguments :: ($T: type, args: []String) -> &T {
     result := alloc(T)
     ok := parse_arguments_help(@type_info(T), args, result)
