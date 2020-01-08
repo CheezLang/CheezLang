@@ -1209,7 +1209,7 @@ namespace Cheez
                                 {
                                     if (call.Arguments.Count == 1 && call.Arguments[0].Expr is AstIdExpr id && (id.IsPolymorphic || id.Name == "_"))
                                     {
-                                        AstExpression cast = new AstCastExpr(new AstTypeRef(ReferenceType.GetRefType(str)), value);
+                                        AstExpression cast = new AstCastExpr(new AstTypeRef(ReferenceType.GetRefType(str), value.Location), value, value.Location);
                                         cast.Replace(value);
                                         cast = InferType(cast, null);
 
@@ -1701,6 +1701,16 @@ namespace Cheez
                         MarkTypeAsRequiredAtRuntime(c);
                         return cast;
                     }
+
+                case (ReferenceType t, ReferenceType f) 
+                    when t.TargetType is StructType ts && f.TargetType is StructType fs
+                    && fs.Declaration.Extends == ts:
+                    return cast;
+
+                case (ReferenceType t, ReferenceType f)
+                    when t.TargetType is StructType ts && f.TargetType is StructType fs
+                    && ts.Declaration.Extends == fs:
+                    return cast;
             }
 
             // check for trait cast
@@ -1824,14 +1834,6 @@ namespace Cheez
                 var mem = cast.SubExpression as AstEnumValueExpr;
                 if (mem != null)
                     cast.Value = mem.Member.Value;
-                return cast;
-            }
-
-            else if (to is ReferenceType && from is ReferenceType)
-            {
-                bool fromIsLValue = cast.SubExpression.GetFlag(ExprFlags.IsLValue);
-                Debug.Assert(fromIsLValue);
-                cast.SetFlag(ExprFlags.IsLValue, true);
                 return cast;
             }
 
@@ -4155,14 +4157,13 @@ namespace Cheez
                 //     ReportError(expr.Left, $"Invalid value on left side of '.': '{expr.Left.Value}'");
                 //     break;
 
-                // case CheezType c when expr.IsDoubleColon:
-                //     {
-                //         var name = expr.Right.Name;
-                //         return GetImplFunctions(expr, c, name, context);
-                //     }
+                case CheezType c:
+                    {
+                        var name = expr.Right.Name;
+                        return GetImplFunctions(expr, c, name, context);
+                    }
 
-                case ErrorType _: return expr;
-                default: ReportError(expr, $"Invalid expression on left side of '.' (type is {expr.Type})"); break;
+                default: ReportError(expr, $"Invalid expression on left side of '.' (type is {expr.Left.Type})"); break;
             }
 
             return expr;
@@ -4880,11 +4881,6 @@ namespace Cheez
             if (expr.Arguments.Any(a => a.Type?.IsErrorType ?? false))
                 return expr;
             
-            if (polyTypes.TryGetValue("T", out var t) && t is TraitType)
-            {
-
-            }
-
             // find or create instance
             var instance = InstantiatePolyFunction(func, polyTypes, constArgs, context.newPolyFunctions, expr);
 

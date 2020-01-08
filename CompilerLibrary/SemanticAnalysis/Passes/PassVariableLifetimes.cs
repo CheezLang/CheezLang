@@ -782,6 +782,9 @@ namespace Cheez
             var symStatTableIf = new SymbolStatusTable(parent);
             var symStatTableElse = new SymbolStatusTable(parent);
 
+            if (!PassVLExpr(expr.Condition, parent))
+                return false;
+
             expr.IfCase.SetFlag(ExprFlags.DontApplySymbolStatuses, true);
             expr.ElseCase.SetFlag(ExprFlags.DontApplySymbolStatuses, true);
             var result = PassVLExpr(expr.IfCase, symStatTableIf);

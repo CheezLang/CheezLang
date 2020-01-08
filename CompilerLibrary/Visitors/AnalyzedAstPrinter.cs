@@ -122,7 +122,7 @@ namespace Cheez.Visitors
             }
             else
             {
-                var body = string.Join("\n", str.Members.Select(m => m.Decl.Accept(this)));
+                var body = string.Join("\n", str.Declarations.Select(m => m.Accept(this)));
                 var head = $"struct ";
 
                 var sb = new StringBuilder();

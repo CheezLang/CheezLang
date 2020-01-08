@@ -38,6 +38,8 @@ namespace Cheez.Util
 
         public static int GetNextAligned(int size, int align)
         {
+            if (align == 0)
+                return size;
             int mul = size + align - 1;
             mul -= (mul % align);
             return mul;

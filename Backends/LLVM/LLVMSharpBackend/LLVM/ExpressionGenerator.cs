@@ -839,6 +839,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case (PointerType t, PointerType f) when !t.IsFatPointer && !f.IsFatPointer:
                     return builder.CreatePointerCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
 
+                case (ReferenceType t, PointerType f) when t.TargetType == f.TargetType && t.IsFatReference:
+                    {
+                        var v = GenerateExpression(cast.SubExpression, true);
+                        var result = builder.CreateBitCast(v, CheezTypeToLLVMType(t), "");
+                        return result;
+                    }
+
                 case (PointerType t, PointerType f) when t.TargetType is TraitType trait:
                     {
                         var v = GenerateExpression(cast.SubExpression, true);
@@ -1066,17 +1073,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
 
             throw new NotImplementedException();
-        }
-
-        private LLVMValueRef GenerateDerefExpr(AstDereferenceExpr de, bool deref)
-        {
-            var ptr = GenerateExpression(de.SubExpression, true);
-
-            if (!deref) return ptr;
-
-            var sub = builder.CreateLoad(ptr, "");
-
-            return sub;
         }
 
         private static Func<LLVMBuilderRef, LLVMValueRef, LLVMValueRef, string, LLVMValueRef> GetICompare(LLVMIntPredicate pred)
@@ -1534,8 +1530,32 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return result;
         }
 
+        private LLVMValueRef GenerateDerefExpr(AstDereferenceExpr de, bool deref)
+        {
+            var ptr = GenerateExpression(de.SubExpression, true);
+
+            if (!deref) return ptr;
+
+            var sub = builder.CreateLoad(ptr, "");
+
+            return sub;
+        }
+
         private LLVMValueRef GenerateAddressOf(AstAddressOfExpr ao)
         {
+            if (ao.Type is ReferenceType r
+                && r.IsFatReference
+                && ao.SubExpression is AstDereferenceExpr d
+                && d.SubExpression.Type is PointerType)
+            {
+                var v = GenerateExpression(ao.SubExpression, false);
+                var result = LLVM.GetUndef(CheezTypeToLLVMType(ao.Type));
+                var data = builder.CreateExtractValue(v, 0, "");
+                var vtableOrTypeInfo = builder.CreateExtractValue(v, 1, "");
+                result = builder.CreateInsertValue(result, data, 0, "");
+                result = builder.CreateInsertValue(result, vtableOrTypeInfo, 1, "");
+                return result;
+            }
             var ptr = GenerateExpression(ao.SubExpression, false);
             return ptr;
         }
