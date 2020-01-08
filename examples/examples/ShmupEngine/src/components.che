@@ -26,7 +26,7 @@ use import math
 
 ComponentInfo :: struct {
     type_info   : &TypeInfo
-    value       : &void
+    value       : &Component
 }
 
 Component :: trait {
@@ -35,30 +35,6 @@ Component :: trait {
     render_gizmos   :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer);
     get_type_info   :: (ref Self) -> &TypeInfo;
     serialize       :: (ref Self, stream: ref String);
-}
-
-ComponentData :: struct {
-    component : &Component
-    value     : Rc[()]
-    type_info : &TypeInfo
-}
-
-impl ComponentData {
-    from_raw :: (type_info: &TypeInfo, vtable: &void, rc: Rc[()]) -> ComponentData {
-        component := Traits.from_vtable_and_pointer(Component, vtable, &rc.get())
-        return ComponentData(component, rc, type_info)
-    }
-
-    clone2 :: (ref Self, to: Rc[()]) -> ComponentData {
-        value_ptr := @ptr_of_trait(component)
-        vtable    := @vtable_of_trait(component)
-        C.memcpy(&to.get(), &value_ptr, cast type_info.size)
-        return ComponentData.from_raw(type_info, vtable, to)
-    }
-
-    clone :: (ref Self) -> ComponentData {
-        return ComponentData(component, value.clone(), type_info)
-    }
 }
 
 PathFollowComponent :: struct {
@@ -79,7 +55,7 @@ impl Handle {
     mouse_pos :: () -> vec3 {
         window  := ImGui.GetWindowPos()
         mouse   := ImGui.GetMousePos()
-        return vec3(mouse.x, mouse.y)// - vec3(window.x, window.y)
+        return vec3(mouse.x, mouse.y)
     }
 
     mouse_pressed :: () -> bool {
@@ -318,8 +294,8 @@ impl Component for QuadComponent {
     }
 }
 
-impl serpa.IParser[ComponentData] for ComponentData {
-    parse :: (parser: ref serpa.Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[ComponentData] {
+impl serpa.IParser[Rc[Component]] for Rc[Component] {
+    parse :: (parser: ref serpa.Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         eat_token :: (typ: TokenType) #macro {
             if (ok, t) := @link(lexer).expect_token(typ), ok {
                 t
@@ -342,12 +318,8 @@ impl serpa.IParser[ComponentData] for ComponentData {
                     return None
                 }
 
-                ptr := Rc[T].from_pointer(result, true)
-                return Some(ComponentData(
-                    &ptr.get()
-                    ptr.change_type(())
-                    @type_info(T)
-                ))
+                ptr := Rc[Component].from_pointer(result, true)
+                return Some(ptr)
             }
         })
 

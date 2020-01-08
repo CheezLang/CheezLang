@@ -20,54 +20,30 @@ Entity :: struct {
     position    := vec3(0, 0, 0)
     size        := vec3(1, 1, 1)
     angle       := 0.0f
-    components  := Array[ComponentData].create()
+    components  := Array[Rc[Component]].create()
 }
 
 impl Entity {
     update :: (ref Self, layer: ref EntityLayer, dt: float) {
         for components {
-            it.component.update(self, layer, dt)
+            it.get().update(self, layer, dt)
         }
     }
 
     render :: (ref Self, engine: ref ShmupEngine, renderer: ref Renderer) {
         for components {
-            it.component.render(self, engine, renderer)
+            it.get().render(self, engine, renderer)
         }
     }
 
     render_gizmos :: (ref Self, engine: ref ShmupEngine, renderer: ref Renderer) {
         for components {
-            it.component.render_gizmos(self, engine, renderer)
+            it.get().render_gizmos(self, engine, renderer)
         }
     }
 
-    add_component :: (ref Self, component: Rc[$T]) {
-        entry := ComponentData(
-            component = Component(component.get())
-            value     = component.change_type(())
-            type_info = @type_info(T)
-        )
-        components.add(entry)
-    }
-
-    add_component2 :: (ref Self, c: &Component) {
-        ptr   := cast(&()) @ptr_of_trait(c)
-        entry := ComponentData(
-            component = c
-            value     = Rc[()].from_pointer(ptr, false)
-            type_info = c.get_type_info()
-        )
-        components.add(entry)
-    }
-
-    add_component3 :: (ref Self, vtable: &void, rc: Rc[()], type_info: &TypeInfo) {
-        entry := ComponentData(
-            component = Traits.from_vtable_and_pointer(Component, vtable, &rc.get())
-            value     = rc
-            type_info = type_info
-        )
-        components.add(entry)
+    add_component :: (ref Self, component: Rc[Component]) {
+        components.add(component)
     }
 }
 

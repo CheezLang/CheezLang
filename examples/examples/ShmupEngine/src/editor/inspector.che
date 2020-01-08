@@ -14,6 +14,7 @@ ImGui :: import imgui.imgui_binding
 use import "../math"
 use import "../entity"
 use import "../components"
+use import "../layer"
 use import "../input"
 use import "../renderer"
 use import "../shmup_engine"
@@ -81,8 +82,8 @@ impl EntityInspector {
                 index := i
 
                 ImGui.PushIDInt(i32(i))
-                it := ref entity.components[i]
-                if !render_component_inspector(it) {
+                component := entity.components[i].clone()
+                if !render_component_inspector(component) {
                     ImGui.OpenPopup("Delete Component")
                 } else {
                     i += 1
@@ -101,7 +102,7 @@ impl EntityInspector {
                         }
                         // pop last component which is now in the second last slot
                         last := entity.components.pop()
-                        io.println(last.value.count())
+                        io.println(last.count())
                     }
                     ImGui.SameLine()
                     if ImGui.Button("Cancel", button_size) {
@@ -154,7 +155,7 @@ impl EntityInspector {
                             for(by_ref=true) m : bi.type_info.kind.Struct.members {
                                 name := String.with_capacity(m.name.bytes.length + 1)
                                 name.append_string(m.name)
-                                imgui_input_property(name, util.pointer_add(bi.value, m.offset), m.typ, &m)
+                                imgui_input_property(name, util.pointer_add(@ptr_of_trait(bi.value), m.offset), m.typ, &m)
                             }
                         }
 
@@ -166,16 +167,10 @@ impl EntityInspector {
                         if ImGui.Button("Ok", button_size) {
                             if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
                                 // add component
-                                bi := ref component_infos.access(current_selected_component)
-                                ptr := cast(&void) mem.alloc_raw(u8, cast bi.type_info.size)
-                                C.memcpy(ptr, bi.value, cast bi.type_info.size)
-
-                                Trait :: struct {
-                                    value   : &void
-                                    v_table : &void
-                                }
-                                b := Traits.from_vtable_and_pointer(Component, bi.type_info.kind.Struct.get_trait_impl(Component).vtable, ptr)
-                                entity.add_component2(b)
+                                bi := ref component_infos[int(current_selected_component)]
+                                component := EntityLayer.alloc_component(bi.type_info, @vtable_of_trait(bi.value))
+                                C.memcpy(@ptr_of_trait(component.get()), @ptr_of_trait(bi.value), cast bi.type_info.size)
+                                entity.add_component(component)
                             }
 
                             ImGui.CloseCurrentPopup()
@@ -193,8 +188,8 @@ impl EntityInspector {
         ImGui.End()
     }
 
-    render_component_inspector :: (ref Self, component_data: ref ComponentData) -> bool {
-        ti := component_data.type_info
+    render_component_inspector :: (ref Self, component: Rc[Component]) -> bool {
+        ti := component.get().get_type_info()
 
         // name of component
         name := String.with_capacity(ti.kind.Struct.name.bytes.length + 1)
@@ -204,7 +199,7 @@ impl EntityInspector {
         ImGui.SetNextItemOpen(true, ImGui.ImGuiCond_.Once)
         if ImGui.CollapsingHeader_2(name.as_cstring(), &open) {
             {
-                rc_count_str := fmt.format_any(component_data.value.count())
+                rc_count_str := fmt.format_any(component.count())
                 ImGui.LabelText("RC count", rc_count_str.as_cstring())
             }
 
@@ -212,13 +207,9 @@ impl EntityInspector {
             for(by_ref=true) m : ti.kind.Struct.members {
                 name := String.with_capacity(m.name.bytes.length + 1)
                 name.append_string(m.name)
-                ptr := util.pointer_add(&component_data.value.get(), m.offset)
+                ptr := util.pointer_add(@ptr_of_trait(component.get()), m.offset)
                 imgui_input_property(name, ptr, m.typ, &m)
             }
-        }
-
-        if !open {
-            return false
         }
 
         return true

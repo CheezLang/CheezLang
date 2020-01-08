@@ -89,14 +89,20 @@ impl EntityLayer {
         return ptr
     }
 
-    new_component :: (ref Self, value: $T) -> Rc[T] {
-        return Rc[T].new(value)
+    new_component :: (ref Self, value: $T) -> Rc[Component] {
+        return Rc[Component].new(value)
     }
 
-    new_component2 :: (ref Self, ti: &TypeInfo) -> Rc[()] {
+    new_component2 :: (ref Self, ti: &TypeInfo, vtable: &void) -> Rc[Component] {
         ptr := mem.alloc_raw(u8, cast ti.size)
         C.memset(ptr, 0, cast ti.size)
-        return Rc[()].from_pointer(cast ptr, false)
+        return Rc[Component].from_pointer(Traits.from_vtable_and_pointer(Component, vtable, ptr), false)
+    }
+
+    alloc_component :: (ti: &TypeInfo, vtable: &void) -> Rc[Component] {
+        ptr := mem.alloc_raw(u8, cast ti.size)
+        C.memset(ptr, 0, cast ti.size)
+        return Rc[Component].from_pointer(Traits.from_vtable_and_pointer(Component, vtable, ptr), false)
     }
 
     remove_dead_entities :: (ref Self) {
@@ -250,11 +256,10 @@ impl Layer for EntityLayer {
         e_new.get().angle       = template.get().angle
 
         for template.get().components {
-            type_info := it.type_info
-            vtable    := @vtable_of_trait(it.component)
-            rc        := self.new_component2(type_info)
-            C.memcpy(&rc.get(), &it.value.get(), cast type_info.size)
-            e_new.get().add_component3(vtable, rc, type_info)
+            template := ref it.get()
+            component := self.new_component2(template.get_type_info(), @vtable_of_trait(template))
+            C.memcpy(@ptr_of_trait(component.get()), @ptr_of_trait(template), cast template.get_type_info().size)
+            e_new.get().add_component(component)
         }
 
         return e_new
@@ -300,8 +305,8 @@ impl Layer for EntityLayer {
             file.appendf("        components  = [`n", ())
 
             for cd : e.components {
-                file.appendf("            {} ``{`n", cd.type_info.kind.Struct.name)
-                cd.component.serialize(file)
+                file.appendf("            {} ``{`n", cd.get().get_type_info().kind.Struct.name)
+                cd.get().serialize(file)
                 file.append_string("            }`n")
             }
 

@@ -243,7 +243,7 @@ impl IParser[String] for String {
 }
 
 // rc
-impl(T: type) IParser[Rc[T]] for Rc[T] {
+impl(T: type) IParser[Rc[T]] for Rc[T] if #notyet {
     parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         return match parser.parse(T, lexer, error_handler) {
             Some($i) -> Some(Rc[T].new(i))

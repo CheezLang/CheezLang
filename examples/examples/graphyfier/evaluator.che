@@ -110,7 +110,7 @@ evaluate :: (code: []OpCode, vars: ref Variables) -> Option[Complex] {
     return Some(stack[0])
 }
 
-OpCode :: enum {
+OpCode :: enum #copy {
     Real    : double
     Im      : double
     Var     : string
