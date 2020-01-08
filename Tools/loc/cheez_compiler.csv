@@ -1,11 +1,11 @@
-File Name,Lines
-lexer.che,835
+﻿File Name,Lines
+lexer.che,855
 compiler_test.che,253
-cli.che,236
-error_handler.che,112
+cli.che,231
+error_handler.che,118
 ast.che,111
 type.che,69
 parser.che,58
 string_database.che,45
 cheez_compiler.che,24
-Total,1743
+Total,1764

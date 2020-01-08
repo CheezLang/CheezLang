@@ -1,6 +1,6 @@
-File Name,Lines
-ExpressionGenerator.cs,1810
-CodeGeneratorHelpers.cs,1016
+﻿File Name,Lines
+ExpressionGenerator.cs,1982
+CodeGeneratorHelpers.cs,1106
 CodeGeneratorMain.cs,356
 StatementGenerator.cs,334
 LLVMLinker.cs,272
@@ -12,6 +12,8 @@ ClangLinker.cs,71
 DIBuilder.cs,40
 LLVMSharpBackend.AssemblyInfo.cs,19
 LLVMSharpBackend.AssemblyInfo.cs,19
+LLVMSharpBackend.AssemblyInfo.cs,19
+LLVMSharpBackend.AssemblyInfo.cs,19
+LLVMSharpBackend.AssemblyInfo.cs,19
 LLVMSharpBackend.AssemblyInfo.cs,14
-LLVMSharpBackend.AssemblyInfo.cs,14
-Total,4372
+Total,4677

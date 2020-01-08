@@ -1,23 +1,22 @@
-File Name,Lines
-imgui_binding.che,6561
-glad_binding.che,2890
+﻿File Name,Lines
+imgui_binding.che,6590
+glad_binding.che,2870
 clang.che,1185
-lexer.che,835
-constants.che,652
-glfw3.che,577
+lexer.che,855
+glfw3.che,585
 clap.che,377
-functions.che,339
-pixel_game_engine.che,275
+serpa.che,370
+pixel_game_engine.che,272
 compiler_test.che,253
-cli.che,236
+cli.che,231
 pge_render_functions.che,231
 olc_win.che,183
 lua.che,171
 glfw_binding.che,165
-error_handler.che,112
+error_handler.che,118
 ast.che,111
 key.che,107
-pge_helper_functions.che,82
+pge_helper_functions.che,81
 sprite.che,71
 type.che,69
 parser.che,58
@@ -25,8 +24,5 @@ string_database.che,45
 opencv.che,41
 pixel.che,28
 cheez_compiler.che,24
-opengl.che,20
-types.che,16
-glew.che,15
 bmp.che,4
-Total,15733
+Total,15095
