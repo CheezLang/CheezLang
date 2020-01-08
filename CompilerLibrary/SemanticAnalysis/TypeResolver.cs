@@ -43,6 +43,7 @@ namespace Cheez
             if (expr.Type.IsErrorType)
             {
                 type = CheezType.Error;
+                expr.Value = CheezType.Error;
                 return expr;
             }
 
@@ -50,6 +51,7 @@ namespace Cheez
             {
                 ReportError(expr, $"Expected type");
                 type = CheezType.Error;
+                expr.Value = CheezType.Error;
                 return expr;
             }
             else

@@ -1645,6 +1645,9 @@ namespace Cheez
 
             switch (to, from)
             {
+                case (EnumType e, IntType t) when e.Declaration.IsReprC && e.Declaration.TagType == t:
+                    return cast;
+
                 case (PointerType t, PointerType _) when t.TargetType == CheezType.Void:
                     return cast;
 

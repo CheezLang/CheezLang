@@ -526,7 +526,12 @@ namespace Cheez.Visitors
                 var bodyStrings = en.Declarations
                     .Where(d => d is AstConstantDeclaration)
                     .Select(m => m.Accept(this))
-                    .Concat(en.Members.Select(m => VisitEnumMember(m)));
+                    .Concat(en.Members != null ?
+                        en.Members.Select(m => VisitEnumMember(m)) :
+                        en.Declarations
+                            .Where(d => !(d is AstConstantDeclaration))
+                            .Select(d => d.Accept(this))
+                        );
                 var body = string.Join("\n", bodyStrings);
                 var head = $"enum<{en.TagType}>";
                 return $"{head} {{ // size: {en.Type?.GetSize()}, alignment: {en.Type?.GetAlignment()}\n{body.Indent(4)}\n}}";
