@@ -59,7 +59,8 @@ namespace Cheez.Types.Complex
                 int score = 0;
                 for (int i = 0; i < Arguments.Length; i++)
                 {
-                    int s = (this.Arguments[i] as CheezType).Match(str.Arguments[i] as CheezType, polyTypes);
+                    int s = Workspace.PolyValuesMatch((null, this.Arguments[i]), (null, str.Arguments[i]), polyTypes);
+                    //int s = (this.Arguments[i] as CheezType).Match(str.Arguments[i] as CheezType, polyTypes);
                     if (s == -1)
                         return -1;
                     score += s;
@@ -157,7 +158,12 @@ namespace Cheez.Types.Complex
         public AstStructTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
         public StructType(AstStructTypeExpr decl, bool isCopy, string name, object[] args = null)
+            : base()
         {
+            if (decl.IsPolymorphic)
+            {
+                throw new Exception();
+            }
             Declaration = decl;
             IsCopy = isCopy;
             Name = name;
@@ -211,7 +217,8 @@ namespace Cheez.Types.Complex
                 int score = 0;
                 for (int i = 0; i < Arguments.Length; i++)
                 {
-                    int s = (this.Arguments[i] as CheezType).Match(str.Arguments[i] as CheezType, polyTypes);
+                    int s = Workspace.PolyValuesMatch((null, this.Arguments[i]), (null, str.Arguments[i]), polyTypes);
+                    //int s = (this.Arguments[i] as CheezType).Match(str.Arguments[i] as CheezType, polyTypes);
                     if (s == -1)
                         return -1;
                     score += s;
@@ -272,7 +279,8 @@ namespace Cheez.Types.Complex
                 int score = 0;
                 for (int i = 0; i < Arguments.Length; i++)
                 {
-                    int s = (this.Arguments[i] as CheezType).Match(str.Arguments[i] as CheezType, polyTypes);
+                    int s = Workspace.PolyValuesMatch((null, this.Arguments[i]), (null, str.Arguments[i]), polyTypes);
+                    //int s = (this.Arguments[i] as CheezType).Match(str.Arguments[i] as CheezType, polyTypes);
                     if (s == -1)
                         return -1;
                     score += s;

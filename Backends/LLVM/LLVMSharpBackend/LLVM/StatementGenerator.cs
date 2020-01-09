@@ -117,16 +117,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     valueMap[param] = p;
                 }
 
-                foreach (var c in function.ConstScope.Symbols)
-                {
-                    if (c.Value is ConstSymbol s && !s.Type.IsComptimeOnly)
-                    {
-                        var val = CheezValueToLLVMValue(s.Type, s.Value);
-                        var cnst = builder.CreateAlloca(CheezTypeToLLVMType(s.Type), $"c_");
-                        builder.CreateStore(val, cnst);
-                        valueMap[s] = cnst;
-                    }
-                }
+                // @todo: do we still need this?
+                //foreach (var c in function.ConstScope.Symbols)
+                //{
+                //    if (c.Value is ConstSymbol s && !s.Type.IsComptimeOnly)
+                //    {
+                //        var val = CheezValueToLLVMValue(s.Type, s.Value);
+                //        var cnst = builder.CreateAlloca(CheezTypeToLLVMType(s.Type), $"c_");
+                //        builder.CreateStore(val, cnst);
+                //        valueMap[s] = cnst;
+                //    }
+                //}
 
                 if (function.ReturnTypeExpr != null)
                 {

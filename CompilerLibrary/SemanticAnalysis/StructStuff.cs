@@ -243,7 +243,8 @@ namespace Cheez
                 {
                     var param = pi.Parameters[i];
                     var arg = args[i];
-                    if (param.Value != arg.value)
+                    if (!param.Value.Equals(arg.value))
+                    //if (param.Value != arg.value)
                     {
                         eq = false;
                         break;

@@ -180,10 +180,6 @@ namespace Cheez
             // instatiate type
             if (instance == null)
             {
-                if (decl.Name == "Iterator")
-                {
-
-                }
                 instance = decl.Clone() as AstTraitTypeExpr;
                 instance.SubScope = new Scope($"trait <poly>", instance.Scope);
                 instance.IsPolyInstance = true;

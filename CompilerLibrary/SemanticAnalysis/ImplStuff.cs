@@ -1,6 +1,7 @@
 ﻿using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Complex;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -254,7 +255,7 @@ namespace Cheez
 
                 foreach (var impl in _list.impls)
                 {
-                    if (CheezType.TypesMatch(impl.Trait, trait))
+                    if (impl.Trait != null && CheezType.TypesMatch(impl.Trait, trait))
                     {
                         var p = new Dictionary<string, (CheezType type, object value)>(polies);
                         CollectPolyTypes(trait, impl.Trait, p);

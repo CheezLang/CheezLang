@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using System;
@@ -245,6 +246,42 @@ namespace Cheez
         public object Execute(object left, object right)
         {
             return Execution?.Invoke(left, right);
+        }
+    }
+
+    public class BuiltInPolyValueBinaryOperator : IBinaryOperator
+    {
+        public CheezType LhsType => CheezType.PolyValue;
+        public CheezType RhsType => CheezType.PolyValue;
+        public CheezType ResultType { get; private set; }
+
+        public string Name { get; private set; }
+
+        public delegate object ComptimeExecution(object left, object right);
+
+        public BuiltInPolyValueBinaryOperator(string name, CheezType resType)
+        {
+            Name = name;
+            ResultType = resType;
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            if (lhs is PolyValueType && rhs is PolyValueType)
+                return 0;
+            if (lhs is PolyValueType || rhs is PolyValueType)
+                return 1;
+            return -1;
+        }
+
+        public override string ToString()
+        {
+            return $"({ResultType}) {LhsType} {Name} {RhsType}";
+        }
+
+        public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
         }
     }
 

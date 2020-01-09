@@ -275,7 +275,7 @@ namespace Cheez
                     return InferTypeContinue(b);
 
                 case AstRangeExpr r:
-                    return InferTypeRangeExpr(r, context);
+                    return InferTypeRangeExpr(r, expected, context);
 
                 case AstVariableRef r:
                     return InferTypeVariableRef(r);
@@ -511,7 +511,7 @@ namespace Cheez
 
                 foreach (var pn in new HashSet<string>(polyNames))
                 {
-                    func.ConstScope.DefineTypeSymbol(pn, new PolyType(pn));
+                    func.ConstScope.DefineSymbol(new PolyValue(pn));
                 }
             }
 
@@ -555,6 +555,12 @@ namespace Cheez
                     case RangeType _:
                     case PolyType _:
                     case CheezTypeType _:
+                        break;
+
+                    case GenericStructType _:
+                    case GenericEnumType _:
+                    case GenericTraitType _:
+                    case PolyValueType _:
                         break;
 
                     default:
@@ -631,13 +637,13 @@ namespace Cheez
         }
 
         
-        private AstExpression InferTypeRangeExpr(AstRangeExpr r, TypeInferenceContext context)
+        private AstExpression InferTypeRangeExpr(AstRangeExpr r, CheezType expected, TypeInferenceContext context)
         {
             r.From.AttachTo(r);
             r.To.AttachTo(r);
 
             r.From.SetFlag(ExprFlags.ValueRequired, true);
-            r.From = InferTypeHelper(r.From, null, context);
+            r.From = InferTypeHelper(r.From, expected, context);
             ConvertLiteralTypeToDefaultType(r.From, IntType.DefaultType);
             r.From = Deref(r.From, context);
 
@@ -4511,12 +4517,14 @@ namespace Cheez
         {
             bool anyArgIsPoly = false;
 
-            for (int i = 0; i < expr.Arguments.Count; i++)
+            AstExpression InferArg(int i, CheezType expected)
             {
                 var arg = expr.Arguments[i];
                 arg.AttachTo(expr);
                 arg.SetFlag(ExprFlags.ValueRequired, true);
-                expr.Arguments[i] = arg = InferTypeHelper(arg, CheezType.Type, context);
+                arg = InferTypeHelper(arg, expected, context);
+                ConvertLiteralTypeToDefaultType(arg, expected);
+                expr.Arguments[i] = arg;
 
                 switch (arg.Type)
                 {
@@ -4526,23 +4534,55 @@ namespace Cheez
                     case CharType _:
                         break;
 
+                    case PolyValueType _:
+                        anyArgIsPoly = true;
+                        break;
+
                     case CheezTypeType _:
                         if ((arg.Value as CheezType).IsPolyType) anyArgIsPoly = true;
                         break;
 
                     default:
-                        ReportError(arg, $"Type {arg.Type} is not allowedin poly type instantiation");
+                        ReportError(arg, $"Type {arg.Type} is not allowed in poly type instantiation");
                         return expr;
                 }
+
+                if (arg.Value is PolyValue)
+                {
+                    anyArgIsPoly = true;
+                }
+
+                return arg;
+            }
+
+            bool InferAllArgs(List<AstParameter> parameters)
+            {
+                if (expr.Arguments.Count != parameters.Count)
+                {
+                    ReportError(expr, $"Number of arguments doesn't match number of parameters ({parameters.Count})");
+                    return false;
+                }
+
+                for (int i = 0; i < expr.Arguments.Count; i++)
+                {
+                    var param = parameters[i];
+                    InferArg(i, param.Type);
+                }
+
+                return true;
             }
 
             if (expr.SubExpression.Value is GenericStructType strType)
             {
+                if (!InferAllArgs(strType.Declaration.Parameters))
+                    return expr;
+
                 if (anyArgIsPoly)
                 {
                     expr.Type = CheezType.Type;
                     // @todo: fix this
-                    expr.Value = new StructType(strType.Declaration, strType.IsCopy, strType.Name, expr.Arguments.Select(a => a.Value as CheezType).ToArray());
+                    //expr.Value = new StructType(strType.Declaration, strType.IsCopy, strType.Name, expr.Arguments.Select(a => a.Value).ToArray());
+                    expr.Value = new GenericStructType(strType.Declaration, strType.IsCopy, strType.Name, expr.Arguments.Select(a => (a.Type, a.Value)).ToArray());
                     return expr;
                 }
 
@@ -4560,6 +4600,9 @@ namespace Cheez
             }
             else if (expr.SubExpression.Value is GenericEnumType @enum)
             {
+                if (!InferAllArgs(@enum.Declaration.Parameters))
+                    return expr;
+
                 if (anyArgIsPoly)
                 {
                     expr.Type = CheezType.Type;
@@ -4581,6 +4624,9 @@ namespace Cheez
             }
             else if (expr.SubExpression.Value is GenericTraitType trait)
             {
+                if (!InferAllArgs(trait.Declaration.Parameters))
+                    return expr;
+
                 if (anyArgIsPoly)
                 {
                     expr.Type = CheezType.Type;
@@ -5294,8 +5340,16 @@ namespace Cheez
         {
             if (expr.IsPolymorphic && !context.resolve_poly_expr_to_concrete_type)
             {
-                expr.Type = CheezType.Type;
-                expr.Value = new PolyType(expr.Name, true);
+                if (expected is CheezTypeType)
+                {
+                    expr.Type = CheezType.Type;
+                    expr.Value = new PolyType(expr.Name, true);
+                }
+                else
+                {
+                    expr.Type = CheezType.PolyValue;
+                    expr.Value = new PolyValue(expr.Name);
+                }
                 return expr;
             }
 
@@ -5355,6 +5409,22 @@ namespace Cheez
             {
                 expr.Type = CheezType.Type;
                 expr.Value = ct.Type;
+            }
+            else if (sym is PolyValue v)
+            {
+                if (expected is CheezTypeType)
+                {
+                    expr.Type = CheezType.Type;
+                    expr.Value = new PolyType(v.Name);
+                }
+                else if (expected != null)
+                {
+                    expr.Type = expected;
+                }
+                else
+                {
+                    expr.Type = PolyValueType.Instance;
+                }
             }
             else if (sym is AstFuncExpr func)
             {
@@ -5747,6 +5817,48 @@ namespace Cheez
                         ReportError(dir.Arguments[i], $"Type {type} is not allowed here.");
                         break;
                 }
+            }
+        }
+
+        public static bool CheezValuesMatch((CheezType type, object value) a, (CheezType type, object value) b)
+        {
+            switch (a.value, b.value)
+            {
+                case (CheezType ta, CheezType tb):
+                    return CheezType.TypesMatch(ta, tb);
+
+                case (NumberData va, NumberData vb): return va == vb;
+                case (bool va, bool vb): return va == vb;
+                case (string va, string vb): return va == vb;
+                case (char va, char vb): return va == vb;
+
+                // poly values
+                case (PolyValue _, object _): return true;
+                case (object _, PolyValue _): return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        public static int PolyValuesMatch((CheezType type, object value) a, (CheezType type, object value) b, Dictionary<string, (CheezType type, object value)> polyTypes)
+        {
+            switch (a.value, b.value)
+            {
+                case (CheezType ta, CheezType tb):
+                    return ta.Match(tb, polyTypes);
+
+                case (NumberData va, NumberData vb): return va == vb ? 0 : -1;
+                case (bool va, bool vb): return va == vb ? 0 : -1;
+                case (string va, string vb): return va == vb ? 0 : -1;
+                case (char va, char vb): return va == vb ? 0 : -1;
+
+                // poly values
+                case (PolyValue _, object _): return 1;
+                case (object _, PolyValue _): return 1;
+
+                default:
+                    return -1;
             }
         }
     }

@@ -61,17 +61,44 @@ namespace Cheez
             return expr;
         }
 
-        public static void CollectPolyTypes(CheezType param, CheezType arg, Dictionary<string, (CheezType type, object value)> result)
+        public static void CollectPolyTypes(object param, object arg, Dictionary<string, (CheezType type, object value)> result)
         {
             switch (param)
             {
+                case PolyValue p:
+                    {
+                        if (!result.ContainsKey(p.Name))
+                        {
+                            result[p.Name] = arg switch
+                            {
+                                NumberData v when v.Type == NumberData.NumberType.Float => (FloatType.LiteralType, v),
+                                NumberData v when v.Type == NumberData.NumberType.Int => (IntType.LiteralType, v),
+                                string v => (StringType.StringLiteral, v),
+                                bool v => (CheezType.Bool, v),
+                                char v => (CharType.LiteralType, v),
+                            };
+                        }
+                        break;
+                    }
+
                 case PolyType i:
                     if (i.IsDeclaring && !result.ContainsKey(i.Name))
                     {
                         if (arg is ReferenceType r)
                             result[i.Name] = (CheezType.Type, r.TargetType);
-                        else
+                        else if (arg is CheezType)
                             result[i.Name] = (CheezType.Type, arg);
+                        else
+                        {
+                            result[i.Name] = arg switch
+                            {
+                                NumberData v when v.Type == NumberData.NumberType.Float => (FloatType.LiteralType, v),
+                                NumberData v when v.Type == NumberData.NumberType.Int => (IntType.LiteralType, v),
+                                string v => (StringType.StringLiteral, v),
+                                bool v => (CheezType.Bool, v),
+                                char v => (CharType.LiteralType, v),
+                            };
+                        }
                     }
                     break;
 
@@ -121,8 +148,53 @@ namespace Cheez
                             {
                                 for (var i = 0; i < str.Arguments.Length; i++)
                                 {
-                                    if (str.Arguments[i] is CheezType a && tt.Arguments[i] is CheezType b)
-                                        CollectPolyTypes(a, b, result);
+                                    //if (str.Arguments[i] is CheezType a && tt.Arguments[i] is CheezType b)
+                                        CollectPolyTypes(str.Arguments[i], tt.Arguments[i], result);
+                                }
+                            }
+                        }
+                        break;
+                    }
+
+                case GenericStructType type:
+                    {
+                        if (arg is StructType tt)
+                        {
+                            if (type.Arguments.Length == tt.Arguments.Length)
+                            {
+                                for (var i = 0; i < type.Arguments.Length; i++)
+                                {
+                                    CollectPolyTypes(type.Arguments[i].value, tt.Arguments[i], result);
+                                }
+                            }
+                        }
+                        break;
+                    }
+
+                case GenericEnumType type:
+                    {
+                        if (arg is EnumType tt)
+                        {
+                            if (type.Arguments.Length == tt.Arguments.Length)
+                            {
+                                for (var i = 0; i < type.Arguments.Length; i++)
+                                {
+                                    CollectPolyTypes(type.Arguments[i].value, tt.Arguments[i], result);
+                                }
+                            }
+                        }
+                        break;
+                    }
+
+                case GenericTraitType type:
+                    {
+                        if (arg is TraitType tt)
+                        {
+                            if (type.Arguments.Length == tt.Arguments.Length)
+                            {
+                                for (var i = 0; i < type.Arguments.Length; i++)
+                                {
+                                    CollectPolyTypes(type.Arguments[i].value, tt.Arguments[i], result);
                                 }
                             }
                         }
@@ -448,6 +520,10 @@ namespace Cheez
 
             switch (poly)
             {
+                case PolyValue p:
+                    if (concreteTypes.TryGetValue(p.Name, out var t1)) return t1.value;
+                    return p;
+
                 case PolyType p:
                     if (concreteTypes.TryGetValue(p.Name, out var t)) return t.value;
                     return p;
@@ -463,6 +539,14 @@ namespace Cheez
                         //if (s.Declaration.Template != null)
                         //    throw new Exception("must be null");
                         var args = s.Arguments.Select(a => (CheezType.Type, InstantiatePolyType(a, concreteTypes, location))).ToList();
+                        //var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
+                        var instance = InstantiatePolyStruct(s.Declaration, args, location: location);
+                        return instance.StructType;
+                    }
+
+                case GenericStructType s:
+                    {
+                        var args = s.Arguments.Select(a => (CheezType.Type, InstantiatePolyType(a.value, concreteTypes, location))).ToList();
                         //var args = s.Declaration.Parameters.Select(p => (p.Type, (object)concreteTypes[p.Name.Name])).ToList();
                         var instance = InstantiatePolyStruct(s.Declaration, args, location: location);
                         return instance.StructType;

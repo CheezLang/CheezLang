@@ -46,6 +46,18 @@ namespace Cheez
         CheezType Type { get; }
     }
 
+    public class PolyValue : ISymbol
+    {
+        public string Name { get; set; }
+
+        public ILocation Location => throw new NotImplementedException();
+
+        public PolyValue(string name)
+        {
+            Name = name;
+        }
+    }
+
     public class AmbiguousSymol : ISymbol
     {
         public string Name => throw new NotImplementedException();
@@ -430,6 +442,20 @@ namespace Cheez
             DefineBinaryOperator(new BuiltInFunctionOperator("!="));
             DefineBinaryOperator(new BuiltInEnumCompareOperator("=="));
             DefineBinaryOperator(new BuiltInEnumCompareOperator("!="));
+
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("+", CheezType.PolyValue));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("-", CheezType.PolyValue));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("*", CheezType.PolyValue));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("/", CheezType.PolyValue));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("%", CheezType.PolyValue));
+
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("==", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("!=", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("<", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("<=", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator(">", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator(">=", CheezType.Bool));
+
         }
 
         private void DefineUnaryOperator(string name, CheezType type, BuiltInUnaryOperator.ComptimeExecution exe)
@@ -707,10 +733,6 @@ namespace Cheez
 
         public (bool ok, ILocation? other) DefineSymbol(ISymbol symbol, string? name = null)
         {
-            if (symbol is ConstSymbol c && !(c.Value is CheezType))
-            {
-
-            }
             if (TransparentParent != null)
                 return TransparentParent.DefineSymbol(symbol, name);
 
@@ -725,10 +747,6 @@ namespace Cheez
 
         public (bool ok, ILocation? other) DefineConstant(string name, CheezType type, object value)
         {
-            if (name == "Tuiae")
-            {
-
-            }
             return DefineSymbol(new ConstSymbol(name, type, value));
         }
 

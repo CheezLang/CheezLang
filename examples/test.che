@@ -8,7 +8,7 @@
 // import examples.snake.snake
 // import examples.pathtracer
 // import examples.command_line_parser
-import examples.ShmupEngine.src.main
+// import examples.ShmupEngine.src.main
 // import compiler.cli
 // import compiler.compiler_test
 
@@ -27,6 +27,113 @@ import examples.ShmupEngine.src.main
 // import bugs.bug1
 
 // import "../Tools/Bindings/imgui_binding"
+
+/*
+
+use import std.string
+use import std.printable
+io :: import std.io
+
+Foo :: struct(size: int) {
+    arr : [size]int = default
+}
+
+Units :: struct(M: int, T: int) #copy {
+    value : double
+}
+
+Meter :: Units[1, 0]
+Time  :: Units[0, 1]
+Speed :: Units[1, -1]
+
+impl Printable for Units[1, 0] {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} m", value)
+    }
+}
+
+impl Printable for Units[0, 1] {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} s", value)
+    }
+}
+
+impl Printable for Units[1, -1] {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} m/s", value)
+    }
+}
+
+impl Printable for Units[1, -2] {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} m/s^2", value)
+    }
+}
+
+impl(M1: int, M2: int) Printable for Units[M1, M2] if #notyet {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} m^{} s^{}", (value, M1, M2))
+    }
+}
+
+impl(M1: int, T1: int) Units[M1, T1] {
+    add :: (Self, other: Units[M1, T1]) -> Units[M1, T1] #operator("+") {
+        return Units[M1, T1](self.value + other.value)
+    }
+
+    sub :: (Self, other: Units[M1, T1]) -> Units[M1, T1] #operator("-") {
+        return Units[M1, T1](self.value - other.value)
+    }
+
+    mul :: (Self, other: Units[$M2, $T2]) -> Units[M1 + M2, T1 + T2] #operator("*") {
+        return Units[M1 + M2, T1 + T2](self.value * other.value)
+    }
+
+    div :: (Self, other: Units[$M2, $T2]) -> Units[M1 - M2, T1 - T2] #operator("/") {
+        return Units[M1 - M2, T1 - T2](self.value / other.value)
+    }
+}
+
+Main :: () {
+    {
+        distance := Meter(10)
+        speed    := Speed(5)
+        time     := distance / speed
+
+        io.printfln("distance: {}", distance)
+        io.printfln("speed: {}", speed)
+        io.printfln("time: {}", time)
+        io.println("")
+    }
+
+    {
+        speed    := Speed(10)
+        time     := Time(5)
+        distance := time * speed
+        acc      := speed / time
+
+        io.printfln("speed: {}", speed)
+        io.printfln("time: {}", time)
+        io.printfln("distance: {}", distance)
+        io.printfln("acc: {}", acc)
+        io.println("")
+    }
+
+    {
+        speed1 := Speed(3)
+        speed2 := Speed(10)
+        sum    := speed1 + speed2
+        diff   := speed1 - speed2
+
+        io.printfln("speed1: {}", speed1)
+        io.printfln("speed2: {}", speed2)
+        io.printfln("sum: {}", sum)
+        io.printfln("diff: {}", diff)
+        io.println("")
+    }
+}
+
+// */
 
 /*
 #test_expect_output("")
