@@ -11,7 +11,7 @@ C    :: import std.c
 use import std.os.windows_types
 use import std.os.windows_functions
 
-use import glfw.glfw3
+use import glfw.glfw_binding
 ImGui :: import imgui.imgui_binding
 
 use import "../math"

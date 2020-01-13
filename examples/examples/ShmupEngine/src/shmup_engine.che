@@ -10,7 +10,7 @@ io  :: import std.io
 fs  :: import std.io.fs
 C   :: import std.c
 
-use import glfw.glfw3
+use import glfw.glfw_binding
 use import opengl.glad_binding
 ImGui :: import imgui.imgui_binding
 
@@ -331,7 +331,7 @@ impl ShmupEngine {
         glfwSetErrorCallback(glfw_error_callback)
 
         // initialize glfw
-        if !glfwInit() {
+        if glfwInit() == 0 {
             io.println("[ERROR] Failed to initialize GLFW")
             return
         }
@@ -473,7 +473,7 @@ impl ShmupEngine {
         fps_counter := 0
 
         loop {
-            if glfwWindowShouldClose(glfw_window) then break
+            if glfwWindowShouldClose(glfw_window) != 0 then break
             // handle time
             this_frame_time     := get_time_microseconds()
             last_frame_duration := this_frame_time - last_frame_time

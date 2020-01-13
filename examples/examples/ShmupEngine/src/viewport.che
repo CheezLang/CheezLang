@@ -10,7 +10,7 @@ io  :: import std.io
 fs  :: import std.io.fs
 C   :: import std.c
 
-use import glfw.glfw3
+use import glfw.glfw_binding
 use import opengl.glad_binding
 ImGui :: import imgui.imgui_binding
 
