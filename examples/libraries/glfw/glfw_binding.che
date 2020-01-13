@@ -1,3 +1,5 @@
+#lib("./lib/glfw3dll.lib")
+#lib("./lib/glfw_binding.lib")
 #export_scope
 
 GLFWglproc :: fn() -> void
@@ -25,142 +27,918 @@ GLFWcharmodsfun :: fn(&GLFWwindow, u32, i32) -> void
 GLFWdropfun :: fn(&GLFWwindow, i32, &&char8) -> void
 GLFWmonitorfun :: fn(&GLFWmonitor, i32) -> void
 GLFWjoystickfun :: fn(i32, i32) -> void
+
+GLFW_VERSION_MAJOR :: 3
+GLFW_VERSION_MINOR :: 3
+GLFW_VERSION_REVISION :: 0
+GLFW_TRUE :: 1
+GLFW_FALSE :: 0
+GLFW_RELEASE :: 0
+GLFW_PRESS :: 1
+GLFW_REPEAT :: 2
+GLFW_HAT_CENTERED :: 0
+GLFW_HAT_UP :: 1
+GLFW_HAT_RIGHT :: 2
+GLFW_HAT_DOWN :: 4
+GLFW_HAT_LEFT :: 8
+GLFW_HAT_RIGHT_UP :: @bin_or(GLFW_HAT_RIGHT, GLFW_HAT_UP)
+GLFW_HAT_RIGHT_DOWN :: @bin_or(GLFW_HAT_RIGHT,GLFW_HAT_DOWN)
+GLFW_HAT_LEFT_UP :: @bin_or(GLFW_HAT_LEFT,GLFW_HAT_UP)
+GLFW_HAT_LEFT_DOWN :: @bin_or(GLFW_HAT_LEFT,GLFW_HAT_DOWN)
+GLFW_KEY_UNKNOWN :: -1
+GLFW_KEY_SPACE :: 32
+GLFW_KEY_APOSTROPHE :: 39
+GLFW_KEY_COMMA :: 44
+GLFW_KEY_MINUS :: 45
+GLFW_KEY_PERIOD :: 46
+GLFW_KEY_SLASH :: 47
+GLFW_KEY_0 :: 48
+GLFW_KEY_1 :: 49
+GLFW_KEY_2 :: 50
+GLFW_KEY_3 :: 51
+GLFW_KEY_4 :: 52
+GLFW_KEY_5 :: 53
+GLFW_KEY_6 :: 54
+GLFW_KEY_7 :: 55
+GLFW_KEY_8 :: 56
+GLFW_KEY_9 :: 57
+GLFW_KEY_SEMICOLON :: 59
+GLFW_KEY_EQUAL :: 61
+GLFW_KEY_A :: 65
+GLFW_KEY_B :: 66
+GLFW_KEY_C :: 67
+GLFW_KEY_D :: 68
+GLFW_KEY_E :: 69
+GLFW_KEY_F :: 70
+GLFW_KEY_G :: 71
+GLFW_KEY_H :: 72
+GLFW_KEY_I :: 73
+GLFW_KEY_J :: 74
+GLFW_KEY_K :: 75
+GLFW_KEY_L :: 76
+GLFW_KEY_M :: 77
+GLFW_KEY_N :: 78
+GLFW_KEY_O :: 79
+GLFW_KEY_P :: 80
+GLFW_KEY_Q :: 81
+GLFW_KEY_R :: 82
+GLFW_KEY_S :: 83
+GLFW_KEY_T :: 84
+GLFW_KEY_U :: 85
+GLFW_KEY_V :: 86
+GLFW_KEY_W :: 87
+GLFW_KEY_X :: 88
+GLFW_KEY_Y :: 89
+GLFW_KEY_Z :: 90
+GLFW_KEY_LEFT_BRACKET :: 91
+GLFW_KEY_BACKSLASH :: 92
+GLFW_KEY_RIGHT_BRACKET :: 93
+GLFW_KEY_GRAVE_ACCENT :: 96
+GLFW_KEY_WORLD_1 :: 161
+GLFW_KEY_WORLD_2 :: 162
+GLFW_KEY_ESCAPE :: 256
+GLFW_KEY_ENTER :: 257
+GLFW_KEY_TAB :: 258
+GLFW_KEY_BACKSPACE :: 259
+GLFW_KEY_INSERT :: 260
+GLFW_KEY_DELETE :: 261
+GLFW_KEY_RIGHT :: 262
+GLFW_KEY_LEFT :: 263
+GLFW_KEY_DOWN :: 264
+GLFW_KEY_UP :: 265
+GLFW_KEY_PAGE_UP :: 266
+GLFW_KEY_PAGE_DOWN :: 267
+GLFW_KEY_HOME :: 268
+GLFW_KEY_END :: 269
+GLFW_KEY_CAPS_LOCK :: 280
+GLFW_KEY_SCROLL_LOCK :: 281
+GLFW_KEY_NUM_LOCK :: 282
+GLFW_KEY_PRINT_SCREEN :: 283
+GLFW_KEY_PAUSE :: 284
+GLFW_KEY_F1 :: 290
+GLFW_KEY_F2 :: 291
+GLFW_KEY_F3 :: 292
+GLFW_KEY_F4 :: 293
+GLFW_KEY_F5 :: 294
+GLFW_KEY_F6 :: 295
+GLFW_KEY_F7 :: 296
+GLFW_KEY_F8 :: 297
+GLFW_KEY_F9 :: 298
+GLFW_KEY_F10 :: 299
+GLFW_KEY_F11 :: 300
+GLFW_KEY_F12 :: 301
+GLFW_KEY_F13 :: 302
+GLFW_KEY_F14 :: 303
+GLFW_KEY_F15 :: 304
+GLFW_KEY_F16 :: 305
+GLFW_KEY_F17 :: 306
+GLFW_KEY_F18 :: 307
+GLFW_KEY_F19 :: 308
+GLFW_KEY_F20 :: 309
+GLFW_KEY_F21 :: 310
+GLFW_KEY_F22 :: 311
+GLFW_KEY_F23 :: 312
+GLFW_KEY_F24 :: 313
+GLFW_KEY_F25 :: 314
+GLFW_KEY_KP_0 :: 320
+GLFW_KEY_KP_1 :: 321
+GLFW_KEY_KP_2 :: 322
+GLFW_KEY_KP_3 :: 323
+GLFW_KEY_KP_4 :: 324
+GLFW_KEY_KP_5 :: 325
+GLFW_KEY_KP_6 :: 326
+GLFW_KEY_KP_7 :: 327
+GLFW_KEY_KP_8 :: 328
+GLFW_KEY_KP_9 :: 329
+GLFW_KEY_KP_DECIMAL :: 330
+GLFW_KEY_KP_DIVIDE :: 331
+GLFW_KEY_KP_MULTIPLY :: 332
+GLFW_KEY_KP_SUBTRACT :: 333
+GLFW_KEY_KP_ADD :: 334
+GLFW_KEY_KP_ENTER :: 335
+GLFW_KEY_KP_EQUAL :: 336
+GLFW_KEY_LEFT_SHIFT :: 340
+GLFW_KEY_LEFT_CONTROL :: 341
+GLFW_KEY_LEFT_ALT :: 342
+GLFW_KEY_LEFT_SUPER :: 343
+GLFW_KEY_RIGHT_SHIFT :: 344
+GLFW_KEY_RIGHT_CONTROL :: 345
+GLFW_KEY_RIGHT_ALT :: 346
+GLFW_KEY_RIGHT_SUPER :: 347
+GLFW_KEY_MENU :: 348
+GLFW_KEY_LAST :: GLFW_KEY_MENU
+GLFW_MOD_SHIFT :: 0x0001
+GLFW_MOD_CONTROL :: 0x0002
+GLFW_MOD_ALT :: 0x0004
+GLFW_MOD_SUPER :: 0x0008
+GLFW_MOD_CAPS_LOCK :: 0x0010
+GLFW_MOD_NUM_LOCK :: 0x0020
+GLFW_MOUSE_BUTTON_1 :: 0
+GLFW_MOUSE_BUTTON_2 :: 1
+GLFW_MOUSE_BUTTON_3 :: 2
+GLFW_MOUSE_BUTTON_4 :: 3
+GLFW_MOUSE_BUTTON_5 :: 4
+GLFW_MOUSE_BUTTON_6 :: 5
+GLFW_MOUSE_BUTTON_7 :: 6
+GLFW_MOUSE_BUTTON_8 :: 7
+GLFW_MOUSE_BUTTON_LAST :: GLFW_MOUSE_BUTTON_8
+GLFW_MOUSE_BUTTON_LEFT :: GLFW_MOUSE_BUTTON_1
+GLFW_MOUSE_BUTTON_RIGHT :: GLFW_MOUSE_BUTTON_2
+GLFW_MOUSE_BUTTON_MIDDLE :: GLFW_MOUSE_BUTTON_3
+GLFW_JOYSTICK_1 :: 0
+GLFW_JOYSTICK_2 :: 1
+GLFW_JOYSTICK_3 :: 2
+GLFW_JOYSTICK_4 :: 3
+GLFW_JOYSTICK_5 :: 4
+GLFW_JOYSTICK_6 :: 5
+GLFW_JOYSTICK_7 :: 6
+GLFW_JOYSTICK_8 :: 7
+GLFW_JOYSTICK_9 :: 8
+GLFW_JOYSTICK_10 :: 9
+GLFW_JOYSTICK_11 :: 10
+GLFW_JOYSTICK_12 :: 11
+GLFW_JOYSTICK_13 :: 12
+GLFW_JOYSTICK_14 :: 13
+GLFW_JOYSTICK_15 :: 14
+GLFW_JOYSTICK_16 :: 15
+GLFW_JOYSTICK_LAST :: GLFW_JOYSTICK_16
+GLFW_GAMEPAD_BUTTON_A :: 0
+GLFW_GAMEPAD_BUTTON_B :: 1
+GLFW_GAMEPAD_BUTTON_X :: 2
+GLFW_GAMEPAD_BUTTON_Y :: 3
+GLFW_GAMEPAD_BUTTON_LEFT_BUMPER :: 4
+GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER :: 5
+GLFW_GAMEPAD_BUTTON_BACK :: 6
+GLFW_GAMEPAD_BUTTON_START :: 7
+GLFW_GAMEPAD_BUTTON_GUIDE :: 8
+GLFW_GAMEPAD_BUTTON_LEFT_THUMB :: 9
+GLFW_GAMEPAD_BUTTON_RIGHT_THUMB :: 10
+GLFW_GAMEPAD_BUTTON_DPAD_UP :: 11
+GLFW_GAMEPAD_BUTTON_DPAD_RIGHT :: 12
+GLFW_GAMEPAD_BUTTON_DPAD_DOWN :: 13
+GLFW_GAMEPAD_BUTTON_DPAD_LEFT :: 14
+GLFW_GAMEPAD_BUTTON_LAST :: GLFW_GAMEPAD_BUTTON_DPAD_LEFT
+GLFW_GAMEPAD_BUTTON_CROSS :: GLFW_GAMEPAD_BUTTON_A
+GLFW_GAMEPAD_BUTTON_CIRCLE :: GLFW_GAMEPAD_BUTTON_B
+GLFW_GAMEPAD_BUTTON_SQUARE :: GLFW_GAMEPAD_BUTTON_X
+GLFW_GAMEPAD_BUTTON_TRIANGLE :: GLFW_GAMEPAD_BUTTON_Y
+GLFW_GAMEPAD_AXIS_LEFT_X :: 0
+GLFW_GAMEPAD_AXIS_LEFT_Y :: 1
+GLFW_GAMEPAD_AXIS_RIGHT_X :: 2
+GLFW_GAMEPAD_AXIS_RIGHT_Y :: 3
+GLFW_GAMEPAD_AXIS_LEFT_TRIGGER :: 4
+GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER :: 5
+GLFW_GAMEPAD_AXIS_LAST :: GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER
+GLFW_NO_ERROR :: 0
+GLFW_NOT_INITIALIZED :: 0x00010001
+GLFW_NO_CURRENT_CONTEXT :: 0x00010002
+GLFW_INVALID_ENUM :: 0x00010003
+GLFW_INVALID_VALUE :: 0x00010004
+GLFW_OUT_OF_MEMORY :: 0x00010005
+GLFW_API_UNAVAILABLE :: 0x00010006
+GLFW_VERSION_UNAVAILABLE :: 0x00010007
+GLFW_PLATFORM_ERROR :: 0x00010008
+GLFW_FORMAT_UNAVAILABLE :: 0x00010009
+GLFW_NO_WINDOW_CONTEXT :: 0x0001000A
+GLFW_FOCUSED :: 0x00020001
+GLFW_ICONIFIED :: 0x00020002
+GLFW_RESIZABLE :: 0x00020003
+GLFW_VISIBLE :: 0x00020004
+GLFW_DECORATED :: 0x00020005
+GLFW_AUTO_ICONIFY :: 0x00020006
+GLFW_FLOATING :: 0x00020007
+GLFW_MAXIMIZED :: 0x00020008
+GLFW_CENTER_CURSOR :: 0x00020009
+GLFW_TRANSPARENT_FRAMEBUFFER :: 0x0002000A
+GLFW_HOVERED :: 0x0002000B
+GLFW_FOCUS_ON_SHOW :: 0x0002000C
+GLFW_RED_BITS :: 0x00021001
+GLFW_GREEN_BITS :: 0x00021002
+GLFW_BLUE_BITS :: 0x00021003
+GLFW_ALPHA_BITS :: 0x00021004
+GLFW_DEPTH_BITS :: 0x00021005
+GLFW_STENCIL_BITS :: 0x00021006
+GLFW_ACCUM_RED_BITS :: 0x00021007
+GLFW_ACCUM_GREEN_BITS :: 0x00021008
+GLFW_ACCUM_BLUE_BITS :: 0x00021009
+GLFW_ACCUM_ALPHA_BITS :: 0x0002100A
+GLFW_AUX_BUFFERS :: 0x0002100B
+GLFW_STEREO :: 0x0002100C
+GLFW_SAMPLES :: 0x0002100D
+GLFW_SRGB_CAPABLE :: 0x0002100E
+GLFW_REFRESH_RATE :: 0x0002100F
+GLFW_DOUBLEBUFFER :: 0x00021010
+GLFW_CLIENT_API :: 0x00022001
+GLFW_CONTEXT_VERSION_MAJOR :: 0x00022002
+GLFW_CONTEXT_VERSION_MINOR :: 0x00022003
+GLFW_CONTEXT_REVISION :: 0x00022004
+GLFW_CONTEXT_ROBUSTNESS :: 0x00022005
+GLFW_OPENGL_FORWARD_COMPAT :: 0x00022006
+GLFW_OPENGL_DEBUG_CONTEXT :: 0x00022007
+GLFW_OPENGL_PROFILE :: 0x00022008
+GLFW_CONTEXT_RELEASE_BEHAVIOR :: 0x00022009
+GLFW_CONTEXT_NO_ERROR :: 0x0002200A
+GLFW_CONTEXT_CREATION_API :: 0x0002200B
+GLFW_SCALE_TO_MONITOR :: 0x0002200C
+GLFW_COCOA_RETINA_FRAMEBUFFER :: 0x00023001
+GLFW_COCOA_FRAME_NAME :: 0x00023002
+GLFW_COCOA_GRAPHICS_SWITCHING :: 0x00023003
+GLFW_X11_CLASS_NAME :: 0x00024001
+GLFW_X11_INSTANCE_NAME :: 0x00024002
+GLFW_NO_API :: 0
+GLFW_OPENGL_API :: 0x00030001
+GLFW_OPENGL_ES_API :: 0x00030002
+GLFW_NO_ROBUSTNESS :: 0
+GLFW_NO_RESET_NOTIFICATION :: 0x00031001
+GLFW_LOSE_CONTEXT_ON_RESET :: 0x00031002
+GLFW_OPENGL_ANY_PROFILE :: 0
+GLFW_OPENGL_CORE_PROFILE :: 0x00032001
+GLFW_OPENGL_COMPAT_PROFILE :: 0x00032002
+GLFW_CURSOR :: 0x00033001
+GLFW_STICKY_KEYS :: 0x00033002
+GLFW_STICKY_MOUSE_BUTTONS :: 0x00033003
+GLFW_LOCK_KEY_MODS :: 0x00033004
+GLFW_RAW_MOUSE_MOTION :: 0x00033005
+GLFW_CURSOR_NORMAL :: 0x00034001
+GLFW_CURSOR_HIDDEN :: 0x00034002
+GLFW_CURSOR_DISABLED :: 0x00034003
+GLFW_ANY_RELEASE_BEHAVIOR :: 0
+GLFW_RELEASE_BEHAVIOR_FLUSH :: 0x00035001
+GLFW_RELEASE_BEHAVIOR_NONE :: 0x00035002
+GLFW_NATIVE_CONTEXT_API :: 0x00036001
+GLFW_EGL_CONTEXT_API :: 0x00036002
+GLFW_OSMESA_CONTEXT_API :: 0x00036003
+GLFW_ARROW_CURSOR :: 0x00036001
+GLFW_IBEAM_CURSOR :: 0x00036002
+GLFW_CROSSHAIR_CURSOR :: 0x00036003
+GLFW_HAND_CURSOR :: 0x00036004
+GLFW_HRESIZE_CURSOR :: 0x00036005
+GLFW_VRESIZE_CURSOR :: 0x00036006
+GLFW_CONNECTED :: 0x00040001
+GLFW_DISCONNECTED :: 0x00040002
+GLFW_JOYSTICK_HAT_BUTTONS :: 0x00050001
+GLFW_COCOA_CHDIR_RESOURCES :: 0x00051001
+GLFW_COCOA_MENUBAR :: 0x00051002
+GLFW_DONT_CARE :: -1
 GLFWvidmode :: struct #copy {
-    width       : i32 = default
-    height      : i32 = default
-    redBits     : i32 = default
-    greenBits   : i32 = default
-    blueBits    : i32 = default
+    width : i32 = default
+    height : i32 = default
+    redBits : i32 = default
+    greenBits : i32 = default
+    blueBits : i32 = default
     refreshRate : i32 = default
 }
 GLFWgammaramp :: struct #copy {
-    red   : &u16 = default
+    red : &u16 = default
     green : &u16 = default
-    blue  : &u16 = default
-    size  : u32 = default
+    blue : &u16 = default
+    size : u32 = default
 }
 GLFWimage :: struct #copy {
-    width  : i32 = default
+    width : i32 = default
     height : i32 = default
     pixels : &u8 = default
 }
 GLFWgamepadstate :: struct #copy {
     buttons : [15]u8 = default
-    axes    : [6]f32 = default
+    axes : [6]f32 = default
 }
-glfwInit :: () -> i32;
-glfwTerminate :: () -> void;
-glfwInitHint :: (_hint: i32, _value: i32) -> void;
-glfwGetVersion :: (_major: &i32, _minor: &i32, _rev: &i32) -> void;
-glfwGetVersionString :: () -> &char8;
-glfwGetError :: (_description: &&char8) -> i32;
-glfwSetErrorCallback :: (_cbfun: fn(i32, &char8) -> void) -> fn(i32, &char8) -> void;
-glfwGetMonitors :: (_count: &i32) -> &&GLFWmonitor;
-glfwGetPrimaryMonitor :: () -> &GLFWmonitor;
-glfwGetMonitorPos :: (_monitor: &GLFWmonitor, _xpos: &i32, _ypos: &i32) -> void;
-glfwGetMonitorWorkarea :: (_monitor: &GLFWmonitor, _xpos: &i32, _ypos: &i32, _width: &i32, _height: &i32) -> void;
-glfwGetMonitorPhysicalSize :: (_monitor: &GLFWmonitor, _widthMM: &i32, _heightMM: &i32) -> void;
-glfwGetMonitorContentScale :: (_monitor: &GLFWmonitor, _xscale: &f32, _yscale: &f32) -> void;
-glfwGetMonitorName :: (_monitor: &GLFWmonitor) -> &char8;
-glfwSetMonitorUserPointer :: (_monitor: &GLFWmonitor, _pointer: &void) -> void;
-glfwGetMonitorUserPointer :: (_monitor: &GLFWmonitor) -> &void;
-glfwSetMonitorCallback :: (_cbfun: fn(&GLFWmonitor, i32) -> void) -> fn(&GLFWmonitor, i32) -> void;
-glfwGetVideoModes :: (_monitor: &GLFWmonitor, _count: &i32) -> &const GLFWvidmode;
-glfwGetVideoMode :: (_monitor: &GLFWmonitor) -> &const GLFWvidmode;
-glfwSetGamma :: (_monitor: &GLFWmonitor, _gamma: f32) -> void;
-glfwGetGammaRamp :: (_monitor: &GLFWmonitor) -> &const GLFWgammaramp;
-glfwSetGammaRamp :: (_monitor: &GLFWmonitor, _ramp: &const GLFWgammaramp) -> void;
-glfwDefaultWindowHints :: () -> void;
-glfwWindowHint :: (_hint: i32, _value: i32) -> void;
-glfwWindowHintString :: (_hint: i32, _value: &char8) -> void;
-glfwCreateWindow :: (_width: i32, _height: i32, _title: &char8, _monitor: &GLFWmonitor, _share: &GLFWwindow) -> &GLFWwindow;
-glfwDestroyWindow :: (_window: &GLFWwindow) -> void;
-glfwWindowShouldClose :: (_window: &GLFWwindow) -> i32;
-glfwSetWindowShouldClose :: (_window: &GLFWwindow, _value: i32) -> void;
-glfwSetWindowTitle :: (_window: &GLFWwindow, _title: &char8) -> void;
-glfwSetWindowIcon :: (_window: &GLFWwindow, _count: i32, _images: &const GLFWimage) -> void;
-glfwGetWindowPos :: (_window: &GLFWwindow, _xpos: &i32, _ypos: &i32) -> void;
-glfwSetWindowPos :: (_window: &GLFWwindow, _xpos: i32, _ypos: i32) -> void;
-glfwGetWindowSize :: (_window: &GLFWwindow, _width: &i32, _height: &i32) -> void;
-glfwSetWindowSizeLimits :: (_window: &GLFWwindow, _minwidth: i32, _minheight: i32, _maxwidth: i32, _maxheight: i32) -> void;
-glfwSetWindowAspectRatio :: (_window: &GLFWwindow, _numer: i32, _denom: i32) -> void;
-glfwSetWindowSize :: (_window: &GLFWwindow, _width: i32, _height: i32) -> void;
-glfwGetFramebufferSize :: (_window: &GLFWwindow, _width: &i32, _height: &i32) -> void;
-glfwGetWindowFrameSize :: (_window: &GLFWwindow, _left: &i32, _top: &i32, _right: &i32, _bottom: &i32) -> void;
-glfwGetWindowContentScale :: (_window: &GLFWwindow, _xscale: &f32, _yscale: &f32) -> void;
-glfwGetWindowOpacity :: (_window: &GLFWwindow) -> f32;
-glfwSetWindowOpacity :: (_window: &GLFWwindow, _opacity: f32) -> void;
-glfwIconifyWindow :: (_window: &GLFWwindow) -> void;
-glfwRestoreWindow :: (_window: &GLFWwindow) -> void;
-glfwMaximizeWindow :: (_window: &GLFWwindow) -> void;
-glfwShowWindow :: (_window: &GLFWwindow) -> void;
-glfwHideWindow :: (_window: &GLFWwindow) -> void;
-glfwFocusWindow :: (_window: &GLFWwindow) -> void;
-glfwRequestWindowAttention :: (_window: &GLFWwindow) -> void;
-glfwGetWindowMonitor :: (_window: &GLFWwindow) -> &GLFWmonitor;
-glfwSetWindowMonitor :: (_window: &GLFWwindow, _monitor: &GLFWmonitor, _xpos: i32, _ypos: i32, _width: i32, _height: i32, _refreshRate: i32) -> void;
-glfwGetWindowAttrib :: (_window: &GLFWwindow, _attrib: i32) -> i32;
-glfwSetWindowAttrib :: (_window: &GLFWwindow, _attrib: i32, _value: i32) -> void;
-glfwSetWindowUserPointer :: (_window: &GLFWwindow, _pointer: &void) -> void;
-glfwGetWindowUserPointer :: (_window: &GLFWwindow) -> &void;
-glfwSetWindowPosCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32, i32) -> void) -> fn(&GLFWwindow, i32, i32) -> void;
-glfwSetWindowSizeCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32, i32) -> void) -> fn(&GLFWwindow, i32, i32) -> void;
-glfwSetWindowCloseCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow) -> void) -> fn(&GLFWwindow) -> void;
-glfwSetWindowRefreshCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow) -> void) -> fn(&GLFWwindow) -> void;
-glfwSetWindowFocusCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32) -> void) -> fn(&GLFWwindow, i32) -> void;
-glfwSetWindowIconifyCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32) -> void) -> fn(&GLFWwindow, i32) -> void;
-glfwSetWindowMaximizeCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32) -> void) -> fn(&GLFWwindow, i32) -> void;
-glfwSetFramebufferSizeCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32, i32) -> void) -> fn(&GLFWwindow, i32, i32) -> void;
-glfwSetWindowContentScaleCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, f32, f32) -> void) -> fn(&GLFWwindow, f32, f32) -> void;
-glfwPollEvents :: () -> void;
-glfwWaitEvents :: () -> void;
-glfwWaitEventsTimeout :: (_timeout: f64) -> void;
-glfwPostEmptyEvent :: () -> void;
-glfwGetInputMode :: (_window: &GLFWwindow, _mode: i32) -> i32;
-glfwSetInputMode :: (_window: &GLFWwindow, _mode: i32, _value: i32) -> void;
-glfwRawMouseMotionSupported :: () -> i32;
-glfwGetKeyName :: (_key: i32, _scancode: i32) -> &char8;
-glfwGetKeyScancode :: (_key: i32) -> i32;
-glfwGetKey :: (_window: &GLFWwindow, _key: i32) -> i32;
-glfwGetMouseButton :: (_window: &GLFWwindow, _button: i32) -> i32;
-glfwGetCursorPos :: (_window: &GLFWwindow, _xpos: &f64, _ypos: &f64) -> void;
-glfwSetCursorPos :: (_window: &GLFWwindow, _xpos: f64, _ypos: f64) -> void;
-glfwCreateCursor :: (_image: &const GLFWimage, _xhot: i32, _yhot: i32) -> &GLFWcursor;
-glfwCreateStandardCursor :: (_shape: i32) -> &GLFWcursor;
-glfwDestroyCursor :: (_cursor: &GLFWcursor) -> void;
-glfwSetCursor :: (_window: &GLFWwindow, _cursor: &GLFWcursor) -> void;
-glfwSetKeyCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32, i32, i32, i32) -> void) -> fn(&GLFWwindow, i32, i32, i32, i32) -> void;
-glfwSetCharCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, u32) -> void) -> fn(&GLFWwindow, u32) -> void;
-glfwSetCharModsCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, u32, i32) -> void) -> fn(&GLFWwindow, u32, i32) -> void;
-glfwSetMouseButtonCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32, i32, i32) -> void) -> fn(&GLFWwindow, i32, i32, i32) -> void;
-glfwSetCursorPosCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, f64, f64) -> void) -> fn(&GLFWwindow, f64, f64) -> void;
-glfwSetCursorEnterCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32) -> void) -> fn(&GLFWwindow, i32) -> void;
-glfwSetScrollCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, f64, f64) -> void) -> fn(&GLFWwindow, f64, f64) -> void;
-glfwSetDropCallback :: (_window: &GLFWwindow, _cbfun: fn(&GLFWwindow, i32, &&char8) -> void) -> fn(&GLFWwindow, i32, &&char8) -> void;
-glfwJoystickPresent :: (_jid: i32) -> i32;
-glfwGetJoystickAxes :: (_jid: i32, _count: &i32) -> &f32;
-glfwGetJoystickButtons :: (_jid: i32, _count: &i32) -> &u8;
-glfwGetJoystickHats :: (_jid: i32, _count: &i32) -> &u8;
-glfwGetJoystickName :: (_jid: i32) -> &char8;
-glfwGetJoystickGUID :: (_jid: i32) -> &char8;
-glfwSetJoystickUserPointer :: (_jid: i32, _pointer: &void) -> void;
-glfwGetJoystickUserPointer :: (_jid: i32) -> &void;
-glfwJoystickIsGamepad :: (_jid: i32) -> i32;
-glfwSetJoystickCallback :: (_cbfun: fn(i32, i32) -> void) -> fn(i32, i32) -> void;
-glfwUpdateGamepadMappings :: (_string: &char8) -> i32;
-glfwGetGamepadName :: (_jid: i32) -> &char8;
-glfwGetGamepadState :: (_jid: i32, _state: &GLFWgamepadstate) -> i32;
-glfwSetClipboardString :: (_window: &GLFWwindow, _string: &char8) -> void;
-glfwGetClipboardString :: (_window: &GLFWwindow) -> &char8;
-glfwGetTime :: () -> f64;
-glfwSetTime :: (_time: f64) -> void;
-glfwGetTimerValue :: () -> u64;
-glfwGetTimerFrequency :: () -> u64;
-glfwMakeContextCurrent :: (_window: &GLFWwindow) -> void;
-glfwGetCurrentContext :: () -> &GLFWwindow;
-glfwSwapBuffers :: (_window: &GLFWwindow) -> void;
-glfwSwapInterval :: (_interval: i32) -> void;
-glfwExtensionSupported :: (_extension: &char8) -> i32;
-glfwGetProcAddress :: (_procname: &char8) -> fn() -> void;
-glfwVulkanSupported :: () -> i32;
-glfwGetRequiredInstanceExtensions :: (_count: &u32) -> &&char8;
+glfwInit :: () -> i32 {
+    result : i32 = default
+    __c__glfwInit(&result)
+    return result
+}
+glfwTerminate :: () {
+    __c__glfwTerminate()
+}
+glfwInitHint :: (_hint: i32, _value: i32) {
+    __c__glfwInitHint(_hint, _value)
+}
+glfwGetVersion :: (_major: &i32, _minor: &i32, _rev: &i32) {
+    __c__glfwGetVersion(_major, _minor, _rev)
+}
+glfwGetVersionString :: () -> &char8 {
+    result : &char8 = default
+    __c__glfwGetVersionString(&result)
+    return result
+}
+glfwGetError :: (_description: &&char8) -> i32 {
+    result : i32 = default
+    __c__glfwGetError(&result, _description)
+    return result
+}
+glfwSetErrorCallback :: (_cbfun: GLFWerrorfun) -> GLFWerrorfun {
+    result : GLFWerrorfun = default
+    __c__glfwSetErrorCallback(&result, _cbfun)
+    return result
+}
+glfwGetMonitors :: (_count: &i32) -> &&GLFWmonitor {
+    result : &&GLFWmonitor = default
+    __c__glfwGetMonitors(&result, _count)
+    return result
+}
+glfwGetPrimaryMonitor :: () -> &GLFWmonitor {
+    result : &GLFWmonitor = default
+    __c__glfwGetPrimaryMonitor(&result)
+    return result
+}
+glfwGetMonitorPos :: (_monitor: &GLFWmonitor, _xpos: &i32, _ypos: &i32) {
+    __c__glfwGetMonitorPos(_monitor, _xpos, _ypos)
+}
+glfwGetMonitorWorkarea :: (_monitor: &GLFWmonitor, _xpos: &i32, _ypos: &i32, _width: &i32, _height: &i32) {
+    __c__glfwGetMonitorWorkarea(_monitor, _xpos, _ypos, _width, _height)
+}
+glfwGetMonitorPhysicalSize :: (_monitor: &GLFWmonitor, _widthMM: &i32, _heightMM: &i32) {
+    __c__glfwGetMonitorPhysicalSize(_monitor, _widthMM, _heightMM)
+}
+glfwGetMonitorContentScale :: (_monitor: &GLFWmonitor, _xscale: &f32, _yscale: &f32) {
+    __c__glfwGetMonitorContentScale(_monitor, _xscale, _yscale)
+}
+glfwGetMonitorName :: (_monitor: &GLFWmonitor) -> &char8 {
+    result : &char8 = default
+    __c__glfwGetMonitorName(&result, _monitor)
+    return result
+}
+glfwSetMonitorUserPointer :: (_monitor: &GLFWmonitor, _pointer: &void) {
+    __c__glfwSetMonitorUserPointer(_monitor, _pointer)
+}
+glfwGetMonitorUserPointer :: (_monitor: &GLFWmonitor) -> &void {
+    result : &void = default
+    __c__glfwGetMonitorUserPointer(&result, _monitor)
+    return result
+}
+glfwSetMonitorCallback :: (_cbfun: GLFWmonitorfun) -> GLFWmonitorfun {
+    result : GLFWmonitorfun = default
+    __c__glfwSetMonitorCallback(&result, _cbfun)
+    return result
+}
+glfwGetVideoModes :: (_monitor: &GLFWmonitor, _count: &i32) -> &GLFWvidmode {
+    result : &GLFWvidmode = default
+    __c__glfwGetVideoModes(&result, _monitor, _count)
+    return result
+}
+glfwGetVideoMode :: (_monitor: &GLFWmonitor) -> &GLFWvidmode {
+    result : &GLFWvidmode = default
+    __c__glfwGetVideoMode(&result, _monitor)
+    return result
+}
+glfwSetGamma :: (_monitor: &GLFWmonitor, _gamma: f32) {
+    __c__glfwSetGamma(_monitor, _gamma)
+}
+glfwGetGammaRamp :: (_monitor: &GLFWmonitor) -> &GLFWgammaramp {
+    result : &GLFWgammaramp = default
+    __c__glfwGetGammaRamp(&result, _monitor)
+    return result
+}
+glfwSetGammaRamp :: (_monitor: &GLFWmonitor, _ramp: &GLFWgammaramp) {
+    __c__glfwSetGammaRamp(_monitor, _ramp)
+}
+glfwDefaultWindowHints :: () {
+    __c__glfwDefaultWindowHints()
+}
+glfwWindowHint :: (_hint: i32, _value: i32) {
+    __c__glfwWindowHint(_hint, _value)
+}
+glfwWindowHintString :: (_hint: i32, _value: &char8) {
+    __c__glfwWindowHintString(_hint, _value)
+}
+glfwCreateWindow :: (_width: i32, _height: i32, _title: &char8, _monitor: &GLFWmonitor, _share: &GLFWwindow) -> &GLFWwindow {
+    result : &GLFWwindow = default
+    __c__glfwCreateWindow(&result, _width, _height, _title, _monitor, _share)
+    return result
+}
+glfwDestroyWindow :: (_window: &GLFWwindow) {
+    __c__glfwDestroyWindow(_window)
+}
+glfwWindowShouldClose :: (_window: &GLFWwindow) -> i32 {
+    result : i32 = default
+    __c__glfwWindowShouldClose(&result, _window)
+    return result
+}
+glfwSetWindowShouldClose :: (_window: &GLFWwindow, _value: i32) {
+    __c__glfwSetWindowShouldClose(_window, _value)
+}
+glfwSetWindowTitle :: (_window: &GLFWwindow, _title: &char8) {
+    __c__glfwSetWindowTitle(_window, _title)
+}
+glfwSetWindowIcon :: (_window: &GLFWwindow, _count: i32, _images: &GLFWimage) {
+    __c__glfwSetWindowIcon(_window, _count, _images)
+}
+glfwGetWindowPos :: (_window: &GLFWwindow, _xpos: &i32, _ypos: &i32) {
+    __c__glfwGetWindowPos(_window, _xpos, _ypos)
+}
+glfwSetWindowPos :: (_window: &GLFWwindow, _xpos: i32, _ypos: i32) {
+    __c__glfwSetWindowPos(_window, _xpos, _ypos)
+}
+glfwGetWindowSize :: (_window: &GLFWwindow, _width: &i32, _height: &i32) {
+    __c__glfwGetWindowSize(_window, _width, _height)
+}
+glfwSetWindowSizeLimits :: (_window: &GLFWwindow, _minwidth: i32, _minheight: i32, _maxwidth: i32, _maxheight: i32) {
+    __c__glfwSetWindowSizeLimits(_window, _minwidth, _minheight, _maxwidth, _maxheight)
+}
+glfwSetWindowAspectRatio :: (_window: &GLFWwindow, _numer: i32, _denom: i32) {
+    __c__glfwSetWindowAspectRatio(_window, _numer, _denom)
+}
+glfwSetWindowSize :: (_window: &GLFWwindow, _width: i32, _height: i32) {
+    __c__glfwSetWindowSize(_window, _width, _height)
+}
+glfwGetFramebufferSize :: (_window: &GLFWwindow, _width: &i32, _height: &i32) {
+    __c__glfwGetFramebufferSize(_window, _width, _height)
+}
+glfwGetWindowFrameSize :: (_window: &GLFWwindow, _left: &i32, _top: &i32, _right: &i32, _bottom: &i32) {
+    __c__glfwGetWindowFrameSize(_window, _left, _top, _right, _bottom)
+}
+glfwGetWindowContentScale :: (_window: &GLFWwindow, _xscale: &f32, _yscale: &f32) {
+    __c__glfwGetWindowContentScale(_window, _xscale, _yscale)
+}
+glfwGetWindowOpacity :: (_window: &GLFWwindow) -> f32 {
+    result : f32 = default
+    __c__glfwGetWindowOpacity(&result, _window)
+    return result
+}
+glfwSetWindowOpacity :: (_window: &GLFWwindow, _opacity: f32) {
+    __c__glfwSetWindowOpacity(_window, _opacity)
+}
+glfwIconifyWindow :: (_window: &GLFWwindow) {
+    __c__glfwIconifyWindow(_window)
+}
+glfwRestoreWindow :: (_window: &GLFWwindow) {
+    __c__glfwRestoreWindow(_window)
+}
+glfwMaximizeWindow :: (_window: &GLFWwindow) {
+    __c__glfwMaximizeWindow(_window)
+}
+glfwShowWindow :: (_window: &GLFWwindow) {
+    __c__glfwShowWindow(_window)
+}
+glfwHideWindow :: (_window: &GLFWwindow) {
+    __c__glfwHideWindow(_window)
+}
+glfwFocusWindow :: (_window: &GLFWwindow) {
+    __c__glfwFocusWindow(_window)
+}
+glfwRequestWindowAttention :: (_window: &GLFWwindow) {
+    __c__glfwRequestWindowAttention(_window)
+}
+glfwGetWindowMonitor :: (_window: &GLFWwindow) -> &GLFWmonitor {
+    result : &GLFWmonitor = default
+    __c__glfwGetWindowMonitor(&result, _window)
+    return result
+}
+glfwSetWindowMonitor :: (_window: &GLFWwindow, _monitor: &GLFWmonitor, _xpos: i32, _ypos: i32, _width: i32, _height: i32, _refreshRate: i32) {
+    __c__glfwSetWindowMonitor(_window, _monitor, _xpos, _ypos, _width, _height, _refreshRate)
+}
+glfwGetWindowAttrib :: (_window: &GLFWwindow, _attrib: i32) -> i32 {
+    result : i32 = default
+    __c__glfwGetWindowAttrib(&result, _window, _attrib)
+    return result
+}
+glfwSetWindowAttrib :: (_window: &GLFWwindow, _attrib: i32, _value: i32) {
+    __c__glfwSetWindowAttrib(_window, _attrib, _value)
+}
+glfwSetWindowUserPointer :: (_window: &GLFWwindow, _pointer: &void) {
+    __c__glfwSetWindowUserPointer(_window, _pointer)
+}
+glfwGetWindowUserPointer :: (_window: &GLFWwindow) -> &void {
+    result : &void = default
+    __c__glfwGetWindowUserPointer(&result, _window)
+    return result
+}
+glfwSetWindowPosCallback :: (_window: &GLFWwindow, _cbfun: GLFWwindowposfun) -> GLFWwindowposfun {
+    result : GLFWwindowposfun = default
+    __c__glfwSetWindowPosCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetWindowSizeCallback :: (_window: &GLFWwindow, _cbfun: GLFWwindowsizefun) -> GLFWwindowsizefun {
+    result : GLFWwindowsizefun = default
+    __c__glfwSetWindowSizeCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetWindowCloseCallback :: (_window: &GLFWwindow, _cbfun: GLFWwindowclosefun) -> GLFWwindowclosefun {
+    result : GLFWwindowclosefun = default
+    __c__glfwSetWindowCloseCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetWindowRefreshCallback :: (_window: &GLFWwindow, _cbfun: GLFWwindowrefreshfun) -> GLFWwindowrefreshfun {
+    result : GLFWwindowrefreshfun = default
+    __c__glfwSetWindowRefreshCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetWindowFocusCallback :: (_window: &GLFWwindow, _cbfun: GLFWwindowfocusfun) -> GLFWwindowfocusfun {
+    result : GLFWwindowfocusfun = default
+    __c__glfwSetWindowFocusCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetWindowIconifyCallback :: (_window: &GLFWwindow, _cbfun: GLFWwindowiconifyfun) -> GLFWwindowiconifyfun {
+    result : GLFWwindowiconifyfun = default
+    __c__glfwSetWindowIconifyCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetWindowMaximizeCallback :: (_window: &GLFWwindow, _cbfun: GLFWwindowmaximizefun) -> GLFWwindowmaximizefun {
+    result : GLFWwindowmaximizefun = default
+    __c__glfwSetWindowMaximizeCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetFramebufferSizeCallback :: (_window: &GLFWwindow, _cbfun: GLFWframebuffersizefun) -> GLFWframebuffersizefun {
+    result : GLFWframebuffersizefun = default
+    __c__glfwSetFramebufferSizeCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetWindowContentScaleCallback :: (_window: &GLFWwindow, _cbfun: GLFWwindowcontentscalefun) -> GLFWwindowcontentscalefun {
+    result : GLFWwindowcontentscalefun = default
+    __c__glfwSetWindowContentScaleCallback(&result, _window, _cbfun)
+    return result
+}
+glfwPollEvents :: () {
+    __c__glfwPollEvents()
+}
+glfwWaitEvents :: () {
+    __c__glfwWaitEvents()
+}
+glfwWaitEventsTimeout :: (_timeout: f64) {
+    __c__glfwWaitEventsTimeout(_timeout)
+}
+glfwPostEmptyEvent :: () {
+    __c__glfwPostEmptyEvent()
+}
+glfwGetInputMode :: (_window: &GLFWwindow, _mode: i32) -> i32 {
+    result : i32 = default
+    __c__glfwGetInputMode(&result, _window, _mode)
+    return result
+}
+glfwSetInputMode :: (_window: &GLFWwindow, _mode: i32, _value: i32) {
+    __c__glfwSetInputMode(_window, _mode, _value)
+}
+glfwRawMouseMotionSupported :: () -> i32 {
+    result : i32 = default
+    __c__glfwRawMouseMotionSupported(&result)
+    return result
+}
+glfwGetKeyName :: (_key: i32, _scancode: i32) -> &char8 {
+    result : &char8 = default
+    __c__glfwGetKeyName(&result, _key, _scancode)
+    return result
+}
+glfwGetKeyScancode :: (_key: i32) -> i32 {
+    result : i32 = default
+    __c__glfwGetKeyScancode(&result, _key)
+    return result
+}
+glfwGetKey :: (_window: &GLFWwindow, _key: i32) -> i32 {
+    result : i32 = default
+    __c__glfwGetKey(&result, _window, _key)
+    return result
+}
+glfwGetMouseButton :: (_window: &GLFWwindow, _button: i32) -> i32 {
+    result : i32 = default
+    __c__glfwGetMouseButton(&result, _window, _button)
+    return result
+}
+glfwGetCursorPos :: (_window: &GLFWwindow, _xpos: &f64, _ypos: &f64) {
+    __c__glfwGetCursorPos(_window, _xpos, _ypos)
+}
+glfwSetCursorPos :: (_window: &GLFWwindow, _xpos: f64, _ypos: f64) {
+    __c__glfwSetCursorPos(_window, _xpos, _ypos)
+}
+glfwCreateCursor :: (_image: &GLFWimage, _xhot: i32, _yhot: i32) -> &GLFWcursor {
+    result : &GLFWcursor = default
+    __c__glfwCreateCursor(&result, _image, _xhot, _yhot)
+    return result
+}
+glfwCreateStandardCursor :: (_shape: i32) -> &GLFWcursor {
+    result : &GLFWcursor = default
+    __c__glfwCreateStandardCursor(&result, _shape)
+    return result
+}
+glfwDestroyCursor :: (_cursor: &GLFWcursor) {
+    __c__glfwDestroyCursor(_cursor)
+}
+glfwSetCursor :: (_window: &GLFWwindow, _cursor: &GLFWcursor) {
+    __c__glfwSetCursor(_window, _cursor)
+}
+glfwSetKeyCallback :: (_window: &GLFWwindow, _cbfun: GLFWkeyfun) -> GLFWkeyfun {
+    result : GLFWkeyfun = default
+    __c__glfwSetKeyCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetCharCallback :: (_window: &GLFWwindow, _cbfun: GLFWcharfun) -> GLFWcharfun {
+    result : GLFWcharfun = default
+    __c__glfwSetCharCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetCharModsCallback :: (_window: &GLFWwindow, _cbfun: GLFWcharmodsfun) -> GLFWcharmodsfun {
+    result : GLFWcharmodsfun = default
+    __c__glfwSetCharModsCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetMouseButtonCallback :: (_window: &GLFWwindow, _cbfun: GLFWmousebuttonfun) -> GLFWmousebuttonfun {
+    result : GLFWmousebuttonfun = default
+    __c__glfwSetMouseButtonCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetCursorPosCallback :: (_window: &GLFWwindow, _cbfun: GLFWcursorposfun) -> GLFWcursorposfun {
+    result : GLFWcursorposfun = default
+    __c__glfwSetCursorPosCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetCursorEnterCallback :: (_window: &GLFWwindow, _cbfun: GLFWcursorenterfun) -> GLFWcursorenterfun {
+    result : GLFWcursorenterfun = default
+    __c__glfwSetCursorEnterCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetScrollCallback :: (_window: &GLFWwindow, _cbfun: GLFWscrollfun) -> GLFWscrollfun {
+    result : GLFWscrollfun = default
+    __c__glfwSetScrollCallback(&result, _window, _cbfun)
+    return result
+}
+glfwSetDropCallback :: (_window: &GLFWwindow, _cbfun: GLFWdropfun) -> GLFWdropfun {
+    result : GLFWdropfun = default
+    __c__glfwSetDropCallback(&result, _window, _cbfun)
+    return result
+}
+glfwJoystickPresent :: (_jid: i32) -> i32 {
+    result : i32 = default
+    __c__glfwJoystickPresent(&result, _jid)
+    return result
+}
+glfwGetJoystickAxes :: (_jid: i32, _count: &i32) -> &f32 {
+    result : &f32 = default
+    __c__glfwGetJoystickAxes(&result, _jid, _count)
+    return result
+}
+glfwGetJoystickButtons :: (_jid: i32, _count: &i32) -> &u8 {
+    result : &u8 = default
+    __c__glfwGetJoystickButtons(&result, _jid, _count)
+    return result
+}
+glfwGetJoystickHats :: (_jid: i32, _count: &i32) -> &u8 {
+    result : &u8 = default
+    __c__glfwGetJoystickHats(&result, _jid, _count)
+    return result
+}
+glfwGetJoystickName :: (_jid: i32) -> &char8 {
+    result : &char8 = default
+    __c__glfwGetJoystickName(&result, _jid)
+    return result
+}
+glfwGetJoystickGUID :: (_jid: i32) -> &char8 {
+    result : &char8 = default
+    __c__glfwGetJoystickGUID(&result, _jid)
+    return result
+}
+glfwSetJoystickUserPointer :: (_jid: i32, _pointer: &void) {
+    __c__glfwSetJoystickUserPointer(_jid, _pointer)
+}
+glfwGetJoystickUserPointer :: (_jid: i32) -> &void {
+    result : &void = default
+    __c__glfwGetJoystickUserPointer(&result, _jid)
+    return result
+}
+glfwJoystickIsGamepad :: (_jid: i32) -> i32 {
+    result : i32 = default
+    __c__glfwJoystickIsGamepad(&result, _jid)
+    return result
+}
+glfwSetJoystickCallback :: (_cbfun: GLFWjoystickfun) -> GLFWjoystickfun {
+    result : GLFWjoystickfun = default
+    __c__glfwSetJoystickCallback(&result, _cbfun)
+    return result
+}
+glfwUpdateGamepadMappings :: (_string: &char8) -> i32 {
+    result : i32 = default
+    __c__glfwUpdateGamepadMappings(&result, _string)
+    return result
+}
+glfwGetGamepadName :: (_jid: i32) -> &char8 {
+    result : &char8 = default
+    __c__glfwGetGamepadName(&result, _jid)
+    return result
+}
+glfwGetGamepadState :: (_jid: i32, _state: &GLFWgamepadstate) -> i32 {
+    result : i32 = default
+    __c__glfwGetGamepadState(&result, _jid, _state)
+    return result
+}
+glfwSetClipboardString :: (_window: &GLFWwindow, _string: &char8) {
+    __c__glfwSetClipboardString(_window, _string)
+}
+glfwGetClipboardString :: (_window: &GLFWwindow) -> &char8 {
+    result : &char8 = default
+    __c__glfwGetClipboardString(&result, _window)
+    return result
+}
+glfwGetTime :: () -> f64 {
+    result : f64 = default
+    __c__glfwGetTime(&result)
+    return result
+}
+glfwSetTime :: (_time: f64) {
+    __c__glfwSetTime(_time)
+}
+glfwGetTimerValue :: () -> uint {
+    result : uint = default
+    __c__glfwGetTimerValue(&result)
+    return result
+}
+glfwGetTimerFrequency :: () -> uint {
+    result : uint = default
+    __c__glfwGetTimerFrequency(&result)
+    return result
+}
+glfwMakeContextCurrent :: (_window: &GLFWwindow) {
+    __c__glfwMakeContextCurrent(_window)
+}
+glfwGetCurrentContext :: () -> &GLFWwindow {
+    result : &GLFWwindow = default
+    __c__glfwGetCurrentContext(&result)
+    return result
+}
+glfwSwapBuffers :: (_window: &GLFWwindow) {
+    __c__glfwSwapBuffers(_window)
+}
+glfwSwapInterval :: (_interval: i32) {
+    __c__glfwSwapInterval(_interval)
+}
+glfwExtensionSupported :: (_extension: &char8) -> i32 {
+    result : i32 = default
+    __c__glfwExtensionSupported(&result, _extension)
+    return result
+}
+glfwGetProcAddress :: (_procname: &char8) -> GLFWglproc {
+    result : GLFWglproc = default
+    __c__glfwGetProcAddress(&result, _procname)
+    return result
+}
+glfwVulkanSupported :: () -> i32 {
+    result : i32 = default
+    __c__glfwVulkanSupported(&result)
+    return result
+}
+glfwGetRequiredInstanceExtensions :: (_count: &u32) -> &&char8 {
+    result : &&char8 = default
+    __c__glfwGetRequiredInstanceExtensions(&result, _count)
+    return result
+}
+
+// ==========================================================
+// ==========================================================
+// ==========================================================
+
+#file_scope
+
+__c__glfwInit :: (ret: &i32);
+__c__glfwTerminate :: ();
+__c__glfwInitHint :: (_hint: i32, _value: i32);
+__c__glfwGetVersion :: (_major: &i32, _minor: &i32, _rev: &i32);
+__c__glfwGetVersionString :: (ret: &&char8);
+__c__glfwGetError :: (ret: &i32, _description: &&char8);
+__c__glfwSetErrorCallback :: (ret: &GLFWerrorfun, _cbfun: GLFWerrorfun);
+__c__glfwGetMonitors :: (ret: &&&GLFWmonitor, _count: &i32);
+__c__glfwGetPrimaryMonitor :: (ret: &&GLFWmonitor);
+__c__glfwGetMonitorPos :: (_monitor: &GLFWmonitor, _xpos: &i32, _ypos: &i32);
+__c__glfwGetMonitorWorkarea :: (_monitor: &GLFWmonitor, _xpos: &i32, _ypos: &i32, _width: &i32, _height: &i32);
+__c__glfwGetMonitorPhysicalSize :: (_monitor: &GLFWmonitor, _widthMM: &i32, _heightMM: &i32);
+__c__glfwGetMonitorContentScale :: (_monitor: &GLFWmonitor, _xscale: &f32, _yscale: &f32);
+__c__glfwGetMonitorName :: (ret: &&char8, _monitor: &GLFWmonitor);
+__c__glfwSetMonitorUserPointer :: (_monitor: &GLFWmonitor, _pointer: &void);
+__c__glfwGetMonitorUserPointer :: (ret: &&void, _monitor: &GLFWmonitor);
+__c__glfwSetMonitorCallback :: (ret: &GLFWmonitorfun, _cbfun: GLFWmonitorfun);
+__c__glfwGetVideoModes :: (ret: &&GLFWvidmode, _monitor: &GLFWmonitor, _count: &i32);
+__c__glfwGetVideoMode :: (ret: &&GLFWvidmode, _monitor: &GLFWmonitor);
+__c__glfwSetGamma :: (_monitor: &GLFWmonitor, _gamma: f32);
+__c__glfwGetGammaRamp :: (ret: &&GLFWgammaramp, _monitor: &GLFWmonitor);
+__c__glfwSetGammaRamp :: (_monitor: &GLFWmonitor, _ramp: &GLFWgammaramp);
+__c__glfwDefaultWindowHints :: ();
+__c__glfwWindowHint :: (_hint: i32, _value: i32);
+__c__glfwWindowHintString :: (_hint: i32, _value: &char8);
+__c__glfwCreateWindow :: (ret: &&GLFWwindow, _width: i32, _height: i32, _title: &char8, _monitor: &GLFWmonitor, _share: &GLFWwindow);
+__c__glfwDestroyWindow :: (_window: &GLFWwindow);
+__c__glfwWindowShouldClose :: (ret: &i32, _window: &GLFWwindow);
+__c__glfwSetWindowShouldClose :: (_window: &GLFWwindow, _value: i32);
+__c__glfwSetWindowTitle :: (_window: &GLFWwindow, _title: &char8);
+__c__glfwSetWindowIcon :: (_window: &GLFWwindow, _count: i32, _images: &GLFWimage);
+__c__glfwGetWindowPos :: (_window: &GLFWwindow, _xpos: &i32, _ypos: &i32);
+__c__glfwSetWindowPos :: (_window: &GLFWwindow, _xpos: i32, _ypos: i32);
+__c__glfwGetWindowSize :: (_window: &GLFWwindow, _width: &i32, _height: &i32);
+__c__glfwSetWindowSizeLimits :: (_window: &GLFWwindow, _minwidth: i32, _minheight: i32, _maxwidth: i32, _maxheight: i32);
+__c__glfwSetWindowAspectRatio :: (_window: &GLFWwindow, _numer: i32, _denom: i32);
+__c__glfwSetWindowSize :: (_window: &GLFWwindow, _width: i32, _height: i32);
+__c__glfwGetFramebufferSize :: (_window: &GLFWwindow, _width: &i32, _height: &i32);
+__c__glfwGetWindowFrameSize :: (_window: &GLFWwindow, _left: &i32, _top: &i32, _right: &i32, _bottom: &i32);
+__c__glfwGetWindowContentScale :: (_window: &GLFWwindow, _xscale: &f32, _yscale: &f32);
+__c__glfwGetWindowOpacity :: (ret: &f32, _window: &GLFWwindow);
+__c__glfwSetWindowOpacity :: (_window: &GLFWwindow, _opacity: f32);
+__c__glfwIconifyWindow :: (_window: &GLFWwindow);
+__c__glfwRestoreWindow :: (_window: &GLFWwindow);
+__c__glfwMaximizeWindow :: (_window: &GLFWwindow);
+__c__glfwShowWindow :: (_window: &GLFWwindow);
+__c__glfwHideWindow :: (_window: &GLFWwindow);
+__c__glfwFocusWindow :: (_window: &GLFWwindow);
+__c__glfwRequestWindowAttention :: (_window: &GLFWwindow);
+__c__glfwGetWindowMonitor :: (ret: &&GLFWmonitor, _window: &GLFWwindow);
+__c__glfwSetWindowMonitor :: (_window: &GLFWwindow, _monitor: &GLFWmonitor, _xpos: i32, _ypos: i32, _width: i32, _height: i32, _refreshRate: i32);
+__c__glfwGetWindowAttrib :: (ret: &i32, _window: &GLFWwindow, _attrib: i32);
+__c__glfwSetWindowAttrib :: (_window: &GLFWwindow, _attrib: i32, _value: i32);
+__c__glfwSetWindowUserPointer :: (_window: &GLFWwindow, _pointer: &void);
+__c__glfwGetWindowUserPointer :: (ret: &&void, _window: &GLFWwindow);
+__c__glfwSetWindowPosCallback :: (ret: &GLFWwindowposfun, _window: &GLFWwindow, _cbfun: GLFWwindowposfun);
+__c__glfwSetWindowSizeCallback :: (ret: &GLFWwindowsizefun, _window: &GLFWwindow, _cbfun: GLFWwindowsizefun);
+__c__glfwSetWindowCloseCallback :: (ret: &GLFWwindowclosefun, _window: &GLFWwindow, _cbfun: GLFWwindowclosefun);
+__c__glfwSetWindowRefreshCallback :: (ret: &GLFWwindowrefreshfun, _window: &GLFWwindow, _cbfun: GLFWwindowrefreshfun);
+__c__glfwSetWindowFocusCallback :: (ret: &GLFWwindowfocusfun, _window: &GLFWwindow, _cbfun: GLFWwindowfocusfun);
+__c__glfwSetWindowIconifyCallback :: (ret: &GLFWwindowiconifyfun, _window: &GLFWwindow, _cbfun: GLFWwindowiconifyfun);
+__c__glfwSetWindowMaximizeCallback :: (ret: &GLFWwindowmaximizefun, _window: &GLFWwindow, _cbfun: GLFWwindowmaximizefun);
+__c__glfwSetFramebufferSizeCallback :: (ret: &GLFWframebuffersizefun, _window: &GLFWwindow, _cbfun: GLFWframebuffersizefun);
+__c__glfwSetWindowContentScaleCallback :: (ret: &GLFWwindowcontentscalefun, _window: &GLFWwindow, _cbfun: GLFWwindowcontentscalefun);
+__c__glfwPollEvents :: ();
+__c__glfwWaitEvents :: ();
+__c__glfwWaitEventsTimeout :: (_timeout: f64);
+__c__glfwPostEmptyEvent :: ();
+__c__glfwGetInputMode :: (ret: &i32, _window: &GLFWwindow, _mode: i32);
+__c__glfwSetInputMode :: (_window: &GLFWwindow, _mode: i32, _value: i32);
+__c__glfwRawMouseMotionSupported :: (ret: &i32);
+__c__glfwGetKeyName :: (ret: &&char8, _key: i32, _scancode: i32);
+__c__glfwGetKeyScancode :: (ret: &i32, _key: i32);
+__c__glfwGetKey :: (ret: &i32, _window: &GLFWwindow, _key: i32);
+__c__glfwGetMouseButton :: (ret: &i32, _window: &GLFWwindow, _button: i32);
+__c__glfwGetCursorPos :: (_window: &GLFWwindow, _xpos: &f64, _ypos: &f64);
+__c__glfwSetCursorPos :: (_window: &GLFWwindow, _xpos: f64, _ypos: f64);
+__c__glfwCreateCursor :: (ret: &&GLFWcursor, _image: &GLFWimage, _xhot: i32, _yhot: i32);
+__c__glfwCreateStandardCursor :: (ret: &&GLFWcursor, _shape: i32);
+__c__glfwDestroyCursor :: (_cursor: &GLFWcursor);
+__c__glfwSetCursor :: (_window: &GLFWwindow, _cursor: &GLFWcursor);
+__c__glfwSetKeyCallback :: (ret: &GLFWkeyfun, _window: &GLFWwindow, _cbfun: GLFWkeyfun);
+__c__glfwSetCharCallback :: (ret: &GLFWcharfun, _window: &GLFWwindow, _cbfun: GLFWcharfun);
+__c__glfwSetCharModsCallback :: (ret: &GLFWcharmodsfun, _window: &GLFWwindow, _cbfun: GLFWcharmodsfun);
+__c__glfwSetMouseButtonCallback :: (ret: &GLFWmousebuttonfun, _window: &GLFWwindow, _cbfun: GLFWmousebuttonfun);
+__c__glfwSetCursorPosCallback :: (ret: &GLFWcursorposfun, _window: &GLFWwindow, _cbfun: GLFWcursorposfun);
+__c__glfwSetCursorEnterCallback :: (ret: &GLFWcursorenterfun, _window: &GLFWwindow, _cbfun: GLFWcursorenterfun);
+__c__glfwSetScrollCallback :: (ret: &GLFWscrollfun, _window: &GLFWwindow, _cbfun: GLFWscrollfun);
+__c__glfwSetDropCallback :: (ret: &GLFWdropfun, _window: &GLFWwindow, _cbfun: GLFWdropfun);
+__c__glfwJoystickPresent :: (ret: &i32, _jid: i32);
+__c__glfwGetJoystickAxes :: (ret: &&f32, _jid: i32, _count: &i32);
+__c__glfwGetJoystickButtons :: (ret: &&u8, _jid: i32, _count: &i32);
+__c__glfwGetJoystickHats :: (ret: &&u8, _jid: i32, _count: &i32);
+__c__glfwGetJoystickName :: (ret: &&char8, _jid: i32);
+__c__glfwGetJoystickGUID :: (ret: &&char8, _jid: i32);
+__c__glfwSetJoystickUserPointer :: (_jid: i32, _pointer: &void);
+__c__glfwGetJoystickUserPointer :: (ret: &&void, _jid: i32);
+__c__glfwJoystickIsGamepad :: (ret: &i32, _jid: i32);
+__c__glfwSetJoystickCallback :: (ret: &GLFWjoystickfun, _cbfun: GLFWjoystickfun);
+__c__glfwUpdateGamepadMappings :: (ret: &i32, _string: &char8);
+__c__glfwGetGamepadName :: (ret: &&char8, _jid: i32);
+__c__glfwGetGamepadState :: (ret: &i32, _jid: i32, _state: &GLFWgamepadstate);
+__c__glfwSetClipboardString :: (_window: &GLFWwindow, _string: &char8);
+__c__glfwGetClipboardString :: (ret: &&char8, _window: &GLFWwindow);
+__c__glfwGetTime :: (ret: &f64);
+__c__glfwSetTime :: (_time: f64);
+__c__glfwGetTimerValue :: (ret: &uint);
+__c__glfwGetTimerFrequency :: (ret: &uint);
+__c__glfwMakeContextCurrent :: (_window: &GLFWwindow);
+__c__glfwGetCurrentContext :: (ret: &&GLFWwindow);
+__c__glfwSwapBuffers :: (_window: &GLFWwindow);
+__c__glfwSwapInterval :: (_interval: i32);
+__c__glfwExtensionSupported :: (ret: &i32, _extension: &char8);
+__c__glfwGetProcAddress :: (ret: &GLFWglproc, _procname: &char8);
+__c__glfwVulkanSupported :: (ret: &i32);
+__c__glfwGetRequiredInstanceExtensions :: (ret: &&&char8, _count: &u32);

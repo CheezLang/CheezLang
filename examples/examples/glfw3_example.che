@@ -7,18 +7,9 @@ fmt :: import std.fmt
 io  :: import std.io
 C   :: import std.c
 
-use import glfw.glfw3
+use import glfw.glfw_binding
 use import opengl.glad_binding
-// use import opengl.opengl
-// use import opengl.constants
-// use import opengl.types
-// use import opengl.functions
-
-
 ImGui :: import imgui.imgui_binding
-// use import ImGui.cimgui_binding
-// use import ImGui.cimgui_glfw_binding
-// use import ImGui.cimgui_opengl3_binding
 
 #export_scope
 
@@ -100,7 +91,7 @@ height := 0
 Main :: () {
     glfwSetErrorCallback(glfw_error_callback)
 
-    if !glfwInit() {
+    if glfwInit() == 0 {
         io.println("Failed to initialize GLFW")
         return
     }
@@ -166,7 +157,7 @@ Main :: () {
     fps_counter := 0
     current_fps := 0
 
-    while !glfwWindowShouldClose(window) {
+    while glfwWindowShouldClose(window) == 0 {
         this_frame_time     := get_time_microseconds()
         last_frame_duration := this_frame_time - last_frame_time
         last_frame_time = this_frame_time
@@ -460,7 +451,7 @@ init_imgui :: (window: &GLFWwindow) -> bool {
     style.WindowRounding = 0.0	
 
     //
-    if !ImGui.ImGui_ImplGlfw_InitForOpenGL(window, true) {
+    if !ImGui.ImGui_ImplGlfw_InitForOpenGL(cast window, true) {
         io.println("[ERROR] ImGui.ImGui_ImplGlfw_InitForOpenGL failed")
         return false
     }
