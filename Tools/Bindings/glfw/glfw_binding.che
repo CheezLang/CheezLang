@@ -1,4 +1,4 @@
-#lib("./lib/glfw3dll.lib")
+
 #lib("./lib/glfw_binding.lib")
 #export_scope
 
@@ -27,7 +27,10 @@ GLFWcharmodsfun :: fn(&GLFWwindow, u32, i32) -> void
 GLFWdropfun :: fn(&GLFWwindow, i32, &&char8) -> void
 GLFWmonitorfun :: fn(&GLFWmonitor, i32) -> void
 GLFWjoystickfun :: fn(i32, i32) -> void
-
+GLFWvidmode :: struct #copy {}
+GLFWgammaramp :: struct #copy {}
+GLFWimage :: struct #copy {}
+GLFWgamepadstate :: struct #copy {}
 GLFW_VERSION_MAJOR :: 3
 GLFW_VERSION_MINOR :: 3
 GLFW_VERSION_REVISION :: 0
@@ -41,10 +44,10 @@ GLFW_HAT_UP :: 1
 GLFW_HAT_RIGHT :: 2
 GLFW_HAT_DOWN :: 4
 GLFW_HAT_LEFT :: 8
-GLFW_HAT_RIGHT_UP :: @bin_or(GLFW_HAT_RIGHT, GLFW_HAT_UP)
-GLFW_HAT_RIGHT_DOWN :: @bin_or(GLFW_HAT_RIGHT,GLFW_HAT_DOWN)
-GLFW_HAT_LEFT_UP :: @bin_or(GLFW_HAT_LEFT,GLFW_HAT_UP)
-GLFW_HAT_LEFT_DOWN :: @bin_or(GLFW_HAT_LEFT,GLFW_HAT_DOWN)
+GLFW_HAT_RIGHT_UP :: (GLFW_HAT_RIGHT|GLFW_HAT_UP)
+GLFW_HAT_RIGHT_DOWN :: (GLFW_HAT_RIGHT|GLFW_HAT_DOWN)
+GLFW_HAT_LEFT_UP :: (GLFW_HAT_LEFT|GLFW_HAT_UP)
+GLFW_HAT_LEFT_DOWN :: (GLFW_HAT_LEFT|GLFW_HAT_DOWN)
 GLFW_KEY_UNKNOWN :: -1
 GLFW_KEY_SPACE :: 32
 GLFW_KEY_APOSTROPHE :: 39
@@ -775,13 +778,13 @@ glfwGetTime :: () -> f64 {
 glfwSetTime :: (_time: f64) {
     __c__glfwSetTime(_time)
 }
-glfwGetTimerValue :: () -> uint {
-    result : uint = default
+glfwGetTimerValue :: () -> uint64_t {
+    result : uint64_t = default
     __c__glfwGetTimerValue(&result)
     return result
 }
-glfwGetTimerFrequency :: () -> uint {
-    result : uint = default
+glfwGetTimerFrequency :: () -> uint64_t {
+    result : uint64_t = default
     __c__glfwGetTimerFrequency(&result)
     return result
 }
@@ -814,7 +817,7 @@ glfwVulkanSupported :: () -> i32 {
     __c__glfwVulkanSupported(&result)
     return result
 }
-glfwGetRequiredInstanceExtensions :: (_count: &u32) -> &&char8 {
+glfwGetRequiredInstanceExtensions :: (_count: &uint32_t) -> &&char8 {
     result : &&char8 = default
     __c__glfwGetRequiredInstanceExtensions(&result, _count)
     return result
@@ -932,8 +935,8 @@ __c__glfwSetClipboardString :: (_window: &GLFWwindow, _string: &char8);
 __c__glfwGetClipboardString :: (ret: &&char8, _window: &GLFWwindow);
 __c__glfwGetTime :: (ret: &f64);
 __c__glfwSetTime :: (_time: f64);
-__c__glfwGetTimerValue :: (ret: &uint);
-__c__glfwGetTimerFrequency :: (ret: &uint);
+__c__glfwGetTimerValue :: (ret: &uint64_t);
+__c__glfwGetTimerFrequency :: (ret: &uint64_t);
 __c__glfwMakeContextCurrent :: (_window: &GLFWwindow);
 __c__glfwGetCurrentContext :: (ret: &&GLFWwindow);
 __c__glfwSwapBuffers :: (_window: &GLFWwindow);
@@ -941,4 +944,4 @@ __c__glfwSwapInterval :: (_interval: i32);
 __c__glfwExtensionSupported :: (ret: &i32, _extension: &char8);
 __c__glfwGetProcAddress :: (ret: &GLFWglproc, _procname: &char8);
 __c__glfwVulkanSupported :: (ret: &i32);
-__c__glfwGetRequiredInstanceExtensions :: (ret: &&&char8, _count: &u32);
+__c__glfwGetRequiredInstanceExtensions :: (ret: &&&char8, _count: &uint32_t);

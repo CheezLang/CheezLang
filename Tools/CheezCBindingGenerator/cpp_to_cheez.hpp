@@ -65,9 +65,10 @@ private:
     void emit_macro_expansion(const Declaration& decl);
     void emit_struct_decl(const Declaration& decl);
     void emit_union_decl(const Declaration& decl);
-    void emit_typedef_decl(CXCursor cursor);
-    void emit_enum_decl(CXCursor cursor);
-    void emit_macro(CXCursor cursor);
+    void emit_typedef_decl(const Declaration& decl);
+    void emit_enum_decl(const Declaration& decl);
+    void emit_macro(const Declaration& decl);
+
     void emit_c_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma = false);
     void emit_c_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma = false);
     void emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma = false, bool prefer_pointers = false);
@@ -87,6 +88,7 @@ private:
     // lua bindings
     static const luaL_Reg lua_lib[4];
     bool call_custom_handler(std::ostream& stream, const char* handler_name, CXCursor cursor, const char* decl_name, CXType decl_type);
+    bool call_custom_handler(std::ostream& stream, const char* handler_name, CXCursor cursor, const char* decl_name);
     void call_custom_handler(std::ostream& stream, const char* handler_name);
 
     int to_cheez_string_lua(lua_State* L);

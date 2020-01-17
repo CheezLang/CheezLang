@@ -12,7 +12,7 @@ C    :: import std.c
 use import compiler.lexer
 use import compiler.string_database
 use import compiler.error_handler
-use import glfw.glfw3
+use import glfw.glfw_binding
 serpa :: import serpa.serpa
 ImGui :: import imgui.imgui_binding
 

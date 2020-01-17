@@ -1,7 +1,7 @@
 mem :: import std.mem.allocator
 io  :: import std.io
 
-use import glfw.glfw3
+use import glfw.glfw_binding
 
 #export_scope
 

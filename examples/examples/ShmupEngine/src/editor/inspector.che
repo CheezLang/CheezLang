@@ -8,7 +8,7 @@ fmt  :: import std.fmt
 io   :: import std.io
 C    :: import std.c
 
-use import glfw.glfw3
+use import glfw.glfw_binding
 ImGui :: import imgui.imgui_binding
 
 use import "../math"

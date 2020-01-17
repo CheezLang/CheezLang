@@ -11,7 +11,7 @@ util :: import std.util
 
 use import opengl.glad_binding
 ImGui :: import imgui.imgui_binding
-glfw  :: import glfw.glfw3
+glfw  :: import glfw.glfw_binding
 
 use import shmup_engine
 use import opengl_utils

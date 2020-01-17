@@ -91,11 +91,11 @@ void CppToCheezGenerator::call_custom_handler(std::ostream& stream, const char* 
         if (lua_isstring(lua_state, -1)) {
             auto str = lua_tostring(lua_state, -1);
             stream << str << "\n";
-            lua_pop(lua_state, 2);
+            lua_pop(lua_state, 1);
         }
         else {
             std::cerr << "[LUA ERROR] " << handler_name << " did not return a string\n";
-            lua_pop(lua_state, 2);
+            lua_pop(lua_state, 1);
         }
     }
     else if (!lua_isnil(lua_state, -1)) {
@@ -105,6 +105,55 @@ void CppToCheezGenerator::call_custom_handler(std::ostream& stream, const char* 
     // pop value which is either nil or not a function
     // if it was a function we already popped it by calling it
     lua_pop(lua_state, 1);
+}
+
+bool CppToCheezGenerator::call_custom_handler(std::ostream& stream, const char* name, CXCursor cursor, const char* decl_name) {
+    lua_getglobal(lua_state, name);
+    if (lua_isfunction(lua_state, -1)) {
+        lua_pushlightuserdata(lua_state, &cursor);
+        lua_pushstring(lua_state, decl_name);
+        lua_call(lua_state, 2, 2);
+        if (lua_isboolean(lua_state, -2)) {
+            bool done = lua_toboolean(lua_state, -2);
+
+            if (done) {
+                if (lua_isstring(lua_state, -1)) {
+                    auto str = lua_tostring(lua_state, -1);
+                    stream << str << "\n";
+                    lua_pop(lua_state, 2);
+                    return true;
+                }
+                else if (lua_isnil(lua_state, -1)) {
+                    lua_pop(lua_state, 2);
+                    return true;
+                }
+                else {
+                    std::cerr << "[LUA ERROR] " << name << " did not return a string or nil as second parameter\n";
+                    lua_pop(lua_state, 2);
+                    return true;
+                }
+            }
+            else {
+                lua_pop(lua_state, 2);
+                return false;
+            }
+
+            return done;
+        }
+        else {
+            std::cerr << "[LUA ERROR] " << name << " did not return a boolean\n";
+            return true;
+        }
+    }
+    else if (!lua_isnil(lua_state, -1)) {
+        std::cerr << "[LUA ERROR] " << name << " is not a function\n";
+    }
+
+    // pop value which is either nil or not a function
+    // if it was a function we already popped it by calling it
+    lua_pop(lua_state, 1);
+
+    return false;
 }
 
 bool CppToCheezGenerator::call_custom_handler(std::ostream& stream, const char* name, CXCursor cursor, const char* decl_name, CXType decl_type) {
@@ -123,8 +172,12 @@ bool CppToCheezGenerator::call_custom_handler(std::ostream& stream, const char* 
                     stream << str << "\n";
                     lua_pop(lua_state, 2);
                     return true;
+                }
+                else if (lua_isnil(lua_state, -1)) {
+                    lua_pop(lua_state, 2);
+                    return true;
                 } else {
-                    std::cerr << "[LUA ERROR] " << name << " did not return a string as second parameter\n";
+                    std::cerr << "[LUA ERROR] " << name << " did not return a string or nil as second parameter\n";
                     lua_pop(lua_state, 2);
                     return true;
                 }
@@ -209,7 +262,7 @@ bool CppToCheezGenerator::load_translation_unit_from_file(const std::string& fil
 }
 
 bool CppToCheezGenerator::do_generate_bindings(std::ostream& cheez_file, std::ostream& cpp_file) {
-    call_custom_handler(m_cpp_buffer, "prepend_to_cheez");
+    call_custom_handler(m_cheez_buffer, "prepend_to_cheez");
     call_custom_handler(m_cpp_buffer, "prepend_to_cpp");
 
     m_namespaces.push_back({ clang_getNullCursor(), 0 });
@@ -217,17 +270,17 @@ bool CppToCheezGenerator::do_generate_bindings(std::ostream& cheez_file, std::os
 
     for (auto td : m_typedefs) {
         reset();
-        emit_typedef_decl(td.declaration);
+        emit_typedef_decl(td);
     }
 
     for (auto td : m_macros) {
         reset();
-        emit_macro(td.declaration);
+        emit_macro(td);
     }
 
     for (auto td : m_enums) {
         reset();
-        emit_enum_decl(td.declaration);
+        emit_enum_decl(td);
     }
 
     for (auto td : m_structs) {
@@ -255,8 +308,6 @@ bool CppToCheezGenerator::do_generate_bindings(std::ostream& cheez_file, std::os
         emit_macro_expansion(td);
     }
 
-    cheez_file << "#lib(\"./__TODO__.lib\")\n\n";
-    cheez_file << "#export_scope\n\n";
     cheez_file << m_cheez_unknown_types.str() << "\n";
     cheez_file << this->m_cheez_buffer.str() << "\n";
     cheez_file << "// ==========================================================\n";
@@ -359,14 +410,21 @@ void CppToCheezGenerator::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
     clang_visitChildren(tu, getFreeCallback(&visitAllChildren), &data);
 }
 
-void CppToCheezGenerator::emit_typedef_decl(CXCursor cursor) {
+void CppToCheezGenerator::emit_typedef_decl(const Declaration& decl) {
+    auto cursor = decl.declaration;
     auto elo = clang_getTypedefDeclUnderlyingType(cursor);
     auto actual_type = clang_Type_getNamedType(elo);
     auto type_decl = clang_getTypeDeclaration(actual_type);
+    auto name = clang_getCursorSpelling(cursor);
+
+    if (call_custom_handler(m_cheez_buffer, "on_typedef", decl.declaration, clang_getCString(name), elo)) {
+        clang_disposeString(name);
+        return;
+    }
 
     switch (type_decl.kind) {
     case CXCursor_StructDecl: {
-        m_cheez_buffer << clang_getCursorSpelling(cursor) << " :: struct #copy {}\n";
+        m_cheez_buffer << name << " :: struct #copy {}\n";
         break;
     }
 
@@ -375,13 +433,14 @@ void CppToCheezGenerator::emit_typedef_decl(CXCursor cursor) {
     }
 
     default: {
-        m_cheez_buffer << clang_getCursorSpelling(cursor) << " :: ";
+        m_cheez_buffer << name << " :: ";
         emit_cheez_type(m_cheez_buffer, elo, false);
         m_cheez_buffer << "\n";
         break;
     }
     }
 
+    clang_disposeString(name);
     //ctx.cheez_file << name << " :: struct {}\n";
 }
 
@@ -440,7 +499,8 @@ void CppToCheezGenerator::emit_variable_decl(const Declaration& decl) {
     clang_disposeString(name);
 }
 
-void CppToCheezGenerator::emit_macro(CXCursor cursor) {
+void CppToCheezGenerator::emit_macro(const Declaration& decl) {
+    auto cursor = decl.declaration;
     auto name = clang_getCursorSpelling(cursor);
     auto name_c = clang_getCString(name);
 
@@ -448,6 +508,11 @@ void CppToCheezGenerator::emit_macro(CXCursor cursor) {
     if (clang_Cursor_isMacroFunctionLike(cursor) || clang_Cursor_isMacroBuiltin(cursor))
         return;
     if (c_string_starts_with(name_c, "_")) {
+        clang_disposeString(name);
+        return;
+    }
+
+    if (call_custom_handler(m_cheez_buffer, "on_macro", decl.declaration, name_c)) {
         clang_disposeString(name);
         return;
     }
@@ -493,6 +558,11 @@ void CppToCheezGenerator::emit_struct_decl(const Declaration& decl) {
 
     if (!clang_isCursorDefinition(cursor))
         return;
+
+    if (call_custom_handler(m_cheez_buffer, "on_struct", decl.declaration, clang_getCString(name))) {
+        clang_disposeString(name);
+        return;
+    }
 
     // type declaration
     m_cheez_buffer << name << " :: struct #copy {\n";
@@ -720,7 +790,8 @@ void CppToCheezGenerator::emit_union_decl(const Declaration& decl) {
     clang_disposeString(name);
 }
 
-void CppToCheezGenerator::emit_enum_decl(CXCursor cursor) {
+void CppToCheezGenerator::emit_enum_decl(const Declaration& decl) {
+    auto cursor = decl.declaration;
     auto name = clang_getCursorSpelling(cursor);
 
     if (strlen(clang_getCString(name)) == 0)
@@ -728,6 +799,11 @@ void CppToCheezGenerator::emit_enum_decl(CXCursor cursor) {
 
     if (!clang_isCursorDefinition(cursor))
         return;
+
+    if (call_custom_handler(m_cheez_buffer, "on_enum", decl.declaration, clang_getCString(name))) {
+        clang_disposeString(name);
+        return;
+    }
 
     int longest_member_name = 0;
     {
@@ -814,12 +890,13 @@ void CppToCheezGenerator::emit_function_decl(const Declaration& decl) {
     if (c_string_starts_with(name.c_str(), "operator"))
         return;
 
+    if (call_custom_handler(m_cheez_buffer, "on_function", decl.declaration, clang_getCString(name_raw))) {
+        clang_disposeString(name_raw);
+        return;
+    }
+
     auto function_type = clang_getCursorType(cursor);
     auto return_type = clang_getResultType(function_type);
-
-    if (strcmp("RenderFrame", clang_getCString(name_raw)) == 0) {
-        int a = 0;
-    }
 
     // cheez
     {
