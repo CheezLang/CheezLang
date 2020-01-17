@@ -985,4 +985,39 @@ namespace Cheez.Ast.Expressions
                 From.Clone(),
                 To.Clone()));
     }
+
+    public class AstGenericExpr : AstExpression
+    {
+        public List<AstParameter> Parameters { get; set; }
+        public AstExpression SubExpression { get; set; }
+        public Scope SubScope { get; set; }
+
+        public AstGenericExpr Template { get; set; } = null;
+        public List<(List<(int index, CheezType type, object value)> args, AstExpression expr)> PolymorphicInstances { get; private set; } = null;
+        public override bool IsPolymorphic => true;
+
+        public AstGenericExpr(List<AstParameter> parameters, AstExpression sub, ILocation Location)
+            : base(Location)
+        {
+            Parameters = parameters;
+            SubExpression = sub;
+            PolymorphicInstances = new List<(List<(int index, CheezType type, object value)> args, AstExpression expr)>();
+        }
+
+        private AstGenericExpr(List<AstParameter> parameters, AstExpression sub, List<(List<(int index, CheezType type, object value)> args, AstExpression expr)> instances)
+        {
+            Parameters = parameters;
+            SubExpression = sub;
+            PolymorphicInstances = instances;
+        }
+
+        public override TReturn Accept<TReturn, TData>(IVisitor<TReturn, TData> visitor, TData data = default)
+            => visitor.VisitGenericExpr(this, data);
+
+        public override AstExpression Clone()
+            => CopyValuesTo(new AstGenericExpr(
+                Parameters.Select(p => p.Clone() as AstParameter).ToList(),
+                SubExpression.Clone(),
+                PolymorphicInstances));
+    }
 }

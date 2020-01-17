@@ -8,7 +8,7 @@
 // import examples.snake.snake
 // import examples.pathtracer
 // import examples.command_line_parser
-// import examples.ShmupEngine.src.main
+import examples.ShmupEngine.src.main
 // import compiler.cli
 // import compiler.compiler_test
 
@@ -27,6 +27,88 @@
 // import bugs.bug1
 
 // import "../Tools/Bindings/imgui_binding"
+
+// use import std.string
+// use import std.printable
+// io :: import std.io
+
+// // Units :: generic[M: int, T: int] struct #copy {
+// //     value : double
+// // }
+
+// // parse_arguments :: generic[T: type] (args: []string) -> Option[T] {
+// //     return None
+// // }
+
+// // args := parse_arguments[MyArgs](["123", "456", "789"])
+
+// // Same :: [V: int] Units[V, V]
+
+// Foo :: generic[T: type] struct {
+//     a : T
+// }
+
+// Foo2 :: struct(T: type) {
+//     a : T
+// }
+
+// Bar :: Foo[int]
+
+// // impl(T: type) Foo[T] {
+// //     print :: (ref Self) {
+// //         io.printfln("T {}", a)
+// //     }
+// // }
+
+// // impl Foo[int] {
+// //     print :: (ref Self) {
+// //         io.printfln("int {}", a)
+// //     }
+// // }
+
+// // impl Foo[string] {
+// //     print :: (ref Self) {
+// //         io.printfln("string {}", a)
+// //     }
+// // }
+
+// Sum         :: generic[A: int, B: int] A + B
+// ConstArray  :: generic[Size: int, T: type] [Size]T
+// PI          :: generic[T: type] T(3.1415)
+
+// Sum2        :: ($A: int, $B: int) -> int {
+//     return A + B
+// }
+// PI2         :: ($T: type) -> T {
+//     return T(3.1415)
+// }
+
+// Main :: () {
+//     io.println(PI[float])
+//     io.println(PI[double])
+//     io.println(PI[int])
+//     io.println(PI2(float))
+//     io.println(PI2(double))
+//     io.println(PI2(int))
+
+//     Arr :: ConstArray[Sum[3, 2], float]
+//     LOL :: Sum[6, 2]
+//     io.println(LOL)
+//     io.println(Sum[3, -5])
+
+//     b := Bar(123)
+//     z := Foo[string]("test")
+//     x := Foo[string]("lol")
+
+//     // b.print()
+//     // z.print()
+//     // x.print()
+    
+//     io.println("")
+//     io.println(b.a)
+//     io.println(z.a)
+//     io.println(x.a)
+// }
 
 /*
 

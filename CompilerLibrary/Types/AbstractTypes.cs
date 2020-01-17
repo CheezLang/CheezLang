@@ -1,4 +1,5 @@
-﻿using Cheez.Ast.Expressions.Types;
+﻿using Cheez.Ast.Expressions;
+using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types.Complex;
 using Cheez.Visitors;
@@ -78,6 +79,24 @@ namespace Cheez.Types.Abstract
         public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             throw new NotImplementedException();
+        }
+    }
+
+    public class GenericType : CheezType
+    {
+        public override bool IsErrorType => false;
+        public override bool IsPolyType => true;
+
+        public AstGenericExpr Expression { get; }
+
+        public GenericType(AstGenericExpr expr)
+        {
+            Expression = expr;
+        }
+
+        public override string ToString()
+        {
+            return "generic " + Expression.ToString();
         }
     }
 

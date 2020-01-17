@@ -138,6 +138,9 @@ namespace Cheez
 
             switch (expr)
             {
+                case AstGenericExpr g:
+                    return InferTypeGenericExpr(g, expected, context);
+
                 case AstMoveAssignExpr m:
                     return InferTypeMoveAssignExpr(m, expected, context);
 
@@ -3795,6 +3798,9 @@ namespace Cheez
                         break;
                     }
 
+                case GenericType g:
+                    return InferTypeGenericCallExpr(g, expr, expected, context);
+
                 case CheezType gen when expr.SubExpression.Value is GenericStructType ||
                                         expr.SubExpression.Value is GenericTraitType ||
                                         expr.SubExpression.Value is GenericEnumType:
@@ -4721,6 +4727,84 @@ namespace Cheez
 
             if (arguments.Count < parameters.Length)
                 return false;
+
+            return true;
+        }
+
+        private bool CheckAndMatchArgsToParams(
+            List<AstArgument> arguments,
+            List<AstParameter> parameters,
+            bool varArgs)
+        {
+            // check for too many arguments
+            if (arguments.Count > parameters.Count && !varArgs)
+            {
+                ReportError(new Location(arguments), $"Too many arguments ({arguments.Count}), expected {parameters.Count} arguments");
+                return false;
+            }
+
+            // match arguments to parameters
+            var map = new Dictionary<int, AstArgument>();
+            bool allowUnnamed = true;
+            for (int i = 0; i < arguments.Count; i++)
+            {
+                var arg = arguments[i];
+                if (arg.Name == null)
+                {
+                    if (!allowUnnamed)
+                    {
+                        ReportError(arg, $"Unnamed arguments are not allowed after named arguments");
+                        return false;
+                    }
+
+                    map[i] = arg;
+                    arg.Index = i;
+                }
+                else
+                {
+                    var index = parameters.FindIndex(p => p.Name.Name == arg.Name.Name);
+                    if (map.TryGetValue(index, out var other))
+                    {
+                        ReportError(arg, $"This argument maps to the same parameter ({i}) as '{other}'");
+                        return false;
+                    }
+                    if (index == -1)
+                    {
+                        ReportError(arg, $"This argument does not match any parameters");
+                        return false;
+                    }
+
+                    map[index] = arg;
+                    arg.Index = index;
+                }
+            }
+
+            // create missing arguments
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                if (map.ContainsKey(i))
+                    continue;
+                var p = parameters[i];
+                if (p.DefaultValue == null)
+                {
+                    ReportError(new Location(arguments), $"No argument for parameter {p.Name} found", ("Parameter defined here:", p.Location));
+                    return false;
+                }
+
+                // create arg with default value
+                var arg = new AstArgument(p.DefaultValue.Clone(), Location: p.DefaultValue.Location);
+                arg.IsDefaultArg = true;
+                arg.Index = i;
+                arguments.Add(arg);
+            }
+
+            arguments.Sort((a, b) => a.Index - b.Index);
+
+            if (arguments.Count < parameters.Count)
+            {
+                WellThatsNotSupposedToHappen();
+                return false;
+            }
 
             return true;
         }
@@ -5781,6 +5865,9 @@ namespace Cheez
                 case BoolType _: return true;
                 case CharType _: return true;
                 case CheezTypeType _: return true;
+
+                case CheezType c when c.IsErrorType:
+                    return false;
 
                 default:
                     ReportError(location, $"The type {type} is not allowed here");
