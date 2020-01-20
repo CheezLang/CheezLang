@@ -444,7 +444,7 @@ impl string {
         }
         @assert(
             from_byte >= 0 and
-            from_byte < self.bytes.length and
+            from_byte <= self.bytes.length and
             from_byte <= to_byte and
             to_byte <= self.bytes.length)
         sub_bytes := self.bytes[from_byte .. to_byte]
