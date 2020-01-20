@@ -1,5 +1,6 @@
 use import std.array
 use import std.string
+use import std.box
 use import std.math
 
 C   :: import std.c
@@ -130,11 +131,18 @@ impl(T: type) Printable for Option[T] if T: Printable {
     }
 }
 
+impl(T: type) Printable for Box[T] {
+    print :: (ref Self, str: ref String, format: string) {
+        msg := fmt.format("Box({})", [<<_value])
+        str.append(msg)
+    }
+}
+
 impl(V: type, E: type) Printable for Result[V, E] if V: Printable, E: Printable {
     print :: (ref Self, str: ref String, format: string) {
         match self {
-            Ok($v)  -> str.appendf("Ok({})", v)
-            Err($v) -> str.appendf("Err({})", v)
+            Ok($v)  -> str.appendf("Ok({})", fmt.format_any(v))
+            Err($v) -> str.appendf("Err({})", fmt.format_any(v))
         }
     }
 }

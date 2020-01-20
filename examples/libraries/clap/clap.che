@@ -12,6 +12,92 @@ indent_size         :: 2
 
 #export_scope
 
+Clap :: struct {
+
+}
+
+Location :: struct #copy {
+    start   : int
+    end     : int
+}
+
+ClapToken :: struct {
+    loc : Location
+    raw : String
+}
+
+impl Clap {
+    tokenize :: (str: string) -> Array[ClapToken] {
+        args := Array[ClapToken].create()
+
+        State :: enum #copy {
+            Unquoted, Whitespace, Escaped, Quoted
+        }
+        use State
+        state := Whitespace
+        start := 0
+
+        loc := Location(0, 0)
+        current := String.empty()
+
+        for c : str {
+            match state, c {
+                (Escaped, $c) -> {
+                    state = Quoted
+                    current += c
+                }
+
+                (Unquoted, $c) if char.is_whitespace(c) -> {
+                    args.add(ClapToken(loc, current.clone()))
+                    current.clear()
+                    state = Whitespace
+                }
+                (Unquoted, $c) -> {
+                    current += c
+                }
+
+                (Whitespace, '"') -> {
+                    state = Quoted
+
+                    loc.start = it_index + 1
+                    loc.end = loc.start
+                }
+                (Whitespace, $c) if !char.is_whitespace(c) -> {
+                    current += c
+                    state = Unquoted
+
+                    loc.start = it_index
+                    loc.end = loc.start
+                }
+
+                (Quoted, '"') -> {
+                    loc.end -= 1
+                    args.add(ClapToken(loc, current.clone()))
+                    current.clear()
+                    state = Whitespace
+                }
+
+                (Quoted, '``') -> {
+                    state = Escaped
+                }
+
+                (Quoted, $c) -> {
+                    current += c
+                }
+            }
+
+            loc.end += 1
+        }
+
+        if state == Unquoted {
+            args.add(ClapToken(loc, current.clone()))
+            current.clear()
+        }
+
+        return args
+    }
+}
+
 parse_arguments_from_string :: ($T: type, str: string) -> &T {
     args := Array[String].create()
 

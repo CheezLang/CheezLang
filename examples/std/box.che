@@ -1,15 +1,20 @@
 use import std.mem.allocator
 
+#export_scope
 
 Box :: struct(T: type) {
     _value: &T
 }
 
 impl(T: type) Box[T] {
-    create :: (v: T = default) -> Box[T] {
+    create :: (v: T) -> Box[T] {
         p := alloc(T)
         <<p = v
         return Box[T](p)
+    }
+
+    from_pointer :: (ptr: &T) -> Box[T] {
+        return Box[T](ptr)
     }
 
     value :: (ref Self) -> ref T {

@@ -8,6 +8,11 @@ use import std.os.windows_functions
 use import std.os.windows_constants
 
 #export_scope
+formatln :: (format: &any, args: []&any = []) {
+    format_string := fmt.format_any(format)
+    println(fmt.format(format_string.slice(), args))
+}
+
 println :: (v: $T) {
     s := String.empty()
     s.appendf("{}`n", v)

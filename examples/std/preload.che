@@ -32,7 +32,19 @@ try :: (code: Code) #macro {
         Err($err) -> {
             ReturnType :: @function_type().return_type
             TargetType :: ReturnType.E
-            return ReturnType.Err(cast(TargetType) @typeof(err).into(err))
+            ErrorType :: @typeof(err)
+
+            return if const @type_has_trait(ErrorType, Into[TargetType]) {
+                ReturnType.Err(cast(TargetType) @typeof(err).into(err))
+            } else {
+                ReturnType.Err(err)
+            }
+            // bug?
+            // if const @type_has_trait(ErrorType, Into[TargetType]) {
+            //     return ReturnType.Err(cast(TargetType) @typeof(err).into(err))
+            // } else {
+            //     return ReturnType.Err(err)
+            // }
         }
     }
 }
