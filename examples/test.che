@@ -8,7 +8,7 @@
 // import examples.snake.snake
 // import examples.pathtracer
 // import examples.command_line_parser
-import examples.ShmupEngine.src.main
+// import examples.ShmupEngine.src.main
 // import compiler.cli
 // import compiler.compiler_test
 
@@ -26,438 +26,344 @@ import examples.ShmupEngine.src.main
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
 
-// import "../Tools/Bindings/imgui_binding"
-
-// use import std.string
-// use import std.printable
-// io :: import std.io
-
-// // Units :: generic[M: int, T: int] struct #copy {
-// //     value : double
-// // }
-
-// // parse_arguments :: generic[T: type] (args: []string) -> Option[T] {
-// //     return None
-// // }
-
-// // args := parse_arguments[MyArgs](["123", "456", "789"])
-
-// // Same :: [V: int] Units[V, V]
-
-// Foo :: generic[T: type] struct {
-//     a : T
-// }
-
-// Foo2 :: struct(T: type) {
-//     a : T
-// }
-
-// Bar :: Foo[int]
-
-// // impl(T: type) Foo[T] {
-// //     print :: (ref Self) {
-// //         io.printfln("T {}", a)
-// //     }
-// // }
-
-// // impl Foo[int] {
-// //     print :: (ref Self) {
-// //         io.printfln("int {}", a)
-// //     }
-// // }
-
-// // impl Foo[string] {
-// //     print :: (ref Self) {
-// //         io.printfln("string {}", a)
-// //     }
-// // }
-
-// Sum         :: generic[A: int, B: int] A + B
-// ConstArray  :: generic[Size: int, T: type] [Size]T
-// PI          :: generic[T: type] T(3.1415)
-
-// Sum2        :: ($A: int, $B: int) -> int {
-//     return A + B
-// }
-// PI2         :: ($T: type) -> T {
-//     return T(3.1415)
-// }
-
-// Main :: () {
-//     io.println(PI[float])
-//     io.println(PI[double])
-//     io.println(PI[int])
-//     io.println(PI2(float))
-//     io.println(PI2(double))
-//     io.println(PI2(int))
-
-//     Arr :: ConstArray[Sum[3, 2], float]
-//     LOL :: Sum[6, 2]
-//     io.println(LOL)
-//     io.println(Sum[3, -5])
-
-//     b := Bar(123)
-//     z := Foo[string]("test")
-//     x := Foo[string]("lol")
-
-//     // b.print()
-//     // z.print()
-//     // x.print()
-    
-//     io.println("")
-//     io.println(b.a)
-//     io.println(z.a)
-//     io.println(x.a)
-// }
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////
 
 /*
 
 use import std.string
 use import std.printable
-io :: import std.io
-
-Foo :: struct(size: int) {
-    arr : [size]int = default
-}
-
-Units :: struct(M: int, T: int) #copy {
-    value : double
-}
-
-Meter :: Units[1, 0]
-Time  :: Units[0, 1]
-Speed :: Units[1, -1]
-
-impl Printable for Units[1, 0] {
-    print :: (ref Self, str: ref String, format: string) {
-        str.appendf("{} m", value)
-    }
-}
-
-impl Printable for Units[0, 1] {
-    print :: (ref Self, str: ref String, format: string) {
-        str.appendf("{} s", value)
-    }
-}
-
-impl Printable for Units[1, -1] {
-    print :: (ref Self, str: ref String, format: string) {
-        str.appendf("{} m/s", value)
-    }
-}
-
-impl Printable for Units[1, -2] {
-    print :: (ref Self, str: ref String, format: string) {
-        str.appendf("{} m/s^2", value)
-    }
-}
-
-impl(M1: int, M2: int) Printable for Units[M1, M2] if #notyet {
-    print :: (ref Self, str: ref String, format: string) {
-        str.appendf("{} m^{} s^{}", (value, M1, M2))
-    }
-}
-
-impl(M1: int, T1: int) Units[M1, T1] {
-    add :: (Self, other: Units[M1, T1]) -> Units[M1, T1] #operator("+") {
-        return Units[M1, T1](self.value + other.value)
-    }
-
-    sub :: (Self, other: Units[M1, T1]) -> Units[M1, T1] #operator("-") {
-        return Units[M1, T1](self.value - other.value)
-    }
-
-    mul :: (Self, other: Units[$M2, $T2]) -> Units[M1 + M2, T1 + T2] #operator("*") {
-        return Units[M1 + M2, T1 + T2](self.value * other.value)
-    }
-
-    div :: (Self, other: Units[$M2, $T2]) -> Units[M1 - M2, T1 - T2] #operator("/") {
-        return Units[M1 - M2, T1 - T2](self.value / other.value)
-    }
-}
-
-Main :: () {
-    {
-        distance := Meter(10)
-        speed    := Speed(5)
-        time     := distance / speed
-
-        io.printfln("distance: {}", distance)
-        io.printfln("speed: {}", speed)
-        io.printfln("time: {}", time)
-        io.println("")
-    }
-
-    {
-        speed    := Speed(10)
-        time     := Time(5)
-        distance := time * speed
-        acc      := speed / time
-
-        io.printfln("speed: {}", speed)
-        io.printfln("time: {}", time)
-        io.printfln("distance: {}", distance)
-        io.printfln("acc: {}", acc)
-        io.println("")
-    }
-
-    {
-        speed1 := Speed(3)
-        speed2 := Speed(10)
-        sum    := speed1 + speed2
-        diff   := speed1 - speed2
-
-        io.printfln("speed1: {}", speed1)
-        io.printfln("speed2: {}", speed2)
-        io.printfln("sum: {}", sum)
-        io.printfln("diff: {}", diff)
-        io.println("")
-    }
-}
-
-// */
-
-/*
-#test_expect_output("")
-
-// use import std.os.windows_functions
-// use import std.os.windows_types
-// use import std.os.windows_constants
-// use import std.io.file
-// use import std.io.fs
-use import std.printable
-use import std.string
 use import std.array
-use import std.rc
-use import std.math
-use import std.hash_table
-mem :: import std.mem.allocator
 io  :: import std.io
 fmt :: import std.fmt
-C   :: import std.c
-util:: import std.util
+mem :: import std.mem.allocator
 
-use import compiler.lexer
-use import compiler.error_handler
-use import compiler.string_database
-serpa :: import serpa.serpa
+// clap :: import clap.clap
 
-impl TextProvider for string {
-    get_text :: (ref Self, filename: string) -> string {
-        return self
-    }
+autocomplete :: ($T: type, args: []string) -> Array[String] {
+    result := Array[String].create()
+    autocomplete_type_info(@type_info(T), args, result)
+    return result
 }
 
-impl(T: type) serpa.IParser[Rc[T]] for Rc[T] if T : serpa.IParser[T] {
-    parse :: (lexer: ref Lexer, error_handler: ErrorHandler) -> Option[Self] {
-        return match T.parse(lexer, error_handler) {
-            Some($i) -> Some(Rc[T].new(i))
-            None -> None
-        }
-    }
-}
+autocomplete_type_info :: (ti: &TypeInfo, args: []string, result: ref Array[String]) {
+    io.printfln("auto {}", args.length)
+    if args.length == 0 {
+        autocomplete_type_members(ti, "", result)
+    } else if args.length == 1 {
+        autocomplete_type_members(ti, args[0], result)
+    } else {
+        current := args[0]
 
-impl(T: type) Printable for Rc[T] if T : Printable {
-    print :: (ref Self, str: ref String, format: string) {
-        str.appendf("Rc(count = {}, value = {})", (self.count(), Printable(self.get())))
-    }
-}
-
-impl Printable for ComponentData {
-    print :: (ref Self, str: ref String, format: string) {
-        msg := fmt.format_any(any(type_info, &value.get()))
-        str.append(msg)
-    }
-}
-
-impl serpa.IParser[ComponentData] for ComponentData {
-    parse :: (parser: ref serpa.Parser, lexer: ref Lexer, error_handler: ErrorHandler) -> Option[ComponentData] {
-        eat_token :: (typ: TokenType) #macro {
-            if (ok, t) := @link(lexer).expect_token(typ), ok {
-                t
-            } else {
-                @link(error_handler).report_errorf(t.location, "Expected '{}', got {}", [typ, t.ttype])
-                return None
-            }
-        }
-
-        name_token := eat_token(TokenType.Identifier)
-        struct_name := name_token.data.String
-
-        // io.printfln("parsing component {}", struct_name)
-        @for_trait_impls(Component, (T) => {
-            // io.printfln("trying with type {}", @typename(T))
-            if streq(@typename(T), struct_name) {
-                result := mem.alloc(T)
-                if !parser.parse_struct_into(result, lexer, error_handler) {
-                    mem.free(result)
-                    return None
+        match ti.kind {
+            TypeInfoKind.Enum($info) -> {
+                io.println("auto enum")
+                for(by_ref=true) mem : info.members {
+                    if mem.typ != null and streq(mem.name, current) {
+                        autocomplete_type_info(mem.typ, args[1..args.length], result)
+                    }
                 }
-
-                ptr := Rc[T].from_pointer(result, true)
-                return Some(ComponentData(
-                    ptr.get()
-                    ptr.change_type(())
-                    @type_info(T)
-                ))
             }
-        })
 
-        error_handler.report_errorf(name_token.location, "'{}' is not a valid component", [struct_name])
-        return None
+            TypeInfoKind.Struct($info) -> {
+                autocomplete_struct(ti, args, result)
+            }
+        }
     }
 }
 
-vec3 :: Vector3[float]
-
-Component :: trait {
-    update :: (ref Self);
+autocomplete_struct :: (ti: &TypeInfo, args: []string, result: ref Array[String]) {
+    io.println("auto struct")
+    info := ti.kind.Struct
+    
+    current := args[0]
+    if current.bytes.length == 0 {
+        // todo
+        // empty string, what now?
+    } else if current[0] == u8('-') {
+        current := current.sub_string(1)
+        for(by_ref=true) mem : info.members {
+            if streq(mem.name, current) {
+                autocomplete_type_info(mem.typ, args[1..args.length], result)
+            }
+        }
+    } else {
+        // current doesn't start with '-'
+        // do nothing
+    }
 }
 
-ComponentData :: struct {
-    component : Component
-    value     : Rc[()]
-    type_info : &TypeInfo
+autocomplete_type_members :: (ti: &TypeInfo, prefix: string, result: ref Array[String]) {
+    match ti.kind {
+        TypeInfoKind.Enum($info) -> {
+            for(by_ref=true) mem : info.members {
+                if mem.typ != null and streq(mem.name, prefix) {
+                    autocomplete_type_members(mem.typ, "", result)
+                } else if mem.name.bytes.length != prefix.bytes.length and mem.name.starts_with(prefix) {
+                    remainder := mem.name.sub_string(prefix.bytes.length)
+                    result.add(String.from_string(remainder))
+                }
+            }
+        }
+
+        TypeInfoKind.Struct($info) -> {
+            if prefix.bytes.length == 0 {
+                for(by_ref=true) mem : info.members {
+                    result.add(fmt.format("-{}", [mem.name]))
+                }
+            } else if prefix[0] == u8('-') {
+                prefix := prefix.sub_string(1)
+                for(by_ref=true) mem : info.members {
+                    is_prefix := mem.name.starts_with(prefix)
+                    if !is_prefix then continue
+                    if mem.name.bytes.length == prefix.bytes.length {
+                        // prefix == name
+                        autocomplete_type_members(mem.typ, "", result)
+                    } else {
+                        // prefix < name
+                        remainder := mem.name.sub_string(prefix.bytes.length)
+                        result.add(String.from_string(remainder))
+                    }
+                }
+            } else {
+                // prefix doesn't start with '-'
+                // do nothing
+            }
+        }
+    }
 }
 
-Entity :: struct {
+Test :: (a: int, b: int) const a + b
+Foo  :: (T: type) struct {
+
+}
+
+Command :: enum {
+    Start
+    Stop
+    Test    : Foo
+    Switch  : Mode
+}
+Foo :: struct {
+    banana : int
+    bazaza : Baz
+    baz    : Baz
+}
+Baz :: struct {
     name : string
-    pos  : vec3
-    coms : Array[ComponentData]
+    age  : int
 }
+Mode :: enum { On, Off }
 
-QuadComponent   :: struct {
-    color : vec3
-}
-LolComponent    :: struct {
-    lol : int
-}
-StringComponent :: struct {
-    str : String
-}
-
-impl Component for QuadComponent {
-    update :: (ref Self) {
-        io.printfln("QuadComponent.update({}, {}, {})", (color.x, color.y, color.z))
-    }
-}
-impl Component for LolComponent {
-    update :: (ref Self) {
-        io.printfln("LolComponent.update({})", lol)
-    }
-}
-impl Component for StringComponent {
-    update :: (ref Self) {
-        io.printfln("StringComponent.update({})", str.slice())
-    }
-}
-
-Main :: () {
-    file := "
-{
-    name = `"entity`"
-    pos  = {x = 9, y = 6, z = 3}
-    coms = [
-        QuadComponent {
-            color = {
-                x = 4
-                y = 5
-                z = 6
-            }
-        }
-        LolComponent {lol = 147}
-        StringComponent {str = `"wassup`"}
-    ]
-}
-"
-
-    console_error_handler := ConsoleErrorHandler.new(null)
-    string_db := StringDatabase.new()
-    lexer := Lexer.from_string(String.from_string(file), string_db)
-    console_error_handler.text_provider = file
-
-    parser := serpa.Parser(expect_struct_name=false)
-    result := parser.parse(Entity, lexer, console_error_handler)
-
-    io.println(@typename(@typeof(result)))
-    io.println(fmt.format_any(result))
-
-    match result {
-        Some($entity) -> {
-            io.println(entity.name)
-            io.println(fmt.format_any(entity.pos))
-            for cd : entity.coms {
-                cd.component.update()
-            }
-        }
-    }
-
-    // loop {
-    //     token := lexer.next_token()
-    //     if int(token.ttype) == int(TokenType.EOF) then break
-
-        
-    // }
-}
-// */
 
 /*
-#test_expect_output("")
+Test -bazaza -name Joe -age 57 -banana 123 -baz -name Jane 
+enum(
+    typ = Command
+    loc = 0..66
+    mem = Command.Test
+    sub = struct(
+        typ = Foo
+        loc = 5..66
+        sub = [
+            field(
+                loc = 5..30
+                mem = Foo.bazaza
+                sub = struct(
+                    typ = Baz
+                    loc = 13..30
+                    sub = [
+                        field(
+                            loc = ..
+                            mem = Baz.name
+                            sub = string("Joe")
+                        )
+                        field(
+                            loc = ..
+                            mem = Baz.age
+                            sub = int(57)
+                        )
+                    ]
+                )
+            )
+            
+            field(
+                loc = ..
+                mem = Foo.banana
+                sub = int(123)
+            )
+            
+            field(
+                loc = ..
+                mem = Foo.baz
+                sub = struct(
+                    typ = Baz
+                    loc = ..
+                    sub = [
+                        field(
+                            loc = ..
+                            mem = Baz.name
+                            sub = string("Jane")
+                        )
+                    ]
+                )
+            )
+        ]
+    )
+)
 
-// use import std.os.windows_functions
-// use import std.os.windows_types
-// use import std.os.windows_constants
-// use import std.io.file
-// use import std.io.fs
-// use import std.string
-// use import std.array
-// use import std.hash_table
-// use import std.mem.allocator
-io  :: import std.io
-// fmt :: import std.fmt
-C   :: import std.c
+Start
+enum(typ = Command, loc = 0..5, mem = Command.Start, sub = null)
 
-use import compiler.ast
-use import compiler.lexer
-use import compiler.parser
-use import compiler.error_handler
-use import compiler.string_database
+Stop
+enum(typ = Command, loc = 0..4, mem = Command.Stop, sub = null)
 
-Main :: () {
-    file :: "uiae.che"
+Switch On
+enum(
+    typ = Command
+    loc = 0..9
+    mem = Command.Switch
+    sub = enum(
+        typ = Mode
+        loc = 7..9
+        mem = Mode.On
+        sub = null
+    )
+)
 
-    console_error_handler := ConsoleErrorHandler.new(null)
-    console_error_handler.code_color_error  = io.ConsoleColor.Green
-    console_error_handler.code_color_normal = io.ConsoleColor.White
-    string_db := StringDatabase.new()
-    lexer := try_with(
-        Lexer.from_file(file, string_db),
-        {
-            io.printfln("Failed to open file '{}'", file)
-            return
-        })
+Switch Off
+enum(
+    typ = Command
+    loc = 0..10
+    mem = Switch
+    sub = enum(
+        typ = Mode
+        loc = 7..10
+        mem = Off
+        sub = null
+    )
+)
+ */
 
-    pattern := IdExpr(id = 1, name = "foo")
-    init    := IdExpr(id = 2, name = "bar")
+Location :: struct #copy {
+    start   : int
+    end     : int
+}
 
-    move := MoveExpr(id = 1, target = pattern, source = init)
-    pipe := PipeExpr(id = 1, left = move, right = pattern)
+Expr :: struct #extendable {
+    typ : &TypeInfo
+    loc : Location
+}
 
-    decl := DeclStmt(
-        id       = 3
-        is_const = true
-        pattern  = pattern
-        typ      = Some(init)
-        init     = Some(pipe))
-    io.println(pattern)
-    io.println(init)
-    io.println(decl)
+EnumExpr :: struct #extend(Expr) {
+    mem : &TypeInfoEnumMember = null
+    sub : &Expr = null
+}
 
-    loop {
-        token := lexer.next_token()
-        if int(token.ttype) == int(TokenType.EOF) then break
+StructExpr :: struct #extend(Expr) {
+    sub := Array[StructMember].create()
+}
 
-        
+StructMember :: struct {
+    loc : Location
+    mem : &TypeInfoStructMember
+    sub : &Expr
+}
+
+ValueExpr :: struct #extend(Expr) {
+    raw : String
+}
+
+parse_args :: (ti: &TypeInfo, args: []string) -> &Expr {
+    return match ti.kind {
+        TypeInfoKind.Enum($info)    -> parse_args_enum(ti, args)
+        TypeInfoKind.Struct($info)  -> parse_args_struct(ti, args)
+        _ -> null
     }
 }
+
+length_of_args :: (args: []string) -> int {
+    len := 0
+    for a : args {
+        if it_index > 0 {
+            len += 1
+        }
+        len += a.bytes.length
+    }
+    return len
+}
+
+parse_args_enum :: (ti: &TypeInfo, args: []string) -> &Expr {
+    result := mem.alloc(EnumExpr)
+    <<result = EnumExpr(ti, Location(0, length_of_args(args)))
+    io.println(int(result.typ))
+
+    if args.length == 0 {
+        return cast result
+    }
+
+    current := args[0]
+
+    for(by_ref=true) mem : ti.kind.Enum.members {
+        if streq(mem.name, current) {
+            result.mem = &mem
+
+            if mem.typ != null {
+                result.sub = parse_args(mem.typ, args[1..args.length])
+            }
+            break
+        }
+    }
+
+    return cast result
+}
+
+parse_args_struct :: (ti: &TypeInfo, args: []string) -> &Expr {
+    return null
+}
+
+Main :: () {
+    result := parse_args(@type_info(Command), [])
+
+    if result != null {
+        io.println("===")
+        io.println(int(result.typ))
+        io.println(fmt.format_any(<<result))
+        io.println("===")
+    }
+
+    // strs := autocomplete(Command, ["Test", "-banana", "5"])
+
+    // for str : strs {
+    //     io.println(str.slice())
+    // }
+    // io.println("===")
+}
+
+impl Printable for Expr {
+    print :: (ref Self, str: ref String, format: string) {
+        match self {
+            EnumExpr($v)   -> v.print(str, format)
+            StructExpr($v) -> ()
+            ValueExpr($v)  -> ()
+        }
+    }
+}
+
+impl Printable for EnumExpr {
+    print :: (ref Self, str: ref String, format: string) {
+        // str.appendf("{}", int(typ))
+        sub_str := if sub == null then String.from_string("null") else fmt.format_any(<<sub)
+        result := fmt.format("enum(typ={}, loc={}, mem={}, sub={})", [int(typ), loc, int(mem), sub_str.slice()])
+        str.append(result)
+    }
+}
+
+impl Printable for Location {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{}..{}", (start, end))
+    }
+}
+
 // */
