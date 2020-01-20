@@ -9,6 +9,8 @@ use import std.os.windows_types
 use import std.os.windows_constants
 io :: import std.io
 
+
+
 #export_scope
 
 impl PixelGameEngine {
@@ -158,7 +160,7 @@ impl PixelGameEngine {
 }
 
 pixel_game_engine_ptr : &PixelGameEngine = null
-olc_window_event :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall {
+olc_window_event :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     match msg {
         WM_DESTROY -> PostQuitMessage(0)
         WM_CLOSE   -> { pixel_game_engine_ptr.active = false }

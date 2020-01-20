@@ -1,3 +1,5 @@
+#lib("OpenGL32.lib")
+
 use import pixel
 use import key
 use import sprite
@@ -85,6 +87,7 @@ PixelGameEngine :: struct {
     glBuffer            : GLuint    = 0
     glDeviceContext     : HDC       = null
     glRenderContext     : HGLRC     = null
+    opengl_initialized  := false
 
     // other
     auto_title          : bool      = true
@@ -145,6 +148,7 @@ impl PixelGameEngine {
     engine_thread :: (ref Self) {
         // Start OpenGL, the context is owned by the game thread
         olc_OpenGLCreate()
+        self.olc_update_window_size(window_width, window_height)
 
         // Create Screen Texture - disable filtering
         glEnable(GL_TEXTURE_2D)
@@ -152,11 +156,12 @@ impl PixelGameEngine {
         glBindTexture(GL_TEXTURE_2D, glBuffer)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, cast GL_NEAREST)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, cast GL_NEAREST)
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, cast GL_DECAL) // glTexEnvf?
-        gl_check_error()
+
+        glTexEnvi :: (target: GLenum, pname: GLenum, param: GLint) #stdcall;
+        // glTexEnvi(0x2200, GL_TEXTURE_ENV_MODE, cast GL_DECAL) // glTexEnvf?
+        glTexEnvi(0x2300, 0x2200, 0x2101)
 
         glTexImage2D(GL_TEXTURE_2D, 0, cast GL_RGBA, cast screen_width, cast screen_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, default_draw_target.get_data())
-        gl_check_error()
 
 
         // Create user resources as part of this thread
@@ -251,6 +256,12 @@ impl PixelGameEngine {
                 // Copy pixel array into texture
                 glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cast screen_width, cast screen_height, GL_RGBA, GL_UNSIGNED_BYTE, default_draw_target.get_data())
 
+                // declare legacy gl functions
+                glBegin      :: (mode: GLenum) #stdcall;
+                glEnd        :: () #stdcall;
+                glVertex3f   :: (x: f32, y: f32, z: f32) #stdcall;
+                glTexCoord2f :: (x: f32, y: f32) #stdcall;
+                glTexEnvi    :: (target: GLenum, pname: GLenum, param: GLint) #stdcall;
 
                 // Display texture on screen
                 glBegin(GL_QUADS)
@@ -282,7 +293,7 @@ impl PixelGameEngine {
                         match fps_string.slice().to_utf16() {
                             Ok($title) -> {
                                 SetWindowTextW(olc_hWnd, title.get_raw())
-                                io.println(fps_string.clone())
+                                // io.println(fps_string.clone())
                             }
                             Err($title) -> SetWindowTextA(olc_hWnd, "ERROR in to_utf16()"c)
                         }
@@ -327,11 +338,18 @@ impl PixelGameEngine {
         }
         wglMakeCurrent(glDeviceContext, glRenderContext)
 
+        if gladLoadGL() == 0 {
+            io.println("Failed to initialize glad")
+            return false
+        }
+
         // Remove Frame cap
         wglSwapInterval := cast(fn(i32) #stdcall)wglGetProcAddress("wglSwapIntervalEXT")
         if wglSwapInterval {
             wglSwapInterval(0)
         }
+
+        opengl_initialized = true
         return true
     }
 }
