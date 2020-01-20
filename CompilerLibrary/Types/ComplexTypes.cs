@@ -308,7 +308,6 @@ namespace Cheez.Types.Complex
         public (string name, CheezType type, AstExpression defaultValue)[] Parameters { get; private set; }
         public CheezType ReturnType { get; private set; }
 
-        public AstFuncExpr Declaration { get; set; } = null;
         public override bool IsErrorType => ReturnType.IsErrorType || Parameters.Any(p => p.type.IsErrorType);
 
         public CallingConvention CC { get; } = CallingConvention.Default;
@@ -330,7 +329,6 @@ namespace Cheez.Types.Complex
         public FunctionType(AstFuncExpr func)
             : base(PointerType.PointerSize, PointerType.PointerAlignment, true)
         {
-            this.Declaration = func;
             this.ReturnType = func.ReturnTypeExpr?.Type ?? CheezType.Void;
             this.Parameters = func.Parameters.Select(p => (p.Name?.Name, p.Type, p.DefaultValue)).ToArray();
             this.IsFatFunction = false;
@@ -365,6 +363,9 @@ namespace Cheez.Types.Complex
                     return false;
 
                 if (IsFatFunction != f.IsFatFunction)
+                    return false;
+
+                if (CC != f.CC)
                     return false;
 
                 for (int i = 0; i < Parameters.Length; i++)

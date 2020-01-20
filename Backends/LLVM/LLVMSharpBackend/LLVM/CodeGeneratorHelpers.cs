@@ -604,8 +604,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     LLVM.ConstPointerNull(pointerType)
                 });
 
-                case FunctionType f when f.Declaration != null:
-                    return valueMap[f.Declaration];
+                case FunctionType f when v is AstFuncExpr:
+                    return valueMap[v];
 
                 default:
                     if (type == CheezType.String && v is string)
@@ -669,7 +669,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         }
                     }
 
-                    throw new NotImplementedException();
+                    return new LLVMValueRef();
             }
 
         }

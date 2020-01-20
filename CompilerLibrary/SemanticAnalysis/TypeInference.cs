@@ -1394,6 +1394,7 @@ namespace Cheez
         private static AstExpression InferTypeSymbolExpr(AstSymbolExpr s)
         {
             s.Type = s.Symbol.Type;
+            s.Value = s.Symbol;
             s.SetFlag(ExprFlags.IsLValue, true);
             return s;
         }
@@ -1599,6 +1600,7 @@ namespace Cheez
         private static AstExpression InferTypeUfcFuncExpr(AstUfcFuncExpr expr)
         {
             expr.Type = expr.FunctionDecl.Type;
+            expr.Value = expr.FunctionDecl;
             return expr;
         }
 
@@ -4340,14 +4342,16 @@ namespace Cheez
                 expr.FunctionExpr.SetFlag(ExprFlags.ValueRequired, true);
                 expr.FunctionExpr = InferTypeHelper(expr.FunctionExpr, null, context);
                 context.functionExpectedReturnType = prev;
+
+                expr.Declaration = expr.FunctionExpr.Value as AstFuncExpr;
+                if (expr.Declaration != null)
+                    expr.Declaration.IsUsed = true;
             }
 
             switch (expr.FunctionExpr.Type)
             {
                 case FunctionType f:
                     {
-                        if (f.Declaration != null)
-                            f.Declaration.IsUsed = true;
                         var newExpr = InferRegularFunctionCall(f, expr, context);
 
                         // check if it is a macro call
@@ -5069,14 +5073,14 @@ namespace Cheez
         private AstExpression InferRegularFunctionCall(FunctionType func, AstCallExpr expr, TypeInferenceContext context)
         {
             // check if call is from trait to non ref self param function
-            if (func.Declaration?.Trait != null)
+            if (expr.Declaration?.Trait != null)
             {
-                if (func.Declaration.SelfType == SelfParamType.Value)
+                if (expr.Declaration.SelfType == SelfParamType.Value)
                     ReportError(expr, $"Can't call trait function with non ref Self param");
-                if (func.Declaration.SelfType == SelfParamType.None)
+                if (expr.Declaration.SelfType == SelfParamType.None)
                     ReportError(expr, $"Can't call trait function with non ref Self param");
 
-                if (func.Declaration.ExcludeFromVTable)
+                if (expr.Declaration.ExcludeFromVTable)
                     ReportError(expr, $"Can't call trait function because it is excluded from the vtable");
             }
 
@@ -5126,7 +5130,6 @@ namespace Cheez
             // :hack
             expr.SetFlag(ExprFlags.IsLValue, func.ReturnType is ReferenceType);
             expr.Type = func.ReturnType;
-            expr.Declaration = func.Declaration;
             expr.FunctionType = func;
 
             return expr;
@@ -5785,6 +5788,7 @@ namespace Cheez
 
             var func = result[0];
             func.IsUsed = true;
+            expr.Value = func;
 
             if (expr.Left.Type == CheezType.Type)
             {

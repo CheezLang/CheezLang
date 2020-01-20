@@ -21,7 +21,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             if (expr.Value != null)
             {
-                return CheezValueToLLVMValue(expr.Type, expr.Value);
+                var result = CheezValueToLLVMValue(expr.Type, expr.Value);
+                if (result.Pointer.ToInt64() != 0)
+                    return result;
             }
 
             switch (expr)

@@ -63,7 +63,7 @@ namespace Cheez
                         ComputeStructMembers(@struct.Declaration);
                         foreach (var m in @struct.Declaration.Members)
                         {
-                            AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name, false));
+                            AstExpression expr = new AstDotExpr(new AstSymbolExpr(p), new AstIdExpr(m.Name, false, p.Location), p.Location);
                             expr.AttachTo(func, func.SubScope);
                             expr = InferType(expr, m.Type);
 
