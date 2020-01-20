@@ -2,7 +2,7 @@
     {
         id          = 6
         dead        = false
-        active      = false
+        active      = true
         position    = {x=0, y=0, z=0}
         size        = {x=1, y=1, z=1}
         angle       = 0
@@ -40,7 +40,7 @@
     {
         id          = 1
         dead        = false
-        active      = false
+        active      = true
         position    = {x=0, y=0, z=0}
         size        = {x=0.5, y=0.5, z=1}
         angle       = 0
@@ -56,7 +56,7 @@
     {
         id          = 2
         dead        = false
-        active      = false
+        active      = true
         position    = {x=-5, y=-5, z=0}
         size        = {x=1, y=1, z=1}
         angle       = 0
@@ -86,7 +86,7 @@
     {
         id          = 3
         dead        = false
-        active      = false
+        active      = true
         position    = {x=5, y=-5, z=0}
         size        = {x=1, y=1, z=1}
         angle       = 0
@@ -116,7 +116,7 @@
     {
         id          = 4
         dead        = false
-        active      = false
+        active      = true
         position    = {x=5, y=5, z=0}
         size        = {x=1, y=1, z=1}
         angle       = 0
@@ -146,7 +146,7 @@
     {
         id          = 5
         dead        = false
-        active      = false
+        active      = true
         position    = {x=-5, y=5, z=0}
         size        = {x=1, y=1, z=1}
         angle       = 0

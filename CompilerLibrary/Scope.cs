@@ -46,6 +46,18 @@ namespace Cheez
         CheezType Type { get; }
     }
 
+    public class PolyValue : ISymbol
+    {
+        public string Name { get; set; }
+
+        public ILocation Location => throw new NotImplementedException();
+
+        public PolyValue(string name)
+        {
+            Name = name;
+        }
+    }
+
     public class AmbiguousSymol : ISymbol
     {
         public string Name => throw new NotImplementedException();
@@ -430,6 +442,20 @@ namespace Cheez
             DefineBinaryOperator(new BuiltInFunctionOperator("!="));
             DefineBinaryOperator(new BuiltInEnumCompareOperator("=="));
             DefineBinaryOperator(new BuiltInEnumCompareOperator("!="));
+
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("+", CheezType.PolyValue));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("-", CheezType.PolyValue));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("*", CheezType.PolyValue));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("/", CheezType.PolyValue));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("%", CheezType.PolyValue));
+
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("==", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("!=", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("<", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator("<=", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator(">", CheezType.Bool));
+            DefineBinaryOperator(new BuiltInPolyValueBinaryOperator(">=", CheezType.Bool));
+
         }
 
         private void DefineUnaryOperator(string name, CheezType type, BuiltInUnaryOperator.ComptimeExecution exe)

@@ -87,9 +87,6 @@ namespace Cheez
                 // setup scopes
                 foreach (var param in impl.Parameters)
                 {
-                    if (param.Name != null)
-                        impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
-
                     param.Scope = impl.Scope;
                     param.TypeExpr.Scope = impl.Scope;
                     param.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
@@ -106,12 +103,17 @@ namespace Cheez
                     {
                         case CheezTypeType _:
                             param.Value = new PolyType(param.Name.Name, true);
+                            if (param.Name != null)
+                                impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
                             break;
 
                         case IntType _:
                         case FloatType _:
                         case BoolType _:
                         case CharType _:
+                            if (param.Name != null)
+                                impl.SubScope.DefineConstant(param.Name.Name, param.Type, new PolyValue(param.Name.Name));
+                                //impl.SubScope.DefineConstant(param.Name.Name, CheezType.PolyValue, new PolyValue(param.Name.Name));
                             break;
 
                         case ErrorType _:
@@ -340,9 +342,6 @@ namespace Cheez
                     // setup scopes
                     foreach (var param in impl.Parameters)
                     {
-                        if (param.Name != null)
-                            impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
-
                         param.Scope = impl.Scope;
                         param.TypeExpr.Scope = impl.Scope;
                         param.TypeExpr.SetFlag(ExprFlags.ValueRequired, true);
@@ -359,12 +358,17 @@ namespace Cheez
                         {
                             case CheezTypeType _:
                                 param.Value = new PolyType(param.Name.Name, true);
+                                if (param.Name != null)
+                                    impl.SubScope.DefineTypeSymbol(param.Name.Name, new PolyType(param.Name.Name, true));
                                 break;
 
                             case IntType _:
                             case FloatType _:
                             case BoolType _:
                             case CharType _:
+                                if (param.Name != null)
+                                    impl.SubScope.DefineConstant(param.Name.Name, param.Type, new PolyValue(param.Name.Name));
+                                //impl.SubScope.DefineConstant(param.Name.Name, CheezType.PolyValue, new PolyValue(param.Name.Name));
                                 break;
 
                             case ErrorType _:

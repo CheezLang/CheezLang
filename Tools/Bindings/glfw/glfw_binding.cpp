@@ -16,7 +16,7 @@ extern "C" void __c__glfwGetVersion(int32_t * _major, int32_t * _minor, int32_t 
 extern "C" void __c__glfwGetVersionString(char * *ret) {
     *ret = (char * )glfwGetVersionString();
 }
-extern "C" void __c__glfwGetError(int32_t *ret, char * * _description) {
+extern "C" void __c__glfwGetError(int32_t *ret, const char * * _description) {
     *ret = (int32_t )glfwGetError(_description);
 }
 extern "C" void __c__glfwSetErrorCallback(GLFWerrorfun *ret, GLFWerrorfun _cbfun) {

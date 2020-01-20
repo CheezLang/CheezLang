@@ -19,6 +19,7 @@ namespace Cheez.Types
         public static CheezType Code => CodeType.Instance;
         public static CheezType Any => AnyType.Intance;
         public static CheezType Module => ModuleType.Instance;
+        public static CheezType PolyValue => PolyValueType.Instance;
 
         public abstract bool IsPolyType { get; }
 
@@ -101,16 +102,6 @@ namespace Cheez.Types
             typesWithMissingProperties = new List<CheezType>();
         }
 
-        //public override bool Equals(object obj)
-        //{
-        //    return base.Equals(obj);
-        //}
-
-        //public override int GetHashCode()
-        //{
-        //    return base.GetHashCode();
-        //}
-
         public override bool Equals(object obj)
         {
             return base.Equals(obj);
@@ -121,7 +112,7 @@ namespace Cheez.Types
             return base.GetHashCode();
         }
 
-        public virtual int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public virtual int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ReferenceType r)
                 concrete = r.TargetType;
@@ -133,6 +124,9 @@ namespace Cheez.Types
 
         public static bool TypesMatch(CheezType a, CheezType b)
         {
+            if (a == null || b == null)
+                throw new Exception();
+
             if (a == b)
                 return true;
 
@@ -158,6 +152,55 @@ namespace Cheez.Types
 
                         return true;
                     }
+
+                case (GenericStructType aa, StructType bb):
+                    {
+                        if (aa.Declaration != bb.DeclarationTemplate)
+                            return false;
+                        if (aa.Arguments.Length != bb.Arguments.Length)
+                            return false;
+                        for (int i = 0; i < aa.Arguments.Length; i++)
+                        {
+                            if (!Workspace.CheezValuesMatch(aa.Arguments[i], (null, bb.Arguments[i])))
+                                return false;
+                        }
+
+                        return true;
+                    }
+
+                case (GenericEnumType aa, EnumType bb):
+                    {
+                        if (aa.Declaration != bb.DeclarationTemplate)
+                            return false;
+                        if (aa.Arguments.Length != bb.Arguments.Length)
+                            return false;
+                        for (int i = 0; i < aa.Arguments.Length; i++)
+                        {
+                            if (!Workspace.CheezValuesMatch(aa.Arguments[i], (null, bb.Arguments[i])))
+                                return false;
+                        }
+
+                        return true;
+                    }
+                case (GenericTraitType aa, TraitType bb):
+                    {
+                        if (aa.Declaration != bb.DeclarationTemplate)
+                            return false;
+                        if (aa.Arguments.Length != bb.Arguments.Length)
+                            return false;
+                        for (int i = 0; i < aa.Arguments.Length; i++)
+                        {
+                            if (!Workspace.CheezValuesMatch(aa.Arguments[i], (null, bb.Arguments[i])))
+                                return false;
+                        }
+
+                        return true;
+                    }
+
+                case (StructType _, GenericStructType _):
+                case (EnumType _, GenericEnumType _):
+                case (TraitType _, GenericTraitType _):
+                    throw new NotImplementedException();
             }
             if (a is StructType sa && b is StructType sb)
             {
@@ -167,7 +210,7 @@ namespace Cheez.Types
                     return false;
                 for (int i = 0; i < sa.Arguments.Length; i++)
                 {
-                    if (!TypesMatch(sa.Arguments[i], sb.Arguments[i]))
+                    if (!Workspace.CheezValuesMatch((null, sa.Arguments[i]), (null, sb.Arguments[i])))
                         return false;
                 }
 
@@ -181,7 +224,7 @@ namespace Cheez.Types
                     return false;
                 for (int i = 0; i < ta.Arguments.Length; i++)
                 {
-                    if (!TypesMatch(ta.Arguments[i], tb.Arguments[i]))
+                    if (!Workspace.CheezValuesMatch((null, ta.Arguments[i]), (null, tb.Arguments[i])))
                         return false;
                 }
 
@@ -195,7 +238,7 @@ namespace Cheez.Types
                     return false;
                 for (int i = 0; i < ea.Arguments.Length; i++)
                 {
-                    if (!TypesMatch(ea.Arguments[i], eb.Arguments[i]))
+                    if (!Workspace.CheezValuesMatch((null, ea.Arguments[i]), (null, eb.Arguments[i])))
                         return false;
                 }
 

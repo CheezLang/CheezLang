@@ -1,4 +1,5 @@
-﻿using Cheez.Ast.Expressions.Types;
+﻿using Cheez.Ast.Expressions;
+using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Types.Complex;
 using Cheez.Visitors;
@@ -74,51 +75,143 @@ namespace Cheez.Types.Abstract
         {
             return new RawAstPrinter(null).VisitFunctionSignature(Declaration);
         }
+
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class GenericType : CheezType
+    {
+        public override bool IsErrorType => false;
+        public override bool IsPolyType => true;
+
+        public AstGenericExpr Expression { get; }
+
+        public GenericType(AstGenericExpr expr)
+        {
+            Expression = expr;
+        }
+
+        public override string ToString()
+        {
+            return "generic " + Expression.ToString();
+        }
     }
 
     public class GenericStructType : CheezType
     {
         //public AstStructDecl Declaration { get; }
         public AstStructTypeExpr Declaration { get; }
-        public override bool IsPolyType => false;
+        public (CheezType type, object value)[] Arguments { get; }
+        public override bool IsPolyType => true;
         public override bool IsErrorType => false;
         public override bool IsCopy { get; }
         public string Name { get; }
 
-        public GenericStructType(AstStructTypeExpr decl, bool copy, string name)
+        public GenericStructType(AstStructTypeExpr decl, bool copy, string name, (CheezType type, object value)[] arguments = null)
             : base(0, 1, false)
         {
             Declaration = decl;
             IsCopy = copy;
             Name = name;
+            Arguments = arguments ?? decl.Parameters.Select(p => (p.Type, p.Value)).ToArray();
+        }
+
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
+        {
+            if (concrete is StructType str)
+            {
+                if (this.Declaration != str.DeclarationTemplate)
+                    return -1;
+
+                int score = 0;
+                for (int i = 0; i < Arguments.Length; i++)
+                {
+                    int s = Workspace.PolyValuesMatch(this.Arguments[i], (null, str.Arguments[i]), polyTypes);
+                    if (s == -1)
+                        return -1;
+                    score += s;
+                }
+                return score;
+            }
+
+            return -1;
         }
     }
 
     public class GenericEnumType : CheezType
     {
         public AstEnumTypeExpr Declaration { get; }
-        public override bool IsPolyType => false;
+        public override bool IsPolyType => true;
         public override bool IsErrorType => false;
         public string Name { get; }
+        public (CheezType type, object value)[] Arguments { get; }
 
-        public GenericEnumType(AstEnumTypeExpr decl, string name)
+        public GenericEnumType(AstEnumTypeExpr decl, string name, (CheezType type, object value)[] arguments = null)
             : base(0, 1, false)
         {
             Declaration = decl;
             Name = name;
+            Arguments = arguments ?? decl.Parameters.Select(p => (p.Type, p.Value)).ToArray();
+        }
+
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
+        {
+            if (concrete is EnumType str)
+            {
+                if (this.Declaration != str.DeclarationTemplate)
+                    return -1;
+
+                int score = 0;
+                for (int i = 0; i < Arguments.Length; i++)
+                {
+                    int s = Workspace.PolyValuesMatch(this.Arguments[i], (null, str.Arguments[i]), polyTypes);
+                    if (s == -1)
+                        return -1;
+                    score += s;
+                }
+                return score;
+            }
+
+            return -1;
         }
     }
 
     public class GenericTraitType : CheezType
     {
         public AstTraitTypeExpr Declaration { get; }
-        public override bool IsPolyType => false;
+        public override bool IsPolyType => true;
         public override bool IsErrorType => false;
+        public (CheezType type, object value)[] Arguments { get; }
 
-        public GenericTraitType(AstTraitTypeExpr decl)
+        public GenericTraitType(AstTraitTypeExpr decl, (CheezType type, object value)[] arguments = null)
             : base(0, 1, false)
         {
             Declaration = decl;
+            Arguments = arguments ?? decl.Parameters.Select(p => (p.Type, p.Value)).ToArray();
+        }
+
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
+        {
+            if (concrete is TraitType str)
+            {
+                if (this.Declaration != str.DeclarationTemplate)
+                    return -1;
+
+                int score = 0;
+                for (int i = 0; i < Arguments.Length; i++)
+                {
+                    int s = Workspace.PolyValuesMatch(this.Arguments[i], (null, str.Arguments[i]), polyTypes);
+                    if (s == -1)
+                        return -1;
+                    score += s;
+                }
+                return score;
+            }
+
+            return -1;
         }
     }
 
@@ -149,10 +242,32 @@ namespace Cheez.Types.Abstract
 
         public override string ToString() => "$" + Name;
 
-        public override int Match(CheezType concrete, Dictionary<string, CheezType> polyTypes)
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (polyTypes != null && polyTypes.TryGetValue(Name, out var v))
-                return v.Match(concrete, polyTypes);
+                return (v.value as CheezType).Match(concrete, polyTypes);
+            return 1;
+        }
+    }
+
+    public class PolyValueType : CheezType
+    {
+        private static readonly PolyValueType _instance = new PolyValueType();
+        public static PolyValueType Instance => _instance;
+        public override bool IsPolyType => true;
+        public override bool IsErrorType => false;
+        
+        private PolyValueType()
+            : base(0, 1, false)
+        {
+        }
+
+        public override string ToString() => "poly_value_t";
+
+        public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
+        {
+            if (this == concrete)
+                return 0;
             return 1;
         }
     }

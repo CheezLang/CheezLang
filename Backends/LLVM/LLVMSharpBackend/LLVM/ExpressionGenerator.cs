@@ -836,6 +836,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             switch (to, from)
             {
+                case (EnumType e, IntType t) when e.Declaration.IsReprC && e.Declaration.TagType == t:
+                    return GenerateExpression(cast.SubExpression, true);
+
                 case (PointerType t, PointerType f) when !t.IsFatPointer && !f.IsFatPointer:
                     return builder.CreatePointerCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
 
@@ -977,13 +980,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return result;
             }
 
-            if (to is IntType i5 && from is EnumType e)
+            if (to is IntType i5 && from is EnumType e5)
             {
                 var v = GenerateExpression(cast.SubExpression, true);
                 var tag = v;
-                if (!e.Declaration.IsReprC)
+                if (!e5.Declaration.IsReprC)
                     tag = builder.CreateExtractValue(v, 0, "");
-                return CreateIntCast(e.Declaration.TagType, e.Declaration.TagType.Signed, i5, i5.Signed, tag);
+                return CreateIntCast(e5.Declaration.TagType, e5.Declaration.TagType.Signed, i5, i5.Signed, tag);
             }
 
             if (to is BoolType && from is FunctionType)

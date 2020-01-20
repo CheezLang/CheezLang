@@ -81,9 +81,6 @@ namespace Cheez
                 return;
             trait.MembersComputed = true;
 
-            if (trait.Parameters != null)
-                foreach (var p in trait.Parameters)
-                    trait.SubScope.DefineTypeSymbol(p.Name.Name, p.Value as CheezType);
             trait.SubScope.DefineTypeSymbol("Self", new SelfType(trait.Value as CheezType));
 
             foreach (var v in trait.Variables)
@@ -142,7 +139,6 @@ namespace Cheez
 
         private AstTraitTypeExpr InstantiatePolyTrait(AstTraitTypeExpr decl, List<(CheezType type, object value)> args, ILocation location = null)
         {
-
             if (args.Any(a => a.type == CheezType.Type && (a.value as CheezType).IsErrorType))
                 WellThatsNotSupposedToHappen();
 
@@ -200,6 +196,7 @@ namespace Cheez
                     var arg = args[i];
                     param.Type = arg.type;
                     param.Value = arg.value;
+                    instance.SubScope.DefineConstant(param.Name.Name, arg.type, arg.value);
                 }
 
                 instance = InferType(instance, null) as AstTraitTypeExpr;

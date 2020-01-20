@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using System;
@@ -248,6 +249,42 @@ namespace Cheez
         }
     }
 
+    public class BuiltInPolyValueBinaryOperator : IBinaryOperator
+    {
+        public CheezType LhsType => CheezType.PolyValue;
+        public CheezType RhsType => CheezType.PolyValue;
+        public CheezType ResultType { get; private set; }
+
+        public string Name { get; private set; }
+
+        public delegate object ComptimeExecution(object left, object right);
+
+        public BuiltInPolyValueBinaryOperator(string name, CheezType resType)
+        {
+            Name = name;
+            ResultType = resType;
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            if (lhs is PolyValueType && rhs is PolyValueType)
+                return 0;
+            if (lhs is PolyValueType || rhs is PolyValueType)
+                return 1;
+            return -1;
+        }
+
+        public override string ToString()
+        {
+            return $"({ResultType}) {LhsType} {Name} {RhsType}";
+        }
+
+        public object Execute(object left, object right)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     public class BuiltInUnaryOperator : IUnaryOperator
     {
         public CheezType SubExprType { get; private set; }
@@ -300,7 +337,7 @@ namespace Cheez
 
         public int Accepts(CheezType sub)
         {
-            Dictionary<string, CheezType> polyTypes = null;
+            Dictionary<string, (CheezType type, object value)> polyTypes = null;
 
             // TODO: necessary?
             //if (SubExprType.IsPolyType)
@@ -338,11 +375,11 @@ namespace Cheez
 
         public int Accepts(CheezType lhs, CheezType rhs)
         {
-            Dictionary<string, CheezType> polyTypes = null;
+            Dictionary<string, (CheezType type, object value)> polyTypes = null;
 
             if (LhsType.IsPolyType || RhsType.IsPolyType)
             {
-                polyTypes = new Dictionary<string, CheezType>();
+                polyTypes = new Dictionary<string, (CheezType type, object value)>();
                 Workspace.CollectPolyTypes(LhsType, lhs, polyTypes);
                 Workspace.CollectPolyTypes(RhsType, rhs, polyTypes);
             }
@@ -382,7 +419,7 @@ namespace Cheez
             if (types.Length != ArgTypes.Length)
                 return -1;
 
-            var polyTypes = new Dictionary<string, CheezType>();
+            var polyTypes = new Dictionary<string, (CheezType type, object value)>();
 
             for (int i = 0; i < ArgTypes.Length; i++)
             {

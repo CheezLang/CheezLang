@@ -24,9 +24,11 @@ use import shmup_engine
 
 GameView :: trait {
     initialize      :: (ref Self, max_size: vec2i) -> bool;
-    update          :: (ref Self, is_playing: bool, world_size: vec3) -> bool;
+    update          :: (ref Self, is_playing: bool, world_size: vec3);
     begin_render    :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool;
     end_render      :: (ref Self);
+    begin_gizmos    :: (ref Self);
+    end_gizmos      :: (ref Self);
 }
 
 WindowBase :: struct #extendable {
@@ -49,7 +51,7 @@ impl GameView for GameWindow {
         return viewport.initialize(max_size)
     }
 
-    update :: (ref Self, is_playing: bool, world_size: vec3) -> bool {
+    update :: (ref Self, is_playing: bool, world_size: vec3) {
         // set window properties of viewport
         ImGui.Begin("Game", null, @bin_or(
             ImGui.ImGuiWindowFlags_.NoScrollbar,
@@ -87,9 +89,6 @@ impl GameView for GameWindow {
         if viewport.is_focused {
             engine.game_viewport = &self.viewport
         }
-
-        // update mode
-        return is_playing
     }
 
     begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
@@ -105,13 +104,8 @@ impl GameView for GameWindow {
         }
         ImGui.End()
 
-        // render game
-        size := viewport.size.change_type(i32)
-        glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer)
-        glViewport(0, 0, size.x, size.y)
-
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
-        glClear(GL_COLOR_BUFFER_BIT)
+        // bind viewport
+        viewport.bind()
 
         // set aspect_ratio_axis so that the game world always fits on screen
         viewport_ar := viewport.size.x / viewport.size.y
@@ -132,6 +126,11 @@ impl GameView for GameWindow {
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         // renderer.end_scene()
     }
+
+    begin_gizmos    :: (ref Self) {
+    }
+    end_gizmos      :: (ref Self) {
+    }
 }
 
 EditorWindow :: struct #extend(WindowBase) {
@@ -148,7 +147,7 @@ impl GameView for EditorWindow {
         return viewport.initialize(max_size)
     }
 
-    update :: (ref Self, is_playing: bool, world_size: vec3) -> bool {
+    update :: (ref Self, is_playing: bool, world_size: vec3) {
         ImGui.Begin("Scene", null, @bin_or(
             ImGui.ImGuiWindowFlags_.NoScrollbar,
             ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
@@ -217,11 +216,6 @@ impl GameView for EditorWindow {
                 viewport.set_translation(-camera_pos)
             }
         }
-
-        
-
-        // update mode
-        return false
     }
 
     begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
@@ -237,14 +231,8 @@ impl GameView for EditorWindow {
         }
         ImGui.End()
 
-        // render game
-        size := viewport.size.change_type(i32)
-        glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer)
-        glViewport(0, 0, size.x, size.y)
-
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
-        glClear(GL_COLOR_BUFFER_BIT)
-
+        // bind viewport
+        viewport.bind()
         engine.editor_viewport = &self.viewport
 
         // render mode
@@ -257,6 +245,13 @@ impl GameView for EditorWindow {
     end_render :: (ref Self) {
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         // renderer.end_scene()
+    }
+
+    begin_gizmos    :: (ref Self) {
+        ImGui.Begin("Scene")
+    }
+    end_gizmos      :: (ref Self) {
+        ImGui.End()
     }
 }
 
@@ -274,7 +269,7 @@ impl GameView for GameAndEditorWindow {
         return viewport.initialize(max_size)
     }
 
-    update :: (ref Self, is_playing: bool, world_size: vec3) -> bool {
+    update :: (ref Self, is_playing: bool, world_size: vec3) {
         ImGui.Begin("GameScene", null, @bin_or(
             ImGui.ImGuiWindowFlags_.NoScrollbar,
             ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
@@ -357,9 +352,6 @@ impl GameView for GameAndEditorWindow {
         if viewport.is_focused {
             engine.game_viewport = &self.viewport
         }
-
-        // update mode
-        return is_playing
     }
 
     begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
@@ -409,6 +401,13 @@ impl GameView for GameAndEditorWindow {
         }
         ImGui.End()
     }
+
+    begin_gizmos    :: (ref Self) {
+        ImGui.Begin("GameScene")
+    }
+    end_gizmos      :: (ref Self) {
+        ImGui.End()
+    }
 }
 
 Viewport :: struct {
@@ -416,6 +415,7 @@ Viewport :: struct {
     size                    := vec3()
     size_max                := vec3()
 
+    clear_color             := vec4()
     aspect_ratio_axis       := 1.0f
 
     translation_matrix      := mat4()
@@ -484,6 +484,15 @@ impl Viewport {
         return true
     }
 
+    bind :: (ref Self) {
+        size := self.size.change_type(i32)
+        glBindFramebuffer(GL_FRAMEBUFFER, self.frame_buffer)
+        glViewport(0, 0, size.x, size.y)
+
+        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
+        glClear(GL_COLOR_BUFFER_BIT)
+    }
+
     set_translation :: (ref Self, offset: vec3) {
         translation_matrix     = mat4.from_translation(offset)
         translation_matrix_inv = mat4.from_translation(-offset)
@@ -511,7 +520,6 @@ impl Viewport {
     }
 
     screen_to_world :: (ref Self, pos: vec3) -> vec3 {
-        // io.println(fmt.format("{}", [projection_inverse]))
         return view_projection_inv * (((pos - self.pos) / size * 2.0f - vec3(1, 1, 0)) * vec3(1, -1, 0))
     }
 
@@ -523,7 +531,6 @@ impl Viewport {
     }
 
     update_projection_matrix :: (ref Self, world_size: vec3) {
-        // io.println(fmt.format("update_projection_matrix  {}  {}", [world_size, aspect_ratio_axis]))
         height1 := world_size.y
         width1  := height1 * size.x / size.y
 

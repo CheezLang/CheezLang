@@ -5,6 +5,9 @@ when importing a file but with an uppercase letter, e.g.
 the compiler successfully imports it but as a new file, causing other errors
 we should report an error at the import location
 
+- number constants as polymorphic parameters
+    + basic cases working
+    - more testing needed
 
 - labeled block + break from block
     + add label to block
@@ -13,7 +16,6 @@ we should report an error at the import location
     - test nesting in blocks and loops
 - immutable/mutable variables
 - public/private struct members
-- number constants as polymorphic parameters
 - loop as expression with value (provided by break)
 - polymorphic constraints (e.g. $T/Printable)
 - properly implement lambdas

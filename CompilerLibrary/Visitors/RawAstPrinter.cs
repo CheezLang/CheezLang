@@ -288,6 +288,17 @@ namespace Cheez.Visitors
 
 
         #region Expression
+
+        public override string VisitGenericExpr(AstGenericExpr expr, int data = 0)
+        {
+            var args = string.Join(", ", expr.Parameters.Select(p => p.Accept(this)));
+            return $"[{args}] {expr.SubExpression.Accept(this)}";
+        }
+
+        public override string VisitMoveAssignExpr(AstMoveAssignExpr expr, int data = 0)
+        {
+            return $"{expr.Target.Accept(this)} <- {expr.Source.Accept(this)}";
+        }
         public override string VisitImportExpr(AstImportExpr expr, int data = 0)
         {
             var result = "import ";
@@ -470,8 +481,8 @@ namespace Cheez.Visitors
         public override string VisitArrayAccessExpr(AstArrayAccessExpr arr, int data = 0)
         {
             var sub = arr.SubExpression.Accept(this);
-            var ind = arr.Arguments[0].Accept(this);
-            return $"{sub}[{ind}]";
+            var args = string.Join(", ", arr.Arguments.Select(a => a.Accept(this)));
+            return $"{sub}[{args}]";
         }
 
         public override string VisitBoolExpr(AstBoolExpr bo, int data = 0)

@@ -243,7 +243,8 @@ namespace Cheez
                 {
                     var param = pi.Parameters[i];
                     var arg = args[i];
-                    if (param.Value != arg.value)
+                    if (!param.Value.Equals(arg.value))
+                    //if (param.Value != arg.value)
                     {
                         eq = false;
                         break;
@@ -281,7 +282,7 @@ namespace Cheez
                     param.Value = arg.value;
 
                     // TODO: what if arg.value is not a type?
-                    instance.SubScope.DefineTypeSymbol(param.Name.Name, param.Value as CheezType);
+                    instance.SubScope.DefineConstant(param.Name.Name, arg.type, arg.value);
                 }
 
                 instance = InferType(instance, null) as AstStructTypeExpr;

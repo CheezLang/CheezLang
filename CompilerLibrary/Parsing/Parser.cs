@@ -709,17 +709,17 @@ namespace Cheez.Parsing
             return new AstParameter(pname, ptype, defaultValue, new Location(beg, end));
         }
 
-        private List<AstParameter> ParseParameterList(out TokenLocation beg, out TokenLocation end, bool allowDefaultValue = true)
+        private List<AstParameter> ParseParameterList(TokenType open, TokenType close, out TokenLocation beg, out TokenLocation end, bool allowDefaultValue = true)
         {
             var parameters = new List<AstParameter>();
 
-            beg = Consume(TokenType.OpenParen, ErrMsg("(", "at beginning of parameter list")).location;
+            beg = Consume(open, ErrMsg("(/[", "at beginning of parameter list")).location;
             SkipNewlines();
 
             while (true)
             {
                 var next = PeekToken();
-                if (next.type == TokenType.ClosingParen || next.type == TokenType.EOF)
+                if (next.type == close || next.type == TokenType.EOF)
                     break;
 
                 var a = ParseParameter(false, allowDefaultValue);
@@ -732,17 +732,17 @@ namespace Cheez.Parsing
                     NextToken();
                     SkipNewlines();
                 }
-                else if (next.type == TokenType.ClosingParen)
+                else if (next.type == close)
                     break;
                 else
                 {
                     NextToken();
                     SkipNewlines();
-                    ReportError(next.location, $"Expected ',' or ')', got '{next}'");
+                    ReportError(next.location, $"Expected ',' or ')/]', got '{next}'");
                 }
             }
 
-            end = Consume(TokenType.ClosingParen, ErrMsg(")", "at end of parameter list")).location;
+            end = Consume(close, ErrMsg(")/]", "at end of parameter list")).location;
 
             return parameters;
         }
@@ -761,7 +761,7 @@ namespace Cheez.Parsing
 
             if (CheckToken(TokenType.OpenParen))
             {
-                parameters = ParseParameterList(out var pbeg, out var pend, false);
+                parameters = ParseParameterList(TokenType.OpenParen, TokenType.ClosingParen, out var pbeg, out var pend, false);
                 if (parameters.Count == 0)
                 {
                     ReportError(new Location(pbeg, pend), $"impl parameter list can't be empty");
@@ -1647,7 +1647,7 @@ namespace Cheez.Parsing
         {
             if (parameters == null)
             {
-                parameters = ParseParameterList(out var beg, out var end, true);
+                parameters = ParseParameterList(TokenType.OpenParen, TokenType.ClosingParen, out var beg, out var end, true);
                 paramsLocation = new Location(beg, end);
             }
 
@@ -1672,7 +1672,7 @@ namespace Cheez.Parsing
 
         private AstExpression ParseTupleExpression(bool allowFunctionExpression, bool allowCommaForTuple)
         {
-            var list = ParseParameterList(out var beg, out var end, allowDefaultValue: true);
+            var list = ParseParameterList(TokenType.OpenParen, TokenType.ClosingParen, out var beg, out var end, allowDefaultValue: true);
 
             // function expression
             // hash identifier for directives
@@ -1811,7 +1811,7 @@ namespace Cheez.Parsing
             beg = Consume(TokenType.KwStruct, ErrMsg("keyword 'struct'", "at beginning of struct type")).location;
 
             if (CheckToken(TokenType.OpenParen))
-                parameters = ParseParameterList(out var _, out var _);
+                parameters = ParseParameterList(TokenType.OpenParen, TokenType.ClosingParen, out var _, out var _);
 
             while (CheckToken(TokenType.HashIdentifier))
             {
@@ -1863,7 +1863,7 @@ namespace Cheez.Parsing
             beg = Consume(TokenType.KwEnum, ErrMsg("keyword 'enum'", "at beginning of enum type")).location;
 
             if (CheckToken(TokenType.OpenParen))
-                parameters = ParseParameterList(out var _, out var _);
+                parameters = ParseParameterList(TokenType.OpenParen, TokenType.ClosingParen, out var _, out var _);
 
             while (CheckToken(TokenType.HashIdentifier))
             {
@@ -1938,7 +1938,7 @@ namespace Cheez.Parsing
             beg = Consume(TokenType.KwTrait, ErrMsg("keyword 'trait'", "at beginning of trait type")).location;
 
             if (CheckToken(TokenType.OpenParen))
-                parameters = ParseParameterList(out var _, out var _);
+                parameters = ParseParameterList(TokenType.OpenParen, TokenType.ClosingParen, out var _, out var _);
 
             while (CheckToken(TokenType.HashIdentifier))
             {
@@ -2012,6 +2012,9 @@ namespace Cheez.Parsing
             var token = PeekToken();
             switch (token.type)
             {
+                case TokenType.KwGeneric:
+                    return ParseGenericExpression(allowCommaForTuple, allowFunctionExpression);
+
                 case TokenType.KwImport:
                     return ParseImportExpr();
 
@@ -2167,6 +2170,14 @@ namespace Cheez.Parsing
                     ReportError(token.location, errorMessage?.Invoke(token) ?? $"Failed to parse expression, unpexpected token ({token.type}) {token.data}");
                     return ParseEmptyExpression();
             }
+        }
+
+        private AstExpression ParseGenericExpression(bool allowCommaForTuple, bool allowFunctionExpression)
+        {
+            Consume(TokenType.KwGeneric, null);
+            var parameters = ParseParameterList(TokenType.OpenBracket, TokenType.ClosingBracket, out var beg, out var end);
+            var sub = ParseExpression(allowCommaForTuple, allowFunctionExpression);
+            return new AstGenericExpr(parameters, sub, new Location(beg, sub.End));
         }
         #endregion
     }

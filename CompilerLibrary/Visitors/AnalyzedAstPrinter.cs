@@ -9,6 +9,8 @@ using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types;
+using Cheez.Types.Abstract;
+using Cheez.Types.Complex;
 using Cheez.Util;
 
 namespace Cheez.Visitors
@@ -263,9 +265,21 @@ namespace Cheez.Visitors
             if (decl.GetFlag(StmtFlags.IsLocal))
                 sb.Append("local ");
             sb.Append(decl.Pattern.Accept(this));
-            sb.Append($" : {decl.Type}");
 
-            sb.Append(" : ");
+            switch (decl.Type)
+            {
+                case CheezTypeType _:
+                case FunctionType _:
+                case GenericType _:
+                    sb.Append($" :");
+                    break;
+
+                default:
+                    sb.Append($" : {decl.Type} ");
+                    break;
+            }
+
+            sb.Append(": ");
             sb.Append(decl.Initializer.Accept(this));
 
             if (decl.Type == CheezType.Type &&
@@ -526,7 +540,12 @@ namespace Cheez.Visitors
                 var bodyStrings = en.Declarations
                     .Where(d => d is AstConstantDeclaration)
                     .Select(m => m.Accept(this))
-                    .Concat(en.Members.Select(m => VisitEnumMember(m)));
+                    .Concat(en.Members != null ?
+                        en.Members.Select(m => VisitEnumMember(m)) :
+                        en.Declarations
+                            .Where(d => !(d is AstConstantDeclaration))
+                            .Select(d => d.Accept(this))
+                        );
                 var body = string.Join("\n", bodyStrings);
                 var head = $"enum<{en.TagType}>";
                 return $"{head} {{ // size: {en.Type?.GetSize()}, alignment: {en.Type?.GetAlignment()}\n{body.Indent(4)}\n}}";
@@ -595,6 +614,23 @@ namespace Cheez.Visitors
 
 
         #region Expressions
+
+        public override string VisitGenericExpr(AstGenericExpr expr, int data = 0)
+        {
+            var result = $"[{string.Join(", ", expr.Parameters.Select(p => p.Accept(this)))}] {expr.SubExpression.Accept(this)}";
+
+            var sb = new StringBuilder();
+            sb.AppendLine();
+            sb.AppendLine($"// Polymorphic instances");
+            foreach (var pi in expr.PolymorphicInstances)
+            {
+                var args = string.Join(", ", pi.args.Select(p => $"{expr.Parameters[p.index].Name.Name} = {p.value}"));
+                sb.AppendLine($"// {args}".Indent(4));
+                sb.AppendLine(pi.expr.Accept(this).Indent(4));
+            }
+
+            return result + sb.ToString();
+        }
 
         public override string VisitMoveAssignExpr(AstMoveAssignExpr expr, int data = 0)
         {
@@ -905,8 +941,8 @@ namespace Cheez.Visitors
         public override string VisitArrayAccessExpr(AstArrayAccessExpr arr, int data = 0)
         {
             var sub = arr.SubExpression.Accept(this);
-            var ind = arr.Arguments[0].Accept(this);
-            return $"{sub}[{ind}]";
+            var args = string.Join(", ", arr.Arguments.Select(a => a.Accept(this)));
+            return $"{sub}[{args}]";
         }
 
         public override string VisitBoolExpr(AstBoolExpr bo, int data = 0)

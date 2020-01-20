@@ -38,6 +38,13 @@ Console :: struct {
     m_buffer         : []char8
     items            : RingQueue[ConsoleEntry]
     on_command       : Fn(ref Command)
+
+    // history stuff
+    history          : RingQueue[String]
+    current_command  : Option[String] = None
+    history_pos      : int  = -1
+
+    //
     scroll_to_bottom : bool = true
     auto_scroll      : bool = true
 }
@@ -56,6 +63,7 @@ impl Console {
         return Console(
             m_buffer   = buff
             items      = RingQueue[ConsoleEntry].new(1024)
+            history    = RingQueue[String].new(1024)
             on_command = on_command
         )
     }
@@ -79,14 +87,14 @@ impl Console {
     execute_command :: (ref Self, cmd_string: String) {
         scroll_to_bottom = true
 
-        cmd := clap.parse_arguments(Command, [cmd_string.clone()])
+        cmd := clap.parse_arguments_from_string(Command, cmd_string.slice())
 
         if cmd == null {
-            add_entry(MessageType.Error, fmt.format("> Failed to execute command '{}'. Enter 'help' to get a list of commands", [cmd_string]))
+            add_entry(MessageType.Error, fmt.format("> Failed to execute command '{}'. Enter 'help' to get a list of commands", [cmd_string.slice()]))
         } else {
             defer mem.free(cmd)
 
-            add_entry(MessageType.Command, fmt.format("> {}", [cmd_string]))
+            add_entry(MessageType.Command, fmt.format("> {}", [cmd_string.slice()]))
             match ref <<cmd {
                 Command.Help -> {
                     add_entry(MessageType.Log, clap.get_help_message(@type_info(Command)))
@@ -97,11 +105,68 @@ impl Console {
                 }
             }
         }
+
+        // add command to history
+        current_command  = None
+        history_pos = -1
+        if history.count() == history.get_capacity() - 1 {
+            history.pop()
+        }
+        history.push(cmd_string)
     }
 
     auto_complete :: (ref Self, data: &ImGui.ImGuiInputTextCallbackData) -> i32 {
-        scroll_to_bottom = true
-        add_entry(MessageType.Error, String.from_string("auto complete not implemented yet"))
+        // scroll_to_bottom = true
+
+        match ImGui.ImGuiInputTextFlags_(data.EventFlag) {
+            ImGui.ImGuiInputTextFlags_.CallbackCompletion -> {
+                log_error("auto complete not implemented yet")
+            }
+            ImGui.ImGuiInputTextFlags_.CallbackHistory -> {
+                prev_history_pos := history_pos
+
+                match ImGui.ImGuiKey_(data.EventKey) {
+                    ImGui.ImGuiKey_.UpArrow -> {
+                        if history_pos < 0 {
+                            text := string(cast m_buffer.data, cast C.strlen(m_buffer.data))
+                            current_command = Some(String.from_string(text))
+                            history_pos = history.get_length() - 1
+                        } else if history_pos > 0 {
+                            history_pos -= 1
+                        }
+                    }
+                    ImGui.ImGuiKey_.DownArrow -> {
+                        if history_pos >= 0 {
+                            history_pos += 1
+                            if history_pos >= history.get_length() {
+                                history_pos = -1
+                            }
+                        }
+                    }
+                }
+
+                if prev_history_pos != history_pos {
+                    cmd := if history_pos == -1 {
+                        match ref current_command {
+                            Some($cmd) -> cmd.slice()
+                            None -> ""
+                        }
+                    } else {
+                        history.at(history_pos).slice()
+                    }
+
+                    // C.memcpy(m_buffer.data, cmd.bytes.data, cast cmd.bytes.length)
+                    // m_buffer[cmd.bytes.length] = char8(0)
+                    data.DeleteChars(0, data.BufTextLen)
+                    data.InsertChars(0, cast cmd.bytes.data, cast util.pointer_add(cmd.bytes.data, cmd.bytes.length))
+                }
+            }
+
+            $event -> {
+                log_error("command text callback: {} not implemented yet", [event])
+            }
+        }
+
         return 0
     }
 

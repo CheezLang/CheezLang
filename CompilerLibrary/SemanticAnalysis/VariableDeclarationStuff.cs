@@ -87,6 +87,9 @@ namespace Cheez
                 case RangeType _:
                     break;
 
+                case CheezType t when t.IsErrorType:
+                    break;
+
                 default:
                     ReportError(v, $"Variable can't have type {v.Type}");
                     break;

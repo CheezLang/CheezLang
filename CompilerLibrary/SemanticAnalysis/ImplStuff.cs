@@ -1,6 +1,7 @@
 ﻿using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Complex;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -120,7 +121,7 @@ namespace Cheez
             }
         }
 
-        private IEnumerable<Dictionary<string, CheezType>> CheckIfConditionApplies(ImplConditionImplTrait cond, Dictionary<string, CheezType> polies)
+        private IEnumerable<Dictionary<string, (CheezType type, object value)>> CheckIfConditionApplies(ImplConditionImplTrait cond, Dictionary<string, (CheezType type, object value)> polies)
         {
             cond.type.Scope = cond.Scope;
             cond.trait.Scope = cond.Scope;
@@ -133,8 +134,8 @@ namespace Cheez
 
             foreach (var p in polies)
             {
-                ty_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
-                tr_expr.Scope.DefineTypeSymbol(p.Key, p.Value);
+                ty_expr.Scope.DefineConstant(p.Key, p.Value.type, p.Value.value);
+                tr_expr.Scope.DefineConstant(p.Key, p.Value.type, p.Value.value);
             }
 
             ty_expr.SetFlag(ExprFlags.ValueRequired, true);
@@ -160,9 +161,9 @@ namespace Cheez
                 if (!CheezType.TypesMatch(impl.TargetType, type))
                     return (null, false);
 
-                var poliesList = new List<Dictionary<string, CheezType>>();
+                var poliesList = new List<Dictionary<string, (CheezType type, object value)>>();
                 {
-                    var polies = new Dictionary<string, CheezType>();
+                    var polies = new Dictionary<string, (CheezType type, object value)>();
                     CollectPolyTypes(impl.TargetType, type, polies);
                     poliesList.Add(polies);
                 }
@@ -172,7 +173,7 @@ namespace Cheez
                 {
                     foreach (var cond in impl.Conditions)
                     {
-                        var newPoliesList = new List<Dictionary<string, CheezType>>();
+                        var newPoliesList = new List<Dictionary<string, (CheezType type, object value)>>();
                         foreach (var polies in poliesList)
                         {
                             switch (cond)
@@ -187,7 +188,7 @@ namespace Cheez
                                     {
                                         var targetType = InstantiatePolyType(impl.TargetType, polies, c.Location);
                                         var traitType = InstantiatePolyType(impl.Trait, polies, c.Location);
-                                        var impls = GetImplsForType(targetType, traitType);
+                                        var impls = GetImplsForType(targetType as CheezType, traitType as CheezType);
                                         if (impls.Count == 0)
                                             newPoliesList.Add(polies);
                                         break;
@@ -199,7 +200,7 @@ namespace Cheez
                                         expr.AttachTo(impl, new Scope("temp", impl.Scope));
 
                                         foreach (var p in polies)
-                                            expr.Scope.DefineTypeSymbol(p.Key, p.Value);
+                                            expr.Scope.DefineConstant(p.Key, p.Value.type, p.Value.value);
 
                                         expr = InferType(expr, CheezType.Bool);
 
@@ -246,17 +247,17 @@ namespace Cheez
             }
         }
 
-        private List<Dictionary<string, CheezType>> GetTraitImplForType(CheezType type, CheezType trait, Dictionary<string, CheezType> polies)
+        private List<Dictionary<string, (CheezType type, object value)>> GetTraitImplForType(CheezType type, CheezType trait, Dictionary<string, (CheezType type, object value)> polies)
         {
             if (m_typeImplMap.TryGetValue(type, out var _list))
             {
-                var result = new List<Dictionary<string, CheezType>>();
+                var result = new List<Dictionary<string, (CheezType type, object value)>>();
 
                 foreach (var impl in _list.impls)
                 {
-                    if (CheezType.TypesMatch(impl.Trait, trait))
+                    if (impl.Trait != null && CheezType.TypesMatch(impl.Trait, trait))
                     {
-                        var p = new Dictionary<string, CheezType>(polies);
+                        var p = new Dictionary<string, (CheezType type, object value)>(polies);
                         CollectPolyTypes(trait, impl.Trait, p);
                         result.Add(p);
                     }
@@ -266,7 +267,7 @@ namespace Cheez
             }
             else if (type.IsPolyType)
             {
-                var result = new List<Dictionary<string, CheezType>>();
+                var result = new List<Dictionary<string, (CheezType type, object value)>>();
 
                 foreach (var kv in m_typeImplMap)
                 {
@@ -277,7 +278,7 @@ namespace Cheez
                     {
                         if (impl.Trait == trait)
                         {
-                            var p = new Dictionary<string, CheezType>(polies);
+                            var p = new Dictionary<string, (CheezType type, object value)>(polies);
                             CollectPolyTypes(type, kv.Key, p);
                             result.Add(p);
                         }
@@ -291,7 +292,7 @@ namespace Cheez
                 m_typeImplMap.Add(type, new TypeImplList(mAllImpls));
             }
 
-            return new List<Dictionary<string, CheezType>>();
+            return new List<Dictionary<string, (CheezType type, object value)>>();
         }
 
         #endregion

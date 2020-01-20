@@ -28,6 +28,195 @@ import examples.ShmupEngine.src.main
 
 // import "../Tools/Bindings/imgui_binding"
 
+// use import std.string
+// use import std.printable
+// io :: import std.io
+
+// // Units :: generic[M: int, T: int] struct #copy {
+// //     value : double
+// // }
+
+// // parse_arguments :: generic[T: type] (args: []string) -> Option[T] {
+// //     return None
+// // }
+
+// // args := parse_arguments[MyArgs](["123", "456", "789"])
+
+// // Same :: [V: int] Units[V, V]
+
+// Foo :: generic[T: type] struct {
+//     a : T
+// }
+
+// Foo2 :: struct(T: type) {
+//     a : T
+// }
+
+// Bar :: Foo[int]
+
+// // impl(T: type) Foo[T] {
+// //     print :: (ref Self) {
+// //         io.printfln("T {}", a)
+// //     }
+// // }
+
+// // impl Foo[int] {
+// //     print :: (ref Self) {
+// //         io.printfln("int {}", a)
+// //     }
+// // }
+
+// // impl Foo[string] {
+// //     print :: (ref Self) {
+// //         io.printfln("string {}", a)
+// //     }
+// // }
+
+// Sum         :: generic[A: int, B: int] A + B
+// ConstArray  :: generic[Size: int, T: type] [Size]T
+// PI          :: generic[T: type] T(3.1415)
+
+// Sum2        :: ($A: int, $B: int) -> int {
+//     return A + B
+// }
+// PI2         :: ($T: type) -> T {
+//     return T(3.1415)
+// }
+
+// Main :: () {
+//     io.println(PI[float])
+//     io.println(PI[double])
+//     io.println(PI[int])
+//     io.println(PI2(float))
+//     io.println(PI2(double))
+//     io.println(PI2(int))
+
+//     Arr :: ConstArray[Sum[3, 2], float]
+//     LOL :: Sum[6, 2]
+//     io.println(LOL)
+//     io.println(Sum[3, -5])
+
+//     b := Bar(123)
+//     z := Foo[string]("test")
+//     x := Foo[string]("lol")
+
+//     // b.print()
+//     // z.print()
+//     // x.print()
+    
+//     io.println("")
+//     io.println(b.a)
+//     io.println(z.a)
+//     io.println(x.a)
+// }
+
+/*
+
+use import std.string
+use import std.printable
+io :: import std.io
+
+Foo :: struct(size: int) {
+    arr : [size]int = default
+}
+
+Units :: struct(M: int, T: int) #copy {
+    value : double
+}
+
+Meter :: Units[1, 0]
+Time  :: Units[0, 1]
+Speed :: Units[1, -1]
+
+impl Printable for Units[1, 0] {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} m", value)
+    }
+}
+
+impl Printable for Units[0, 1] {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} s", value)
+    }
+}
+
+impl Printable for Units[1, -1] {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} m/s", value)
+    }
+}
+
+impl Printable for Units[1, -2] {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} m/s^2", value)
+    }
+}
+
+impl(M1: int, M2: int) Printable for Units[M1, M2] if #notyet {
+    print :: (ref Self, str: ref String, format: string) {
+        str.appendf("{} m^{} s^{}", (value, M1, M2))
+    }
+}
+
+impl(M1: int, T1: int) Units[M1, T1] {
+    add :: (Self, other: Units[M1, T1]) -> Units[M1, T1] #operator("+") {
+        return Units[M1, T1](self.value + other.value)
+    }
+
+    sub :: (Self, other: Units[M1, T1]) -> Units[M1, T1] #operator("-") {
+        return Units[M1, T1](self.value - other.value)
+    }
+
+    mul :: (Self, other: Units[$M2, $T2]) -> Units[M1 + M2, T1 + T2] #operator("*") {
+        return Units[M1 + M2, T1 + T2](self.value * other.value)
+    }
+
+    div :: (Self, other: Units[$M2, $T2]) -> Units[M1 - M2, T1 - T2] #operator("/") {
+        return Units[M1 - M2, T1 - T2](self.value / other.value)
+    }
+}
+
+Main :: () {
+    {
+        distance := Meter(10)
+        speed    := Speed(5)
+        time     := distance / speed
+
+        io.printfln("distance: {}", distance)
+        io.printfln("speed: {}", speed)
+        io.printfln("time: {}", time)
+        io.println("")
+    }
+
+    {
+        speed    := Speed(10)
+        time     := Time(5)
+        distance := time * speed
+        acc      := speed / time
+
+        io.printfln("speed: {}", speed)
+        io.printfln("time: {}", time)
+        io.printfln("distance: {}", distance)
+        io.printfln("acc: {}", acc)
+        io.println("")
+    }
+
+    {
+        speed1 := Speed(3)
+        speed2 := Speed(10)
+        sum    := speed1 + speed2
+        diff   := speed1 - speed2
+
+        io.printfln("speed1: {}", speed1)
+        io.printfln("speed2: {}", speed2)
+        io.printfln("sum: {}", sum)
+        io.printfln("diff: {}", diff)
+        io.println("")
+    }
+}
+
+// */
+
 /*
 #test_expect_output("")
 
