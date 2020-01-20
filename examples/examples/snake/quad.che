@@ -7,7 +7,7 @@ Vec2i :: Vector2[int]
 Vec2 :: Vector2[double]
 Vec3 :: Vector3[double]
 
-Quad :: struct {
+Quad :: struct #copy {
     pos: Vec2i
     size: Vec2
     col: Vec3
@@ -15,6 +15,11 @@ Quad :: struct {
 
 impl Quad {
     draw :: (ref Self) {
+        glBegin      :: (mode: GLenum) #stdcall;
+        glEnd        :: () #stdcall;
+        glVertex2d   :: (x: f64, y: f64) #stdcall;
+        glColor3d    :: (x: f64, y: f64, z: f64) #stdcall;
+
         glBegin(GL_TRIANGLES)
 
         {

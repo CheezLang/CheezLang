@@ -1,3 +1,5 @@
+#lib("OpenGL32.lib")
+
 use import quad
 
 use import std.array
@@ -8,7 +10,7 @@ use import std.string
 use import std.time
 io :: import std.io
 
-use import glfw.glfw3
+use import glfw.glfw_binding
 use import opengl.glad_binding
 
 Direction :: enum #copy {
@@ -54,7 +56,7 @@ action_to_dir :: (dir: ref Direction, action: Direction) {
 }
 
 Main :: () {
-    if !glfwInit() {
+    if glfwInit() == 0 {
         io.println("Failed to initialize GLFW")
         return
     }
@@ -73,10 +75,16 @@ Main :: () {
     glfwSetWindowSizeCallback(window, onResize)
 
     glfwMakeContextCurrent(window)
+    if gladLoadGL() == 0 {
+        io.println("Failed to initialize glad")
+        return
+    }
     glViewport(0, 0, cast width, cast height)
 
     glClearColor(0, 0, 0, 1)
 
+    glTranslated :: (x: f64, y: f64, z: f64) #stdcall;
+    glScaled     :: (x: f64, y: f64, z: f64) #stdcall;
     glTranslated(-1.0, -1.0, 0.0)
     glScaled(2.0 / width, 2.0 / height, 1.0)
 
@@ -113,7 +121,7 @@ Main :: () {
     fpsCounter := 0
 
     lastTime := glfwGetTime()
-    while !glfwWindowShouldClose(window) {
+    while glfwWindowShouldClose(window) == 0 {
         glClear(GL_COLOR_BUFFER_BIT)
 
         //
