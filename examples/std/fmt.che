@@ -7,13 +7,18 @@ C :: import std.c
 
 parse_int :: (str: string) -> int {
     val := 0
+    sign := 1
+
+    if str.bytes.length > 0 and char(str[0]) == '-' {
+        sign = -1
+    }
 
     for c : str {
         val *= 10
         val += int(c - '0')
     }
 
-    return val
+    return val * sign
 }
 
 format_int :: (buffer: ref String, val: $T, _base: int = 10) {

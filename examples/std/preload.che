@@ -240,6 +240,7 @@ TypeInfoStructMember :: struct #copy {
     name       : string
     typ        : &TypeInfo
     value      : &any
+    initializer: fn(&void)
     attributes : []TypeInfoAttribute
 }
 

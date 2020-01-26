@@ -994,6 +994,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             rttiTypeInfoTraitFunction = CheezTypeToLLVMType(sTypeInfoTraitFunction);
             rttiTypeInfoTraitImpl = CheezTypeToLLVMType(sTypeInfoTraitImpl);
             rttiTypeInfoAttribute = CheezTypeToLLVMType(sTypeInfoAttribute);
+            rttiStructMemberInitializer = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { pointerType }, false);
         }
 
         private void GenerateTypeInfos()
@@ -1005,6 +1006,55 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 global.SetInitializer(LLVM.GetUndef(rttiTypeInfo));
 
                 typeInfoTable[type] = global;
+
+                // if its a struct, create functions for default values of members
+                if (type is StructType str)
+                    CreateStructMemberInitializerFunctions(str);
+            }
+        }
+
+        private void CreateStructMemberInitializerFunctions(StructType type)
+        {
+            foreach (var mem in type.Declaration.Members)
+            {
+                if (mem.Decl.Initializer == null)
+                    continue;
+
+                var funcType = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { CheezTypeToLLVMType(mem.Type).GetPointerTo() }, false);
+                var func = module.AddFunction($"init.{type.Declaration.Name}.{mem.Name}.che", funcType);
+
+                Debug.Assert(!valueMap.ContainsKey(mem));
+                valueMap[mem] = func;
+            }
+        }
+
+        private void FinishStructMemberInitializers()
+        {
+            builder = new IRBuilder();
+            foreach (var type in workspace.TypesRequiredAtRuntime)
+            {
+                if (type is StructType str)
+                    FinishStructMemberInitializerFunctions(str);
+            }
+            builder.Dispose();
+            builder = null;
+        }
+
+        private void FinishStructMemberInitializerFunctions(StructType type)
+        {
+            foreach (var mem in type.Declaration.Members)
+            {
+                if (mem.Decl.Initializer == null)
+                    continue;
+
+                var func = valueMap[mem];
+                var bb = func.AppendBasicBlock("entry");
+                builder.PositionBuilderAtEnd(bb);
+
+                var value = GenerateExpression(mem.Decl.Initializer, true);
+                var memberPtr = func.GetParam(0);
+                builder.CreateStore(value, memberPtr);
+                builder.CreateRetVoid();
             }
         }
 
@@ -1212,12 +1262,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             //
             var off = LLVM.OffsetOfElement(targetData, CheezTypeToLLVMType(s), (uint)m.Index);
             off = (ulong)m.Offset;
+            var initializer = valueMap.GetValueOrDefault(m, LLVM.ConstNull(rttiStructMemberInitializer.GetPointerTo()));
             return LLVM.ConstNamedStruct(rttiTypeInfoStructMember, new LLVMValueRef[]
             {
                 LLVM.ConstInt(LLVM.Int64Type(), off, true),
                 CheezValueToLLVMValue(CheezType.String, m.Name),
                 typeInfoTable[m.Type],
                 default_value,
+                LLVM.ConstPointerCast(initializer, rttiStructMemberInitializer.GetPointerTo()),
                 attributes
             });
         }

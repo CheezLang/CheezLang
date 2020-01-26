@@ -75,6 +75,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private CheezType sTypeInfoTraitImpl;
         private CheezType sTypeInfoAttribute;
 
+        private LLVMTypeRef rttiStructMemberInitializer;
         private LLVMTypeRef rttiTypeInfo;
         private LLVMTypeRef rttiTypeInfoKind;
         private LLVMTypeRef rttiTypeInfoInt;
@@ -224,7 +225,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     }
                 }
 
-                // generate destructors
+                FinishStructMemberInitializers();
                 GenerateDestructors();
 
                 //foreach (var i in workspace.mImpls)

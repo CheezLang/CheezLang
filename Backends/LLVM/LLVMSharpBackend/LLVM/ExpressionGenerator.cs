@@ -2343,7 +2343,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposing)
+            if (disposing && builder != null)
             {
                 builder.Dispose();
             }
