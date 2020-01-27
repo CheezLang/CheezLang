@@ -236,12 +236,13 @@ TypeInfoTraitImpl :: struct #copy {
 }
 
 TypeInfoStructMember :: struct #copy {
-    offset     : int
-    name       : string
-    typ        : &TypeInfo
-    value      : &any
-    initializer: fn(&void)
-    attributes : []TypeInfoAttribute
+    index       : int
+    offset      : int
+    name        : string
+    typ         : &TypeInfo
+    value       : &any
+    initializer : fn(&void)
+    attributes  : []TypeInfoAttribute
 }
 
 TypeInfoAttribute :: struct {
@@ -303,6 +304,16 @@ impl TypeInfoStruct {
         ti_trait := ti_impl.trait_type
         vtable := ti_impl.vtable
         func_info := ti_trait.kind.Trait.get_function(func_name)
+        @assert(func_info != null)
+        function := cast(F) @cast(&fn(), vtable)[func_info.index]
+        return function
+    }
+}
+
+impl TypeInfoTraitImpl {
+    get_function :: (ref Self, func_name: string, $F: type) -> F {
+        func_info := trait_type.kind.Trait.get_function(func_name)
+        @assert(func_info != null)
         function := cast(F) @cast(&fn(), vtable)[func_info.index]
         return function
     }

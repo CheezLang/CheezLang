@@ -278,9 +278,8 @@ impl Lexer {
         token.ttype = TokenType.NumberLiteral
         base := 10
         str := {
-            cap :: 128
-            raw := @alloca(u8, cap)
-            str := String.from_raw_ptr(raw, cap)
+            raw := @alloca(u8, 128)
+            str := String.from_raw_ptr(raw.data, raw.length)
             str
         }
 

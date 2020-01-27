@@ -69,7 +69,8 @@ format :: (text: string, args: []&any) -> String {
 
     formatSpecifier := {
         len :: 64
-        String.from_raw_ptr(@alloca(u8, len), len)
+        mem := @alloca(u8, len)
+        String.from_raw_ptr(mem.data, len)
     }
 
     len      := text.bytes.length

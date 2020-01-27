@@ -13,8 +13,8 @@ mem :: import std.mem.allocator
 load_file :: (filename: string) -> Result[String, String] {
     str_c := @alloca(char8, filename.bytes.length + 1)
     str_c[filename.bytes.length] = cast 0
-    C.memcpy(cast str_c, cast filename.bytes.data, cast filename.bytes.length)
-    return load_filec(str_c)
+    C.memcpy(cast str_c.data, cast filename.bytes.data, cast filename.bytes.length)
+    return load_filec(str_c.data)
 }
 
 load_filec :: (filename: c_string) -> Result[String, String] {
@@ -100,8 +100,8 @@ write_file_string :: (filename: string, str: string) -> bool {
     filename_c := {
         str_c := @alloca(char8, filename.bytes.length + 1)
         str_c[filename.bytes.length] = cast 0
-        C.memcpy(cast str_c, cast filename.bytes.data, cast filename.bytes.length)
-        str_c
+        C.memcpy(cast str_c.data, cast filename.bytes.data, cast filename.bytes.length)
+        str_c.data
     }
 
     handle := CreateFileA(cast filename_c, GENERIC_WRITE, FILE_SHARE_WRITE, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null)

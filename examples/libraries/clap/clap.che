@@ -222,8 +222,8 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
         // Option[String]
         _ if type_info == @type_info(Option[String]) -> {
             temp := @alloca(String, 1)
-            parse_arguments_help(@type_info(String), args, temp)
-            <<cast(&Option[String]) result = Some(<<temp)
+            parse_arguments_help(@type_info(String), args, temp.data)
+            <<cast(&Option[String]) result = Some(<<temp.data)
             true
         }
 

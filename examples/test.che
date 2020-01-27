@@ -8,9 +8,9 @@
 // import examples.snake.snake
 // import examples.pathtracer
 // import examples.command_line_parser
-// import examples.ShmupEngine.src.main
 // import compiler.cli
 // import compiler.compiler_test
+import examples.ShmupEngine.src.main
 
 // examples which are not working currently
 // import examples.postfix
@@ -30,51 +30,6 @@
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
-mem  :: import std.mem.allocator
-util :: import std.util
-io   :: import std.io
-use import std.array
-use import std.string
-use import std.printable
-
-test :: () -> string {
-    return "lol"
-}
-
-impl Printable for Array[int] {
-    print :: (ref Self, str: ref String, format: string) {
-        str.append_string("[")
-        for i : self.slice() {
-            if it_index > 0 then str.append_string(", ")
-            str.appendf("{}", i)
-        }
-        str.append_string("]")
-    }
-}
-
-Foo :: struct {
-    a : int
-    b := test()
-    c := 3.5
-    d := Array[int].create()
-}
-
-Main :: () {
-    f := mem.alloc(Foo)
-
-    for(by_ref=true) m : @type_info(Foo).kind.Struct.members {
-        if m.initializer != null {
-            m.initializer(util.pointer_add(f, m.offset))
-        }
-    }
-
-    f.d.add(1)
-    f.d.add(2)
-    f.d.add(3)
-
-    io.formatln(<<f)
-}
-
 /*
 
 use import std.string
@@ -82,10 +37,11 @@ use import std.printable
 use import std.array
 use import std.box
 use import std.math
-io  :: import std.io
-fmt :: import std.fmt
-mem :: import std.mem.allocator
+io   :: import std.io
+fmt  :: import std.fmt
+mem  :: import std.mem.allocator
 util :: import std.util
+C    :: import std.c
 
 use import clap.clap
 
@@ -182,96 +138,6 @@ autocomplete_type_members :: (ti: &TypeInfo, prefix: string, result: ref Array[S
     }
 }
 
-
-/*
-Test -bazaza -name Joe -age 57 -banana 123 -baz -name Jane 
-enum(
-    typ = Command
-    loc = 0..66
-    mem = Command.Test
-    sub = struct(
-        typ = Foo
-        loc = 5..66
-        sub = [
-            field(
-                loc = 5..30
-                mem = Foo.bazaza
-                sub = struct(
-                    typ = Baz
-                    loc = 13..30
-                    sub = [
-                        field(
-                            loc = ..
-                            mem = Baz.name
-                            sub = string("Joe")
-                        )
-                        field(
-                            loc = ..
-                            mem = Baz.age
-                            sub = int(57)
-                        )
-                    ]
-                )
-            )
-            
-            field(
-                loc = ..
-                mem = Foo.banana
-                sub = int(123)
-            )
-            
-            field(
-                loc = ..
-                mem = Foo.baz
-                sub = struct(
-                    typ = Baz
-                    loc = ..
-                    sub = [
-                        field(
-                            loc = ..
-                            mem = Baz.name
-                            sub = string("Jane")
-                        )
-                    ]
-                )
-            )
-        ]
-    )
-)
-
-Start
-enum(typ = Command, loc = 0..5, mem = Command.Start, sub = null)
-
-Stop
-enum(typ = Command, loc = 0..4, mem = Command.Stop, sub = null)
-
-Switch On
-enum(
-    typ = Command
-    loc = 0..9
-    mem = Command.Switch
-    sub = enum(
-        typ = Mode
-        loc = 7..9
-        mem = Mode.On
-        sub = null
-    )
-)
-
-Switch Off
-enum(
-    typ = Command
-    loc = 0..10
-    mem = Switch
-    sub = enum(
-        typ = Mode
-        loc = 7..10
-        mem = Off
-        sub = null
-    )
-)
- */
-
 Expr :: struct #extendable {
     typ : &TypeInfo
     loc : Location
@@ -294,6 +160,16 @@ StructMember :: struct {
 
 ValueExpr :: struct #extend(Expr) {
     raw : String
+}
+
+CustomExpr :: struct #extend(Expr) {
+    sub : &Expr
+}
+
+CustomParser :: trait {
+    parse     :: (args: []ClapToken, loc: Location) -> (&Expr, []ClapToken);
+    validate  :: (ref CustomExpr) -> Result[(), ClapError];
+    get_value :: (result: &void, expr: ref CustomExpr);
 }
 
 create_raw_expr :: (ti: &TypeInfo, token: ref ClapToken) -> &Expr {
@@ -379,7 +255,16 @@ parse_args_struct :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr,
 parse_args_help :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr, []ClapToken {
     return match ti.kind {
         TypeInfoKind.Enum($info)    -> parse_args_enum(ti, args, loc)
-        TypeInfoKind.Struct($info)  -> parse_args_struct(ti, args, loc)
+        TypeInfoKind.Struct($info)  -> {
+            custom_parser := info.get_trait_impl(CustomParser)
+            if custom_parser != null {
+                func := custom_parser.get_function("parse", fn([]ClapToken, Location) -> (&Expr, []ClapToken))
+                @assert(func != null)
+                return func(args, loc)
+            } else {
+                parse_args_struct(ti, args, loc)
+            }
+        }
         _ -> if args.length == 0 {
             null, args
         } else {
@@ -442,14 +327,35 @@ get_value_help :: (result: &void, expr: ref Expr) {
             }
         }
         StructExpr($v) -> {
+            // stack allocated array to track which members have been provided
+            members_set := @alloca(bool, v.typ.kind.Struct.members.length)
+            C.memset(members_set.data, 0, cast members_set.length * @sizeof(bool))
+
             for mem : v.subs {
                 @assert(mem.mem != null)
                 offset := mem.mem.offset
                 get_value_help(util.pointer_add(result, offset), <<mem.sub)
+                members_set[mem.mem.index] = true
+            }
+
+            for set : members_set {
+                if set then continue
+                mem := ref v.typ.kind.Struct.members[it_index]
+                @assert(mem.initializer != null)
+                member_ptr := util.pointer_add(result, mem.offset)
+                mem.initializer(member_ptr)
             }
         }
         ValueExpr($v) -> {
             get_value_raw(result, v)
+        }
+
+        CustomExpr($v) -> {
+            custom_parser := v.typ.kind.Struct.get_trait_impl(CustomParser)
+            @assert(custom_parser != null)
+            get_value_func := custom_parser.get_function("get_value", fn(&void, ref CustomExpr))
+            @assert(get_value_func != null)
+            get_value_func(result, v)
         }
     }
 }
@@ -463,8 +369,9 @@ Command :: enum {
 Foo :: struct {
     mode   : Mode
     banana : int
-    bazaza : string
+    bazaza : String
     // baz    : Baz
+    array  := Array[string].create()
 }
 Baz :: struct {
     // name : string
@@ -475,8 +382,38 @@ Mode :: enum {
     #name("off") Off
 }
 
+impl CustomParser for String {
+    parse :: (args: []ClapToken, loc: Location) -> &Expr, []ClapToken {
+        // io.println("String.parse")
+        result := mem.alloc(CustomExpr)
+        <<result = CustomExpr(@type_info(Self), loc, null)
+        if args.length == 0 {
+            return cast result, args
+        }
+
+        result.sub = create_raw_expr(result.typ, args[0])
+        return cast result, args[1..args.length]
+    }
+
+    validate :: (ref CustomExpr) -> Result[(), ClapError] {
+        // io.println("String.validate")
+        return Ok(())
+    }
+
+    get_value :: (result: &void, expr: ref CustomExpr) {
+        // io.println("String.get_value")
+        match ref <<expr.sub {
+            ValueExpr($v) -> {
+                <<cast(&String)result = v.raw.clone()
+            }
+
+            _ -> @assert(false)
+        }
+    }
+}
+
 Main :: () {
-    command := "test -mode on -banana 123 -bazaza `"lol wassup?`""
+    command := "test -mode on -banana 123 -bazaza uiae"
     args := Clap.tokenize(command)
 
     io.println("Arguments`n==========")
@@ -618,6 +555,10 @@ validate :: (expr: ref Expr) -> Result[(), ClapError] {
             }
         }
         StructExpr($v) -> {
+            // stack allocated array to track which members have been provided
+            members_set := @alloca(bool, v.typ.kind.Struct.members.length)
+            C.memset(members_set.data, 0, cast members_set.length * @sizeof(bool))
+
             for mem : v.subs {
                 if mem.mem == null {
                     match ref <<mem.sub {
@@ -630,10 +571,37 @@ validate :: (expr: ref Expr) -> Result[(), ClapError] {
                 }
 
                 try(validate(<<mem.sub))
+
+                if members_set[mem.mem.index] {
+                    return Err(ClapError(mem.loc, fmt.format("Duplicate argument '{}'", [get_display_name_for_member(mem.mem)])))
+                }
+                members_set[mem.mem.index] = true
+            }
+
+            for set : members_set {
+                if set then continue
+
+                mem := ref v.typ.kind.Struct.members[it_index]
+                if mem.initializer != null then continue
+
+                return Err(ClapError(v.loc, fmt.format("Missing argument '{}'", [get_display_name_for_member(mem)])))
             }
             Ok(())
         }
         ValueExpr($v) -> validate_raw(v)
+
+        CustomExpr($v) -> {
+            custom_parser := v.typ.kind.Struct.get_trait_impl(CustomParser)
+            @assert(custom_parser != null)
+            validate_func := custom_parser.get_function("validate", fn(ref CustomExpr) -> Result[(), ClapError])
+            @assert(validate_func != null)
+            validate_func(v)
+        }
+
+        _ -> {
+            @assert(false)
+            Ok(())
+        }
     }
 }
 

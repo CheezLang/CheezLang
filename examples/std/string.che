@@ -232,7 +232,8 @@ impl String {
     append_printables :: (ref Self, format: string, args: []&Printable) {
         formatSpecifier := {
             len :: 64
-            String.from_raw_ptr(@alloca(u8, len), len)
+            mem := @alloca(u8, len)
+            String.from_raw_ptr(mem.data, mem.length)
         }
 
         //len      := format.bytes.length
