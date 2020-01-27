@@ -728,14 +728,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 }
                 foreach (var func in trait.Functions)
                 {
-                    if (func.ExcludeFromVTable)
-                        continue;
+                    // if (func.ExcludeFromVTable)
+                    //     continue;
 
                     if (func.IsGeneric)
                     {
                         throw new NotImplementedException();
                     }
-                    else if (func.SelfType == SelfParamType.Reference)
+                    // else if (func.SelfType == SelfParamType.Reference)
                     {
                         vtableIndices[func] = funcTypes.Count;
 
@@ -771,9 +771,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             foreach (var kv in workspace.TypeTraitMap)
             {
                 var type = kv.Key;
-                var traits = kv.Value;
+                var traitImpls = kv.Value;
 
-                foreach (var impl in traits)
+                foreach (var impl in traitImpls)
                 {
                     var trait = impl.Trait;
                     var vtableType = vtableTypes[trait];
@@ -803,10 +803,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     foreach (var func in impl.Functions)
                     {
                         var traitFunc = func.TraitFunction;
-                        if (traitFunc == null || func.SelfType != SelfParamType.Reference)
+                        if (traitFunc == null)
                             continue;
-                        if (traitFunc.ExcludeFromVTable)
-                            continue;
+                        // if (traitFunc == null || func.SelfType != SelfParamType.Reference)
+                        //     continue;
+                        // if (traitFunc.ExcludeFromVTable)
+                        //     continue;
 
                         var index = vtableIndices[traitFunc];
                         functions[index] = LLVM.ConstPointerCast(valueMap[func], vfuncTypes[index]);
@@ -1030,6 +1032,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void FinishStructMemberInitializers()
         {
+            var builderPrev = builder;
             builder = new IRBuilder();
             foreach (var type in workspace.TypesRequiredAtRuntime)
             {
@@ -1037,7 +1040,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     FinishStructMemberInitializerFunctions(str);
             }
             builder.Dispose();
-            builder = null;
+            builder = builderPrev;
         }
 
         private void FinishStructMemberInitializerFunctions(StructType type)
@@ -1048,6 +1051,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     continue;
 
                 var func = valueMap[mem];
+                currentLLVMFunction = func;
+
                 var bb = func.AppendBasicBlock("entry");
                 builder.PositionBuilderAtEnd(bb);
 
@@ -1203,7 +1208,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var memberSlice = CreateSlice(
                 sTypeInfoTraitFunction,
                 $"ti.{traitType.Declaration.Name}.functions",
-                traitType.Declaration.Functions.Where(m => !m.ExcludeFromVTable).Select(m => LLVM.ConstNamedStruct(rttiTypeInfoTraitFunction, new LLVMValueRef[]
+                traitType.Declaration.Functions.Select(m => LLVM.ConstNamedStruct(rttiTypeInfoTraitFunction, new LLVMValueRef[]
                 {
                     CheezValueToLLVMValue(CheezType.String, m.Name),
                     LLVM.ConstInt(LLVM.Int64Type(), (ulong)vtableIndices[m], false)
@@ -1265,6 +1270,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var initializer = valueMap.GetValueOrDefault(m, LLVM.ConstNull(rttiStructMemberInitializer.GetPointerTo()));
             return LLVM.ConstNamedStruct(rttiTypeInfoStructMember, new LLVMValueRef[]
             {
+                LLVM.ConstInt(LLVM.Int64Type(), (ulong)m.Index, true),
                 LLVM.ConstInt(LLVM.Int64Type(), off, true),
                 CheezValueToLLVMValue(CheezType.String, m.Name),
                 typeInfoTable[m.Type],
@@ -1357,6 +1363,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 LLVM.ConstInt(LLVM.Int64Type(), (ulong)length, true),
                 LLVM.ConstPointerCast(data, elemTypes[1]),
             });
+        }
+
+        private LLVMValueRef CreateLLVMSlice(CheezType sliceType, LLVMValueRef value, LLVMValueRef length)   
+        {
+            var result = LLVM.GetUndef(CheezTypeToLLVMType(sliceType));
+            result = builder.CreateInsertValue(result, length, 0, "");
+            result = builder.CreateInsertValue(result, value, 1, "");
+            return result;
         }
     }
 }

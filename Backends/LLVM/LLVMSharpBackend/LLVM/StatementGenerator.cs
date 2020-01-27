@@ -216,7 +216,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateBr(bbBody);
             builder.PositionBuilderAtEnd(bbBody);
             GenerateExpression(whl.Body, false);
-            builder.CreateBr(bbBody);
+
+            if (!whl.Body.GetFlag(ExprFlags.Returns) && !whl.Body.GetFlag(ExprFlags.Breaks)) {
+                builder.CreateBr(bbBody);
+            }
             builder.PositionBuilderAtEnd(bbEnd);
         }
 
