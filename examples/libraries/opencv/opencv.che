@@ -27,8 +27,8 @@ IplImage :: struct {
     nChannels           : i32
     alphaChannel        : i32
     depth               : i32
-    colorModel          : [4]char
-    channelSeq          : [4]char
+    colorModel          : [4]char8
+    channelSeq          : [4]char8
     dataOrder           : i32
     origin              : i32
     align               : i32
@@ -43,5 +43,8 @@ IplImage :: struct {
     widthStep           : i32
     BorderMode          : [4]i32
     BorderConst         : [4]i32
-    imageDataOrigin     : &char
+    imageDataOrigin     : &char8
 }
+
+CV_CAP_PROP_FRAME_WIDTH  :: 3
+CV_CAP_PROP_FRAME_HEIGHT :: 4

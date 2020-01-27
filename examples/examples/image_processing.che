@@ -10,44 +10,48 @@ use import opencv.opencv
 
 image_width   : int : 320
 image_height  : int : 240
-num_images_x  : int : 3
-num_images_y  : int : 1
+num_images_x  : int : 4
+num_images_y  : int : 2
 border_width  : int : 10
 
-Color :: (x: double, y: double, z: double)
+Color :: struct #copy {
+    x : double
+    y : double
+    z : double
+}
 
 impl Color {
     add :: (a: Color, b: Color) -> Color #operator("+") {
-        return (a.x + b.x, a.y + b.y, a.z + b.z)
+        return Color(a.x + b.x, a.y + b.y, a.z + b.z)
     }
 
     sub :: (a: Color, b: Color) -> Color #operator("-") {
-        return (a.x - b.x, a.y - b.y, a.z - b.z)
+        return Color(a.x - b.x, a.y - b.y, a.z - b.z)
     }
 
     mul :: (a: Color, b: Color) -> Color #operator("*") {
-        return (a.x * b.x, a.y * b.y, a.z * b.z)
+        return Color(a.x * b.x, a.y * b.y, a.z * b.z)
     }
     
     mul_s :: (a: Color, b: double) -> Color #operator("*") {
-        return (a.x * b, a.y * b, a.z * b)
+        return Color(a.x * b, a.y * b, a.z * b)
     }
     
     div :: (a: Color, b: Color) -> Color #operator("/") {
-        return (a.x / b.x, a.y / b.y, a.z / b.z)
+        return Color(a.x / b.x, a.y / b.y, a.z / b.z)
     }
     
     div_s :: (a: Color, b: double) -> Color #operator("/") {
-        return (a.x / b, a.y / b, a.z / b)
+        return Color(a.x / b, a.y / b, a.z / b)
     }
     
     neg :: (a: Color) -> Color #operator("-") {
-        return (-a.x, -a.y, -a.z)
+        return Color(-a.x, -a.y, -a.z)
     }
 }
 
 absolute :: (self: Color) -> Color {
-    return (abs(self.x), abs(self.y), abs(self.z))
+    return Color(abs(self.x), abs(self.y), abs(self.z))
 }
 
 Frame :: struct {
@@ -66,7 +70,7 @@ impl Frame {
 
     get_rgb :: (ref Self, x: int, y: int) -> Color {
         if x < 0 or y < 0 or x >= image_width or y >= image_height {
-            return (0, 0, 0)
+            return Color(0, 0, 0)
         }
 
         return pixels[x + y * image_width]
@@ -77,7 +81,7 @@ impl Frame {
             return
         }
 
-        pixels[x + y * image_width] = (value, value, value)
+        pixels[x + y * image_width] = Color(value, value, value)
     }
 
     set_rgb :: (ref Self, x: int, y: int, value: Color) {
@@ -110,7 +114,7 @@ impl Game for ImageProcessingGame {
             io.printfln("clearing frame {}", i)
             for x : 0..image_width {
                 for y : 0..image_height {
-                    frames[i].set(x, y, 0.5)
+                    frames[i].set(x, y, 0.9)
                 }
             }
         }
@@ -123,10 +127,13 @@ impl Game for ImageProcessingGame {
 
         capture = cvCreateCameraCapture(0)
 
+
         if capture == null {
             io.println("Failed to create webcam capture")
             return false
         }
+        io.println(cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH))
+        io.println(cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT))
 
         return true
     }
@@ -157,12 +164,14 @@ impl Game for ImageProcessingGame {
             for x : 0i32..res.width {
                 for y : 0i32..res.height {
                     index := (x + y * res.width) * 3
-                    col := (cast(double) res.imageData[index + 2], cast(double) res.imageData[index + 1], cast(double) res.imageData[index + 0]) / 255.0
+                    col := Color(cast(double) res.imageData[index + 2], cast(double) res.imageData[index + 1], cast(double) res.imageData[index + 0]) / 255.0
                     targetX := cast(int) (cast(double)x) * xScale
                     targetY := cast(int) (cast(double)y) * yScale
                     targetFrame.set_rgb(targetX, targetY, col)
                 }
             }
+        } else {
+            io.println("Failed to query frame")
         }
     }
 
@@ -177,10 +186,7 @@ impl Game for ImageProcessingGame {
                 g := if diff < 0 then -diff else 0.0
                 b := abs(diff)
 
-                // r := if diff > 0 {diff} else {0.0}
-                // g := if diff < 0 {-diff} else {0.0}
-
-                target_frame.set_rgb(x, y, (r, g, b))
+                target_frame.set_rgb(x, y, Color(r, g, b))
             }
         }
     }
@@ -270,8 +276,6 @@ impl Game for ImageProcessingGame {
         pge.clear(Pixel.rgba(0, 0, 100))
 
         webcam : ref Frame = frames[0]
-        target1 : ref Frame = frames[1]
-        target2 : ref Frame = frames[2]
 
         capture_webcam(webcam)
 
@@ -280,10 +284,14 @@ impl Game for ImageProcessingGame {
             primer = true
         }
 
-        // move_detection(webcam, last_frame, target1)
-        // dilation_erosion(webcam, last_frame, target4, target5)
-        // temporal_low_pass_filter(webcam, target1, target2)
-        adaptive_threshold(webcam, target1)
+        idx :: (x: int, y: int) -> int {
+            return x + y * num_images_x
+        }
+
+        // move_detection(webcam, last_frame, frames[idx(1, 0)])
+        // adaptive_threshold(webcam, frames[idx(1, 1)])
+        // dilation_erosion(webcam, last_frame, frames[idx(2, 0)], frames[idx(2, 1)])
+        temporal_low_pass_filter(webcam, frames[idx(3, 0)], frames[idx(3, 1)])
 
         webcam.copy_to(last_frame)
 
@@ -298,11 +306,11 @@ impl Game for ImageProcessingGame {
 }
 
 Main :: () {
-    ipg : Game = ref <<alloc(ImageProcessingGame)
+    ipg := alloc(ImageProcessingGame)
     engine := PixelGameEngine.create(
         ipg,
         num_images_x * image_width + (num_images_x + 1) * border_width,
         num_images_y * image_height + (num_images_y + 1) * border_width,
-        2, 2)
+        1, 1)
     engine.start()
 }
