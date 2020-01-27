@@ -3381,7 +3381,8 @@ namespace Cheez
                             return expr;
 
                         if (argType.Type is CheezType)
-                            expr.Type = PointerType.GetPointerType(argType.Value as CheezType);
+                            expr.Type = SliceType.GetSliceType(argType.Value as CheezType);
+                            // expr.Type = PointerType.GetPointerType(argType.Value as CheezType);
                         else
                             ReportError(argSize, $"Argument must be a type");
 

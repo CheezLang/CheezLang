@@ -249,11 +249,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (cc.Name.Name == "alloca")
             {
+                var sliceType = cc.Type as SliceType;
                 var size = GenerateExpression(cc.Arguments[1], true);
-                var mem = builder.CreateArrayAlloca(LLVM.Int8Type(), size, "");
-                mem.SetAlignment(8);
-                var anyPtr = builder.CreatePointerCast(mem, CheezTypeToLLVMType(cc.Type), "");
-                return anyPtr;
+                var mem = builder.CreateArrayAlloca(CheezTypeToLLVMType(sliceType.TargetType), size, "");
+                mem.SetAlignment((uint) sliceType.TargetType.GetAlignment());
+                return CreateLLVMSlice(sliceType, mem, size);
+
+                // var mem = builder.CreateArrayAlloca(LLVM.Int8Type(), size, "");
+                // mem.SetAlignment(8);
+                // var anyPtr = builder.CreatePointerCast(mem, CheezTypeToLLVMType(cc.Type), "");
+                // return anyPtr;
             }
 
             if (cc.Name.Name == "bin_or")
@@ -1591,7 +1596,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateStatement(block.Statements[i]);
 
                 // check if the current statement returs and there are more statements after that
-                if (block.Statements[i].GetFlag(StmtFlags.Returns) && i < block.Statements.Count - 1)
+                if (block.Statements[i].GetFlag(StmtFlags.Returns) && i < end)
                 {
                     // create new basic block
                     var bbNext = LLVM.AppendBasicBlock(currentLLVMFunction, "_unreachable");
