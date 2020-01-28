@@ -13,8 +13,8 @@
 // import examples.ShmupEngine.src.main
 
 // examples which are not working currently
+// import examples.image_processing
 // import examples.postfix
-import examples.image_processing
 // import examples.clox.main
 // import examples.lua_example
 
@@ -30,7 +30,7 @@ import examples.image_processing
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
-/*
+//*
 
 use import std.string
 use import std.printable
@@ -44,6 +44,121 @@ util :: import std.util
 C    :: import std.c
 
 use import clap.clap
+
+Command :: enum {
+    #name("start")  Start
+    #name("stop")   Stop
+    #name("test")   Test    : Foo
+    #name("switch") Switch  : Mode
+}
+Foo :: struct {
+    mode   : Mode
+    banana : int
+    bazaza : String
+    // baz    : Baz
+    array  := Array[string].create()
+}
+Baz :: struct {
+    // name : string
+    age  : int
+}
+Mode :: enum {
+    #name("on") On
+    #name("off") Off
+}
+
+Main :: () {
+    command := "switch "
+    args := Clap.tokenize(command)
+
+    io.println("Arguments`n==========")
+    for(by_ref=true) a : args {
+        io.formatln(a)
+    }
+    io.println("==========")
+
+    result, _ := parse_args(@type_info(Command), args.slice())
+    io.println("===")
+    io.println(fmt.format_any(result))
+    io.println("===")
+
+    match result {
+        Some($result) -> {
+            match get_value(Command, result.get()) {
+                Ok($result) -> io.formatln(result)
+                Err($err)   -> print_error_message(command, err)
+            }
+
+            io.println("------------------")
+            auto_completions := get_auto_completions_at(result.get(), command.bytes.length)
+            for completion : auto_completions {
+                io.println(completion.slice())
+            }
+            io.println("------------------")
+        }
+    }
+}
+
+impl CustomParser for String {
+    parse :: (args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken {
+        // io.println("String.parse")
+        result := mem.alloc(CustomExpr)
+        <<result = CustomExpr(@type_info(Self), loc, create_empty_expr(null, loc))
+        if args.length == 0 {
+            return Some(Box[Expr].from_pointer(cast result)), args
+        }
+
+        result.sub = create_raw_expr(result.typ, args[0])
+        return Some(Box[Expr].from_pointer(cast result)), args[1..args.length]
+    }
+
+    validate :: (expr: ref CustomExpr) -> Result[(), ClapError] {
+        // io.println("String.validate")
+        return match ref expr.sub.get() {
+            ValueExpr($v)   -> Ok(())
+            EmptyExpr($v)   -> Err(ClapError(v.loc, fmt.format("Missing value for string argument", [])))
+            _               -> @assert(false)
+        }
+    }
+
+    get_value :: (result: &void, expr: ref CustomExpr) {
+        // io.println("String.get_value")
+        match ref expr.sub.get() {
+            ValueExpr($v) -> {
+                <<cast(&String)result = v.raw.clone()
+            }
+
+            _ -> @assert(false)
+        }
+    }
+}
+
+get_auto_completions_at :: (expr: ref Expr, pos: int) -> Array[String] {
+    result := Array[String].create()
+    get_auto_completions_at_helper(result, expr, pos)
+    return result
+}
+
+get_auto_completions_at_helper :: (result: ref Array[String], expr: ref Expr, pos: int) {
+    io.formatln("complete at {}: {}", [pos, expr])
+    match expr {
+        EnumExpr($v) -> {
+            match ref v.sub {
+                Some($sub) -> {
+                    result.add(fmt.format_any(sub))
+                }
+
+                None -> {
+                    @assert(v.typ != null)
+                    @assert(v.typ.kind == TypeInfoKind.Enum)
+                    for(by_ref=true) mem : v.typ.kind.Enum.members {
+                        result.add(String.from_string(mem.name))
+                    }
+                }
+            }
+        }
+    }
+}
 
 autocomplete :: ($T: type, args: []string) -> Array[String] {
     result := Array[String].create()
@@ -144,8 +259,8 @@ Expr :: struct #extendable {
 }
 
 EnumExpr :: struct #extend(Expr) {
-    mem : &TypeInfoEnumMember = null
-    sub : &Expr = null
+    mem := Option[&TypeInfoEnumMember].None
+    sub := Option[Box[Expr]].None
 }
 
 StructExpr :: struct #extend(Expr) {
@@ -155,35 +270,44 @@ StructExpr :: struct #extend(Expr) {
 StructMember :: struct {
     loc : Location
     mem : &TypeInfoStructMember
-    sub : &Expr
+    sub : Option[Box[Expr]]
 }
 
 ValueExpr :: struct #extend(Expr) {
     raw : String
 }
 
+EmptyExpr :: struct #extend(Expr) {
+}
+
 CustomExpr :: struct #extend(Expr) {
-    sub : &Expr
+    sub : Box[Expr]
 }
 
 CustomParser :: trait {
-    parse     :: (args: []ClapToken, loc: Location) -> (&Expr, []ClapToken);
+    parse     :: (args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken;
     validate  :: (ref CustomExpr) -> Result[(), ClapError];
     get_value :: (result: &void, expr: ref CustomExpr);
 }
 
-create_raw_expr :: (ti: &TypeInfo, token: ref ClapToken) -> &Expr {
-    result := mem.alloc(ValueExpr)
-    <<result = ValueExpr(ti, token.loc, token.raw.clone())
-    return cast result
+create_empty_expr :: (ti: &TypeInfo, loc: Location) -> Box[Expr] {
+    result := mem.alloc(EmptyExpr)
+    <<result = EmptyExpr(ti, loc)
+    return Box[Expr].from_pointer(cast result)
 }
 
-parse_args_enum :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr, []ClapToken {
+create_raw_expr :: (ti: &TypeInfo, token: ref ClapToken) -> Box[Expr] {
+    result := mem.alloc(ValueExpr)
+    <<result = ValueExpr(ti, token.loc, token.raw.clone())
+    return Box[Expr].from_pointer(cast result)
+}
+
+parse_args_enum :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken {
     result := mem.alloc(EnumExpr)
     <<result = EnumExpr(ti, loc)
 
     if args.length == 0 {
-        return cast result, args
+        return Some(Box[Expr].from_pointer(cast result)), args
     }
 
     current := ref args[0]
@@ -193,7 +317,7 @@ parse_args_enum :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr, [
     for(by_ref=true) mem : ti.kind.Enum.members {
         display_name := get_display_name_for_member(mem)
         if streq(display_name, current.raw.slice()) {
-            result.mem = &mem
+            result.mem = Some(&mem)
             if mem.typ != null {
                 result.sub, args = parse_args_help(mem.typ, args, Location(current.loc.end, current.loc.end))
                 //result.loc = Location(result.loc.start, result.sub.loc.end)
@@ -202,15 +326,17 @@ parse_args_enum :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr, [
         }
     }
 
-    if result.mem == null {
-        // no matching enum member found, so create raw expression used for error reporting/autocomplete later
-        result.sub = create_raw_expr(null, current)
+    match result.mem {
+        None -> {
+            // no matching enum member found, so create raw expression used for error reporting/autocomplete later
+            result.sub = Some(create_raw_expr(null, current))
+        }
     }
 
-    return cast result, args
+    return Some(Box[Expr].from_pointer(cast result)), args
 }
 
-parse_args_struct :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr, []ClapToken {
+parse_args_struct :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken {
     result := mem.alloc(StructExpr)
     <<result = StructExpr(ti, Location(-1, loc.end))
 
@@ -219,7 +345,9 @@ parse_args_struct :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr,
         result.loc.start = if result.loc.start >= 0 then result.loc.start else current.loc.start
         args = args[1..args.length]
 
-        member := StructMember(current.loc, null, null)
+        loc := current.loc
+        mem_info : &TypeInfoStructMember = null
+        sub := Option[Box[Expr]].None
 
         // todo: handle these error cases
         if current.raw.get_length() > 0 and current.raw[0] == '-' {
@@ -229,36 +357,38 @@ parse_args_struct :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr,
             for(by_ref=true) mem : ti.kind.Struct.members {
                 display_name := get_display_name_for_member(mem)
                 if streq(display_name, current_raw) {
-                    member.mem = &mem
-                    member.sub, args = parse_args_help(mem.typ, args, Location(current.loc.end, current.loc.end))
-
-                    if member.sub != null {
-                        member.loc.end = member.sub.loc.end
+                    mem_info = &mem
+                    sub, args = parse_args_help(mem.typ, args, Location(current.loc.end, current.loc.end))
+                    match ref sub {
+                        Some($sub) -> {
+                            loc.end = sub.get().loc.end
+                        }
                     }
                     break
                 }
             }
         }
 
-        if member.mem == null {
+        if mem_info == null {
             // no matching struct member found, so create raw expression used for error reporting/autocomplete later
-            member.sub = create_raw_expr(null, current)
+            sub = Some(create_raw_expr(null, current))
         }
 
+        member := StructMember(loc, mem_info, sub)
         result.loc.end = member.loc.end
         result.subs.add(member)
     }
 
-    return cast result, args
+    return Some(Box[Expr].from_pointer(cast result)), args
 }
 
-parse_args_help :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr, []ClapToken {
+parse_args_help :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken {
     return match ti.kind {
         TypeInfoKind.Enum($info)    -> parse_args_enum(ti, args, loc)
         TypeInfoKind.Struct($info)  -> {
             custom_parser := info.get_trait_impl(CustomParser)
             if custom_parser != null {
-                func := custom_parser.get_function("parse", fn([]ClapToken, Location) -> (&Expr, []ClapToken))
+                func := custom_parser.get_function("parse", fn([]ClapToken, Location) -> (Option[Box[Expr]], []ClapToken))
                 @assert(func != null)
                 return func(args, loc)
             } else {
@@ -266,14 +396,14 @@ parse_args_help :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> &Expr, [
             }
         }
         _ -> if args.length == 0 {
-            null, args
+            None, args
         } else {
-            create_raw_expr(ti, args[0]), args[1..args.length]
+            Some(create_raw_expr(ti, args[0])), args[1..args.length]
         }
     }
 }
 
-parse_args :: (ti: &TypeInfo, args: []ClapToken) -> &Expr, []ClapToken {
+parse_args :: (ti: &TypeInfo, args: []ClapToken) -> Option[Box[Expr]], []ClapToken {
     return parse_args_help(ti, args, Location(0, 0))
 }
 
@@ -315,15 +445,21 @@ get_value_help :: (result: &void, expr: ref Expr) {
         EnumExpr($v) -> {
             tag_type := v.typ.kind.Enum.tag_type
 
-            @assert(v.mem != null)
+            member_info := match v.mem {
+                Some($info) -> info
+                None        -> @assert(false)
+            }
 
             // copy tag
             tag_ptr := cast(&int) result
-            <<tag_ptr = v.mem.tag
+            <<tag_ptr = member_info.tag
 
-            if v.mem.typ != null {
-                @assert(v.sub != null)
-                get_value_help(util.pointer_add(result, tag_type.size), <<v.sub)
+            if member_info.typ != null {
+                sub : ref Expr = match ref v.sub {
+                    Some($sub)  -> sub.get()
+                    None        -> @assert(false)
+                }
+                get_value_help(util.pointer_add(result, tag_type.size), sub)
             }
         }
         StructExpr($v) -> {
@@ -334,7 +470,10 @@ get_value_help :: (result: &void, expr: ref Expr) {
             for mem : v.subs {
                 @assert(mem.mem != null)
                 offset := mem.mem.offset
-                get_value_help(util.pointer_add(result, offset), <<mem.sub)
+                match ref mem.sub {
+                    Some($sub)  -> get_value_help(util.pointer_add(result, offset), sub.get())
+                    None        -> @assert(false)
+                }
                 members_set[mem.mem.index] = true
             }
 
@@ -360,88 +499,6 @@ get_value_help :: (result: &void, expr: ref Expr) {
     }
 }
 
-Command :: enum {
-    #name("start")  Start
-    #name("stop")   Stop
-    #name("test")   Test    : Foo
-    #name("switch") Switch  : Mode
-}
-Foo :: struct {
-    mode   : Mode
-    banana : int
-    bazaza : String
-    // baz    : Baz
-    array  := Array[string].create()
-}
-Baz :: struct {
-    // name : string
-    age  : int
-}
-Mode :: enum {
-    #name("on") On
-    #name("off") Off
-}
-
-impl CustomParser for String {
-    parse :: (args: []ClapToken, loc: Location) -> &Expr, []ClapToken {
-        // io.println("String.parse")
-        result := mem.alloc(CustomExpr)
-        <<result = CustomExpr(@type_info(Self), loc, null)
-        if args.length == 0 {
-            return cast result, args
-        }
-
-        result.sub = create_raw_expr(result.typ, args[0])
-        return cast result, args[1..args.length]
-    }
-
-    validate :: (ref CustomExpr) -> Result[(), ClapError] {
-        // io.println("String.validate")
-        return Ok(())
-    }
-
-    get_value :: (result: &void, expr: ref CustomExpr) {
-        // io.println("String.get_value")
-        match ref <<expr.sub {
-            ValueExpr($v) -> {
-                <<cast(&String)result = v.raw.clone()
-            }
-
-            _ -> @assert(false)
-        }
-    }
-}
-
-Main :: () {
-    command := "test -mode on -banana 123 -bazaza uiae"
-    args := Clap.tokenize(command)
-
-    io.println("Arguments`n==========")
-    for(by_ref=true) a : args {
-        io.formatln(a)
-    }
-    io.println("==========")
-
-    result, _ := parse_args(@type_info(Command), args.slice())
-    if result != null {
-        io.println("===")
-        io.println(fmt.format_any(<<result))
-        io.println("===")
-
-        match get_value(Command, <<result) {
-            Ok($result) -> io.formatln(result)
-            Err($err)   -> print_error_message(command, err)
-        }
-    }
-
-    // strs := autocomplete(Command, ["Test", "-banana", "5"])
-
-    // for str : strs {
-    //     io.println(str.slice())
-    // }
-    // io.println("===")
-}
-
 print_error_message :: (command: string, err: ClapError) {
     io.formatln("[ERROR] {}", [err.msg])
     io.formatln("> {}", [command])
@@ -457,9 +514,11 @@ print_error_message :: (command: string, err: ClapError) {
 impl Printable for Expr {
     print :: (ref Self, str: ref String, format: string) {
         match self {
-            EnumExpr($v)   -> v.print(str, format)
-            StructExpr($v) -> v.print(str, format)
-            ValueExpr($v)  -> v.print(str, format)
+            EnumExpr($v)    -> v.print(str, format)
+            StructExpr($v)  -> v.print(str, format)
+            ValueExpr($v)   -> v.print(str, format)
+            CustomExpr($v)  -> str.append_string("custom()")
+            EmptyExpr($v)   -> str.append_string("empty()")
         }
     }
 }
@@ -467,8 +526,15 @@ impl Printable for Expr {
 impl Printable for EnumExpr {
     print :: (ref Self, str: ref String, format: string) {
         // str.appendf("{}", int(typ))
-        sub_str := if sub == null then String.from_string("null") else fmt.format_any(<<sub)
-        result := fmt.format("enum({}.{}, loc={}, sub={})", [typ.kind.Enum.name, if mem == null then "?" else mem.name, loc, sub_str.slice()])
+        sub_str := match ref sub {
+            Some($sub)  -> fmt.format_any(sub.get())
+            None        -> String.from_string("null")
+        }
+        mem_name := match ref mem {
+            Some($mem)  -> mem.name
+            None        -> "?"
+        }
+        result := fmt.format("enum({}.{}, loc={}, sub={})", [typ.kind.Enum.name, mem_name, loc, sub_str.slice()])
         str.append(result)
     }
 }
@@ -481,8 +547,10 @@ impl Printable for StructExpr {
                 sub_str.append_string(", ")
             }
             sub_str.appendf("member({}, loc={}, sub=", (if mem.mem != null then mem.mem.name else "?", mem.loc))
-            if mem.sub != null {
-                mem.sub.print(sub_str, "")
+            match ref mem.sub {
+                Some($sub)  -> sub.get().print(sub_str, "")
+                None        -> sub_str.append_string("None")
+                _           -> @assert(false)
             }
             sub_str.append_string(")")
         }
@@ -534,24 +602,27 @@ validate :: (expr: ref Expr) -> Result[(), ClapError] {
 
     return match expr {
         EnumExpr($v) -> {
-            if v.mem == null {
-                if v.sub == null {
-                    return Err(ClapError(v.loc, fmt.format("Missing argument {}", [v.typ.kind.Enum.name])))
-                }
-                match ref <<v.sub {
-                    ValueExpr($raw) -> {
-                        return Err(ClapError(raw.loc, fmt.format("Unknown argument {}", [raw.raw.slice()])))
+            match ref v.mem {
+                Some($mem) -> {
+                    if mem.typ != null {
+                        match ref v.sub {
+                            Some($sub)  -> validate(sub.get())
+                            None        -> @assert(false)
+                        }
+                    } else {
+                        Ok(())
                     }
-
-                    _ -> @assert(false)
                 }
-            }
 
-            if v.mem.typ != null {
-                @assert(v.sub != null)
-                validate(<<v.sub)
-            } else {
-                Ok(())
+                None -> {
+                    match ref v.sub {
+                        Some($sub) -> match ref sub.get() {
+                            ValueExpr($raw) -> Err(ClapError(raw.loc, fmt.format("Unknown argument {}", [raw.raw.slice()])))
+                            _               -> @assert(false)
+                        }
+                        None -> Err(ClapError(v.loc, fmt.format("Missing argument {}", [v.typ.kind.Enum.name])))
+                    }
+                }
             }
         }
         StructExpr($v) -> {
@@ -561,16 +632,25 @@ validate :: (expr: ref Expr) -> Result[(), ClapError] {
 
             for mem : v.subs {
                 if mem.mem == null {
-                    match ref <<mem.sub {
-                        ValueExpr($raw) -> {
-                            return Err(ClapError(raw.loc, fmt.format("Unknown argument {}", [raw.raw.slice()])))
+                    match ref mem.sub {
+                        Some($sub) -> {
+                            match sub.get() {
+                                ValueExpr($raw) -> {
+                                    return Err(ClapError(raw.loc, fmt.format("Unknown argument {}", [raw.raw.slice()])))
+                                }
+                                _ -> @assert(false)
+                            }
                         }
-
-                        _ -> @assert(false)
+                        None -> @assert(false)
                     }
                 }
 
-                try(validate(<<mem.sub))
+                match ref mem.sub {
+                    Some($sub)  -> try(validate(sub.get()))
+                    None        -> {
+                        return Err(ClapError(mem.loc, fmt.format("Missing value for argument '{}'", [get_display_name_for_member(mem.mem)])))
+                    }
+                }
 
                 if members_set[mem.mem.index] {
                     return Err(ClapError(mem.loc, fmt.format("Duplicate argument '{}'", [get_display_name_for_member(mem.mem)])))

@@ -12,12 +12,21 @@ impl(T: type) Box[T] {
         <<p = v
         return Box[T](p)
     }
+    new :: (v: $T2) -> Box[T] {
+        p := alloc(T2)
+        <<p = v
+        return Box[T](cast p)
+    }
 
     from_pointer :: (ptr: &T) -> Box[T] {
         return Box[T](ptr)
     }
 
     value :: (ref Self) -> ref T {
+        return <<_value
+    }
+
+    get :: (ref Self) -> ref T {
         return <<_value
     }
 }
