@@ -1026,7 +1026,9 @@ namespace Cheez
                 if (expected != null)
                 {
                     c.Body = HandleReference(c.Body, expected, context);
-                    c.Body = CheckType(c.Body, expected);
+
+                    if (!c.Body.GetFlag(ExprFlags.Returns) && !c.Body.GetFlag(ExprFlags.Breaks))
+                        c.Body = CheckType(c.Body, expected);
                 }
 
                 if (!(c.Pattern is AstNumberExpr || c.Pattern is AstCharLiteral) || c.Condition != null)
@@ -2029,6 +2031,18 @@ namespace Cheez
 
             if (expr.SubExpression.Type.IsErrorType)
                 return expr;
+
+            if (expr.SubExpression.GetFlag(ExprFlags.Returns)) {
+                expr.SetFlag(ExprFlags.Returns, true);
+                expr.Type = CheezType.Void;
+                return expr;
+            }
+
+            if (expr.SubExpression.GetFlag(ExprFlags.Breaks)) {
+                expr.SetFlag(ExprFlags.Breaks, true);
+                expr.Type = CheezType.Void;
+                return expr;
+            }
 
             // handle type expression
             if (expr.SubExpression.Type == CheezType.Type)
@@ -3089,6 +3103,13 @@ namespace Cheez
                                 ReportError(arg, $"Argument must be a compile time constant");
                                 return expr;
                             }
+                        }
+
+                        if (expr.Arguments[0].Expr.IsCompTimeValue)
+                        {
+                            bool value = (bool)expr.Arguments[0].Expr.Value;
+                            if (!value)
+                                expr.SetFlag(ExprFlags.Returns, true);
                         }
 
                         expr.Type = CheezType.Void;

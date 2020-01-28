@@ -197,10 +197,13 @@ namespace Cheez.Types
                         return true;
                     }
 
-                case (StructType _, GenericStructType _):
-                case (EnumType _, GenericEnumType _):
-                case (TraitType _, GenericTraitType _):
-                    throw new NotImplementedException();
+
+                case (StructType bb, GenericStructType aa):
+                    return TypesMatch(aa, bb);
+                case (EnumType bb, GenericEnumType aa):
+                    return TypesMatch(aa, bb);
+                case (TraitType bb, GenericTraitType aa):
+                    return TypesMatch(aa, bb);
             }
             if (a is StructType sa && b is StructType sb)
             {
