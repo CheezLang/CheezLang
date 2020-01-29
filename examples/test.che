@@ -46,6 +46,7 @@ C    :: import std.c
 use import clap.clap
 
 Command :: enum {
+    #name("star")   Star
     #name("start")  Start
     #name("stop")   Stop
     #name("test")   Test    : Foo
@@ -68,7 +69,7 @@ Mode :: enum {
 }
 
 Main :: () {
-    command := "switch "
+    command := "switch o"
     args := Clap.tokenize(command)
 
     io.println("Arguments`n==========")
@@ -89,8 +90,8 @@ Main :: () {
                 Err($err)   -> print_error_message(command, err)
             }
 
+            auto_completions := get_auto_completions_at(result.get(), 7)
             io.println("------------------")
-            auto_completions := get_auto_completions_at(result.get(), command.bytes.length)
             for completion : auto_completions {
                 io.println(completion.slice())
             }
@@ -141,18 +142,59 @@ get_auto_completions_at :: (expr: ref Expr, pos: int) -> Array[String] {
 
 get_auto_completions_at_helper :: (result: ref Array[String], expr: ref Expr, pos: int) {
     io.formatln("complete at {}: {}", [pos, expr])
+    // if pos < expr.loc.start or pos > expr.loc.end {
+    //     return
+    // }
+
     match expr {
         EnumExpr($v) -> {
+            // if pos is 
+            if v.loc.contains(pos) {
+                match ref v.mem {
+                    Some($mem) -> {
+                        // full command, but maybe a prefix of a longer command
+                        // todo
+                    }
+
+                    None -> {
+                        // partial command
+                        @assert(v.sub == Option[Box[Expr]].Some)
+                        match ref v.sub.Some.get() {
+                            ValueExpr($val) -> {
+                                offset := pos - val.loc.start
+                                raw := val.raw.slice()
+
+                                @assert(offset >= 0 and offset <= raw.bytes.length)
+
+                                string_to_complete := raw[0..offset]
+                                type_to_complete   := val.typ
+                                io.formatln("off: {}, raw: {}, to_complete: {}", [offset, raw, string_to_complete])
+                                autocomplete_type_members(type_to_complete, string_to_complete, result)
+                            }
+
+                            _ -> @assert(false)
+                        }
+                    }
+                }
+                io.formatln("in base command: {}", [v])
+                return
+            }
+
+            // 
             match ref v.sub {
                 Some($sub) -> {
-                    result.add(fmt.format_any(sub))
+                    if sub.get().loc.contains(pos) {
+                        io.formatln("some: {}", [sub.get()])
+                        get_auto_completions_at_helper(result, sub.get(), pos)
+                    }
                 }
 
                 None -> {
+
                     @assert(v.typ != null)
                     @assert(v.typ.kind == TypeInfoKind.Enum)
                     for(by_ref=true) mem : v.typ.kind.Enum.members {
-                        result.add(String.from_string(mem.name))
+                        result.add(String.from_string(get_display_name_for_member(mem)))
                     }
                 }
             }
@@ -217,10 +259,12 @@ autocomplete_type_members :: (ti: &TypeInfo, prefix: string, result: ref Array[S
     match ti.kind {
         TypeInfoKind.Enum($info) -> {
             for(by_ref=true) mem : info.members {
-                if mem.typ != null and streq(mem.name, prefix) {
+                name := get_display_name_for_member(mem)
+                    // io.formatln(mem.name)
+                if mem.typ != null and streq(name, prefix) {
                     autocomplete_type_members(mem.typ, "", result)
-                } else if mem.name.bytes.length != prefix.bytes.length and mem.name.starts_with(prefix) {
-                    remainder := mem.name.sub_string(prefix.bytes.length)
+                } else if name.bytes.length != prefix.bytes.length and name.starts_with(prefix) {
+                    remainder := name.sub_string(prefix.bytes.length)
                     result.add(String.from_string(remainder))
                 }
             }
@@ -329,7 +373,7 @@ parse_args_enum :: (ti: &TypeInfo, args: []ClapToken, loc: Location) -> Option[B
     match result.mem {
         None -> {
             // no matching enum member found, so create raw expression used for error reporting/autocomplete later
-            result.sub = Some(create_raw_expr(null, current))
+            result.sub = Some(create_raw_expr(ti, current))
         }
     }
 
@@ -527,8 +571,8 @@ impl Printable for EnumExpr {
     print :: (ref Self, str: ref String, format: string) {
         // str.appendf("{}", int(typ))
         sub_str := match ref sub {
-            Some($sub)  -> fmt.format_any(sub.get())
-            None        -> String.from_string("null")
+            Some($sub)  -> fmt.format("Some({})", [sub.get()])
+            None        -> String.from_string("None")
         }
         mem_name := match ref mem {
             Some($mem)  -> mem.name

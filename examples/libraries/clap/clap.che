@@ -23,7 +23,7 @@ Location :: struct #copy {
 
 impl Location {
     contains :: (ref Self, pos: int) -> bool {
-        return pos >= start and pos < end
+        return pos >= start and pos <= end
     }
 
     before :: (ref Self, pos: int) -> bool {
