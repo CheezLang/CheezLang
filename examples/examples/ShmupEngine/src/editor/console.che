@@ -1,6 +1,7 @@
 use import std.array
 use import std.string
 use import std.rc
+use import std.box
 use import std.math
 use import std.ring_queue
 mem  :: import std.mem.allocator
@@ -10,7 +11,8 @@ io   :: import std.io
 C    :: import std.c
 
 use import glfw.glfw_binding
-clap  :: import clap.clap
+// clap  :: import clap.clap
+clap  :: import clap.clap2
 ImGui :: import imgui.imgui_binding
 
 use import "../math"
@@ -87,22 +89,27 @@ impl Console {
     execute_command :: (ref Self, cmd_string: String) {
         scroll_to_bottom = true
 
-        cmd := clap.parse_arguments_from_string(Command, cmd_string.slice())
+        cmd := clap.parse_args_from_string(Command, cmd_string.slice())
 
-        if cmd == null {
-            add_entry(MessageType.Error, fmt.format("> Failed to execute command '{}'. Enter 'help' to get a list of commands", [cmd_string.slice()]))
-        } else {
-            defer mem.free(cmd)
+        match cmd {
+            Ok($cmd) -> {
+                add_entry(MessageType.Command, fmt.format("> {}", [cmd_string.slice()]))
+                match ref cmd.get() {
+                    Command.Help -> {
+                        // add_entry(MessageType.Log, clap.get_help_message(@type_info(Command)))
+                    }
 
-            add_entry(MessageType.Command, fmt.format("> {}", [cmd_string.slice()]))
-            match ref <<cmd {
-                Command.Help -> {
-                    add_entry(MessageType.Log, clap.get_help_message(@type_info(Command)))
+                    $c -> {
+                        on_command(c)
+                    }
                 }
 
-                $c -> {
-                    on_command(c)
-                }
+            }
+
+            Err($err) -> {
+                err_msg := clap.get_pretty_error_message(cmd_string.slice(), err)
+                add_entry(MessageType.Error, err_msg)
+                // add_entry(MessageType.Error, fmt.format("> Failed to execute command '{}'. Enter 'help' to get a list of commands", [cmd_string.slice()]))
             }
         }
 
@@ -120,7 +127,20 @@ impl Console {
 
         match ImGui.ImGuiInputTextFlags_(data.EventFlag) {
             ImGui.ImGuiInputTextFlags_.CallbackCompletion -> {
-                log_error("auto complete not implemented yet")
+                text := string(cast m_buffer.data, cast C.strlen(m_buffer.data))
+                completions := clap.get_completions_at(Command, text, cast data.CursorPos)
+
+
+                if completions.get_length() == 1 {
+                    completion := completions[0].slice()
+                    data.InsertChars(data.CursorPos, cast completion.bytes.data, cast util.pointer_add(completion.bytes.data, completion.bytes.length))
+                } else {
+                    to_complete := text.sub_string(0, cast data.CursorPos)
+                    add_entry(MessageType.Command, fmt.format("?{}", [to_complete]))
+                    for c : completions {
+                        add_entry(MessageType.Log, fmt.format(" {}{}", [to_complete, c.slice()]))
+                    }
+                }
             }
             ImGui.ImGuiInputTextFlags_.CallbackHistory -> {
                 prev_history_pos := history_pos
@@ -225,6 +245,9 @@ impl Console {
             ImGui.ImGuiInputTextFlags_.CallbackCompletion,
             ImGui.ImGuiInputTextFlags_.CallbackHistory)
         reclaim_focus := false
+
+        padding := ImGui.ImVec2(7, 3)
+        ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.FramePadding, padding)
         if ImGui.InputText("Input", m_buffer.data, cast m_buffer.length, input_flags, auto_complete_callback, &self) {
             text := string(cast m_buffer.data, cast C.strlen(m_buffer.data))
             text = text.trim()
@@ -234,6 +257,7 @@ impl Console {
             m_buffer[0] = char8(0)
             reclaim_focus = true
         }
+        ImGui.PopStyleVar()
 
         // set focus
         ImGui.SetItemDefaultFocus()
