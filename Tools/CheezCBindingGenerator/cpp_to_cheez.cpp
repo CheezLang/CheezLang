@@ -880,6 +880,10 @@ void CppToCheezGenerator::emit_function_decl(const Declaration& decl) {
     auto name_raw = clang_getCursorSpelling(cursor);
     auto name = get_unique_function_name(name_raw);
 
+    if (strcmp("stbi_load", clang_getCString(name_raw))) {
+        int a = 0;
+    }
+
     // ignore definitions
     // this apparently doesn't ignore functions defined inside structs, only global function defininitions
     // which is what we want

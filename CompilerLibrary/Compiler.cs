@@ -72,6 +72,7 @@ namespace Cheez
             ModulePaths["glfw"]     = exePath + "/libraries";
             ModulePaths["imgui"]    = exePath + "/libraries";
             ModulePaths["opengl"]   = exePath + "/libraries";
+            ModulePaths["stb"]      = exePath + "/libraries";
             ModulePaths["olc_pge"]  = exePath + "/libraries";
             ModulePaths["bmp"]      = exePath + "/libraries";
             ModulePaths["lua"]      = exePath + "/libraries";
