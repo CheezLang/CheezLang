@@ -1,9 +1,12 @@
-
 #lib("./lib/stb_binding.lib")
+
+use import std.io.stdio
+
 #export_scope
 
 stbi_uc :: u8
 stbi_us :: u16
+stbi_io_callbacks :: struct #copy {}
 stbi__uint16 :: u16
 stbi__int16 :: i16
 stbi__uint32 :: u32
@@ -12,7 +15,6 @@ stbi__context :: struct #copy {}
 stbi__result_info :: struct #copy {}
 stbi__huffman :: struct #copy {}
 stbi__jpeg :: struct #copy {}
-resample_row_func :: fn(&stbi_uc, &stbi_uc, &stbi_uc, i32, i32) -> &stbi_uc
 stbi__resample :: struct #copy {}
 stbi__zhuffman :: struct #copy {}
 stbi__zbuf :: struct #copy {}
@@ -22,11 +24,198 @@ stbi__bmp_data :: struct #copy {}
 stbi__pic_packet :: struct #copy {}
 stbi__gif_lzw :: struct #copy {}
 stbi__gif :: struct #copy {}
-__m128d :: struct #copy {
-    m128d_f64 : [2]f64 = default
+__codecvt_result :: enum #copy #repr("C") #tag_type(i32) {
+    _codecvt_ok      = 0x0
+    _codecvt_partial = 0x1
+    _codecvt_error   = 0x2
+    _codecvt_noconv  = 0x3
 }
-__m512d :: struct #copy {
-    m512d_f64 : [8]f64 = default
+stbi_load_from_memory :: (_buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_uc {
+    result : &stbi_uc = default
+    __c__stbi_load_from_memory(&result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_uc {
+    result : &stbi_uc = default
+    __c__stbi_load_from_callbacks(&result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load :: (_filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_uc {
+    result : &stbi_uc = default
+    __c__stbi_load(&result, _filename, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_from_file :: (_f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_uc {
+    result : &stbi_uc = default
+    __c__stbi_load_from_file(&result, _f, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_gif_from_memory :: (_buffer: &stbi_uc, _len: i32, _delays: &&i32, _x: &i32, _y: &i32, _z: &i32, _comp: &i32, _req_comp: i32) -> &stbi_uc {
+    result : &stbi_uc = default
+    __c__stbi_load_gif_from_memory(&result, _buffer, _len, _delays, _x, _y, _z, _comp, _req_comp)
+    return result
+}
+stbi_load_16_from_memory :: (_buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_us {
+    result : &stbi_us = default
+    __c__stbi_load_16_from_memory(&result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_16_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_us {
+    result : &stbi_us = default
+    __c__stbi_load_16_from_callbacks(&result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_16 :: (_filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_us {
+    result : &stbi_us = default
+    __c__stbi_load_16(&result, _filename, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_from_file_16 :: (_f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_us {
+    result : &stbi_us = default
+    __c__stbi_load_from_file_16(&result, _f, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_loadf_from_memory :: (_buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &f32 {
+    result : &f32 = default
+    __c__stbi_loadf_from_memory(&result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_loadf_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &f32 {
+    result : &f32 = default
+    __c__stbi_loadf_from_callbacks(&result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_loadf :: (_filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &f32 {
+    result : &f32 = default
+    __c__stbi_loadf(&result, _filename, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_loadf_from_file :: (_f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &f32 {
+    result : &f32 = default
+    __c__stbi_loadf_from_file(&result, _f, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_hdr_to_ldr_gamma :: (_gamma: f32) {
+    __c__stbi_hdr_to_ldr_gamma(_gamma)
+}
+stbi_hdr_to_ldr_scale :: (_scale: f32) {
+    __c__stbi_hdr_to_ldr_scale(_scale)
+}
+stbi_ldr_to_hdr_gamma :: (_gamma: f32) {
+    __c__stbi_ldr_to_hdr_gamma(_gamma)
+}
+stbi_ldr_to_hdr_scale :: (_scale: f32) {
+    __c__stbi_ldr_to_hdr_scale(_scale)
+}
+stbi_is_hdr_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void) -> i32 {
+    result : i32 = default
+    __c__stbi_is_hdr_from_callbacks(&result, _clbk, _user)
+    return result
+}
+stbi_is_hdr_from_memory :: (_buffer: &stbi_uc, _len: i32) -> i32 {
+    result : i32 = default
+    __c__stbi_is_hdr_from_memory(&result, _buffer, _len)
+    return result
+}
+stbi_is_hdr :: (_filename: &char8) -> i32 {
+    result : i32 = default
+    __c__stbi_is_hdr(&result, _filename)
+    return result
+}
+stbi_is_hdr_from_file :: (_f: &FILE) -> i32 {
+    result : i32 = default
+    __c__stbi_is_hdr_from_file(&result, _f)
+    return result
+}
+stbi_failure_reason :: () -> &char8 {
+    result : &char8 = default
+    __c__stbi_failure_reason(&result)
+    return result
+}
+stbi_image_free :: (_retval_from_stbi_load: &void) {
+    __c__stbi_image_free(_retval_from_stbi_load)
+}
+stbi_info_from_memory :: (_buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+    result : i32 = default
+    __c__stbi_info_from_memory(&result, _buffer, _len, _x, _y, _comp)
+    return result
+}
+stbi_info_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+    result : i32 = default
+    __c__stbi_info_from_callbacks(&result, _clbk, _user, _x, _y, _comp)
+    return result
+}
+stbi_is_16_bit_from_memory :: (_buffer: &stbi_uc, _len: i32) -> i32 {
+    result : i32 = default
+    __c__stbi_is_16_bit_from_memory(&result, _buffer, _len)
+    return result
+}
+stbi_is_16_bit_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void) -> i32 {
+    result : i32 = default
+    __c__stbi_is_16_bit_from_callbacks(&result, _clbk, _user)
+    return result
+}
+stbi_info :: (_filename: &char8, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+    result : i32 = default
+    __c__stbi_info(&result, _filename, _x, _y, _comp)
+    return result
+}
+stbi_info_from_file :: (_f: &FILE, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+    result : i32 = default
+    __c__stbi_info_from_file(&result, _f, _x, _y, _comp)
+    return result
+}
+stbi_is_16_bit :: (_filename: &char8) -> i32 {
+    result : i32 = default
+    __c__stbi_is_16_bit(&result, _filename)
+    return result
+}
+stbi_is_16_bit_from_file :: (_f: &FILE) -> i32 {
+    result : i32 = default
+    __c__stbi_is_16_bit_from_file(&result, _f)
+    return result
+}
+stbi_set_unpremultiply_on_load :: (_flag_true_if_should_unpremultiply: i32) {
+    __c__stbi_set_unpremultiply_on_load(_flag_true_if_should_unpremultiply)
+}
+stbi_convert_iphone_png_to_rgb :: (_flag_true_if_should_convert: i32) {
+    __c__stbi_convert_iphone_png_to_rgb(_flag_true_if_should_convert)
+}
+stbi_set_flip_vertically_on_load :: (_flag_true_if_should_flip: i32) {
+    __c__stbi_set_flip_vertically_on_load(_flag_true_if_should_flip)
+}
+stbi_set_flip_vertically_on_load_thread :: (_flag_true_if_should_flip: i32) {
+    __c__stbi_set_flip_vertically_on_load_thread(_flag_true_if_should_flip)
+}
+stbi_zlib_decode_malloc_guesssize :: (_buffer: &char8, _len: i32, _initial_size: i32, _outlen: &i32) -> &char8 {
+    result : &char8 = default
+    __c__stbi_zlib_decode_malloc_guesssize(&result, _buffer, _len, _initial_size, _outlen)
+    return result
+}
+stbi_zlib_decode_malloc_guesssize_headerflag :: (_buffer: &char8, _len: i32, _initial_size: i32, _outlen: &i32, _parse_header: i32) -> &char8 {
+    result : &char8 = default
+    __c__stbi_zlib_decode_malloc_guesssize_headerflag(&result, _buffer, _len, _initial_size, _outlen, _parse_header)
+    return result
+}
+stbi_zlib_decode_malloc :: (_buffer: &char8, _len: i32, _outlen: &i32) -> &char8 {
+    result : &char8 = default
+    __c__stbi_zlib_decode_malloc(&result, _buffer, _len, _outlen)
+    return result
+}
+stbi_zlib_decode_buffer :: (_obuffer: &char8, _olen: i32, _ibuffer: &char8, _ilen: i32) -> i32 {
+    result : i32 = default
+    __c__stbi_zlib_decode_buffer(&result, _obuffer, _olen, _ibuffer, _ilen)
+    return result
+}
+stbi_zlib_decode_noheader_malloc :: (_buffer: &char8, _len: i32, _outlen: &i32) -> &char8 {
+    result : &char8 = default
+    __c__stbi_zlib_decode_noheader_malloc(&result, _buffer, _len, _outlen)
+    return result
+}
+stbi_zlib_decode_noheader_buffer :: (_obuffer: &char8, _olen: i32, _ibuffer: &char8, _ilen: i32) -> i32 {
+    result : i32 = default
+    __c__stbi_zlib_decode_noheader_buffer(&result, _obuffer, _olen, _ibuffer, _ilen)
+    return result
 }
 stbi__refill_buffer :: (_s: &stbi__context) {
     __c__stbi__refill_buffer(_s)
@@ -198,6 +387,47 @@ stbi__hdr_to_ldr :: (_data: &f32, _x: i32, _y: i32, _comp: i32) -> &stbi_uc {
 
 #file_scope
 
+__c__stbi_load_from_memory :: (ret: &&stbi_uc, _buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_load_from_callbacks :: (ret: &&stbi_uc, _clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_load :: (ret: &&stbi_uc, _filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_load_from_file :: (ret: &&stbi_uc, _f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_load_gif_from_memory :: (ret: &&stbi_uc, _buffer: &stbi_uc, _len: i32, _delays: &&i32, _x: &i32, _y: &i32, _z: &i32, _comp: &i32, _req_comp: i32);
+__c__stbi_load_16_from_memory :: (ret: &&stbi_us, _buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_load_16_from_callbacks :: (ret: &&stbi_us, _clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_load_16 :: (ret: &&stbi_us, _filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_load_from_file_16 :: (ret: &&stbi_us, _f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_loadf_from_memory :: (ret: &&f32, _buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_loadf_from_callbacks :: (ret: &&f32, _clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_loadf :: (ret: &&f32, _filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_loadf_from_file :: (ret: &&f32, _f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_hdr_to_ldr_gamma :: (_gamma: f32);
+__c__stbi_hdr_to_ldr_scale :: (_scale: f32);
+__c__stbi_ldr_to_hdr_gamma :: (_gamma: f32);
+__c__stbi_ldr_to_hdr_scale :: (_scale: f32);
+__c__stbi_is_hdr_from_callbacks :: (ret: &i32, _clbk: &stbi_io_callbacks, _user: &void);
+__c__stbi_is_hdr_from_memory :: (ret: &i32, _buffer: &stbi_uc, _len: i32);
+__c__stbi_is_hdr :: (ret: &i32, _filename: &char8);
+__c__stbi_is_hdr_from_file :: (ret: &i32, _f: &FILE);
+__c__stbi_failure_reason :: (ret: &&char8);
+__c__stbi_image_free :: (_retval_from_stbi_load: &void);
+__c__stbi_info_from_memory :: (ret: &i32, _buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _comp: &i32);
+__c__stbi_info_from_callbacks :: (ret: &i32, _clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _comp: &i32);
+__c__stbi_is_16_bit_from_memory :: (ret: &i32, _buffer: &stbi_uc, _len: i32);
+__c__stbi_is_16_bit_from_callbacks :: (ret: &i32, _clbk: &stbi_io_callbacks, _user: &void);
+__c__stbi_info :: (ret: &i32, _filename: &char8, _x: &i32, _y: &i32, _comp: &i32);
+__c__stbi_info_from_file :: (ret: &i32, _f: &FILE, _x: &i32, _y: &i32, _comp: &i32);
+__c__stbi_is_16_bit :: (ret: &i32, _filename: &char8);
+__c__stbi_is_16_bit_from_file :: (ret: &i32, _f: &FILE);
+__c__stbi_set_unpremultiply_on_load :: (_flag_true_if_should_unpremultiply: i32);
+__c__stbi_convert_iphone_png_to_rgb :: (_flag_true_if_should_convert: i32);
+__c__stbi_set_flip_vertically_on_load :: (_flag_true_if_should_flip: i32);
+__c__stbi_set_flip_vertically_on_load_thread :: (_flag_true_if_should_flip: i32);
+__c__stbi_zlib_decode_malloc_guesssize :: (ret: &&char8, _buffer: &char8, _len: i32, _initial_size: i32, _outlen: &i32);
+__c__stbi_zlib_decode_malloc_guesssize_headerflag :: (ret: &&char8, _buffer: &char8, _len: i32, _initial_size: i32, _outlen: &i32, _parse_header: i32);
+__c__stbi_zlib_decode_malloc :: (ret: &&char8, _buffer: &char8, _len: i32, _outlen: &i32);
+__c__stbi_zlib_decode_buffer :: (ret: &i32, _obuffer: &char8, _olen: i32, _ibuffer: &char8, _ilen: i32);
+__c__stbi_zlib_decode_noheader_malloc :: (ret: &&char8, _buffer: &char8, _len: i32, _outlen: &i32);
+__c__stbi_zlib_decode_noheader_buffer :: (ret: &i32, _obuffer: &char8, _olen: i32, _ibuffer: &char8, _ilen: i32);
 __c__stbi__refill_buffer :: (_s: &stbi__context);
 __c__stbi__jpeg_test :: (ret: &i32, _s: &stbi__context);
 __c__stbi__jpeg_load :: (ret: &&void, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info);
