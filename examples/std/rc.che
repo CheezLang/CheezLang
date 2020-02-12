@@ -29,7 +29,11 @@ impl(T: type) Rc[T] {
     from_pointer :: (ptr: &$K, owned: bool) -> Rc[T] {
         data := mem.alloc(RcData)
         <<data = RcData(1, 1)
-        drop_impl : fn(&T) = cast if const @type_has_trait(K, Drop) then data.value.drop else null
+
+        // drop :: (ptr: &K) {
+        //     Memory.drop(<<ptr)
+        // }
+        drop_impl : fn(&T) = cast if const @type_has_trait(K, Drop) then ptr.drop else null
         return Rc[T](data, cast ptr, drop_impl, owned)
     }
 
@@ -38,7 +42,11 @@ impl(T: type) Rc[T] {
         <<data  = RcData(1, 1)
         ptr     := mem.alloc(K)
         <<ptr   = value
-        drop_impl : fn(&T) = cast if const @type_has_trait(K, Drop) then ptr.drop else null
+
+        drop :: (ptr: &K) {
+            Memory.drop(<<ptr)
+        }
+        drop_impl : fn(&T) = cast if const @type_has_trait(K, Drop) then drop else null
         return Rc[T](data, cast ptr, drop_impl, true)
     }
 
@@ -74,7 +82,14 @@ impl(T: type) Rc[T] {
     }
 
     change_type :: (Self, $R: type) -> Rc[R] {
-        result := Rc[R](data, cast value, owns_memory)
+        result := Rc[R](data, null, cast drop_impl, owns_memory)
+        if const @is_trait(T) and !@is_trait(R) {
+            // cast from trait ptr to non trait ptr
+            result.value = cast @ptr_of_trait(value)
+        } else {
+            result.value = cast value
+        }
+
         data = null
         value = null
         return result
@@ -82,6 +97,10 @@ impl(T: type) Rc[T] {
 }
 
 impl(T: type) Ref[T] {
+    empty :: () -> Ref[T] {
+        return Ref[T](null, null, false)
+    }
+
     clone :: (ref Self) -> Ref[T] {
         data.internal_count += 1
         return Ref[T](data, value, owns_memory)
@@ -106,6 +125,20 @@ impl(T: type) Ref[T] {
         @assert(value != null)
         return <<value
     }
+
+    change_type :: (Self, $R: type) -> Ref[R] {
+        result := Ref[R](data, null, owns_memory)
+        if const @is_trait(T) and !@is_trait(R) {
+            // cast from trait ptr to non trait ptr
+            result.value = cast @ptr_of_trait(value)
+        } else {
+            result.value = cast value
+        }
+
+        data = null
+        value = null
+        return result
+    }
 }
 
 impl(T: type) Drop for Rc[T] {
@@ -117,13 +150,11 @@ impl(T: type) Drop for Rc[T] {
         @assert(data.count > 0)
         data.count -= 1
         data.internal_count -= 1
-        if data.count == 0 {
-            if drop_impl != null {
-                drop_impl(value)
-            }
-            if owns_memory {
-                mem.free(data)
-            }
+        if data.count == 0 and drop_impl != null {
+            drop_impl(value)
+        }
+        if owns_memory and data.internal_count == 0 {
+            mem.free(data)
         }
     }
 }
@@ -136,10 +167,8 @@ impl(T: type) Drop for Ref[T] {
 
         @assert(data.internal_count > 0)
         data.internal_count -= 1
-        if data.internal_count == 0 {
-            if owns_memory {
-                mem.free(data)
-            }
+        if data.internal_count == 0 and owns_memory {
+            mem.free(data)
         }
     }
 }

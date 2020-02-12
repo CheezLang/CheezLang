@@ -184,6 +184,21 @@ impl(T: type) Vector2[T] {
         return a.x == b.x and a.y == b.y
     }
 
+    clamp_length :: (Self, min: T, max: T) -> Self {
+        m := self.mag()
+        if m == 0 {
+            return self
+        }
+        if m > max {
+            return self * (max / m)
+        }
+        if m < min {
+            return self * (min / m)
+        }
+
+        return self
+    }
+
     clamped :: (Self, min: T, max: T) -> Self {
         return Vector2[T](
             clamp(x, min, max)
@@ -372,6 +387,21 @@ impl(T: type) Vector3[T] {
             clamp(y, min, max)
             clamp(z, min, max)
         )
+    }
+
+    clamp_length :: (Self, min: T, max: T) -> Self {
+        m := self.mag()
+        if m == 0 {
+            return self
+        }
+        if m > max {
+            return self * (max / m)
+        }
+        if m < min {
+            return self * (min / m)
+        }
+
+        return self
     }
 
     change_type :: (Self, $TargetType: type) -> Vector3[TargetType] {

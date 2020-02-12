@@ -267,6 +267,7 @@ Test :: struct {
 impl EntityLayerCallbacks for Test {
     init :: (ref Self, layer: ref EntityLayer) -> bool {
         self.layer = &layer
+        layer.engine.inspector.register_component_info(CameraController())
 
         layer.engine.save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))
 
@@ -369,6 +370,75 @@ impl EntityLayerCallbacks for Test {
         } else {
             ImGui.Text(title.as_cstring())
         }
+    }
+}
+
+CameraController :: struct #extend(ComponentBase) {
+    zoom_speed  := 0.0f
+    cam         := Option[Rc[Camera]].None
+
+    max_speed   := 5.0f
+    acc_time    := 1.0f
+    velocity    := vec3()
+}
+
+impl Component for CameraController {
+    init :: (ref Self) {
+        cam = entity.get_component(Camera)
+        velocity = vec3()
+    }
+
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+        input := ref layer.get_input()
+
+        move := vec3()
+
+        if input.key_down(glfw.GLFW_KEY_UP) {
+            move += vec3(0, 1, 0)
+        }
+        if input.key_down(glfw.GLFW_KEY_DOWN) {
+            move += vec3(0, -1, 0)
+        }
+        if input.key_down(glfw.GLFW_KEY_LEFT) {
+            move += vec3(-1, 0, 0)
+        }
+        if input.key_down(glfw.GLFW_KEY_RIGHT) {
+            move += vec3(1, 0, 0)
+        }
+
+        if move.magsq() == 0 {
+            move = -velocity.normalized()
+
+            vel_change := move * (max_speed / acc_time) * dt
+            if vel_change.magsq() > velocity.magsq() {
+                velocity = vec3()
+            } else {
+                velocity += vel_change
+            }
+        } else {
+            move = move.normalized()
+
+            vel_change := move * (max_speed / acc_time) * dt
+            velocity += vel_change
+        }
+
+        if velocity.magsq() > max_speed * max_speed {
+            velocity = velocity.clamp_length(0, max_speed)
+        }
+
+        entity.position += velocity * dt
+    }
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    render_gizmos :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    get_type_info :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+    base :: (ref Self) -> ref ComponentBase {
+        return self
+    }
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                max_speed   = {}`n", (max_speed))
+        stream.appendf("                acc_time    = {}`n", (acc_time))
     }
 }
 

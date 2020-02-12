@@ -156,7 +156,16 @@ impl Layer for EntityLayer {
     }
 
     init :: (ref Self) -> bool {
-        return callbacks.init(self)
+        ok := callbacks.init(self)
+        if !ok {
+            return false
+        }
+
+        for e : entities {
+            e.get().init()
+        }
+
+        return true
     }
 
     update :: (ref Self, dt: float) {
@@ -279,6 +288,11 @@ impl Layer for EntityLayer {
                 self.next_entity_id = 0
                 for e : self.entities {
                     self.next_entity_id = max(self.next_entity_id, e.get().id + 1)
+
+                    // set entity pointer in components
+                    for c : e.get().components {
+                        c.get().base().entity = &e.get()
+                    }
                 }
             }
             None -> {

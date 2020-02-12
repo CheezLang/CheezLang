@@ -30,6 +30,12 @@ Entity :: struct {
 }
 
 impl Entity {
+    init :: (ref Self) {
+        for components {
+            it.get().init()
+        }
+    }
+
     update :: (ref Self, layer: ref EntityLayer, dt: float) {
         for components {
             it.get().update(self, layer, dt)
@@ -43,18 +49,20 @@ impl Entity {
     }
 
     add_component :: (ref Self, component: Rc[Component]) {
+        component.get().base().entity = &self
         components.add(component)
     }
-}
 
-impl Drop for Entity {
-    drop :: (ref Self) {
-        // io.printfln("dropping entity {}", id)
+    get_component :: (ref Self, $T: type) -> Option[Rc[T]] {
+        for components {
+            match ref it.get() {
+                T($comp) -> {
+                    return Some(it.clone().change_type(T))
+                }
+            }
+        }
 
-        // @todo: drop components
-        // for c : components {
-        //     value := cast(&void)
-        // }
+        return None
     }
 }
 

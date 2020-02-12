@@ -31,13 +31,19 @@ ComponentInfo :: struct {
 }
 
 Component :: trait {
+    init            :: (ref Self);
     update          :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float);
     render          :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer);
     get_type_info   :: (ref Self) -> &TypeInfo;
     serialize       :: (ref Self, stream: ref String);
+    base            :: (ref Self) -> ref ComponentBase;
 }
 
-PathFollowComponent :: struct {
+ComponentBase :: struct #extendable {
+    entity : &Entity = null
+}
+
+PathFollowComponent :: struct #extend(ComponentBase) {
     speed  := 1.0f
     loops  := true
     pos    := 0.0f
@@ -103,6 +109,8 @@ impl Handle {
 }
 
 impl Component for PathFollowComponent {
+    init :: (ref Self) {}
+
     update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
         eval :: (p0: vec3, p1: vec3, p2: vec3, p3: vec3, t: float) -> vec3 {
             k := 1 - t
@@ -195,6 +203,10 @@ impl Component for PathFollowComponent {
         return @type_info(Self)
     }
 
+    base :: (ref Self) -> ref ComponentBase {
+        return self
+    }
+
     serialize :: (ref Self, stream: ref String) {
         stream.appendf("                speed  = {}`n", speed)
         stream.appendf("                loops  = {}`n", loops)
@@ -212,12 +224,14 @@ impl Component for PathFollowComponent {
     }
 }
 
-BasicMoveComponent :: struct {
+BasicMoveComponent :: struct #extend(ComponentBase) {
     velocity : vec3
     speed    : float
 }
 
 impl Component for BasicMoveComponent {
+    init :: (ref Self) {}
+
     update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
         entity.position += velocity * speed * dt
     }
@@ -230,17 +244,23 @@ impl Component for BasicMoveComponent {
         return @type_info(Self)
     }
 
+    base :: (ref Self) -> ref ComponentBase {
+        return self
+    }
+
     serialize :: (ref Self, stream: ref String) {
         stream.appendf("                velocity = ``{x={}, y={}, z={}}`n", (self.velocity.x, self.velocity.y, self.velocity.z))
         stream.appendf("                speed = {}`n", self.speed)
     }
 }
 
-PlayerControlComponent :: struct {
+PlayerControlComponent :: struct #extend(ComponentBase) {
     speed : float
 }
 
 impl Component for PlayerControlComponent {
+    init :: (ref Self) {}
+
     update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
         // if layer.engine.global_input.key_down(glfw.GLFW_KEY_LEFT) {
         if layer.get_input().key_down(glfw.GLFW_KEY_LEFT) {
@@ -264,17 +284,23 @@ impl Component for PlayerControlComponent {
         return @type_info(Self)
     }
 
+    base :: (ref Self) -> ref ComponentBase {
+        return self
+    }
+
     serialize :: (ref Self, stream: ref String) {
         stream.appendf("                speed = {}`n", self.speed)
     }
 }
 
-QuadComponent :: struct {
+QuadComponent :: struct #extend(ComponentBase) {
     #color
     color : vec3
 }
 
 impl Component for QuadComponent {
+    init :: (ref Self) {}
+
     update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
     }
     render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
@@ -285,8 +311,33 @@ impl Component for QuadComponent {
         return @type_info(Self)
     }
 
+    base :: (ref Self) -> ref ComponentBase {
+        return self
+    }
+
     serialize :: (ref Self, stream: ref String) {
         stream.appendf("                color = ``{x={}, y={}, z={}}`n", (self.color.x, self.color.y, self.color.z))
+    }
+}
+
+Camera :: struct #extend(ComponentBase) {
+    size := vec2(10, 10)
+}
+
+impl Component for Camera {
+    init :: (ref Self) {}
+
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {}
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    render_gizmos :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    get_type_info :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+    base :: (ref Self) -> ref ComponentBase {
+        return self
+    }
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                size = ``{x={}, y={}}`n", (self.size.x, self.size.y))
     }
 }
 
@@ -321,30 +372,5 @@ impl serpa.IParser[Rc[Component]] for Rc[Component] {
 
         error_handler.report_errorf(name_token.location, "'{}' is not a valid component", [struct_name])
         return None
-    }
-}
-
-Camera :: struct {
-    size := vec2(10, 10)
-}
-
-impl Component for Camera {
-    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
-        viewport := ref layer.engine.current_viewport()
-        viewport.set_translation(-entity.position)
-        viewport.set_scale(1)
-        viewport.update_projection_matrix(vec3(size.x, size.y))
-    }
-
-    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
-
-    render_gizmos :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
-
-    get_type_info   :: (ref Self) -> &TypeInfo {
-        return @type_info(Self)
-    }
-
-    serialize :: (ref Self, stream: ref String) {
-        stream.appendf("                size = ``{x={}, y={}}`n", (self.size.x, self.size.y))
     }
 }

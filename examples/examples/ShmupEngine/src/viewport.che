@@ -32,6 +32,8 @@ GameView :: trait {
     render          :: (ref Self, world_size: vec3, renderer: ref Renderer);
     is_focused      :: (ref Self) -> bool;
     on_key_event    :: (ref Self, key: i32, scancode: i32, action: i32, mods: i32);
+
+    on_event        :: (ref Self, event: Event);
 }
 
 WindowBase :: struct #extendable {
@@ -91,6 +93,14 @@ impl GameView for GameWindow {
         }
     }
 
+    on_event :: (ref Self, event: Event) {
+        match event {
+            Event.EngineModeChanged(_) -> {
+                camera = None
+            }
+        }
+    }
+
     is_focused :: (ref Self) -> bool {
         return viewport.is_focused
     }
@@ -127,7 +137,7 @@ impl GameView for GameWindow {
         ImGui.End()
 
         find_camera :: (data: &EngineModeData) -> Option[Ref[Camera]] {
-            io.formatln("{}", [int(data)])
+            // io.println("Searching for camera...")
             if data != null {
                 for layer : data.layer_stack {
                     match layer.get_base() {
@@ -136,7 +146,8 @@ impl GameView for GameWindow {
                                 for component : entity.get().components {
                                     match ref component.get() {
                                         Camera($cam) -> {
-                                            // return Some(cam.borrow())
+                                            io.formatln("Found on entity ({}) {}", [entity.get().id, entity.get().name.slice()])
+                                            return Some(component.borrow().change_type(Camera))
                                         }
                                     }
                                 }
@@ -201,13 +212,14 @@ impl GameView for GameWindow {
         // set projection matrix
         match ref camera {
             Some($cam) -> {
-                io.println("yes cam")
+                viewport.set_translation(-cam.get().entity.position)
+                viewport.set_scale(1)
+                viewport.update_projection_matrix(vec3(cam.get().size.x, cam.get().size.y))
                 view_proj := viewport.projection_matrix * viewport.view_matrix
                 renderer.begin_scene(view_proj)
             }
 
             None -> {
-                io.println("no cam")
                 viewport.update_projection_matrix(world_size)
                 renderer.begin_scene(viewport.projection_matrix)
             }
@@ -254,6 +266,10 @@ impl GameView for EditorWindow {
                 input.set_key_state(keycode, false)
             }
         }
+    }
+
+    on_event :: (ref Self, event: Event) {
+        
     }
 
     is_focused :: (ref Self) -> bool {
@@ -406,6 +422,10 @@ impl GameView for GameAndEditorWindow {
                 input.set_key_state(keycode, false)
             }
         }
+    }
+
+    on_event :: (ref Self, event: Event) {
+        
     }
 
     is_focused :: (ref Self) -> bool {

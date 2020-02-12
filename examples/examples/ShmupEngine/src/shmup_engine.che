@@ -29,6 +29,10 @@ use import editor.hierarchy
 use import editor.console
 
 #export_scope
+Event :: enum {
+    EngineModeChanged : EngineMode
+}
+
 EnabledEditors :: struct {
     editor      := true
     stats       := false
@@ -591,11 +595,11 @@ impl ShmupEngine {
 
 impl ShmupEngine {
     register_builtin_components :: (ref Self) {
-        self.inspector.register_component_info(PathFollowComponent())
-        self.inspector.register_component_info(BasicMoveComponent(vec3(), 0))
-        self.inspector.register_component_info(QuadComponent(vec3(1, 1, 1)))
-        self.inspector.register_component_info(PlayerControlComponent(1))
-        self.inspector.register_component_info(Camera(vec2(10, 10)))
+        self.inspector.register_component_info(PathFollowComponent(null))
+        self.inspector.register_component_info(BasicMoveComponent(null, vec3(), 0))
+        self.inspector.register_component_info(QuadComponent(null, vec3(1, 1, 1)))
+        self.inspector.register_component_info(PlayerControlComponent(null, 1))
+        self.inspector.register_component_info(Camera(null, vec2(10, 10)))
     }
 
     push_entity_layer :: (ref Self, name: String, callbacks: &EntityLayerCallbacks) {
@@ -700,6 +704,11 @@ impl ShmupEngine {
         current_mode = EngineMode.Play(&play_mode)
 
         set_editor_background_color(editor_play_mode_color)
+
+        for window : editor_windows {
+            if !window.get().base().enabled then continue
+            window.get().on_event(Event.EngineModeChanged(current_mode))
+        }
     }
 
     exit_play_mode :: (ref Self) {
@@ -714,6 +723,11 @@ impl ShmupEngine {
         current_mode = EngineMode.Edit(&edit_mode)
 
         set_editor_background_color(editor_edit_mode_color)
+
+        for window : editor_windows {
+            if !window.get().base().enabled then continue
+            window.get().on_event(Event.EngineModeChanged(current_mode))
+        }
     }
 
     set_editor_background_color :: (ref Self, col: vec3) {

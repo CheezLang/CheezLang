@@ -2591,6 +2591,20 @@ namespace Cheez
                         return expr;
                     }
 
+                case "is_trait":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@is_trait takes 1 argument");
+                            return expr;
+                        }
+
+                        var arg = InferArg(0, CheezType.Type);
+                        expr.Type = CheezType.Bool;
+                        expr.Value = arg.Value is TraitType;
+                        return expr;
+                    }
+
                 case "for_tuple_values":
                     {
                         if (expr.Arguments.Count != 2)
