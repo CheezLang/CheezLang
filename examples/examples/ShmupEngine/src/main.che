@@ -266,39 +266,40 @@ Test :: struct {
 
 impl EntityLayerCallbacks for Test {
     init :: (ref Self, layer: ref EntityLayer) -> bool {
+        io.formatln("EntityLayerCallbacks.init()")
         self.layer = &layer
 
         layer.engine.save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))
 
-        menu = Box[MenuObject].new(MenuObject(String.from_string("/"), -1, true, vec2i(2, 4)))
+        // menu = Box[MenuObject].new(MenuObject(String.from_string("/"), -1, true, vec2i(2, 4)))
 
-        // menu.get().add_child("main", MenuObject.new("main", table = vec2i(1, 10)))
-        menu.get().add_child("Magic", MenuObject.new("Magic", id = 101))
-        menu.get().add_child("Defend", MenuObject.new("Defend", id = 102))
-        menu.get().add_child("Items", MenuObject.new("Items", id = 103))
-        menu.get().add_child("Escape", MenuObject.new("Escape", id = 104))
-        menu.get().add_child("Test1", MenuObject.new("Test1", id = 105))
-        menu.get().add_child("Test2", MenuObject.new("Test2", id = 106))
-        menu.get().add_child("Test3", MenuObject.new("Test3", id = 107))
-        menu.get().add_child("Test4", MenuObject.new("Test4", id = 108))
-        menu.get().add_child("Test5", MenuObject.new("Test5", id = 109))
+        // // menu.get().add_child("main", MenuObject.new("main", table = vec2i(1, 10)))
+        // menu.get().add_child("Magic", MenuObject.new("Magic", id = 101))
+        // menu.get().add_child("Defend", MenuObject.new("Defend", id = 102))
+        // menu.get().add_child("Items", MenuObject.new("Items", id = 103))
+        // menu.get().add_child("Escape", MenuObject.new("Escape", id = 104))
+        // menu.get().add_child("Test1", MenuObject.new("Test1", id = 105))
+        // menu.get().add_child("Test2", MenuObject.new("Test2", id = 106))
+        // menu.get().add_child("Test3", MenuObject.new("Test3", id = 107))
+        // menu.get().add_child("Test4", MenuObject.new("Test4", id = 108))
+        // menu.get().add_child("Test5", MenuObject.new("Test5", id = 109))
 
-        // menu.get().add_child("Magic/Black/Fire", MenuObject.new("Fire", id = 101, enabled = true, table = vec2i(1, 0)))
-        // menu.get().add_child("Magic/Black/Ice", MenuObject.new("Ice", id = 102, enabled = false, table = vec2i(1, 0)))
-        menu.get().build()
+        // // menu.get().add_child("Magic/Black/Fire", MenuObject.new("Fire", id = 101, enabled = true, table = vec2i(1, 0)))
+        // // menu.get().add_child("Magic/Black/Ice", MenuObject.new("Ice", id = 102, enabled = false, table = vec2i(1, 0)))
+        // menu.get().build()
 
-        cmd := Command.SetEditorMode(CommandEditorMode.Single)
-        layer.engine.on_command(cmd)
+        // cmd := Command.SetEditorMode(CommandEditorMode.Single)
+        // layer.engine.on_command(cmd)
 
-        proj = mat4.orthographic(0, 1920, 1280, 0, 1, -1)
+        // proj = mat4.orthographic(0, 1920, 1280, 0, 1, -1)
 
-        tex = match Texture.from_file("../data/RetroMenu.png") {
-            Ok($tex) -> tex
-            Err(_) -> {
-                io.formatln("[ERROR] Failed to load image")
-                return false
-            }
-        }
+        // tex = match Texture.from_file("../data/RetroMenu.png") {
+        //     Ok($tex) -> tex
+        //     Err(_) -> {
+        //         io.formatln("[ERROR] Failed to load image")
+        //         return false
+        //     }
+        // }
 
         return true
     }
@@ -307,30 +308,30 @@ impl EntityLayerCallbacks for Test {
     }
 
     render :: (ref Self, renderer: ref Renderer) {
-        layer.engine.edit_property(PropertyEdit.EditVec4(&sub, "sub"))
+        // layer.engine.edit_property(PropertyEdit.EditVec4(&sub, "sub"))
 
-        viewport_size := layer.engine.game_viewport.size * 0.1f
-        proj = mat4.orthographic(0, viewport_size.x, 0, viewport_size.y, 1, -1)
+        // viewport_size := layer.engine.game_viewport.size * 0.1f
+        // proj = mat4.orthographic(0, viewport_size.x, 0, viewport_size.y, 1, -1)
 
-        // renderer.draw_text(vec3(100, 100), "lol was geht", size = 50)
-        // renderer.draw_text(vec3(100, 200), "lol was geht", color = vec3(1, 0, 0))
-        // renderer.draw_text(vec3(100, 300), "lol was geht", color = vec3(0, 1, 1), size = 16)
+        // // renderer.draw_text(vec3(100, 100), "lol was geht", size = 50)
+        // // renderer.draw_text(vec3(100, 200), "lol was geht", color = vec3(1, 0, 0))
+        // // renderer.draw_text(vec3(100, 300), "lol was geht", color = vec3(0, 1, 1), size = 16)
 
-        renderer.push_proj(proj)
-        tex.get().bind(0)
+        // renderer.push_proj(proj)
+        // tex.get().bind(0)
 
-        if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_UP) {
-            menu.get().on_up()
-        }
-        if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_DOWN) {
-            menu.get().on_down()
-        }
-        menu.get().draw_self(renderer, vec3(10, 10), <<layer.engine.game_viewport, proj)
+        // if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_UP) {
+        //     menu.get().on_up()
+        // }
+        // if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_DOWN) {
+        //     menu.get().on_down()
+        // }
+        // menu.get().draw_self(renderer, vec3(10, 10), <<layer.engine.game_viewport, proj)
 
-        // renderer.fill_quad(vec3(200, 400), vec3(400, 400), 0, sub=sub)
-        renderer.pop_proj()
+        // // renderer.fill_quad(vec3(200, 400), vec3(400, 400), 0, sub=sub)
+        // renderer.pop_proj()
 
-        render_menu_imgui()
+        // render_menu_imgui()
     }
 
     imgui_render :: (ref Self) {

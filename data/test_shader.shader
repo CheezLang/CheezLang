@@ -29,11 +29,11 @@ void main()
 {
     vec2 uv = mix(u_sub.xy, u_sub.zw, vTexCoord);
     FragColor = texture(u_texture, uv) * vec4(color, 1.0f);
-    // FragColor = vec4(color, 1.0f);
+    FragColor = vec4(color, 1.0f);
     // FragColor = vec4(vTexCoord, 0.0f, 1.0f);
     // FragColor = u_sub;
 
-    if (FragColor.a < 0.5f) {
-        discard;
-    }
+    // if (FragColor.a < 0.5f) {
+    //     discard;
+    // }
 }
