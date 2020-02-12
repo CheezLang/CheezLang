@@ -1,4 +1,5 @@
 use import std.array
+use import std.string
 use import std.rc
 mem :: import std.mem.allocator
 io  :: import std.io
@@ -19,6 +20,7 @@ use import components
 
 Entity :: struct {
     id          : int
+    name        : String
     dead        := false
     active      := true
     position    := vec3(0, 0, 0)

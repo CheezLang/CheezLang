@@ -34,6 +34,10 @@ impl Hierarchy {
         layer = l
     }
 
+    get_layer :: (ref Self) -> Option[&Layer] {
+        return if layer == null then None else Some(layer)
+    }
+
     render :: (ref Self) {
         if layer == null {
             ImGui.Begin("Hierarchy")
@@ -60,10 +64,8 @@ impl Hierarchy {
                 ImGui.PushIDInt(i32(i))
                 ImGui.BeginGroup()
 
-                name := fmt.format("Entity {} ({})", [e.get().id, e.count()])
-
                 list_entry_size := ImGui.ImVec2(0, 0)
-                if ImGui.Selectable(name.as_cstring(), i32(i) == entity_index, 0, list_entry_size) {
+                if ImGui.Selectable(e.get().name.as_cstring(), i32(i) == entity_index, 0, list_entry_size) {
                     entity_index = i32(i)
                 }
 
@@ -104,7 +106,7 @@ impl Hierarchy {
                 ImGui.EndGroup()
                 ImGui.PopID()
 
-                if ImGui.BeginPopupContextItem(name.as_cstring()) {
+                if ImGui.BeginPopupContextItem(e.get().name.as_cstring()) {
                     defer ImGui.EndPopup()
                     if ImGui.MenuItem("Active", null, e.get().active, true) {
                         e.get().active = !e.get().active

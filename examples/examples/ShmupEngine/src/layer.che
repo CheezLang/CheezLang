@@ -78,12 +78,11 @@ impl EntityLayer {
     }
 
     new_entity_with_id :: (ref Self, id: int) -> Rc[Entity] {
-        // io.printfln("new_entity_with_id {}", id)
         if next_entity_id <= id {
             next_entity_id = id + 1
         }
 
-        ptr := Rc[Entity].new(Entity(id))
+        ptr := Rc[Entity].new(Entity(id, fmt.format("Entity {}", [id])))
         entities.add(ptr.clone())
         return ptr
     }
@@ -241,6 +240,7 @@ impl Layer for EntityLayer {
 
     clone_entity_with_id :: (ref Self, template: Rc[Entity], id: int) -> Rc[Entity] {
         e_new := self.new_entity_with_id(id)
+        e_new.get().name        = template.get().name.clone()
         e_new.get().active      = template.get().active
         e_new.get().position    = template.get().position
         e_new.get().size        = template.get().size
@@ -274,7 +274,12 @@ impl Layer for EntityLayer {
         match result {
             Some($entities) -> {
                 self.entities = entities
-                self.next_entity_id = self.entities.get_length()
+
+                // find max entity id
+                self.next_entity_id = 0
+                for e : self.entities {
+                    self.next_entity_id = max(self.next_entity_id, e.get().id + 1)
+                }
             }
             None -> {
                 io.println("[ERROR] Failed to parse layer file")
@@ -288,6 +293,7 @@ impl Layer for EntityLayer {
             e := ref rc.get()
             file.append_string("    {`n")
             file.appendf("        id          = {}`n", e.id)
+            file.appendf("        name        = `"{}`"`n", e.name.slice())
             file.appendf("        dead        = {}`n", e.dead)
             file.appendf("        active      = {}`n", e.active)
             file.appendf("        position    = ``{x={}, y={}, z={}}`n", (e.position.x, e.position.y, e.position.z))

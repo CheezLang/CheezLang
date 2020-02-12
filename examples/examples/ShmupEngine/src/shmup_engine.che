@@ -606,10 +606,6 @@ impl ShmupEngine {
 
     on_command :: (ref Self, cmd: ref Command) {
         match cmd {
-            Command.Echo($msg) -> {
-                console.get().log(msg.slice())
-            }
-
             Command.Quit -> {
                 glfwSetWindowShouldClose(glfw_window, 1)
             }
@@ -633,6 +629,28 @@ impl ShmupEngine {
                         editor_windows[0].get().base().enabled = true
                         editor_windows[1].get().base().enabled = true
                         editor_windows[2].get().base().enabled = false
+                    }
+                }
+            }
+
+            Command.DeleteEntity($id) -> {
+                match hierarchy.get_layer() {
+                    Some($layer) -> match ref <<layer {
+                        EntityLayer($layer) -> match layer.find_entity(id) {
+                            Some($entity) -> {
+                                T :: @typeof(layer)
+                                entity.get().dead = true
+                                layer.remove_dead_entities()
+                            }
+                        }
+                    }
+                }
+            }
+
+            Command.NewEntity -> match hierarchy.get_layer() {
+                Some($layer) -> match ref <<layer {
+                    EntityLayer($layer) -> {
+                        e := layer.new_entity()
                     }
                 }
             }

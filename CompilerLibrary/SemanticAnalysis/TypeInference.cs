@@ -1242,6 +1242,58 @@ namespace Cheez
             return pattern;
         }
 
+        private AstExpression MatchPatternWithTrait(
+            AstMatchCase cas,
+            AstExpression pattern,
+            AstExpression value,
+            bool matchingReference)
+        {
+            var expected = value.Type;
+            if (value.Type is ReferenceType re)
+                expected = re.TargetType;
+
+            var trait = expected as TraitType;
+
+            switch (pattern)
+            {
+                case AstCallExpr call:
+                    {
+                        call.FunctionExpr.AttachTo(call);
+                        call.FunctionExpr = InferType(call.FunctionExpr, expected);
+                        if (call.FunctionExpr.Type != CheezType.Type)
+                            break;
+                        var type = call.FunctionExpr.Value as CheezType;
+                        ComputeTypeMembers(type);
+
+                        if (TypeHasTrait(type, trait)) {
+                            if (call.Arguments.Count == 1 && call.Arguments[0].Expr is AstIdExpr id && (id.IsPolymorphic || id.Name == "_"))
+                            {
+                                var ptrOfTrait = new AstCompCallExpr(new AstIdExpr("ptr_of_trait", false, value.Location), new List<AstArgument>{ new AstArgument(value, Location: value.Location) }, value.Location);
+                                var cast = new AstCastExpr(new AstTypeRef(PointerType.GetPointerType(type), value.Location), ptrOfTrait, value.Location);
+                                var deref = new AstDereferenceExpr(cast, cast.Location);
+                                AstExpression refe = new AstAddressOfExpr(deref, true, deref.Location);
+
+                                refe.Replace(value);
+                                refe = InferType(refe, ReferenceType.GetRefType(type));
+
+                                var tempVar = InferType(new AstTempVarExpr(refe), null);
+                                cas.SubScope.DefineUse(id.Name, tempVar, false, out var use);
+                            }
+                            else
+                                ReportError(call, $"This pattern requires one polymorphic argument or _");
+                            return call;
+                        } else {
+                            ReportError(pattern, $"Can't match trait {value.Type} with pattern {pattern} because it doesn't implement the trait");
+                        }
+
+                        break;
+                    }
+            }
+
+            ReportError(pattern, $"Can't match type {value.Type} with pattern {pattern}");
+            return pattern;
+        }
+
         private AstExpression MatchPatternWithType(
             AstMatchCase cas,
             AstExpression pattern,
@@ -1275,6 +1327,9 @@ namespace Cheez
 
                 case StructType _ when matchingReference:
                     return MatchPatternWithStruct(cas, pattern, value, matchingReference);
+
+                case TraitType _ when matchingReference:
+                    return MatchPatternWithTrait(cas, pattern, value, matchingReference);
 
                 default:
                     ReportError(pattern, $"Can't pattern match on type {expected}");
