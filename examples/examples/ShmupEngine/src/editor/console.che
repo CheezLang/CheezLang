@@ -41,6 +41,8 @@ Console :: struct {
     items            : RingQueue[ConsoleEntry]
     on_command       : Fn(ref Command)
 
+    force_focus      := false
+
     // history stuff
     history          : RingQueue[String]
     current_command  : Option[String] = None
@@ -134,7 +136,7 @@ impl Console {
                 if completions.get_length() == 1 {
                     completion := completions[0].slice()
                     data.InsertChars(data.CursorPos, cast completion.bytes.data, cast util.pointer_add(completion.bytes.data, completion.bytes.length))
-                } else {
+                } else if completions.get_length() > 1 {
                     to_complete := text.sub_string(0, cast data.CursorPos)
                     add_entry(MessageType.Command, fmt.format("?{}", [to_complete]))
                     for c : completions {
@@ -175,16 +177,12 @@ impl Console {
                         history.at(history_pos).slice()
                     }
 
-                    // C.memcpy(m_buffer.data, cmd.bytes.data, cast cmd.bytes.length)
-                    // m_buffer[cmd.bytes.length] = char8(0)
                     data.DeleteChars(0, data.BufTextLen)
                     data.InsertChars(0, cast cmd.bytes.data, cast util.pointer_add(cmd.bytes.data, cmd.bytes.length))
                 }
             }
 
-            $event -> {
-                log_error("command text callback: {} not implemented yet", [event])
-            }
+            $event -> log_error("command text callback: {} not implemented yet", [event])
         }
 
         return 0
@@ -196,6 +194,7 @@ impl Console {
             ImGui.SetNextWindowSize(initial_size, ImGui.ImGuiCond_.FirstUseEver)
         }
 
+        if force_focus then ImGui.SetNextWindowFocus()
         defer ImGui.End()
         if !ImGui.Begin("Console") {
             return
@@ -261,7 +260,8 @@ impl Console {
 
         // set focus
         ImGui.SetItemDefaultFocus()
-        if reclaim_focus then ImGui.SetKeyboardFocusHere(-1)
+        if reclaim_focus or force_focus then ImGui.SetKeyboardFocusHere(-1)
+        force_focus = false
     }
 
 }

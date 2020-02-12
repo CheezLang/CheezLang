@@ -24,9 +24,13 @@ Command :: enum {
     #help("Change the editor mode between two windows or one window")
     SetEditorMode : CommandEditorMode
 
-    #name("echo")
-    #help("Prints the argument to the console")
-    Echo : String
+    #name("delete-entity")
+    #help("Delete the entity with the specified id")
+    DeleteEntity : int
+
+    #name("new-entity")
+    #help("Create a new entity")
+    NewEntity
 }
 
 CommandEditorMode :: enum {

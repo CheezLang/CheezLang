@@ -657,6 +657,13 @@ namespace Cheez.Ast.Expressions
         }
 
         [DebuggerStepThrough]
+        public AstAddressOfExpr(AstExpression sub, bool reference, ILocation Location = null) : base(Location)
+        {
+            SubExpression = sub;
+            Reference = reference;
+        }
+
+        [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitAddressOfExpr(this, data);
 
         [DebuggerStepThrough]

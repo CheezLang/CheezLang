@@ -70,6 +70,16 @@ impl EntityInspector {
 
             ImGui.Separator()
 
+            // name
+            {
+                buff : [256] char8 = default
+                buff[0] = char8(0)
+                C.memcpy(buff.data, entity.name.get_raw(), cast entity.name.get_length())
+                ImGui.InputText("Name", buff.data, cast buff.length)
+                entity.name.clear()
+                entity.name.append_cstring(buff.data)
+            }
+
             // transform
             ImGui.InputFloat3("Position", &entity.position.x)
             ImGui.InputFloat3("Size", &entity.size.x)
