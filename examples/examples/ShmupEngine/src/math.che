@@ -1,6 +1,8 @@
 use import matrix
 use import std.math
 
+ImGui :: import imgui.imgui_binding
+
 #export_scope
 
 mat4  :: Matrix4[f32]
@@ -9,3 +11,21 @@ vec3i :: Vector3[int]
 vec2  :: Vector2[f32]
 vec3  :: Vector3[f32]
 vec4  :: Vector4[f32]
+
+impl Into[ImGui.ImVec2] for vec2 {
+    into :: (ref Self) -> ImGui.ImVec2 {
+        return ImGui.ImVec2(x, y)
+    }
+}
+
+impl Into[ImGui.ImVec2] for vec3 {
+    into :: (ref Self) -> ImGui.ImVec2 {
+        return ImGui.ImVec2(x, y)
+    }
+}
+
+impl vec3 {
+    to_color32 :: (ref Self) -> u32 {
+        return ImGui.Color32(u8(x * 255), u8(y * 255), u8(z * 255))
+    }
+}

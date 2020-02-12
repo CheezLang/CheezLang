@@ -159,6 +159,16 @@ impl Shader {
         return true
     }
 
+    set_uniform_vec4 :: (ref Self, name: string, value: vec4) -> bool {
+        loc := get_uniform_location(name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniform4f(loc, value.x, value.y, value.z, value.w))
+        return true
+    }
+
     set_uniform_float :: (ref Self, name: string, value: f32) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
@@ -166,6 +176,16 @@ impl Shader {
         }
 
         GL(glUniform1f(loc, value))
+        return true
+    }
+
+    set_uniform_int :: (ref Self, name: string, value: i32) -> bool {
+        loc := get_uniform_location(name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniform1i(loc, value))
         return true
     }
 

@@ -232,6 +232,7 @@ namespace Cheez.Parsing
                 case TokenType.KwIf:
                 case TokenType.Ampersand:
                 case TokenType.Asterisk:
+                case TokenType.Bang:
                 case TokenType.Identifier:
                 case TokenType.AtSignIdentifier:
                 case TokenType.DollarIdentifier:

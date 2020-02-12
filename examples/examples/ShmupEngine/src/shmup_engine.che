@@ -38,234 +38,46 @@ EnabledEditors :: struct {
 PropertyEdit :: enum #copy {
     EditFloat   : (ptr: &float, name: c_string, step: float)
     EditVec3    : (ptr: &vec3, name: c_string)
+    EditVec4    : (ptr: &vec4, name: c_string)
     EditColor3  : (ptr: &vec3, name: c_string)
 }
 
-EngineMode :: trait {
-    reset_input     :: (ref Self);
-    release_input   :: (ref Self);
-    init            :: (ref Self) -> bool;
-    update          :: (ref Self, dt: float);
-    render          :: (ref Self, renderer: ref Renderer);
-    imgui_render    :: (ref Self);
-    on_key_event    :: (ref Self, key: int, action: int, modifiers: int);
-    on_enable       :: (ref Self);
-}
+// impl PlayMode {
+//     initialize :: (ref Self, edit_mode: ref EditMode) {
+//         layer_stack.clear()
+//         for l : edit_mode.layer_stack {
+//             match l.clone() {
+//                 Some($l) -> {
+//                     layer_stack.add(l)
+//                 }
+//             }
+//         }
+//         self.init()
+//     }
+// }
 
-EngineModeBase :: struct #extendable {
-    engine              : &ShmupEngine = null
-    layer_stack         := Array[&Layer].create()
-    projection_matrix   := mat4.id()
-}
-
-EditMode :: struct #extend(EngineModeBase) {
-}
-
-impl EngineMode for EditMode {
-    reset_input :: (ref Self) {
-
-    }
-
-    release_input :: (ref Self) {
-
-    }
-
-    init :: (ref Self) -> bool {
-        for layer : layer_stack {
-            if !layer.init() {
-                io.println("[ERROR] failed to init layer")
-                return false
-            }
-        }
-
-        return true
-    }
-
-    update :: (ref Self, dt: float) {
-        //
-        for view : engine.active_game_views {
-            view.update(false, engine.world_size)
-        }
-    }
-
-    render :: (ref Self, renderer: ref Renderer) {
-        for view : engine.active_game_views {
-            render_gizmos := view.begin_render(false, engine.world_size, renderer)
-            for layer : layer_stack {
-                layer.render(render_gizmos, renderer)
-            }
-            if render_gizmos {
-                view.begin_gizmos()
-                for layer : layer_stack {
-                    layer.render_gizmos(renderer)
-                }
-                view.end_gizmos()
-            }
-            view.end_render()
-        }
-    }
-
-    imgui_render :: (ref Self) {
-
-    }
-
-    on_key_event :: (ref Self, key: int, action: int, modifiers: int) {
-        match key, action, modifiers {
-            (GLFW_KEY_L, GLFW_PRESS, GLFW_MOD_CONTROL) -> {
-                match ref engine.save_file {
-                    Some($file) -> {
-                        for layer : layer_stack {
-                            layer.load_from_file(file.slice())
-                        }
-                        engine.console.get().log("Loading layers")
-                    }
-
-                    None -> {
-                        engine.console.get().log_error("[ERROR] Trying to load layers from file but no file name was specified")
-                        io.println("[ERROR] Trying to load layers from file but no file name was specified")
-                    }
-                }
-            }
-            (GLFW_KEY_S, GLFW_PRESS, GLFW_MOD_CONTROL) -> {
-                match ref engine.save_file {
-                    Some($file_name) -> {
-                        file_content := String.empty()
-                        for layer : layer_stack {
-                            layer.save_to_file(ref file_content)
-                        }
-                        fs.write_file(file_name.slice(), file_content.slice())
-
-                        engine.console.get().log("Saving layers")
-                    }
-
-                    None -> {
-                        engine.console.get().log_error("[ERROR] Trying to save layers to file but no file name was specified")
-                        io.println("[ERROR] Trying to save layers to file but no file name was specified")
-                    }
-                }
-            }
-        }
-    }
-
-    on_enable :: (ref Self) {
-
-    }
-}
-
-PlayMode :: struct #extend(EngineModeBase) {
-    paused := false
-}
-
-impl PlayMode {
-    initialize :: (ref Self, edit_mode: ref EditMode) {
-        layer_stack.clear()
-        for l : edit_mode.layer_stack {
-            match l.clone() {
-                Some($l) -> {
-                    layer_stack.add(l)
-                }
-            }
-        }
-        self.init()
-    }
-}
-
-impl EngineMode for PlayMode {
-    reset_input :: (ref Self) {
-        for layer : layer_stack do layer.get_input().reset()
-    }
-
-    release_input :: (ref Self) {
-        for layer : layer_stack do layer.get_input().release_all_keys()
-    }
-
-    init :: (ref Self) -> bool {
-        for layer : layer_stack {
-            if !layer.init() {
-                return false
-            }
-        }
-
-        return true
-    }
-
-    update :: (ref Self, dt: float) {
-        if engine.global_input.key_pressed(GLFW_KEY_F6) {
-            paused = !paused
-        }
-
-        //
-        for view : engine.active_game_views {
-            view.update(!paused, engine.world_size)
-        }
-
-        if !paused {
-            for layer : layer_stack {
-                layer.update(dt)
-            }
-        }
-    }
-
-    render :: (ref Self, renderer: ref Renderer) {
-        for view : engine.active_game_views {
-            render_gizmos := view.begin_render(!paused, engine.world_size, renderer)
-            for layer : layer_stack {
-                layer.render(render_gizmos, renderer)
-            }
-            if render_gizmos {
-                view.begin_gizmos()
-                for layer : layer_stack {
-                    layer.render_gizmos(renderer)
-                }
-                view.end_gizmos()
-            }
-            view.end_render()
-        }
-    }
-
-    imgui_render :: (ref Self) {
-
-    }
-
-    on_key_event :: (ref Self, key: int, action: int, modifiers: int) {
-        if engine.game_viewport.is_focused {
-            match (action, key) {
-                (GLFW_PRESS, $keycode) -> {
-                    engine.game_input.set_key_state(keycode, true)
-                }
-                (GLFW_RELEASE, $keycode) -> {
-                    engine.game_input.set_key_state(keycode, false)
-                }
-            }
-
-            match (action, key) {
-                ($action, $keycode) -> {
-                    for(reverse=true) layer : layer_stack {
-                        if layer.on_key_event(int(key), int(action)) {
-                            break
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    on_enable :: (ref Self) {
-        paused = false
-    }
-}
 
 Editor :: struct {
+}
+
+EngineModeData :: struct {
+    layer_stack := Array[&Layer].create()
+}
+
+EngineMode :: enum #copy {
+    None
+    Edit    : &EngineModeData
+    Play    : &EngineModeData
+    Pause   : &EngineModeData
 }
 
 ShmupEngine :: struct {
     // engine stuff
     world_size          := vec3(10, 10, 0)
 
-    current_engine_mode : &EngineMode = null
-    current_mode_base   : &EngineModeBase = null
-    edit_mode           := EditMode()
-    play_mode           := PlayMode()
+    current_mode        := EngineMode.None
+    edit_mode           := EngineModeData()
+    play_mode           := EngineModeData()
 
     // io stuff
     global_input        : &Input = null
@@ -281,9 +93,9 @@ ShmupEngine :: struct {
     hierarchy           : Hierarchy = default
     current_layer_index : i32 = 0
     console             := Rc[Console].empty()
-    editor_edit_mode_color := vec3()
-    editor_play_mode_color := vec3(0.027f, 0.2f, 0.047f)
-    save_file           := Option[String].None
+    editor_edit_mode_color  := vec3()
+    editor_play_mode_color  := vec3(0.027f, 0.2f, 0.047f)
+    save_file               := Option[String].None
 
     game_and_editor_window  : GameAndEditorWindow = default
     game_window             : GameWindow          = default
@@ -291,8 +103,8 @@ ShmupEngine :: struct {
     game_viewport           : &Viewport           = null
     editor_viewport         : &Viewport           = null
 
-    game_views              : [3]&GameView = default
-    active_game_views       : []&GameView  = default
+    editor_windows          := Array[Rc[GameView]].create()
+    active_editor_window    := Rc[GameView].empty()
 
     // window stuff
     glfw_window         : &GLFWwindow = null
@@ -311,10 +123,7 @@ impl ShmupEngine {
         <<ptr = ShmupEngine()
 
         // setup modes
-        ptr.edit_mode.engine = ptr
-        ptr.play_mode.engine = ptr
-        ptr.current_engine_mode = &ptr.edit_mode
-        ptr.current_mode_base = cast &ptr.edit_mode
+        ptr.current_mode = EngineMode.Edit(&ptr.edit_mode)
 
         return ptr
     }
@@ -329,6 +138,7 @@ impl ShmupEngine {
         glfwSetErrorCallback(glfw_error_callback)
 
         // initialize glfw
+        io.println("[LOG] Initializing GLFW")
         if glfwInit() == 0 {
             io.println("[ERROR] Failed to initialize GLFW")
             return
@@ -342,7 +152,6 @@ impl ShmupEngine {
         glfwWindowHint(GLFW_MAXIMIZED, 0)
         glfwWindowHint(GLFW_RESIZABLE, 1)
 
-        
         monitor, monitor_pos := {
             count := 0i32
             monitors := glfwGetMonitors(&count)
@@ -353,6 +162,9 @@ impl ShmupEngine {
 
             // use last monitor
             monitor := monitors[count - 1]
+
+            // use primary monitor
+            // monitor := monitors[0]
 
             monitor_pos := Vector2[i32]()
             glfwGetMonitorPos(monitor, &monitor_pos.x, &monitor_pos.y)
@@ -375,7 +187,9 @@ impl ShmupEngine {
         glfwSwapInterval(if vsync_enabled then 1 else 0)
 
         // initialize glad
+        io.println("[LOG] Initializing GLAD")
         if gladLoadGL() != 1 {
+            io.println("[ERROR] Failed to initialize GLAD")
             return
         }
         { // get opengl version
@@ -400,13 +214,18 @@ impl ShmupEngine {
         glfwSetFramebufferSizeCallback(glfw_window, on_framebuffer_resize)
 
         // initialize imgui
+        io.println("[LOG] Initializing ImGui")
         if !init_imgui(glfw_window) {
+            io.println("[ERROR] Failed to initialize ImGui")
             return
         }
         defer shutdown_imgui()
 
         viewport_size_max.x = int(vidmode.width)
         viewport_size_max.y = int(vidmode.height)
+        viewport_size_max.x = 1920
+        viewport_size_max.y = 1080
+        io.println("[LOG] Initializing viewports")
         if !initialize_viewport() {
             io.println("[ERROR] Failed to create frame buffer for viewport")
             return
@@ -431,19 +250,16 @@ impl ShmupEngine {
     }
 
     initialize_viewport :: (ref Self) -> bool {
-        game_and_editor_window.engine = &self
-        game_window.engine            = &self
-        editor_window.engine          = &self
-        game_views[0] = &game_and_editor_window
-        game_views[1] = &game_window
-        game_views[2] = &editor_window
+        editor_windows.add(WindowBase.new(EditorWindow, &self))
+        editor_windows.add(WindowBase.new(GameWindow, &self))
+        editor_windows.add(WindowBase.new(GameAndEditorWindow, &self))
+        editor_windows[2].get().base().enabled = false
+        active_editor_window = editor_windows[0].clone()
+
         game_viewport = &game_window.viewport
 
-        active_game_views = @cast([]&GameView, game_views)[1..3]
-
-        for view : @cast([]&GameView, game_views) {
-            if !view.initialize(viewport_size_max) {
-                return false
+        for window : editor_windows {
+            if !window.get().initialize(viewport_size_max) {
             }
         }
 
@@ -463,6 +279,54 @@ impl ShmupEngine {
                 engine.toggle_play_mode()
                 return
             }
+            (GLFW_PRESS, GLFW_KEY_F9, GLFW_MOD_CONTROL) -> {
+                io.println("[LOG] Reloading shaders")
+                engine.renderer.reload_shaders()
+                return
+            }
+            
+            (GLFW_PRESS, GLFW_KEY_L, GLFW_MOD_CONTROL) -> {
+                match ref engine.save_file {
+                    Some($file) -> {
+                        match engine.current_mode {
+                            EngineMode.Edit($data) -> {
+                                engine.console.get().log("Loading layers")
+                                for layer : data.layer_stack {
+                                    layer.load_from_file(file.slice())
+                                }
+                            }
+                        }
+                    }
+
+                    None -> {
+                        engine.console.get().log_error("[ERROR] Trying to load layers from file but no file name was specified")
+                        io.println("[ERROR] Trying to load layers from file but no file name was specified")
+                    }
+                }
+                return
+            }
+            (GLFW_PRESS, GLFW_KEY_S, GLFW_MOD_CONTROL) -> {
+                match ref engine.save_file {
+                    Some($file_name) -> {
+                        match engine.current_mode {
+                            EngineMode.Edit($data) -> {
+                                engine.console.get().log("Saving layers")
+                                file_content := String.empty()
+                                for layer : data.layer_stack {
+                                    layer.save_to_file(ref file_content)
+                                }
+                                fs.write_file(file_name.slice(), file_content.slice())
+                            }
+                        }
+                    }
+
+                    None -> {
+                        engine.console.get().log_error("[ERROR] Trying to save layers to file but no file name was specified")
+                        io.println("[ERROR] Trying to save layers to file but no file name was specified")
+                    }
+                }
+                return
+            }
 
             (GLFW_PRESS, $keycode, _) -> {
                 engine.global_input.set_key_state(keycode, true)
@@ -472,17 +336,18 @@ impl ShmupEngine {
             }
         }
 
-        engine.current_engine_mode.on_key_event(int(key), int(action), int(mods))
+        match (action, key) {
+            ($action, $keycode) -> {
+                engine.active_editor_window.get().on_key_event(key, scancode, action, mods)
+            }
+        }
     }
 
     render_loop :: (ref Self) {
-        self.register_builtin_components()
-        if !current_engine_mode.init() {
-            io.println("[ERROR] Failed to initialize edit/play mode")
-            return
-        }
+        // @temp
+        save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))
 
-        self.push_gizmos_layer(String.from_string("Gizmos"))
+        self.register_builtin_components()
 
         last_frame_time := get_time_microseconds()
 
@@ -523,7 +388,7 @@ impl ShmupEngine {
         // // handle events and input
         // global_input.reset()
         // game_input.reset()
-        // current_engine_mode.reset_input()
+        // current_mode.reset_input()
         // glfwPollEvents()
 
         // viewport_size = window_size
@@ -535,11 +400,11 @@ impl ShmupEngine {
         // self.update_projection_matrix(viewport_size.change_type(f32))
         
         // // update mode
-        // current_engine_mode.update(delta_time)
+        // current_mode.update(delta_time)
 
         // // render mode
         // renderer.begin_scene(projection_matrix)
-        // current_engine_mode.render(<<renderer)
+        // current_mode.render(<<renderer)
         // renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
         // // renderer.end_scene()
     }
@@ -554,34 +419,53 @@ impl ShmupEngine {
         // handle events and input
         global_input.reset()
         game_input.reset()
-        current_engine_mode.reset_input()
+        // current_mode.reset_input()
         glfwPollEvents()
         if game_viewport.lost_focused {
             // release all keys in all layers
             game_input.release_all_keys()
-            current_engine_mode.release_input()
+            // current_mode.release_input()
         }
 
         // render imgui gui
         render_menu_bar()
         render_editor()
 
-        current_engine_mode.update(delta_time)
-        current_engine_mode.render(<<renderer)
-
-        // for view : active_game_views {
-        //     // io.println(fmt.format("{}", [game_viewport.projection_matrix]))
-        //     if view.update(true, world_size, aspect_ratio_axis) {
-        //         current_engine_mode.update(delta_time)
-        //     }
-        //     view.begin_render(world_size, <<renderer)
-        //     // renderer.begin_scene(projection_matrix)
-        //     current_engine_mode.render(<<renderer)
-        //     view.end_render()
-        // }
+        update(delta_time)
+        for window : editor_windows {
+            if !window.get().base().enabled then continue
+            window.get().render(world_size, <<renderer)
+        }
 
         // end frame
         imgui_end_frame()
+    }
+
+    update :: (ref Self, dt: f32) {
+        for window : editor_windows {
+            if !window.get().base().enabled then continue
+            window.get().update(world_size)
+            if window.get().is_focused() {
+                active_editor_window = window.clone()
+            }
+        }
+
+        match current_mode {
+            EngineMode.Pause($data) -> {
+                if global_input.key_pressed(GLFW_KEY_F6) {
+                    current_mode = EngineMode.Play(data)
+                }
+            }
+            EngineMode.Play($data) -> {
+                if global_input.key_pressed(GLFW_KEY_F6) {
+                    current_mode = EngineMode.Pause(data)
+                }
+
+                for layer : data.layer_stack {
+                    layer.update(dt)
+                }
+            }
+        }
     }
 
     render_menu_bar :: (ref Self) {
@@ -660,43 +544,53 @@ impl ShmupEngine {
             ImGui.End()
         }
 
-        if ImGui.Begin("Values") {
-            for p : properties_to_edit {
-                match p {
-                    PropertyEdit.EditFloat($e) -> {
-                        ImGui.InputFloat(e.name, e.ptr, e.step, e.step * 5)
-                    }
-                    PropertyEdit.EditVec3($e) -> {
-                        ImGui.InputFloat3(e.name, cast e.ptr)
-                    }
-                    PropertyEdit.EditColor3($e) -> {
-                        ImGui.ColorEdit3(e.name, cast e.ptr)
-                    }
-                }
-            }
-        }
-
-        { // layers
-            if ImGui.Begin("Layers") {
-                for l : current_mode_base.layer_stack {
-                    list_entry_size := ImGui.ImVec2(0, 0)
-                    if ImGui.Selectable(l.get_name(), current_layer_index == i32(it_index), 0, list_entry_size) {
-                        current_layer_index = i32(it_index)
+        { // values
+            if ImGui.Begin("Values") {
+                for p : properties_to_edit {
+                    match p {
+                        PropertyEdit.EditFloat($e) -> {
+                            ImGui.InputFloat(e.name, e.ptr, e.step, e.step * 5)
+                        }
+                        PropertyEdit.EditVec3($e) -> {
+                            ImGui.InputFloat3(e.name, cast e.ptr)
+                        }
+                        PropertyEdit.EditVec4($e) -> {
+                            ImGui.InputFloat4(e.name, cast e.ptr)
+                        }
+                        PropertyEdit.EditColor3($e) -> {
+                            ImGui.ColorEdit3(e.name, cast e.ptr)
+                        }
                     }
                 }
             }
             ImGui.End()
+
+            properties_to_edit.clear()
         }
 
-        if current_layer_index >= 0 and current_layer_index < i32(current_mode_base.layer_stack.get_length()) {
-            hierarchy.set_layer(current_mode_base.layer_stack[int(current_layer_index)])
+        data := self.current_mode_data()
+
+        if data != null {
+            { // layers
+                if ImGui.Begin("Layers") {
+                    for l : data.layer_stack {
+                        list_entry_size := ImGui.ImVec2(0, 0)
+                        if ImGui.Selectable(l.get_name(), current_layer_index == i32(it_index), 0, list_entry_size) {
+                            current_layer_index = i32(it_index)
+                        }
+                    }
+                }
+                ImGui.End()
+            }
+
+            if current_layer_index >= 0 and current_layer_index < i32(data.layer_stack.get_length()) {
+                hierarchy.set_layer(data.layer_stack[int(current_layer_index)])
+            }
         }
 
         inspector.render()
         hierarchy.render()
         console.get().render()
-
-        ImGui.End()
     }
 
     edit_property :: (ref Self, edit: PropertyEdit) {
@@ -715,13 +609,13 @@ impl ShmupEngine {
     push_entity_layer :: (ref Self, name: String, callbacks: &EntityLayerCallbacks) {
         ptr := mem.alloc(EntityLayer)
         <<ptr = EntityLayer.new(name, callbacks, self, <<Input.new())
-        current_mode_base.layer_stack.add(ptr)
+        self.current_mode_data().layer_stack.add(ptr)
     }
 
     push_gizmos_layer :: (ref Self, name: String) {
         ptr := mem.alloc(GizmosLayer)
         <<ptr = GizmosLayer.new(name, null, self, <<Input.new())
-        current_mode_base.layer_stack.add(ptr)
+        self.current_mode_data().layer_stack.add(ptr)
     }
 
     on_command :: (ref Self, cmd: ref Command) {
@@ -741,10 +635,14 @@ impl ShmupEngine {
             Command.SetEditorMode($m) -> {
                 match m {
                     CommandEditorMode.Single -> {
-                        active_game_views = @cast([]&GameView, game_views)[0..1]
+                        editor_windows[0].get().base().enabled = false
+                        editor_windows[1].get().base().enabled = false
+                        editor_windows[2].get().base().enabled = true
                     }
                     CommandEditorMode.Double -> {
-                        active_game_views = @cast([]&GameView, game_views)[1..3]
+                        editor_windows[0].get().base().enabled = true
+                        editor_windows[1].get().base().enabled = true
+                        editor_windows[2].get().base().enabled = false
                     }
                 }
             }
@@ -778,44 +676,71 @@ impl ShmupEngine {
     }
 
     toggle_play_mode :: (ref Self) {
-        if int(current_mode_base) == int(&play_mode) {
-            exit_play_mode()
-        } else {
-            enter_play_mode()
+        match current_mode {
+            EngineMode.Edit(_) -> enter_play_mode()
+            EngineMode.Play(_) -> exit_play_mode()
+            EngineMode.Pause(_) -> exit_play_mode()
         }
     }
 
     enter_play_mode :: (ref Self) {
-        if int(current_mode_base) == int(&play_mode) {
-            console.get().log("Already in play mode")
-            return
+        match current_mode {
+            EngineMode.Play(_) -> {
+                console.get().log("Already in play mode")
+                return
+            }
+            EngineMode.Pause(_) -> {
+                console.get().log("Already in play mode")
+                return
+            }
         }
         console.get().log("Entering play mode")
-        
-        play_mode.initialize(edit_mode)
-        current_engine_mode = &play_mode
-        current_mode_base = cast &play_mode
-        current_engine_mode.on_enable()
+
+        { // initialize play mode
+            play_mode.layer_stack.clear()
+            for l : edit_mode.layer_stack {
+                match l.clone() {
+                    Some($l) -> {
+                        play_mode.layer_stack.add(l)
+                    }
+                }
+            }
+            for layer : play_mode.layer_stack {
+                if !layer.init() {
+                    io.formatln("[ERROR] Failed to initialize layer {} when entering play mode", [it_index])
+                }
+            }
+        }
+        current_mode = EngineMode.Play(&play_mode)
 
         set_editor_background_color(editor_play_mode_color)
     }
 
     exit_play_mode :: (ref Self) {
-        if int(current_mode_base) == int(&edit_mode) {
-            console.get().log("Already in edit mode")
-            return
+        match current_mode {
+            EngineMode.Edit(_) -> {
+                console.get().log("Already in edit mode")
+                return
+            }
         }
 
         console.get().log("Exiting play mode")
-        current_engine_mode = &edit_mode
-        current_mode_base = cast &edit_mode
-        current_engine_mode.on_enable()
+        current_mode = EngineMode.Edit(&edit_mode)
 
         set_editor_background_color(editor_edit_mode_color)
     }
 
     set_editor_background_color :: (ref Self, col: vec3) {
         ImGui.GetStyle().Colors[int(ImGui.ImGuiCol_.WindowBg)] = ImGui.ImVec4(col.x, col.y, col.z, 1)
+    }
+
+    current_mode_data :: (ref Self) -> &EngineModeData {
+        return match current_mode {
+            EngineMode.Edit($data) -> {data}
+            EngineMode.Play($data) -> {data}
+            EngineMode.Pause($data) -> {data}
+            _ -> null
+        }
     }
 }
 

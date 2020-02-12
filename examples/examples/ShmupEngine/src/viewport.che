@@ -18,23 +18,40 @@ use import opengl_utils
 use import matrix
 use import renderer
 use import math
+use import input
 use import shmup_engine
 
 #export_scope
 
 GameView :: trait {
+    base            :: (ref Self) -> ref WindowBase;
     initialize      :: (ref Self, max_size: vec2i) -> bool;
-    update          :: (ref Self, is_playing: bool, world_size: vec3);
-    begin_render    :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool;
+    update          :: (ref Self, world_size: vec3);
+    render          :: (ref Self, world_size: vec3, renderer: ref Renderer);
+    begin_render    :: (ref Self, world_size: vec3, renderer: ref Renderer) -> bool;
     end_render      :: (ref Self);
     begin_gizmos    :: (ref Self);
     end_gizmos      :: (ref Self);
+    is_focused      :: (ref Self) -> bool;
+
+    on_key_event    :: (ref Self, key: i32, scancode: i32, action: i32, mods: i32);
 }
 
 WindowBase :: struct #extendable {
     engine      : &ShmupEngine  = null
+    input       : &Input        = null
     viewport    : Viewport      = default
     clear_color : vec4          = default
+    enabled     : bool          = true
+}
+
+impl WindowBase {
+    new :: ($T: type, engine: &ShmupEngine) -> Rc[GameView] {
+        return Rc[GameView].new(T(
+            engine  = engine
+            input   = Input.new()
+        ))
+    }
 }
 
 impl GameWindow {
@@ -51,7 +68,27 @@ impl GameView for GameWindow {
         return viewport.initialize(max_size)
     }
 
-    update :: (ref Self, is_playing: bool, world_size: vec3) {
+    base :: (ref Self) -> ref WindowBase {
+        return self
+    }
+
+    on_key_event :: (ref Self, key: i32, scancode: i32, action: i32, mods: i32) {
+        data := engine.current_mode_data()
+
+        if data != null {
+            for(reverse=true) layer : data.layer_stack {
+                if layer.on_key_event(int(key), int(action)) {
+                    break
+                }
+            }
+        }
+    }
+
+    is_focused :: (ref Self) -> bool {
+        return viewport.is_focused
+    }
+
+    update :: (ref Self, world_size: vec3) {
         // set window properties of viewport
         ImGui.Begin("Game", null, @bin_or(
             ImGui.ImGuiWindowFlags_.NoScrollbar,
@@ -91,7 +128,18 @@ impl GameView for GameWindow {
         }
     }
 
-    begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
+    render :: (ref Self, world_size: vec3, renderer: ref Renderer) {
+        begin_render(world_size, renderer)
+        data := engine.current_mode_data()
+        if data != null {
+            for layer : data.layer_stack {
+                layer.render(true, renderer)
+            }
+        }
+        end_render()
+    }
+
+    begin_render :: (ref Self, world_size: vec3, renderer: ref Renderer) -> bool {
         // draw viewport window
         ImGui.Begin("Game")
         if viewport.size.x > 0 and viewport.size.y > 0 {
@@ -147,7 +195,19 @@ impl GameView for EditorWindow {
         return viewport.initialize(max_size)
     }
 
-    update :: (ref Self, is_playing: bool, world_size: vec3) {
+    base :: (ref Self) -> ref WindowBase {
+        return self
+    }
+
+    on_key_event :: (ref Self, key: i32, scancode: i32, action: i32, mods: i32) {
+
+    }
+
+    is_focused :: (ref Self) -> bool {
+        return viewport.is_focused
+    }
+
+    update :: (ref Self, world_size: vec3) {
         ImGui.Begin("Scene", null, @bin_or(
             ImGui.ImGuiWindowFlags_.NoScrollbar,
             ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
@@ -218,7 +278,19 @@ impl GameView for EditorWindow {
         }
     }
 
-    begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
+    render :: (ref Self, world_size: vec3, renderer: ref Renderer) {
+        begin_render(world_size, renderer)
+        data := engine.current_mode_data()
+        if data != null {
+            for layer : data.layer_stack {
+                layer.render(true, renderer)
+            }
+        }
+        renderer.draw_quad(vec3(0, 0, 0), engine.world_size, 0, 0.05)
+        end_render()
+    }
+
+    begin_render :: (ref Self, world_size: vec3, renderer: ref Renderer) -> bool {
         // draw viewport window
         ImGui.Begin("Scene")
         if viewport.size.x > 0 and viewport.size.y > 0 {
@@ -247,10 +319,10 @@ impl GameView for EditorWindow {
         // renderer.end_scene()
     }
 
-    begin_gizmos    :: (ref Self) {
+    begin_gizmos :: (ref Self) {
         ImGui.Begin("Scene")
     }
-    end_gizmos      :: (ref Self) {
+    end_gizmos :: (ref Self) {
         ImGui.End()
     }
 }
@@ -269,7 +341,19 @@ impl GameView for GameAndEditorWindow {
         return viewport.initialize(max_size)
     }
 
-    update :: (ref Self, is_playing: bool, world_size: vec3) {
+    base :: (ref Self) -> ref WindowBase {
+        return self
+    }
+
+    on_key_event :: (ref Self, key: i32, scancode: i32, action: i32, mods: i32) {
+
+    }
+
+    is_focused :: (ref Self) -> bool {
+        return viewport.is_focused
+    }
+
+    update :: (ref Self, world_size: vec3) {
         ImGui.Begin("GameScene", null, @bin_or(
             ImGui.ImGuiWindowFlags_.NoScrollbar,
             ImGui.ImGuiWindowFlags_.NoScrollWithMouse,
@@ -302,6 +386,10 @@ impl GameView for GameAndEditorWindow {
         viewport.update_projection_matrix(world_size)
 
         // movement
+        is_playing := match engine.current_mode {
+            EngineMode.Play(_) -> true
+            _ -> false
+        }
         if is_playing {
             viewport.set_translation(vec3())
             viewport.set_scale(1.0f)
@@ -354,7 +442,19 @@ impl GameView for GameAndEditorWindow {
         }
     }
 
-    begin_render :: (ref Self, is_playing: bool, world_size: vec3, renderer: ref Renderer) -> bool {
+    render :: (ref Self, world_size: vec3, renderer: ref Renderer) {
+        begin_render(world_size, renderer)
+        data := engine.current_mode_data()
+        if data != null {
+            for layer : data.layer_stack {
+                layer.render(true, renderer)
+            }
+        }
+        renderer.draw_quad(vec3(0, 0, 0), engine.world_size, 0, 0.05)
+        end_render()
+    }
+
+    begin_render :: (ref Self, world_size: vec3, renderer: ref Renderer) -> bool {
         // render game
         size := viewport.size.change_type(i32)
         glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer)
@@ -364,6 +464,10 @@ impl GameView for GameAndEditorWindow {
         glClear(GL_COLOR_BUFFER_BIT)
 
         // set aspect_ratio_axis so that the game world always fits on screen
+        is_playing := match engine.current_mode {
+            EngineMode.Play(_) -> true
+            _ -> false
+        }
         if is_playing {
             viewport_ar := viewport.size.x / viewport.size.y
             world_ar    := world_size.x / world_size.y
@@ -382,7 +486,7 @@ impl GameView for GameAndEditorWindow {
         view_projection := viewport.projection_matrix * viewport.view_matrix
         renderer.begin_scene(view_projection)
 
-        return (!is_playing)
+        return false
     }
 
     end_render :: (ref Self) {
@@ -444,8 +548,8 @@ impl Viewport {
         texture_height := i32(max_size.y)
 
         // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
-        (glGenFramebuffers(1, &frame_buffer))
-        (glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer))
+        GL(glGenFramebuffers(1, &frame_buffer))
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer))
 
         // The texture we're going to render to
         GL(glGenTextures(1, &render_texture))
@@ -478,9 +582,9 @@ impl Viewport {
             return false
         }
 
-        glBindTexture(GL_TEXTURE_2D, 0)
-        glBindRenderbuffer(GL_RENDERBUFFER, 0)
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        GL(glBindTexture(GL_TEXTURE_2D, 0))
+        GL(glBindRenderbuffer(GL_RENDERBUFFER, 0))
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, 0))
         return true
     }
 
@@ -524,10 +628,24 @@ impl Viewport {
     }
 
     world_to_screen :: (ref Self, pos: vec3) -> vec3 {
-        clip_pos := projection_matrix * view_matrix * pos
-        ndc_pos := clip_pos * vec3(1, -1) * 0.5f + 0.5f
-        screen_pos := ndc_pos * size + self.pos
+        clip_pos    := projection_matrix * view_matrix * pos
+        ndc_pos     := clip_pos * vec3(1, -1) * 0.5f + 0.5f
+        screen_pos  := ndc_pos * size + self.pos
         return screen_pos
+    }
+
+    project :: (ref Self, projection_matrix: mat4, pos: vec3) -> vec3 {
+        clip_pos    := projection_matrix * pos
+        ndc_pos     := clip_pos * vec3(1, -1) * 0.5f + 0.5f
+        screen_pos  := ndc_pos * size + self.pos
+        return screen_pos
+    }
+
+    project_dir :: (ref Self, projection_matrix: mat4, pos: vec2) -> vec2 {
+        clip_pos    := mat4.mulv(projection_matrix, vec3(pos.x, pos.y, 0), 0)
+        ndc_pos     := clip_pos * vec3(1, -1) * 0.5f
+        screen_pos  := ndc_pos * size
+        return screen_pos.xy()
     }
 
     update_projection_matrix :: (ref Self, world_size: vec3) {

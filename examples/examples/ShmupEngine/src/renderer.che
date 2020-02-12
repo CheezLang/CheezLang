@@ -5,6 +5,7 @@ io  :: import std.io
 fmt :: import std.fmt
 
 use import opengl.glad_binding
+ImGui :: import imgui.imgui_binding
 
 use import math
 use import matrix
@@ -19,35 +20,28 @@ Origin :: enum #copy {
 
 Renderer :: struct {
     filled_quad_va  : &VertexArray
-    color_shader    : &Shader
+    color_shader    : &Shader = null
+    line_shader     : &Shader = null
     line_va         : &VertexArray
+
+    projection_matrix_stack := Array[mat4].create()
+    projection_matrix       : mat4 = mat4()
 }
 
 impl Renderer {
     create :: () -> &Renderer {
-        // load shader
-        shader := match Shader.from_file("../data/test_shader.shader") {
-            Ok($shader) -> {
-                shader_program   := mem.alloc(Shader)
-                <<shader_program = shader
-                shader_program
-            }
-
-            Err($msg) -> {
-                io.println(msg)
-                return null
-            }
-        }
-
         // create line va
         line_va := {
             line_va := VertexArray.new()
 
             vertex_buffer := VertexBuffer.create([
-                vec3(-0.5f, -0.5f, 0.0f)
-                vec3( 0.5f,  0.5f, 0.0f)
+                -0.5f, -0.5f, 0.0f, 0.0f
+                 0.5f,  0.5f, 0.0f, 1.0f
             ], static = false)
-            vertex_buffer.layout = BufferLayout.new([BufferElement("aPos", ShaderDataType.Float3)])
+            vertex_buffer.layout = BufferLayout.new([
+                BufferElement("aPos", ShaderDataType.Float3)
+                BufferElement("aTexCoord", ShaderDataType.Float)
+            ])
             line_va.add_vertex_buffer(vertex_buffer)
 
             index_buffer := IndexBuffer.create([0, 1])
@@ -61,13 +55,16 @@ impl Renderer {
             vertex_array := VertexArray.new()
 
             vertices := [
-                vec3(-0.5f, -0.5f, 0.0f)
-                vec3( 0.5f, -0.5f, 0.0f)
-                vec3( 0.5f,  0.5f, 0.0f)
-                vec3(-0.5f,  0.5f, 0.0f)
+                -0.5f, -0.5f, 0.0f, 0.0f, 0.0f
+                 0.5f, -0.5f, 0.0f, 1.0f, 0.0f
+                 0.5f,  0.5f, 0.0f, 1.0f, 1.0f
+                -0.5f,  0.5f, 0.0f, 0.0f, 1.0f
             ]
             vertex_buffer := VertexBuffer.create(vertices)
-            vertex_buffer.layout = BufferLayout.new([BufferElement("aPos", ShaderDataType.Float3)])
+            vertex_buffer.layout = BufferLayout.new([
+                BufferElement("aPos", ShaderDataType.Float3)
+                BufferElement("aTexCoord", ShaderDataType.Float2)
+            ])
             vertex_array.add_vertex_buffer(vertex_buffer)
 
             index_buffer := IndexBuffer.create([0, 1, 2, 2, 3, 0])
@@ -80,15 +77,77 @@ impl Renderer {
         r := mem.alloc(Renderer)
         <<r = Renderer(
             filled_quad_va = vertex_array
-            color_shader = shader
             line_va = line_va
         )
+        r.reload_shaders()
         return r
     }
 
-    begin_scene :: (ref Self, projection_matrix: ref mat4) {
+    reload_shaders :: (ref Self) {
+        if color_shader != null {
+            Memory.drop(<<color_shader)
+            mem.free(color_shader)
+            color_shader = null
+        }
+        // load shader
+        color_shader = match Shader.from_file("../data/test_shader.shader") {
+            Ok($shader) -> {
+                shader_program   := mem.alloc(Shader)
+                <<shader_program = shader
+                shader_program
+            }
+
+            Err($msg) -> {
+                io.formatln("[ERROR] Failed to load 'test_shader.shader' from file: {}", [msg.slice()])
+                return
+            }
+        }
+        color_shader.bind()
+        color_shader.set_uniform_int("u_texture", 0)
+        
+        // line shader
+        if line_shader != null {
+            Memory.drop(<<line_shader)
+            mem.free(line_shader)
+            line_shader = null
+        }
+        line_shader = match Shader.from_file("../data/line_shader.shader") {
+            Ok($shader) -> {
+                shader_program   := mem.alloc(Shader)
+                <<shader_program = shader
+                shader_program
+            }
+
+            Err($msg) -> {
+                io.formatln("[ERROR] Failed to load 'line_shader.shader' from file: {}", [msg.slice()])
+                return
+            }
+        }
+    }
+
+    set_projection_matrix :: (ref Self, projection_matrix: ref mat4) {
         color_shader.bind()
         color_shader.set_uniform_mat4("m_projection", projection_matrix)
+        line_shader.bind()
+        line_shader.set_uniform_mat4("m_projection", projection_matrix)
+    }
+
+    push_proj   :: (ref Self, projection_matrix: ref mat4) {
+        projection_matrix_stack.push(self.projection_matrix)
+        set_projection_matrix(projection_matrix)
+    }
+
+    pop_proj    :: (ref Self) {
+        projection_matrix = projection_matrix_stack.pop()
+        set_projection_matrix(projection_matrix)
+    }
+
+    begin_scene :: (ref Self, projection_matrix: ref mat4) {
+        // @todo: <<& is a hack
+        self.projection_matrix = <<&projection_matrix
+        self.projection_matrix_stack.clear()
+
+        set_projection_matrix(projection_matrix)
     }
 
     draw_indexed :: (ref Self, vertex_array: &VertexArray) {
@@ -98,7 +157,7 @@ impl Renderer {
         glBindVertexArray(0)
     }
 
-    fill_quad :: (ref Self, pos: vec3, size: vec3, angle: float, color: vec3 = vec3(1, 1, 1), origin: Origin = Origin.Center) {
+    fill_quad :: (ref Self, pos: vec3, size: vec3, angle: float, color: vec3 = vec3(1, 1, 1), origin: Origin = Origin.Center, sub: vec4 = vec4(0, 0, 1, 1)) {
         color_shader.bind()
         model_matrix := {
             translation := mat4.from_translation(pos)
@@ -108,6 +167,7 @@ impl Renderer {
         }
         color_shader.set_uniform_mat4("m_model", model_matrix)
         color_shader.set_uniform_vec3("color", color)
+        color_shader.set_uniform_vec4("u_sub", sub)
 
         draw_indexed(filled_quad_va)
     }
@@ -130,16 +190,26 @@ impl Renderer {
     draw_line :: (ref Self, pos0: vec3, pos1: vec3, color: vec3 = vec3(1, 1, 1), thickness: float = 1.0f) {
         // io.println("test")
         glLineWidth(thickness)
-        color_shader.bind()
+        line_shader.bind()
         model_matrix := mat4.id()
-        color_shader.set_uniform_mat4("m_model", model_matrix)
-        color_shader.set_uniform_vec3("color", color)
+        line_shader.set_uniform_mat4("m_model", model_matrix)
+        line_shader.set_uniform_vec3("color1", color)
+        line_shader.set_uniform_vec3("color2", color)
 
-        line_va.vertex_buffers[0].set_data([pos0, pos1])
+        line_va.vertex_buffers[0].set_data([
+            pos0.x, pos0.y, pos0.z, 0.0f
+            pos1.x, pos1.y, pos1.z, 1.0f
+        ])
         
         line_va.bind()
         line_va.index_buffer.bind()
         glDrawElements(GL_LINES, line_va.index_buffer.count, GL_UNSIGNED_INT, null)
         glBindVertexArray(0)
+    }
+
+    draw_text :: (ref Self, pos: vec3, text: string, color: vec3 = vec3(1, 1, 1), size: float = 16) {
+        pos : ImGui.ImVec2 = pos.into()
+        font := ImGui.GetFont()
+        ImGui.GetForegroundDrawList().AddText_2(font, size, pos, color.to_color32(), text)
     }
 }

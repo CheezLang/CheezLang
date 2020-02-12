@@ -1423,11 +1423,11 @@ impl ImDrawList {
     AddNgonFilled :: (ref Self, _center: ref ImVec2, _radius: f32, _col: ImU32, _num_segments: i32) {
         __c__ImDrawList_AddNgonFilled_34(&self, &_center, _radius, _col, _num_segments)
     }
-    AddText :: (ref Self, _pos: ref ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8 = null) {
-        __c__ImDrawList_AddText_35(&self, &_pos, _col, _text_begin, _text_end)
+    AddText :: (ref Self, _pos: ref ImVec2, _col: ImU32, _text: string) {
+        __c__ImDrawList_AddText_35(&self, &_pos, _col, cast _text.bytes.data, cast(&char8) int(_text.bytes.data) + _text.bytes.length)
     }
-    AddText :: (ref Self, _font: &ImFont, _font_size: f32, _pos: ref ImVec2, _col: ImU32, _text_begin: &char8, _text_end: &char8 = null, _wrap_width: f32 = 0.0f, _cpu_fine_clip_rect: &ImVec4 = null) {
-        __c__ImDrawList_AddText_36(&self, _font, _font_size, &_pos, _col, _text_begin, _text_end, _wrap_width, _cpu_fine_clip_rect)
+    AddText_2 :: (ref Self, _font: &ImFont, _font_size: f32, _pos: ref ImVec2, _col: ImU32, _text: string, _wrap_width: f32 = 0.0f, _cpu_fine_clip_rect: &ImVec4 = null) {
+        __c__ImDrawList_AddText_36(&self, _font, _font_size, &_pos, _col, cast _text.bytes.data, cast(&char8) int(_text.bytes.data) + _text.bytes.length, _wrap_width, _cpu_fine_clip_rect)
     }
     AddPolyline :: (ref Self, _points: &ImVec2, _num_points: i32, _col: ImU32, _closed: bool, _thickness: f32) {
         __c__ImDrawList_AddPolyline_37(&self, _points, _num_points, _col, _closed, _thickness)
