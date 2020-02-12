@@ -1664,6 +1664,9 @@ namespace Cheez
                 case (PointerType t, PointerType _) when t.TargetType == CheezType.Void:
                     return cast;
 
+                case (PointerType _, PointerType f) when f.TargetType == CheezType.Void:
+                    return cast;
+
                 case (PointerType t, PointerType f) when t.IsFatPointer && f.IsFatPointer:
                     {
                         ReportError(cast, $"Can't convert from {f} to {t}");

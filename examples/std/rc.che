@@ -15,25 +15,6 @@ Rc :: struct(T: type) {
     owns_memory : bool
 }
 
-impl(T: type) Drop for Rc[T] {
-    drop :: (ref Self) {
-        if data == null {
-            return
-        }
-
-        @assert(data.count > 0)
-        data.count -= 1
-        if data.count == 0 {
-            if drop_impl != null {
-                drop_impl(value)
-            }
-            if owns_memory {
-                mem.free(data)
-            }
-        }
-    }
-}
-
 impl(T: type) Rc[T] {
     empty :: () -> Rc[T] {
         return Rc[T](null, null, null, false)
@@ -47,14 +28,12 @@ impl(T: type) Rc[T] {
     }
 
     new :: (value: $K) -> Rc[T] {
-        Combined :: struct {
-            data  : RcData
-            value : K
-        }
-        data := mem.alloc(Combined)
-        <<data = Combined(RcData(1, 1), value)
-        drop_impl : fn(&T) = cast if const @type_has_trait(K, Drop) then data.value.drop else null
-        return Rc[T](&data.data, &data.value, drop_impl, true)
+        data    := mem.alloc(RcData)
+        <<data  = RcData(1, 1)
+        ptr     := mem.alloc(K)
+        <<ptr   = value
+        drop_impl : fn(&T) = cast if const @type_has_trait(K, Drop) then ptr.drop else null
+        return Rc[T](data, cast ptr, drop_impl, true)
     }
 
     clone :: (ref Self) -> Rc[T] {
@@ -87,5 +66,24 @@ impl(T: type) Rc[T] {
         data = null
         value = null
         return result
+    }
+}
+
+impl(T: type) Drop for Rc[T] {
+    drop :: (ref Self) {
+        if data == null {
+            return
+        }
+
+        @assert(data.count > 0)
+        data.count -= 1
+        if data.count == 0 {
+            if drop_impl != null {
+                drop_impl(value)
+            }
+            if owns_memory {
+                mem.free(data)
+            }
+        }
     }
 }
