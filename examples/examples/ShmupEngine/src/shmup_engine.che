@@ -97,12 +97,6 @@ ShmupEngine :: struct {
     editor_play_mode_color  := vec3(0.027f, 0.2f, 0.047f)
     save_file               := Option[String].None
 
-    game_and_editor_window  : GameAndEditorWindow = default
-    game_window             : GameWindow          = default
-    editor_window           : EditorWindow        = default
-    game_viewport           : &Viewport           = null
-    editor_viewport         : &Viewport           = null
-
     editor_windows          := Array[Rc[GameView]].create()
     active_editor_window    := Rc[GameView].empty()
 
@@ -255,8 +249,6 @@ impl ShmupEngine {
         editor_windows.add(WindowBase.new(GameAndEditorWindow, &self))
         editor_windows[2].get().base().enabled = false
         active_editor_window = editor_windows[0].clone()
-
-        game_viewport = &game_window.viewport
 
         for window : editor_windows {
             if !window.get().initialize(viewport_size_max) {
@@ -419,13 +411,8 @@ impl ShmupEngine {
         // handle events and input
         global_input.reset()
         game_input.reset()
-        // current_mode.reset_input()
+        active_editor_window.get().base().input.reset()
         glfwPollEvents()
-        if game_viewport.lost_focused {
-            // release all keys in all layers
-            game_input.release_all_keys()
-            // current_mode.release_input()
-        }
 
         // render imgui gui
         render_menu_bar()
@@ -445,6 +432,11 @@ impl ShmupEngine {
         for window : editor_windows {
             if !window.get().base().enabled then continue
             window.get().update(world_size)
+
+            if window.get().base().viewport.lost_focus {
+                window.get().base().input.release_all_keys()
+            }
+
             if window.get().is_focused() {
                 active_editor_window = window.clone()
             }
@@ -512,9 +504,8 @@ impl ShmupEngine {
                 ImGui.ImGuiWindowFlags_.NoNav)
             if ImGui.Begin("Stats", &enabled_editors.stats, overlay_flags) {
                 // viewport dimensions
-                dimensions := fmt.format("{} x {}", [game_viewport.size.x, game_viewport.size.y])
-                ImGui.LabelText("Viewport Dimensions", dimensions.as_cstring())
-                ImGui.LabelText("Viewport focused", if game_viewport.is_focused then "true" else "false")
+                dimensions := fmt.format("{} x {}", [active_editor_window.get().base().viewport.size.x, active_editor_window.get().base().viewport.size.y])
+                ImGui.LabelText("Active Editor Dimensions", dimensions.as_cstring())
                 ImGui.Separator()
 
                 // show fps
@@ -604,17 +595,12 @@ impl ShmupEngine {
         self.inspector.register_component_info(BasicMoveComponent(vec3(), 0))
         self.inspector.register_component_info(QuadComponent(vec3(1, 1, 1)))
         self.inspector.register_component_info(PlayerControlComponent(1))
+        self.inspector.register_component_info(Camera(vec2(10, 10)))
     }
 
     push_entity_layer :: (ref Self, name: String, callbacks: &EntityLayerCallbacks) {
         ptr := mem.alloc(EntityLayer)
         <<ptr = EntityLayer.new(name, callbacks, self, <<Input.new())
-        self.current_mode_data().layer_stack.add(ptr)
-    }
-
-    push_gizmos_layer :: (ref Self, name: String) {
-        ptr := mem.alloc(GizmosLayer)
-        <<ptr = GizmosLayer.new(name, null, self, <<Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
@@ -723,6 +709,10 @@ impl ShmupEngine {
             EngineMode.Pause($data) -> {data}
             _ -> null
         }
+    }
+
+    current_viewport :: (ref Self) -> ref Viewport {
+        return active_editor_window.get().base().viewport
     }
 }
 

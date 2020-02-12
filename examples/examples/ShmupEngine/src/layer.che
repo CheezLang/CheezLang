@@ -40,7 +40,6 @@ Layer :: trait {
     init            :: (ref Self) -> bool;
     update          :: (ref Self, dt: float);
     render          :: (ref Self, render_gizmos: bool, renderer: ref Renderer);
-    render_gizmos   :: (ref Self, renderer: ref Renderer);
     imgui_render    :: (ref Self);
     on_key_event    :: (ref Self, key: int, action: int) -> bool;
     clone           :: (ref Self) -> Option[&Layer];
@@ -208,14 +207,6 @@ impl Layer for EntityLayer {
         }
     }
 
-    render_gizmos :: (ref Self, renderer: ref Renderer) {
-        for e : entities {
-            if e.get().active {
-                e.get().render_gizmos(engine, renderer)
-            }
-        }
-    }
-
     imgui_render :: (ref Self) {
         callbacks.imgui_render()
     }
@@ -314,72 +305,5 @@ impl Layer for EntityLayer {
             file.append_string("    }`n")
         }
         file.append_string("]")
-    }
-}
-
-// gizmoz layer
-
-GizmosLayer :: struct #extend(LayerBase) {
-}
-
-impl GizmosLayer {
-    new :: (name: String, callbacks: &EntityLayerCallbacks, engine: ref ShmupEngine, input: ref Input) -> GizmosLayer {
-        return GizmosLayer(name, engine, input, callbacks)
-    }
-}
-
-impl Layer for GizmosLayer {
-    get_name :: (ref Self) -> c_string {
-        return name.as_cstring()
-    }
-
-    get_base :: (ref Self) -> ref LayerBase {
-        return self
-    }
-
-    get_input :: (ref Self) -> ref Input {
-        return input
-    }
-
-    init :: (ref Self) -> bool {
-        return false
-    }
-
-    update :: (ref Self, dt: float) {
-    }
-
-    render :: (ref Self, render_gizmos: bool, renderer: ref Renderer) {
-    }
-
-    render_gizmos :: (ref Self, renderer: ref Renderer) {
-        renderer.draw_quad(vec3(0, 0, 0), engine.world_size, 0, 0.05)
-    }
-
-    imgui_render :: (ref Self) {
-    }
-
-    on_key_event :: (ref Self, key: int, action: int) -> bool {
-        match (action, key) {
-            (GLFW_PRESS, $keycode) -> {
-                input.set_key_state(keycode, true)
-            }
-            (GLFW_RELEASE, $keycode) -> {
-                input.set_key_state(keycode, false)
-            }
-        }
-
-        return false
-    }
-
-    clone :: (ref Self) -> Option[&Layer] {
-        result := mem.alloc(GizmosLayer)
-        <<result = GizmosLayer.new(name.clone(), null, engine, input)
-        return Some(result)
-    }
-
-    load_from_file :: (ref Self, file: string) {
-    }
-
-    save_to_file :: (ref Self, file: ref String) {
     }
 }

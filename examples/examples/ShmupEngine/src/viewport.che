@@ -18,22 +18,19 @@ use import opengl_utils
 use import matrix
 use import renderer
 use import math
+use import layer
 use import input
 use import shmup_engine
+use import components
 
 #export_scope
 
 GameView :: trait {
-    base            :: (ref Self) -> ref WindowBase;
     initialize      :: (ref Self, max_size: vec2i) -> bool;
+    base            :: (ref Self) -> ref WindowBase;
     update          :: (ref Self, world_size: vec3);
     render          :: (ref Self, world_size: vec3, renderer: ref Renderer);
-    begin_render    :: (ref Self, world_size: vec3, renderer: ref Renderer) -> bool;
-    end_render      :: (ref Self);
-    begin_gizmos    :: (ref Self);
-    end_gizmos      :: (ref Self);
     is_focused      :: (ref Self) -> bool;
-
     on_key_event    :: (ref Self, key: i32, scancode: i32, action: i32, mods: i32);
 }
 
@@ -59,6 +56,7 @@ impl GameWindow {
 }
 
 GameWindow :: struct #extend(WindowBase) {
+    camera := Option[Ref[Camera]].None
 }
 
 impl GameView for GameWindow {
@@ -73,6 +71,15 @@ impl GameView for GameWindow {
     }
 
     on_key_event :: (ref Self, key: i32, scancode: i32, action: i32, mods: i32) {
+        match (action, key, mods) {
+            (GLFW_PRESS, $keycode, _) -> {
+                input.set_key_state(keycode, true)
+            }
+            (GLFW_RELEASE, $keycode, _) -> {
+                input.set_key_state(keycode, false)
+            }
+        }
+
         data := engine.current_mode_data()
 
         if data != null {
@@ -99,7 +106,7 @@ impl GameView for GameWindow {
         { // calculate focused state
             was_focused := viewport.is_focused
             viewport.is_focused = ImGui.IsWindowFocused()
-            viewport.lost_focused = was_focused and !viewport.is_focused
+            viewport.lost_focus = was_focused and !viewport.is_focused
             viewport.is_hovered = ImGui.IsWindowHovered()
             // @todo: send focus event to layer_stack
         }
@@ -119,12 +126,39 @@ impl GameView for GameWindow {
 
         ImGui.End()
 
-        viewport.update_projection_matrix(world_size)
-        viewport.set_scale(1)
-        viewport.set_translation(vec3())
+        find_camera :: (data: &EngineModeData) -> Option[Ref[Camera]] {
+            io.formatln("{}", [int(data)])
+            if data != null {
+                for layer : data.layer_stack {
+                    match layer.get_base() {
+                        EntityLayer($el) -> {
+                            for entity : el.entities {
+                                for component : entity.get().components {
+                                    match ref component.get() {
+                                        Camera($cam) -> {
+                                            // return Some(cam.borrow())
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return None
+        }
 
-        if viewport.is_focused {
-            engine.game_viewport = &self.viewport
+        match ref camera {
+            Some($cam) -> {
+                if cam.count() == 0 {
+                    // camera was destroyed
+                    camera = find_camera(engine.current_mode_data())
+                }
+            }
+
+            None -> {
+                camera = find_camera(engine.current_mode_data())
+            }
         }
     }
 
@@ -164,8 +198,20 @@ impl GameView for GameWindow {
             viewport.aspect_ratio_axis = 0
         }
 
-        // render mode
-        renderer.begin_scene(viewport.projection_matrix)
+        // set projection matrix
+        match ref camera {
+            Some($cam) -> {
+                io.println("yes cam")
+                view_proj := viewport.projection_matrix * viewport.view_matrix
+                renderer.begin_scene(view_proj)
+            }
+
+            None -> {
+                io.println("no cam")
+                viewport.update_projection_matrix(world_size)
+                renderer.begin_scene(viewport.projection_matrix)
+            }
+        }
 
         return false
     }
@@ -200,7 +246,14 @@ impl GameView for EditorWindow {
     }
 
     on_key_event :: (ref Self, key: i32, scancode: i32, action: i32, mods: i32) {
-
+        match (action, key, mods) {
+            (GLFW_PRESS, $keycode, _) -> {
+                input.set_key_state(keycode, true)
+            }
+            (GLFW_RELEASE, $keycode, _) -> {
+                input.set_key_state(keycode, false)
+            }
+        }
     }
 
     is_focused :: (ref Self) -> bool {
@@ -217,7 +270,7 @@ impl GameView for EditorWindow {
         { // calculate focused state
             was_focused := viewport.is_focused
             viewport.is_focused = ImGui.IsWindowFocused()
-            viewport.lost_focused = was_focused and !viewport.is_focused
+            viewport.lost_focus = was_focused and !viewport.is_focused
             viewport.is_hovered = ImGui.IsWindowHovered()
             // @todo: send focus event to layer_stack
         }
@@ -305,7 +358,6 @@ impl GameView for EditorWindow {
 
         // bind viewport
         viewport.bind()
-        engine.editor_viewport = &self.viewport
 
         // render mode
         view_projection := viewport.projection_matrix * viewport.view_matrix
@@ -346,7 +398,14 @@ impl GameView for GameAndEditorWindow {
     }
 
     on_key_event :: (ref Self, key: i32, scancode: i32, action: i32, mods: i32) {
-
+        match (action, key, mods) {
+            (GLFW_PRESS, $keycode, _) -> {
+                input.set_key_state(keycode, true)
+            }
+            (GLFW_RELEASE, $keycode, _) -> {
+                input.set_key_state(keycode, false)
+            }
+        }
     }
 
     is_focused :: (ref Self) -> bool {
@@ -363,7 +422,7 @@ impl GameView for GameAndEditorWindow {
         { // calculate focused state
             was_focused := viewport.is_focused
             viewport.is_focused = ImGui.IsWindowFocused()
-            viewport.lost_focused = was_focused and !viewport.is_focused
+            viewport.lost_focus = was_focused and !viewport.is_focused
             viewport.is_hovered = ImGui.IsWindowHovered()
             // @todo: send focus event to layer_stack
         }
@@ -436,10 +495,6 @@ impl GameView for GameAndEditorWindow {
             viewport.set_scale(zoom)
             viewport.set_translation(-camera_pos)
         }
-
-        if viewport.is_focused {
-            engine.game_viewport = &self.viewport
-        }
     }
 
     render :: (ref Self, world_size: vec3, renderer: ref Renderer) {
@@ -479,8 +534,6 @@ impl GameView for GameAndEditorWindow {
         } else {
             viewport.aspect_ratio_axis = 1.0f
         }
-
-        engine.editor_viewport = &self.viewport
 
         // render mode
         view_projection := viewport.projection_matrix * viewport.view_matrix
@@ -536,7 +589,7 @@ Viewport :: struct {
     render_texture : u32 = 0
     depth_texture  : u32 = 0
     is_focused     := false
-    lost_focused   := false
+    lost_focus   := false
     is_hovered     := false
 }
 

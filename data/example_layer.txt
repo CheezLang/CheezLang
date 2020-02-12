@@ -51,6 +51,9 @@
             PlayerControlComponent {
                 speed = 10.1235
             }
+            Camera {
+                size = {x=10, y=10}
+            }
         ]
     }
     {

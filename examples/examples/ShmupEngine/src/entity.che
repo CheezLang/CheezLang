@@ -40,12 +40,6 @@ impl Entity {
         }
     }
 
-    render_gizmos :: (ref Self, engine: ref ShmupEngine, renderer: ref Renderer) {
-        for components {
-            it.get().render_gizmos(self, engine, renderer)
-        }
-    }
-
     add_component :: (ref Self, component: Rc[Component]) {
         components.add(component)
     }

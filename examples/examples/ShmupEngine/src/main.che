@@ -266,7 +266,6 @@ Test :: struct {
 
 impl EntityLayerCallbacks for Test {
     init :: (ref Self, layer: ref EntityLayer) -> bool {
-        io.formatln("EntityLayerCallbacks.init()")
         self.layer = &layer
 
         layer.engine.save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))

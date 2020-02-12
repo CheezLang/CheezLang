@@ -15,6 +15,12 @@ Rc :: struct(T: type) {
     owns_memory : bool
 }
 
+Ref :: struct(T: type) {
+    data        : &RcData
+    value       : &T
+    owns_memory : bool
+}
+
 impl(T: type) Rc[T] {
     empty :: () -> Rc[T] {
         return Rc[T](null, null, null, false)
@@ -38,7 +44,13 @@ impl(T: type) Rc[T] {
 
     clone :: (ref Self) -> Rc[T] {
         data.count += 1
+        data.internal_count += 1
         return Rc[T](data, value, drop_impl, owns_memory)
+    }
+
+    borrow :: (ref Self) -> Ref[T] {
+        data.internal_count += 1
+        return Ref[T](data, value, owns_memory)
     }
 
     count :: (ref Self) -> int {
@@ -69,6 +81,33 @@ impl(T: type) Rc[T] {
     }
 }
 
+impl(T: type) Ref[T] {
+    clone :: (ref Self) -> Ref[T] {
+        data.internal_count += 1
+        return Ref[T](data, value, owns_memory)
+    }
+
+    count :: (ref Self) -> int {
+        @assert(data != null)
+        return data.count
+    }
+
+    is_null :: (ref Self) -> bool {
+        return value == null
+    }
+
+    try_get :: (ref Self) -> Option[ref T] {
+        return if value == null
+            then None
+            else Some(<<value)
+    }
+
+    get :: (ref Self) -> ref T {
+        @assert(value != null)
+        return <<value
+    }
+}
+
 impl(T: type) Drop for Rc[T] {
     drop :: (ref Self) {
         if data == null {
@@ -77,10 +116,27 @@ impl(T: type) Drop for Rc[T] {
 
         @assert(data.count > 0)
         data.count -= 1
+        data.internal_count -= 1
         if data.count == 0 {
             if drop_impl != null {
                 drop_impl(value)
             }
+            if owns_memory {
+                mem.free(data)
+            }
+        }
+    }
+}
+
+impl(T: type) Drop for Ref[T] {
+    drop :: (ref Self) {
+        if data == null {
+            return
+        }
+
+        @assert(data.internal_count > 0)
+        data.internal_count -= 1
+        if data.internal_count == 0 {
             if owns_memory {
                 mem.free(data)
             }

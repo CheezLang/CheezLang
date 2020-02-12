@@ -249,6 +249,10 @@ impl EntityInspector {
                 }
             }
 
+            _ if typ == @type_info(vec2) -> {
+                ImGui.InputFloat2(name.as_cstring(), cast ptr)
+            }
+
             _ if typ == @type_info(Array[vec3]) -> {
                 arr := ref <<cast(&Array[vec3]) ptr
                 open := true
