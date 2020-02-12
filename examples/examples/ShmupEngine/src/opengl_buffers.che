@@ -1,9 +1,13 @@
 use import std.array
+use import std.rc
+use import std.string
 mem :: import std.mem.allocator
 io  :: import std.io
 
 use import opengl.glad_binding
+use import stb.stb_binding
 
+use import opengl_utils
 use import math
 
 #export_scope
@@ -93,11 +97,11 @@ VertexBuffer :: struct {
 }
 
 impl VertexBuffer {
-    create :: (vertices: []vec3, static: bool = true) -> &VertexBuffer {
+    create :: (vertices: []f32, static: bool = true) -> &VertexBuffer {
         vbo : u32 = 0
         glGenBuffers(1, &vbo)
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
-        glBufferData(GL_ARRAY_BUFFER, @sizeof(vec3) * vertices.length, vertices.data, if static then GL_STATIC_DRAW else GL_DYNAMIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, if static then GL_STATIC_DRAW else GL_DYNAMIC_DRAW)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
 
         buff := mem.alloc(VertexBuffer)
@@ -105,9 +109,9 @@ impl VertexBuffer {
         return buff
     }
 
-    set_data :: (ref Self, vertices: []vec3) {
+    set_data :: (ref Self, vertices: []f32) {
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
-        glBufferData(GL_ARRAY_BUFFER, @sizeof(vec3) * vertices.length, vertices.data, GL_DYNAMIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, GL_DYNAMIC_DRAW)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
     }
 
@@ -216,5 +220,73 @@ impl VertexArray {
 impl Drop for VertexArray {
     drop :: (ref Self) {
         glDeleteVertexArrays(1, &vao)
+    }
+}
+
+///////////////////////////////////////////////
+Texture :: struct {
+    id      : u32
+    width   : int
+    height  : int
+    internal_format : GLenum
+    data_format     : GLenum
+}
+
+impl Texture {
+    from_file :: (path: string) -> Result[Rc[Texture], ()] {
+        io.println("creating texture from file")
+        // load data from file
+        width    : i32 = 0
+        height   : i32 = 0
+        channels : i32 = 0
+        stbi_set_flip_vertically_on_load(1)
+        data : &stbi_uc = null
+        {
+            str := String.from_string(path)
+            data = stbi_load(str.as_cstring(), &width, &height, &channels, 0)
+        }
+
+        if data == null {
+            return Err(())
+        }
+
+        defer stbi_image_free(data)
+
+        internal_format : GLenum = 0
+        data_format     : GLenum = 0
+        match channels {
+            3 -> {
+                internal_format = GL_RGB8
+                data_format     = GL_RGB
+            }
+            4 -> {
+                internal_format = GL_RGBA8
+                data_format     = GL_RGBA
+            }
+        }
+
+        id : u32 = 0
+        GL(glGenTextures(1, &id))
+        GL(glBindTexture(GL_TEXTURE_2D, id))
+
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST))
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT))
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT))
+        GL(glTexImage2D(GL_TEXTURE_2D, 0, cast internal_format, width, height, 0, data_format, GL_UNSIGNED_BYTE, data))
+
+        return Ok(Rc[Texture].new(Texture(id, cast width, cast height, internal_format, data_format)))
+    }
+
+    bind :: (ref Self, slot: int) {
+        // glBindTextureUnit(cast slot, id)
+        GL(glActiveTexture(GL_TEXTURE0))
+        GL(glBindTexture(GL_TEXTURE_2D, id))
+    }
+}
+
+impl Drop for Texture {
+    drop :: (ref Self) {
+        glDeleteTextures(1, &id)
     }
 }

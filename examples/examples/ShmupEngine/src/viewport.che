@@ -444,8 +444,8 @@ impl Viewport {
         texture_height := i32(max_size.y)
 
         // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
-        (glGenFramebuffers(1, &frame_buffer))
-        (glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer))
+        GL(glGenFramebuffers(1, &frame_buffer))
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer))
 
         // The texture we're going to render to
         GL(glGenTextures(1, &render_texture))
@@ -478,9 +478,9 @@ impl Viewport {
             return false
         }
 
-        glBindTexture(GL_TEXTURE_2D, 0)
-        glBindRenderbuffer(GL_RENDERBUFFER, 0)
-        glBindFramebuffer(GL_FRAMEBUFFER, 0)
+        GL(glBindTexture(GL_TEXTURE_2D, 0))
+        GL(glBindRenderbuffer(GL_RENDERBUFFER, 0))
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, 0))
         return true
     }
 
@@ -524,10 +524,24 @@ impl Viewport {
     }
 
     world_to_screen :: (ref Self, pos: vec3) -> vec3 {
-        clip_pos := projection_matrix * view_matrix * pos
-        ndc_pos := clip_pos * vec3(1, -1) * 0.5f + 0.5f
-        screen_pos := ndc_pos * size + self.pos
+        clip_pos    := projection_matrix * view_matrix * pos
+        ndc_pos     := clip_pos * vec3(1, -1) * 0.5f + 0.5f
+        screen_pos  := ndc_pos * size + self.pos
         return screen_pos
+    }
+
+    project :: (ref Self, projection_matrix: mat4, pos: vec3) -> vec3 {
+        clip_pos    := projection_matrix * pos
+        ndc_pos     := clip_pos * vec3(1, -1) * 0.5f + 0.5f
+        screen_pos  := ndc_pos * size + self.pos
+        return screen_pos
+    }
+
+    project_dir :: (ref Self, projection_matrix: mat4, pos: vec2) -> vec2 {
+        clip_pos    := mat4.mulv(projection_matrix, vec3(pos.x, pos.y, 0), 0)
+        ndc_pos     := clip_pos * vec3(1, -1) * 0.5f
+        screen_pos  := ndc_pos * size
+        return screen_pos.xy()
     }
 
     update_projection_matrix :: (ref Self, world_size: vec3) {

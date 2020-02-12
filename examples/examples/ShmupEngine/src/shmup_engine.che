@@ -38,6 +38,7 @@ EnabledEditors :: struct {
 PropertyEdit :: enum #copy {
     EditFloat   : (ptr: &float, name: c_string, step: float)
     EditVec3    : (ptr: &vec3, name: c_string)
+    EditVec4    : (ptr: &vec4, name: c_string)
     EditColor3  : (ptr: &vec3, name: c_string)
 }
 
@@ -329,6 +330,7 @@ impl ShmupEngine {
         glfwSetErrorCallback(glfw_error_callback)
 
         // initialize glfw
+        io.println("[LOG] Initializing GLFW")
         if glfwInit() == 0 {
             io.println("[ERROR] Failed to initialize GLFW")
             return
@@ -354,6 +356,9 @@ impl ShmupEngine {
             // use last monitor
             monitor := monitors[count - 1]
 
+            // use primary monitor
+            // monitor := monitors[0]
+
             monitor_pos := Vector2[i32]()
             glfwGetMonitorPos(monitor, &monitor_pos.x, &monitor_pos.y)
 
@@ -375,7 +380,9 @@ impl ShmupEngine {
         glfwSwapInterval(if vsync_enabled then 1 else 0)
 
         // initialize glad
+        io.println("[LOG] Initializing GLAD")
         if gladLoadGL() != 1 {
+            io.println("[ERROR] Failed to initialize GLAD")
             return
         }
         { // get opengl version
@@ -400,13 +407,18 @@ impl ShmupEngine {
         glfwSetFramebufferSizeCallback(glfw_window, on_framebuffer_resize)
 
         // initialize imgui
+        io.println("[LOG] Initializing ImGui")
         if !init_imgui(glfw_window) {
+            io.println("[ERROR] Failed to initialize ImGui")
             return
         }
         defer shutdown_imgui()
 
         viewport_size_max.x = int(vidmode.width)
         viewport_size_max.y = int(vidmode.height)
+        viewport_size_max.x = 1920
+        viewport_size_max.y = 1080
+        io.println("[LOG] Initializing viewports")
         if !initialize_viewport() {
             io.println("[ERROR] Failed to create frame buffer for viewport")
             return
@@ -461,6 +473,11 @@ impl ShmupEngine {
 
             (GLFW_PRESS, GLFW_KEY_F5, _) -> {
                 engine.toggle_play_mode()
+                return
+            }
+            (GLFW_PRESS, GLFW_KEY_F9, GLFW_MOD_CONTROL) -> {
+                io.println("[LOG] Reloading shaders")
+                engine.renderer.reload_shaders()
                 return
             }
 
@@ -660,20 +677,28 @@ impl ShmupEngine {
             ImGui.End()
         }
 
-        if ImGui.Begin("Values") {
-            for p : properties_to_edit {
-                match p {
-                    PropertyEdit.EditFloat($e) -> {
-                        ImGui.InputFloat(e.name, e.ptr, e.step, e.step * 5)
-                    }
-                    PropertyEdit.EditVec3($e) -> {
-                        ImGui.InputFloat3(e.name, cast e.ptr)
-                    }
-                    PropertyEdit.EditColor3($e) -> {
-                        ImGui.ColorEdit3(e.name, cast e.ptr)
+        { // values
+            if ImGui.Begin("Values") {
+                for p : properties_to_edit {
+                    match p {
+                        PropertyEdit.EditFloat($e) -> {
+                            ImGui.InputFloat(e.name, e.ptr, e.step, e.step * 5)
+                        }
+                        PropertyEdit.EditVec3($e) -> {
+                            ImGui.InputFloat3(e.name, cast e.ptr)
+                        }
+                        PropertyEdit.EditVec4($e) -> {
+                            ImGui.InputFloat4(e.name, cast e.ptr)
+                        }
+                        PropertyEdit.EditColor3($e) -> {
+                            ImGui.ColorEdit3(e.name, cast e.ptr)
+                        }
                     }
                 }
             }
+            ImGui.End()
+
+            properties_to_edit.clear()
         }
 
         { // layers
@@ -695,8 +720,6 @@ impl ShmupEngine {
         inspector.render()
         hierarchy.render()
         console.get().render()
-
-        ImGui.End()
     }
 
     edit_property :: (ref Self, edit: PropertyEdit) {

@@ -16,6 +16,7 @@ GL :: (code: Code) #macro {
 
         // this slows down compilation times a lot, so only use for debugging
         // io.printfln("at {}:{}:{}", @macro_source_location())
+        // @assert(false)
     }
 }
 
