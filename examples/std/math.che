@@ -377,6 +377,198 @@ impl(T: type) Vector3[T] {
     change_type :: (Self, $TargetType: type) -> Vector3[TargetType] {
         return Vector3[TargetType](TargetType(x), TargetType(y), TargetType(z))
     }
+
+    xy :: (Self) -> Vector2[T] {
+        return Vector2[T](x, y)
+    }
+}
+
+
+impl(T: type) Vector4[T] {
+    // ref
+    addv :: (ref Self, other: Self) -> ref Self #operator("+=") {
+        x += other.x
+        y += other.y
+        z += other.z
+        w += other.w
+        return self
+    }
+
+    subv :: (ref Self, other: Self) -> ref Self #operator("-=") {
+        x -= other.x
+        y -= other.y
+        z -= other.z
+        w -= other.w
+        return self
+    }
+
+    mulv :: (ref Self, other: Self) -> ref Self #operator("*=") {
+        x *= other.x
+        y *= other.y
+        z *= other.z
+        w *= other.w
+        return self
+    }
+
+    muls :: (ref Self, other: T) -> ref Self #operator("*=") {
+        x *= other
+        y *= other
+        z *= other
+        w *= other
+        return self
+    }
+
+    divv :: (ref Self, other: Self) -> ref Self #operator("/=") {
+        x /= other.x
+        y /= other.y
+        z /= other.z
+        w /= other.w
+        return self
+    }
+
+    normalize :: (ref Self) -> ref Self {
+        mag := self.mag()
+        if mag != 0 {
+            x /= mag
+            y /= mag
+            z /= mag
+            w /= mag
+        }
+
+        return self
+    }
+
+    normalized :: (Self) -> Self {
+        mag := self.mag()
+        if mag != 0 {
+            return Vector4[T](
+                x / mag
+                y / mag
+                z / mag
+                w / mag
+            )
+        } else {
+            return Vector4[T](0, 0, 0, 0)
+        }
+    }
+
+    mag :: (Self) -> T {
+        return cast(T) sqrt(cast(double) (x*x + y*y + z*z + w*w))
+    }
+
+    magsq :: (Self) -> T {
+        return cast(T) (x*x + y*y + z*z + w*w)
+    }
+
+    neg :: (Self) -> Self #operator("-") {
+        return Vector4[T](-x, -y, -z, -w)
+    }
+
+    // static
+    addvv :: (a: Self, b: Self) -> Self #operator("+") {
+        return Vector4[T](
+            a.x + b.x
+            a.y + b.y
+            a.z + b.z
+            a.w + b.w
+        )
+    }
+
+    addvs :: (a: Self, b: T) -> Self #operator("+") {
+        return Vector4[T](
+            a.x + b
+            a.y + b
+            a.z + b
+            a.w + b
+        )
+    }
+
+    subvv :: (a: Self, b: Self) -> Self #operator("-") {
+        return Vector4[T](
+            a.x - b.x
+            a.y - b.y
+            a.z - b.z
+            a.w - b.w
+        )
+    }
+
+    subvs :: (a: Self, b: T) -> Self #operator("-") {
+        return Vector4[T](
+            a.x - b
+            a.y - b
+            a.z - b
+            a.w - b
+        )
+    }
+
+    mulvv :: (a: Self, b: Self) -> Self #operator("*") {
+        return Vector4[T](
+            a.x * b.x
+            a.y * b.y
+            a.z * b.z
+            a.w * b.w
+        )
+    }
+
+    mulvs :: (a: Self, b: T) -> Self #operator("*") {
+        return Vector4[T](
+            a.x * b
+            a.y * b
+            a.z * b
+            a.w * b
+        )
+    }
+
+    divvv :: (a: Self, b: Self) -> Self #operator("/") {
+        return Vector4[T](
+            a.x / b.x
+            a.y / b.y
+            a.z / b.z
+            a.w / b.w
+        )
+    }
+
+    divvs :: (a: Self, b: T) -> Self #operator("/") {
+        return Vector4[T](
+            a.x / b
+            a.y / b
+            a.z / b
+            a.w / b
+        )
+    }
+
+    dot :: (a: Self, b: Self) -> T {
+        return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w
+    }
+
+    reflect :: (ref Self, normal: Self) -> Self {
+        return normal * -Self.dot(self, normal) * T(2) + <<&self
+    }
+
+    max_component :: (ref Self) -> T {
+        return max(x, max(y, max(z, w)))
+    }
+
+    clamped :: (Self, min: T, max: T) -> Self {
+        return Vector4[T](
+            clamp(x, min, max)
+            clamp(y, min, max)
+            clamp(z, min, max)
+            clamp(w, min, max)
+        )
+    }
+
+    change_type :: (Self, $TargetType: type) -> Vector4[TargetType] {
+        return Vector4[TargetType](TargetType(x), TargetType(y), TargetType(z), TargetType(w))
+    }
+
+    xyz :: (Self) -> Vector3[T] {
+        return Vector3[T](x, y, z)
+    }
+
+    xy :: (Self) -> Vector2[T] {
+        return Vector2[T](x, y)
+    }
 }
 
 Complex :: struct #copy {

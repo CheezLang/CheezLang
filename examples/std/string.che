@@ -396,6 +396,10 @@ streq :: (a: $T, b: $T2) -> bool {
     return true
 }
 
+streq_string :: (a: string, b: string) -> bool {
+    return streq(a, b)
+}
+
 impl string {
     get_length :: (Self) -> int {
         // @todo: calculate length in chars
@@ -479,6 +483,17 @@ impl string {
         end += 1
         @assert(start >= 0 and start < self.bytes.length and start <= end and end <= self.bytes.length)
         return self.sub_string(start, end)
+    }
+
+    index_of :: (ref Self, ch: char) -> int {
+        bytes := self.bytes
+        for i : 0..bytes.length {
+            if bytes[i] == u8(ch) {
+                return i
+            }
+        }
+
+        return -1
     }
 
     to_cstring :: (Self) -> c_string {
