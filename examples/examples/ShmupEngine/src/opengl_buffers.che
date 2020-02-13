@@ -99,28 +99,40 @@ VertexBuffer :: struct {
 impl VertexBuffer {
     create :: (vertices: []f32, static: bool = true) -> &VertexBuffer {
         vbo : u32 = 0
-        glGenBuffers(1, &vbo)
-        glBindBuffer(GL_ARRAY_BUFFER, vbo)
-        glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, if static then GL_STATIC_DRAW else GL_DYNAMIC_DRAW)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        GL(glGenBuffers(1, &vbo))
+        GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
+        GL(glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, if static then GL_STATIC_DRAW else GL_DYNAMIC_DRAW))
+        GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
 
         buff := mem.alloc(VertexBuffer)
         <<buff = VertexBuffer(vbo, BufferLayout())
         return buff
     }
 
-    set_data :: (ref Self, vertices: []f32) {
-        glBindBuffer(GL_ARRAY_BUFFER, vbo)
-        glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, GL_DYNAMIC_DRAW)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+    dynamic :: (size_in_bytes: int) -> &VertexBuffer {
+        vbo : u32 = 0
+        GL(glGenBuffers(1, &vbo))
+        GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
+        GL(glBufferData(GL_ARRAY_BUFFER, cast size_in_bytes, null, GL_DYNAMIC_DRAW))
+        GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
+
+        buff := mem.alloc(VertexBuffer)
+        <<buff = VertexBuffer(vbo, BufferLayout())
+        return buff
+    }
+
+    sub_data :: (ref Self, offset: int, bytes: int, data: &void) {
+        GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
+        GL(glBufferSubData(GL_ARRAY_BUFFER, cast offset, cast bytes, data))
+        GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
     }
 
     bind :: (ref Self) {
-        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
     }
 
     unbind :: (ref Self) {
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
     }
 }
 

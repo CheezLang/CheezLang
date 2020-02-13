@@ -181,6 +181,7 @@ impl GameView for GameWindow {
                 layer.render(true, renderer)
             }
         }
+        renderer.flush()
         end_render()
     }
 
@@ -355,7 +356,8 @@ impl GameView for EditorWindow {
                 layer.render(true, renderer)
             }
         }
-        renderer.draw_quad(vec3(0, 0, 0), engine.world_size, 0, 0.05)
+        renderer.draw_quad(vec3(0, 0, 0), engine.world_size)
+        renderer.flush()
         end_render()
     }
 
@@ -525,7 +527,8 @@ impl GameView for GameAndEditorWindow {
                 layer.render(true, renderer)
             }
         }
-        renderer.draw_quad(vec3(0, 0, 0), engine.world_size, 0, 0.05)
+        renderer.draw_quad(vec3(0, 0, 0), engine.world_size)
+        renderer.flush()
         end_render()
     }
 

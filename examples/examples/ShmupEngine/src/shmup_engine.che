@@ -40,6 +40,7 @@ EnabledEditors :: struct {
 }
 
 PropertyEdit :: enum #copy {
+    EditInt     : (ptr: &int, name: c_string)
     EditFloat   : (ptr: &float, name: c_string, step: float)
     EditVec3    : (ptr: &vec3, name: c_string)
     EditVec4    : (ptr: &vec4, name: c_string)
@@ -344,6 +345,14 @@ impl ShmupEngine {
         save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))
 
         self.register_builtin_components()
+        
+        { // initialize edit mode
+            for layer : edit_mode.layer_stack {
+                if !layer.init() {
+                    io.formatln("[ERROR] Failed to initialize layer {} when starting engine", [it_index])
+                }
+            }
+        }
 
         last_frame_time := get_time_microseconds()
 
@@ -543,6 +552,9 @@ impl ShmupEngine {
             if ImGui.Begin("Values") {
                 for p : properties_to_edit {
                     match p {
+                        PropertyEdit.EditInt($e) -> {
+                            ImGui.InputScalar(e.name, ImGui.ImGuiDataType_.S64, e.ptr)
+                        }
                         PropertyEdit.EditFloat($e) -> {
                             ImGui.InputFloat(e.name, e.ptr, e.step, e.step * 5)
                         }

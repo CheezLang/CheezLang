@@ -94,7 +94,7 @@ impl MenuObject {
                 uv_min := source_patch * f32(n_patch) / image_size
                 uv_max := uv_min + vec2(f32(n_patch), f32(n_patch)) / image_size
 
-                renderer.fill_quad(screen_location, vec3(cast patch_size.x, cast patch_size.y, 0), 0, sub=vec4(uv_min.x, uv_min.y, uv_max.x, uv_max.y))
+                renderer.fill_quad(screen_location, vec3(cast patch_size.x, cast patch_size.y, 0), 0, uv=vec4(uv_min.x, uv_min.y, uv_max.x, uv_max.y))
             }
         }
 
@@ -116,7 +116,7 @@ impl MenuObject {
             uv_min := source_patch * f32(n_patch) / image_size
             uv_max := uv_min + vec2(f32(n_patch), f32(n_patch)) / image_size
 
-            renderer.fill_quad(screen_location, vec3(cast patch_size.x, cast patch_size.y, 0), 0, sub=vec4(uv_min.x, uv_min.y, uv_max.x, uv_max.y))
+            renderer.fill_quad(screen_location, vec3(cast patch_size.x, cast patch_size.y, 0), 0, uv=vec4(uv_min.x, uv_min.y, uv_max.x, uv_max.y))
         }
 
         if total_rows - top_visible_row > cell_table.y {
@@ -128,7 +128,7 @@ impl MenuObject {
             uv_min := source_patch * f32(n_patch) / image_size
             uv_max := uv_min + vec2(f32(n_patch), f32(n_patch)) / image_size
 
-            renderer.fill_quad(screen_location, vec3(cast patch_size.x, cast patch_size.y, 0), 0, sub=vec4(uv_min.x, uv_min.y, uv_max.x, uv_max.y))
+            renderer.fill_quad(screen_location, vec3(cast patch_size.x, cast patch_size.y, 0), 0, uv=vec4(uv_min.x, uv_min.y, uv_max.x, uv_max.y))
         }
 
         // draw items
@@ -150,7 +150,7 @@ impl MenuObject {
         cursor_pos.y = f32((cell_cursor.y - top_visible_row) * (cell_size.y + cell_padding.y)) * f32(n_patch) + screen_offset.y + f32(n_patch) * 0.5f
 
         // temp: draw cursor
-        renderer.fill_quad(vec3(cursor_pos.x, cursor_pos.y), vec3(16, 16), 0, sub = vec4(32, 8, 48, 24) / vec4(48, 24, 48, 24))
+        renderer.fill_quad(vec3(cursor_pos.x, cursor_pos.y), vec3(16, 16), 0, uv = vec4(32, 8, 48, 24) / vec4(48, 24, 48, 24))
     }
 
     build :: (ref Self) {
@@ -262,6 +262,13 @@ Test :: struct {
     sub := vec4(0, 0, 1, 1)
 
     tex := Rc[Texture].empty()
+
+    total       := 10
+    x_count     := 100
+    size        := 1.0f
+    thickness   := 0.1f
+
+    time := 0.0f
 }
 
 impl EntityLayerCallbacks for Test {
@@ -305,6 +312,7 @@ impl EntityLayerCallbacks for Test {
     }
 
     update :: (ref Self, dt: float) {
+        time += dt
     }
 
     render :: (ref Self, renderer: ref Renderer) {
@@ -332,6 +340,22 @@ impl EntityLayerCallbacks for Test {
         // renderer.pop_proj()
 
         // render_menu_imgui()
+        
+        layer.engine.edit_property(PropertyEdit.EditInt(&total, "Quad Count"))
+        layer.engine.edit_property(PropertyEdit.EditInt(&x_count, "X Count"))
+        layer.engine.edit_property(PropertyEdit.EditFloat(&size, "Quad Size", 0.1f))
+        layer.engine.edit_property(PropertyEdit.EditFloat(&thickness, "Line thickness", 0.01f))
+
+        rand.PseudoRandom.set_seed(123)
+        for 0..total {
+            x := f32(it % x_count) * size
+            y := f32(it / x_count) * size
+
+            // col := vec3(rand.PseudoRandom.next_float(), rand.PseudoRandom.next_float(), rand.PseudoRandom.next_float())
+            // angle := rand.PseudoRandom.next_float() * 3.1415f * 2.0f
+
+            renderer.fill_quad(vec3(x, y), vec3(size, size) * 0.9f)
+        }
     }
 
     imgui_render :: (ref Self) {
@@ -428,7 +452,8 @@ impl Component for CameraController {
 
         entity.position += velocity * dt
     }
-    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
+    }
     render_gizmos :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
     get_type_info :: (ref Self) -> &TypeInfo {
         return @type_info(Self)
