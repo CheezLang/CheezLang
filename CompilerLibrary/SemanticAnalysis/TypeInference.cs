@@ -4965,6 +4965,12 @@ namespace Cheez
                         break;
                     }
                     // TODO: check if index != -1
+                    if (index == -1)
+                    {
+                        ReportError(arg, $"No parameters matches argument with name '{arg.Name.Name}'");
+                        ok = false;
+                        break;
+                    }
 
                     map[index] = arg;
                     arg.Index = index;
@@ -5184,7 +5190,7 @@ namespace Cheez
                 return expr;
 
             // match arguments and parameter types
-            var pairs = expr.Arguments.Select(arg => (arg.Index < func.Parameters.Length ? func.Parameters[arg.Index].type : null, arg));
+            var pairs = expr.Arguments.Select(arg => (arg.Index < func.Parameters.Length && arg.Index >= 0 ? func.Parameters[arg.Index].type : null, arg));
             (CheezType type, AstArgument arg)[] args = pairs.ToArray();
             foreach (var (type, arg) in args)
             {
@@ -5311,6 +5317,16 @@ namespace Cheez
                     if (mi.Value.Type.IsErrorType) continue;
                     mi.Value = HandleReference(mi.Value, mem.Type, context);
                     mi.Value = CheckType(mi.Value, mem.Type);
+                }
+
+                if (expr.MemberInitializers.Count > publicMembers.Count)
+                {
+                    for (int i = publicMembers.Count; i < expr.MemberInitializers.Count; i++)
+                    {
+                        expr.MemberInitializers[i].Value.Type = CheezType.Error;
+                    }
+                    ReportError(expr, $"Too many values provided: needed {publicMembers.Count}, got {expr.MemberInitializers.Count}");
+                    return expr;
                 }
             }
             else if (namesProvided == expr.MemberInitializers.Count)
