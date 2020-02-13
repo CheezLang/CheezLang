@@ -15,6 +15,10 @@ impl LinearCongruentialGenerator {
         return Self(seed)
     }
 
+    set_seed :: (ref Self, seed: u64) {
+        self.seed = seed
+    }
+
     next :: (ref Self) -> u32 {
         M : u64 = cast(u64) u32.max
         A : u64 = 1664525
@@ -59,6 +63,11 @@ impl PseudoRandom {
         }
     }
 
+    set_seed :: (seed: u64) {
+        init()
+        lcg.set_seed(seed)
+    }
+
     next_int :: () -> i32 {
         init()
         return cast lcg.next()
@@ -67,6 +76,11 @@ impl PseudoRandom {
     next_double :: () -> double {
         init()
         return lcg.next_double()
+    }
+
+    next_float :: () -> float {
+        init()
+        return cast lcg.next_double()
     }
 }
 

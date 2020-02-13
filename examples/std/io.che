@@ -12,6 +12,10 @@ formatln :: (format: &any, args: []&any = []) {
     format_string := fmt.format_any(format)
     println(fmt.format(format_string.slice(), args))
 }
+format :: (format: &any, args: []&any = []) {
+    format_string := fmt.format_any(format)
+    print(fmt.format(format_string.slice(), args))
+}
 
 println :: (v: $T) {
     s := String.empty()
