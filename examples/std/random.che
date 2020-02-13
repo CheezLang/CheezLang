@@ -68,7 +68,7 @@ impl PseudoRandom {
         lcg.set_seed(seed)
     }
 
-    next_int :: () -> i32 {
+    next_int :: () -> int {
         init()
         return cast lcg.next()
     }

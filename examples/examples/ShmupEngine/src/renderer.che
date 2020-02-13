@@ -1,5 +1,7 @@
 use import std.math
+use import std.rc
 use import std.array
+use import std.hash_table
 mem :: import std.mem.allocator
 io  :: import std.io
 fmt :: import std.fmt
@@ -17,6 +19,9 @@ use import shader
 quad_cache_size :: 5000
 line_cache_size :: 5000
 
+// @todo: read this value from OpenGL
+max_texture_slots :: 16
+
 Origin :: enum #copy {
     Center, TopLeft, BottomLeft, TopRight, BottomRight
 }
@@ -25,12 +30,16 @@ QuadVertex :: struct #copy {
     position    : vec3
     color       : vec4
     uv          : vec2
-    tex_index   : float
+    tex_index   : i32
 }
 
 LineVertex :: struct #copy {
     position    : vec3
     color       : vec4
+}
+
+int_compare :: (a: int, b: int) -> bool {
+    return a == b
 }
 
 Renderer :: struct {
@@ -40,6 +49,9 @@ Renderer :: struct {
     line_va         : &VertexArray
     line_cache      := Array[LineVertex].create(line_cache_size * 2)
 
+    white_tex       := Rc[Texture].empty()
+    texture_map     := Table[int, i32].create(int_compare)
+    used_textures   := Array[Rc[Texture]].create(max_texture_slots)
 
     color_shader    : &Shader = null
     line_shader     : &Shader = null
@@ -50,6 +62,9 @@ Renderer :: struct {
 
 impl Renderer {
     create :: () -> &Renderer {
+        // white texture
+        white_tex := Texture.from_bytes(1, 1, 3, [255, 255, 255])
+
         // create line va
         line_va := {
             line_va := VertexArray.new()
@@ -84,7 +99,7 @@ impl Renderer {
                 BufferElement("aPos", ShaderDataType.Float3)
                 BufferElement("aColor", ShaderDataType.Float4)
                 BufferElement("aTexCoord", ShaderDataType.Float2)
-                BufferElement("aTexIndex", ShaderDataType.Float)
+                BufferElement("aTexIndex", ShaderDataType.Int)
             ])
             vertex_array.add_vertex_buffer(vertex_buffer)
 
@@ -108,8 +123,9 @@ impl Renderer {
         //
         r := mem.alloc(Renderer)
         <<r = Renderer(
-            quad_va = vertex_array
-            line_va = line_va
+            quad_va     = vertex_array
+            line_va     = line_va
+            white_tex   = white_tex
         )
         r.reload_shaders()
         return r
@@ -124,7 +140,7 @@ impl Renderer {
         // load shader
         color_shader = match Shader.from_file("../data/test_shader.shader") {
             Ok($shader) -> {
-                shader_program   := mem.alloc(Shader)
+                shader_program := mem.alloc(Shader)
                 <<shader_program = shader
                 shader_program
             }
@@ -135,8 +151,11 @@ impl Renderer {
             }
         }
         color_shader.bind()
-        color_shader.set_uniform_int("u_texture", 0)
-        
+        for 0..16 {
+            tex := fmt.format("uTextures[{}]", [it])
+            color_shader.set_uniform_int(tex.slice(), cast it)
+        }
+
         // line shader
         if line_shader != null {
             Memory.drop(<<line_shader)
@@ -182,40 +201,65 @@ impl Renderer {
         set_projection_matrix(projection_matrix)
     }
 
-    fill_quad :: (ref Self, pos: vec3, size: vec3, angle: float = 0, color: vec3 = vec3(1, 1, 1), uv: vec4 = vec4(0, 0, 1, 1)) {
-        if quad_cache.get_length() + 4 >= quad_cache_size {
+    fill_quad :: (ref Self, pos: vec3, size: vec3,
+                    angle: float = 0,
+                    color: vec3 = vec3(1, 1, 1),
+                    texture: Option[Rc[Texture]] = None,
+                    uv: vec4 = vec4(0, 0, 1, 1)) {
+
+        if quad_cache.get_length() + 4 >= quad_cache_size * 4 {
             flush_quads()
         }
 
+        // calculate texture index
+        tex_index : i32 = match texture {
+            Some($tex) -> match texture_map.get(int(&tex.get())) {
+                Some($idx) -> idx
+                None -> {
+                    if used_textures.get_length() >= max_texture_slots {
+                        flush_quads()
+                    }
+                    idx := i32(used_textures.get_length())
+                    texture_map[int(&tex.get())] = idx
+                    used_textures.add(tex.clone())
+                    idx
+                }
+            }
+
+            None -> 0
+        }
+
+        // calculate rotation
         offset_x, offset_y := {
             sa := sinf(angle)
             ca := cosf(angle)
             vec3(ca, sa) * size.x * 0.5f, vec3(-sa, ca) * size.y * 0.5f
         }
 
+        // emit vertices into buffer
         quad_cache.add(QuadVertex(
             position    = pos - offset_x - offset_y
             color       = vec4(color.x, color.y, color.z, 1.0f)
             uv          = vec2(uv.x, uv.y)
-            tex_index   = 0
+            tex_index   = tex_index
         ))
         quad_cache.add(QuadVertex(
             position    = pos + offset_x - offset_y
             color       = vec4(color.x, color.y, color.z, 1.0f)
             uv          = vec2(uv.z, uv.y)
-            tex_index   = 0
+            tex_index   = tex_index
         ))
         quad_cache.add(QuadVertex(
             position    = pos + offset_x + offset_y
             color       = vec4(color.x, color.y, color.z, 1.0f)
             uv          = vec2(uv.z, uv.w)
-            tex_index   = 0
+            tex_index   = tex_index
         ))
         quad_cache.add(QuadVertex(
             position    = pos - offset_x + offset_y
             color       = vec4(color.x, color.y, color.z, 1.0f)
             uv          = vec2(uv.x, uv.w)
-            tex_index   = 0
+            tex_index   = tex_index
         ))
     }
 
@@ -290,14 +334,30 @@ impl Renderer {
     }
 
     flush_quads :: (ref Self) {
+        // upload data
         vb := quad_va.vertex_buffers[0]
         vb.sub_data(0, quad_cache.get_length() * @sizeof(QuadVertex), quad_cache.get_raw())
 
+        // bind stuff
         color_shader.bind()
         quad_va.bind()
         quad_va.index_buffer.bind()
+
+        for tex : used_textures {
+            tex.get().bind(it_index)
+        }
+
+        // draw buffer
         glDrawElements(GL_TRIANGLES, cast quad_cache.get_length() * 6, GL_UNSIGNED_INT, null)
         glBindVertexArray(0)
+
+        // clear textures
+        texture_map.clear()
+        used_textures.clear()
+
+        // set white tex as texture 0
+        texture_map[int(&white_tex.get())] = 0i32
+        used_textures.add(white_tex.clone())
 
         quad_cache.clear()
     }

@@ -7,9 +7,9 @@ STATE_VECTOR_M        :: 397
 STATE_VECTOR_DIFF     :: STATE_VECTOR_LENGTH - STATE_VECTOR_M
 
 MTwister :: struct {
-    mt      : [STATE_VECTOR_LENGTH]u32 = default
-    mt_temp : [STATE_VECTOR_LENGTH]u32 = default
-    index   : u32
+    mt      : [STATE_VECTOR_LENGTH]u32  = default
+    mt_temp : [STATE_VECTOR_LENGTH]u32  = default
+    index   : u32                       = default
 }
 
 impl PseudoRandomGen for MTwister {
@@ -117,7 +117,7 @@ impl MTwister {
     next_int :: (ref Self, min: int = 0, max: int = cast i64.max) -> int {
         a := u64(next())
         b := u64(next())
-        rand := @bin_or(@bin_lsl(b, 32), a)
+        rand := @bin_and(@bin_or(@bin_lsl(b, 32), a), @bin_lsr(0xFFFFFFFF_FFFFFFFF, 1))
         return int(rand) % (max - min) + min
     }
 }

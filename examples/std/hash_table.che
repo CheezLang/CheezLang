@@ -41,6 +41,16 @@ impl(K: type, V: type) Table[K, V] {
         )
     }
 
+    clear :: (ref Self) {
+        // @todo
+        for(by_ref=true) entry : entries {
+            entry.filled = false
+            entry.is_tombstone = false
+            entry.value = None
+        }
+        count = 0
+    }
+
     empty :: (ref Self) -> bool {
         return count == 0
     }

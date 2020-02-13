@@ -4,6 +4,7 @@ use import std.math
 use import std.box
 use import std.rc
 use import std.hash_table
+use import std.random.mt
 rand :: import std.random
 mem  :: import std.mem.allocator
 fmt  :: import std.fmt
@@ -262,13 +263,17 @@ Test :: struct {
     sub := vec4(0, 0, 1, 1)
 
     tex := Rc[Texture].empty()
+    tex1 := Rc[Texture].empty()
+    tex2 := Rc[Texture].empty()
 
-    total       := 10
+    total       := 1000
     x_count     := 100
     size        := 1.0f
     thickness   := 0.1f
 
     time := 0.0f
+
+    random      : MTwister = default
 }
 
 impl EntityLayerCallbacks for Test {
@@ -277,6 +282,8 @@ impl EntityLayerCallbacks for Test {
         layer.engine.inspector.register_component_info(CameraController())
 
         layer.engine.save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))
+
+        random = MTwister.create(123456789)
 
         // menu = Box[MenuObject].new(MenuObject(String.from_string("/"), -1, true, vec2i(2, 4)))
 
@@ -307,6 +314,21 @@ impl EntityLayerCallbacks for Test {
         //         return false
         //     }
         // }
+
+        tex1 = match Texture.from_file("../data/RetroMenu.png") {
+            Ok($tex) -> tex
+            Err(_) -> {
+                io.formatln("[ERROR] Failed to load image 1")
+                return false
+            }
+        }
+        tex2 = match Texture.from_file("../data/sdfr.bmp") {
+            Ok($tex) -> tex
+            Err(_) -> {
+                io.formatln("[ERROR] Failed to load image 2")
+                return false
+            }
+        }
 
         return true
     }
@@ -345,16 +367,20 @@ impl EntityLayerCallbacks for Test {
         layer.engine.edit_property(PropertyEdit.EditInt(&x_count, "X Count"))
         layer.engine.edit_property(PropertyEdit.EditFloat(&size, "Quad Size", 0.1f))
         layer.engine.edit_property(PropertyEdit.EditFloat(&thickness, "Line thickness", 0.01f))
+        
+        // random = MTwister.create(123456789)
 
-        rand.PseudoRandom.set_seed(123)
         for 0..total {
             x := f32(it % x_count) * size
             y := f32(it / x_count) * size
 
-            // col := vec3(rand.PseudoRandom.next_float(), rand.PseudoRandom.next_float(), rand.PseudoRandom.next_float())
-            // angle := rand.PseudoRandom.next_float() * 3.1415f * 2.0f
+            tex : Option[Rc[Texture]] = match it_index % 3 {
+                1 -> Some(tex1.clone())
+                2 -> Some(tex2.clone())
+                _ -> None
+            }
 
-            renderer.fill_quad(vec3(x, y), vec3(size, size) * 0.9f)
+            renderer.fill_quad(vec3(x, y), vec3(size, size) * 0.9f, texture = tex)
         }
     }
 
