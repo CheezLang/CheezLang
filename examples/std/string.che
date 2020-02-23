@@ -201,7 +201,7 @@ impl String {
 
     as_cstring :: (ref Self) -> c_string {
         reserve(length + 1)
-        data[length] = 0
+        data[length] = 0u8
         return cast data.data
     }
 }

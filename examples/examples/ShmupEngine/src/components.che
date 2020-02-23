@@ -162,7 +162,7 @@ impl Component for PathFollowComponent {
             p2 := p3 - d1
             
             prev := p0
-            for(inclusive=true) i : 1..num_points {
+            for i : 1 ..= num_points {
                 t := float(i) / num_points
                 k := 1 - t
                 curr := (p0 * k * k * k) + (p1 * 3.0f * k * k * t) + (p2 * 3.0f * k * t * t) + (p3 * t * t * t)

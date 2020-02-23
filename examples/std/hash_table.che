@@ -69,7 +69,7 @@ impl(K: type, V: type) Table[K, V] {
         tombstone : &Entry[K, V] = null
 
         while true {
-            entry := &the_entries[index]
+            entry := &the_entries[int(index)]
 
             if !entry.filled {
                 if !entry.is_tombstone {

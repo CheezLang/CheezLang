@@ -80,8 +80,8 @@ impl Renderer {
             indices := mem.alloc_n(u32, line_cache_size * 2)
             defer mem.free_n(indices)
             for i : 0..line_cache_size {
-                indices[i * 2 + 0] = cast i * 2 + 0
-                indices[i * 2 + 1] = cast i * 2 + 1
+                indices[i * 2 + 0] = u32(i * 2 + 0)
+                indices[i * 2 + 1] = u32(i * 2 + 1)
             }
 
             index_buffer := IndexBuffer.create(indices)
@@ -106,12 +106,12 @@ impl Renderer {
             indices := mem.alloc_n(u32, quad_cache_size * 6)
             defer mem.free_n(indices)
             for i : 0..quad_cache_size {
-                indices[i * 6 + 0] = cast i * 4 + 0
-                indices[i * 6 + 1] = cast i * 4 + 1
-                indices[i * 6 + 2] = cast i * 4 + 2
-                indices[i * 6 + 3] = cast i * 4 + 2
-                indices[i * 6 + 4] = cast i * 4 + 3
-                indices[i * 6 + 5] = cast i * 4 + 0
+                indices[i * 6 + 0] = u32(i * 4 + 0)
+                indices[i * 6 + 1] = u32(i * 4 + 1)
+                indices[i * 6 + 2] = u32(i * 4 + 2)
+                indices[i * 6 + 3] = u32(i * 4 + 2)
+                indices[i * 6 + 4] = u32(i * 4 + 3)
+                indices[i * 6 + 5] = u32(i * 4 + 0)
             }
 
             index_buffer := IndexBuffer.create(indices)

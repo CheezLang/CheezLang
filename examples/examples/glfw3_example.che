@@ -229,7 +229,7 @@ Main :: () {
             ImGui.InputText("String to add", buff.data, cast buff.length)
             if ImGui.SmallButton("Add String") {
                 strings.add(String.from_cstring(buff.data))
-                buff[0] = cast 0
+                buff[0] = char8(0)
             }
             ImGui.Separator()
 

@@ -77,7 +77,7 @@ impl ErrorHandler for ConsoleErrorHandler {
         }
 
         // 
-        get_line_range :: (text: string, start_line: int, byte_index: int, byte_length: int) -> int..int {
+        get_line_range :: (text: string, start_line: int, byte_index: int, byte_length: int) -> RangeInclusive[int] {
             bytes    := text.bytes
             end_line := start_line
             end      := byte_index + byte_length
@@ -88,7 +88,7 @@ impl ErrorHandler for ConsoleErrorHandler {
                 }
             }
 
-            return start_line..end_line
+            return start_line ..= end_line
         }
 
         print_line_number :: (line: int, max_line_digits: int) {
@@ -109,7 +109,7 @@ impl ErrorHandler for ConsoleErrorHandler {
             max_line_digits := count_digits(lines.end)
 
             index := location.byte_index
-            for(inclusive=true) line : lines {
+            for line : lines {
                 // byte range of current line
                 line_range  := find_start_of_line(text, index) .. find_end_of_line(text, index)
 

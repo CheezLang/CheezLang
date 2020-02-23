@@ -43,9 +43,9 @@ impl MTwister {
     }
 
     unroll :: (ref Self, y: ref u32, i: ref u64, expr: u64) {
-        y = @bin_or(m32(mt[i]), l31(mt[i + 1]))
-        mt[i] = @bin_xor(
-            mt[expr],
+        y = @bin_or(m32(mt[int(i)]), l31(mt[int(i + 1)]))
+        mt[int(i)] = @bin_xor(
+            mt[int(expr)],
             @bin_lsr(y, 1),
             @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31), 31)), 0x9908b0df)
         )
@@ -104,7 +104,7 @@ impl MTwister {
         }
 
         index += 1
-        return mt_temp[index - 1]
+        return mt_temp[int(index - 1)]
     }
 
     next_uint :: (ref Self, min: u64 = 0, max: u64 = cast u64.max) -> u64 {

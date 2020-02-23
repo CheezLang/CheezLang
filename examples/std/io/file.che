@@ -12,7 +12,7 @@ mem :: import std.mem.allocator
 
 load_file :: (filename: string) -> Result[String, String] {
     str_c := @alloca(char8, filename.bytes.length + 1)
-    str_c[filename.bytes.length] = cast 0
+    str_c[filename.bytes.length] = char8(0)
     C.memcpy(cast str_c.data, cast filename.bytes.data, cast filename.bytes.length)
     return load_filec(str_c.data)
 }
@@ -99,7 +99,7 @@ write_filecb :: (filename: c_string, data: []u8) -> bool {
 write_file_string :: (filename: string, str: string) -> bool {
     filename_c := {
         str_c := @alloca(char8, filename.bytes.length + 1)
-        str_c[filename.bytes.length] = cast 0
+        str_c[filename.bytes.length] = char8(0)
         C.memcpy(cast str_c.data, cast filename.bytes.data, cast filename.bytes.length)
         str_c.data
     }

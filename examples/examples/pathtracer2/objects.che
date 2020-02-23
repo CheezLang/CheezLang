@@ -191,9 +191,9 @@ impl BhvNode {
         quick_sort(l, compare_funcs[int(global_random.random_real() * 3)])
 
         left, right : &Hittable, &Hittable = if l.length == 1 {
-            (l[0], l[0])
+            (cast l[0], cast l[0])
         } else if l.length == 2 {
-            (l[0], l[1])
+            (cast l[0], cast l[1])
         } else {
             mid := l.length / 2
             a := alloc(BhvNode)

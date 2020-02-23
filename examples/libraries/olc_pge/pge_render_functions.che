@@ -129,7 +129,7 @@ impl PixelGameEngine {
             y1 = max(y1, 0)
             y2 = min(y2, screen_height - 1)
 
-            for(inclusive=true) y : y1..y2 {
+            for y : y1 ..= y2 {
                 if rol(pattern) {
                     self.draw(x1, y, p)
                 }
@@ -149,7 +149,7 @@ impl PixelGameEngine {
             x1 = max(x1, 0)
             x2 = min(x2, screen_width - 1)
 
-            for(inclusive=true) x : x1..x2 {
+            for x : x1 ..= x2 {
                 if rol(pattern) {
                     draw(x, y1, p)
                 }

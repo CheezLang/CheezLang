@@ -204,7 +204,7 @@ get_help_message :: (type_info: &TypeInfo) -> String {
 
 parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) -> bool {
     if const console_debug_print {
-        io.println("parsing help")
+        io.formatln("parsing help: {}", [type_info.kind])
         log_args(args)
     }
 
@@ -222,7 +222,7 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
         _ if type_info == @type_info(String) -> {
             if !require_arg(args) { return false }
             <<cast(&String) result = args[0].clone()
-            args = args[1..args.length]
+            args = args[1..]
             true
         }
 
@@ -242,7 +242,7 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
         TypeInfoKind.Int($_)    -> {
             if !require_arg(args) { return false }
             <<cast(&int) result = fmt.parse_int(args[0].slice())
-            args = args[1..args.length]
+            args = args[1..]
             true
         }
 
@@ -275,7 +275,7 @@ parse_arguments_string_array :: (args: ref []String, result: &void) -> bool {
         }
 
         array.add(arg.clone())
-        args = args[1..args.length]
+        args = args[1..]
     }
 
     return true
@@ -296,7 +296,7 @@ parse_arguments_enum :: (type_info: &TypeInfoEnum, args: ref []String, result: &
     }
 
     command := ref args[0]
-    args = args[1..args.length]
+    args = args[1..]
 
     for(by_ref=true) mem : type_info.members {
         mem_name := get_display_name_for_member(mem)
@@ -309,6 +309,7 @@ parse_arguments_enum :: (type_info: &TypeInfoEnum, args: ref []String, result: &
                 // parse remaining arguments into associated value
                 tag_size := type_info.tag_type.size
                 value_ptr := pointer_add(result, tag_size)
+
                 if !parse_arguments_help(mem.typ, args, value_ptr) {
                     return false
                 }
@@ -317,7 +318,9 @@ parse_arguments_enum :: (type_info: &TypeInfoEnum, args: ref []String, result: &
         }
     }
 
+    C.puts("3")
     io.printfln("[ERROR] Unknown command: {}", command.slice())
+    C.puts("4")
     return false
 }
 
@@ -355,7 +358,7 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
         arg := ref args[0]
         @assert(arg.length > 0)
 
-        args = args[1..args.length]
+        args = args[1..]
 
         if arg[0] == '-' {
             name := arg.sliceF(1)
@@ -612,4 +615,24 @@ get_display_name_for_member :: (mem: ref $T) -> string {
     @assert(@type_info_of_any(name_att.args[0]) == @type_info(string))
     name := <<cast(&string) @ptr_of_any(name_att.args[0])
     return name
+}
+
+log_args :: (args: []String) {
+    // io.println("=== args ===")
+    // io.formatln("len: {}", [args.length])
+
+    // ptr := args.data[0].clone()
+    // io.formatln("len: {}", [ptr.length])
+
+    // io.println("1")
+    // for(by_ref=false) arg : args {
+    //     io.println("2")
+    //     slc := arg.slice()
+    //     io.println("3")
+
+    //     io.formatln("len: {}", [args[it_index].length])
+    //     io.formatln("len: {}", [arg.length])
+    //     io.formatln("[{}] '{}'", [it_index, slc])
+    //     io.println("4")
+    // }
 }
