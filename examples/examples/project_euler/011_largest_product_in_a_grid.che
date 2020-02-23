@@ -32,8 +32,8 @@ grid : [grid_size][grid_size]int = [
 Main :: () {
     length := 4
     largest := 0
-    for(inclusive=true) y : 0..grid_size-length {
-        for(inclusive=true) x : 3..grid_size-length {
+    for y : 0 ..= grid_size-length {
+        for x : 3 ..= grid_size-length {
             phr := 1
             phl := 1
             pv  := 1

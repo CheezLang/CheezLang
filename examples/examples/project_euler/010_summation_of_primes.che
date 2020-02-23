@@ -9,7 +9,7 @@ is_prime :: (i: int) -> bool {
     if i < 2 {
         return false
     }
-    for(inclusive=true) 2..int(sqrt(double(i))) {
+    for 2 ..= int(sqrt(double(i))) {
     // for(inclusive=true) : 2..int(i/2) {
         if i % it == 0 {
             return false
