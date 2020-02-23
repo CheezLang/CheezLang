@@ -151,10 +151,13 @@ impl Renderer {
             }
         }
         color_shader.bind()
-        for 0..16 {
-            tex := fmt.format("uTextures[{}]", [it])
-            color_shader.set_uniform_int(tex.slice(), cast it)
+
+        uTextures : [16]i32 = default
+        for i : 0..16 {
+            uTextures[i] = i32(i)
         }
+        color_shader.set_uniform_ints("uTextures", uTextures)
+        color_shader.unbind()
 
         // line shader
         if line_shader != null {

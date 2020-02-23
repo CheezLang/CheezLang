@@ -136,6 +136,10 @@ impl Shader {
         GL(glUseProgram(id))
     }
 
+    unbind :: (ref Self) {
+        GL(glUseProgram(0))
+    }
+
     get_uniform_location :: (ref Self, name: string) -> i32 {
         return match uniforms.get(name) {
             Some($loc) -> loc
@@ -189,6 +193,16 @@ impl Shader {
         return true
     }
 
+    set_uniform_ints :: (ref Self, name: string, values: []i32) -> bool {
+        loc := get_uniform_location(name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniform1iv(loc, cast values.length, values.data))
+        return true
+    }
+
     set_uniform_mat4 :: (ref Self, name: string, value: ref mat4) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
@@ -197,6 +211,15 @@ impl Shader {
 
         GL(glUniformMatrix4fv(loc, 1, 1, value.data()))
         return true
+    }
+
+    get_uniform_int :: (ref Self, name: string, result: []i32, count: int = 1) {
+        loc := get_uniform_location(name)
+        if loc == -1 {
+            @assert(false)
+        }
+
+        GL(glGetUniformiv(id, loc, result.data))
     }
 }
 
