@@ -850,8 +850,10 @@ namespace Cheez
                 if (!PassVLExpr(cas.Body, stats))
                     return false;
 
-                if (expr.Type != CheezType.Void && !Move(expr.Type, cas.Body, stats, cas.Body))
-                    return false;
+                if (expr.GetFlag(ExprFlags.ValueRequired)) {
+                    if (expr.Type != CheezType.Void && !Move(expr.Type, cas.Body, stats, cas.Body))
+                        return false;
+                }
 
                 // call destructors for bindings
                 foreach (var stat in stats.OwnedSymbolStatusesReverseOrdered)

@@ -136,7 +136,7 @@ namespace Cheez.Types
             switch (a, b)
             {
                 case (SliceType aa, SliceType bb): return TypesMatch(aa.TargetType, bb.TargetType);
-                case (ArrayType aa, ArrayType bb): return aa.Length == bb.Length && TypesMatch(aa.TargetType, bb.TargetType);
+                case (ArrayType aa, ArrayType bb): return Workspace.CheezValuesMatch((null, aa.Length), (null, bb.Length)) && TypesMatch(aa.TargetType, bb.TargetType);
                 case (RangeType aa, RangeType bb): return TypesMatch(aa.TargetType, bb.TargetType);
 
                 case (TupleType aa, TupleType bb):

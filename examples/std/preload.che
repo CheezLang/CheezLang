@@ -113,18 +113,168 @@ impl From[()] for () {
 //     }
 // }
 
+// Ranges
+Range :: struct(T: type) {
+    start : T = default
+    end   : T = default
+}
+
+RangeInclusive :: struct(T: type) {
+    start : T = default
+    end   : T = default
+}
+
+RangeFrom :: struct(T: type) {
+    start : T = default
+}
+
+RangeTo :: struct(T: type) {
+    end : T = default
+}
+
+RangeToInclusive :: struct(T: type) {
+    end : T = default
+}
+
+RangeFull :: struct {}
+
+impl string {
+    get_index :: (Self, index: int) -> ref u8 #operator("[]") {
+        return self.bytes[index]
+    }
+
+    get_range :: (Self, range: Range[int]) -> string #operator("[]") {
+        data := int(self.bytes.data) + range.start
+        length := range.end - range.start
+        return string(cast data, length)
+    }
+}
+
+impl(T: type) []T {
+    get_index :: (Self, index: int) -> ref T #operator("[]") {
+        return <<cast(&T) int(self.data) + index * @sizeof(T)
+    }
+
+    get_range :: (Self, range: Range[int]) -> []T #operator("[]") {
+        result := self
+        result.data = cast int(result.data) + range.start * @sizeof(T)
+        result.length = range.end - range.start
+        return result
+    }
+
+    get_range_inclusive :: (Self, range: RangeInclusive[int]) -> []T #operator("[]") {
+        result := self
+        result.data = cast int(result.data) + range.start * @sizeof(T)
+        result.length = range.end - range.start + 1
+        return result
+    }
+
+    get_range_to :: (Self, range: RangeTo[int]) -> []T #operator("[]") {
+        @assert(range.end >= 0 and range.end <= self.length)
+        result := self
+        result.length = range.end
+        return result
+    }
+
+    get_range_to_incl :: (Self, range: RangeToInclusive[int]) -> []T #operator("[]") {
+        @assert(range.end >= 0 and range.end < self.length)
+        result := self
+        result.length = range.end + 1
+        return result
+    }
+
+    get_range_from :: (Self, range: RangeFrom[int]) -> []T #operator("[]") {
+        @assert(range.start >= 0 and range.start <= self.length)
+        result := self
+        result.data = cast int(result.data) + range.start * @sizeof(T)
+        result.length = self.length - range.start
+        return result
+    }
+
+    get_range_full :: (Self, range: RangeFull) -> []T #operator("[]") {
+        return self
+    }
+}
+
+impl(T: type, Size: int) [Size]T {
+    get_index :: (ref Self, index: int) -> ref T #operator("[]") {
+        return <<cast(&T) int(self.data) + index * @sizeof(T)
+    }
+
+    get_range :: (ref Self, range: Range[int]) -> []T #operator("[]") {
+        result : []T = self
+        result.data = cast int(result.data) + range.start * @sizeof(T)
+        result.length = range.end - range.start
+        return result
+    }
+
+    get_range_inclusive :: (ref Self, range: RangeInclusive[int]) -> []T #operator("[]") {
+        result : []T = self
+        result.data = cast int(result.data) + range.start * @sizeof(T)
+        result.length = range.end - range.start + 1
+        return result
+    }
+
+    get_range_to :: (ref Self, range: RangeTo[int]) -> []T #operator("[]") {
+        @assert(range.end >= 0 and range.end <= self.length)
+        result : []T = self
+        result.length = range.end
+        return result
+    }
+
+    get_range_to_incl :: (ref Self, range: RangeToInclusive[int]) -> []T #operator("[]") {
+        @assert(range.end >= 0 and range.end < self.length)
+        result : []T = self
+        result.length = range.end + 1
+        return result
+    }
+
+    get_range_from :: (ref Self, range: RangeFrom[int]) -> []T #operator("[]") {
+        @assert(range.start >= 0 and range.start <= self.length)
+        result : []T = self
+        result.data = cast int(result.data) + range.start * @sizeof(T)
+        result.length = self.length - range.start
+        return result
+    }
+
+    get_range_full :: (ref Self, range: RangeFull) -> []T #operator("[]") {
+        return cast([]T) self
+    }
+}
+
 // standard for loops
-for_extension_range :: (r: $T..T, code: Code, reverse: bool = false, inclusive: bool = false) #for {
+for_extension_range :: (r: Range[$T], code: Code, reverse: bool = false) #for {
     start, end, inc := {
-        end := if const inclusive then r.end else r.end - 1
+        end := r.end - 1
         if const reverse then (end, r.start, T(-1)) else (r.start, end, T(1))
     }
 
     compare :: @code(if const reverse then it >= end else it <= end)
 
     while (it, it_index) := (start, 0),
-        @insert(compare, link=[it], _break={}, _continue={}),
-        it_index += 1; it += inc {
+            @insert(compare, link=[it], _break={}, _continue={}),
+            it_index += 1; it += inc {
+        @insert(code, _break=break, _continue=continue)
+    }
+}
+
+for_extension_range_inclusive :: (r: RangeInclusive[$T], code: Code, reverse: bool = false) #for {
+    start, end, inc := {
+        end := r.end
+        if const reverse then (end, r.start, T(-1)) else (r.start, end, T(1))
+    }
+
+    compare :: @code(if const reverse then it >= end else it <= end)
+
+    while (it, it_index) := (start, 0),
+            @insert(compare, link=[it], _break={}, _continue={}),
+            it_index += 1; it += inc {
+        @insert(code, _break=break, _continue=continue)
+    }
+}
+
+for_extension_range_from :: (r: RangeFrom[$T], code: Code) #for {
+    while (it, it_index) := (r.start, 0), true, it_index += 1; it += 1 {
         @insert(code, _break=break, _continue=continue)
     }
 }
@@ -136,24 +286,24 @@ for_extension_slice :: (arr: []$T, code: Code, reverse: bool = false, by_ref: bo
             it := if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
             @insert(code, link=[it_index_rev], _break=break, _continue=continue)
         } else {
-            it := if const by_ref then ref arr[it_index] else arr[it_index]
+            it := ref if const by_ref then ref arr[it_index] else arr[it_index]
             @insert(code, _break=break, _continue=continue)
         }
     }
 }
 
-// for_extension_array :: (arr: [$Size]$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
-//     while it_index := 0, it_index < arr.length, it_index += 1 {
-//         if const reverse {
-//             it_index_rev := arr.length - it_index - 1
-//             it := if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
-//             @insert(code, link=[it_index_rev], _break=break, _continue=continue)
-//         } else {
-//             it := if const by_ref then ref arr[it_index] else arr[it_index]
-//             @insert(code, _break=break, _continue=continue)
-//         }
-//     }
-// }
+for_extension_array :: (arr: [$Size]$T, code: Code, reverse: bool = false, by_ref: bool = false) #for {
+    while it_index := 0, it_index < arr.length, it_index += 1 {
+        if const reverse {
+            it_index_rev := arr.length - it_index - 1
+            it := if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
+            @insert(code, link=[it_index_rev], _break=break, _continue=continue)
+        } else {
+            it := if const by_ref then ref arr[it_index] else arr[it_index]
+            @insert(code, _break=break, _continue=continue)
+        }
+    }
+}
 
 // trait stuff
 __Trait :: struct {

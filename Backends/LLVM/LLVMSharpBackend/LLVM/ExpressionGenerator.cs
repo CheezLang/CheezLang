@@ -216,6 +216,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (cc.Name.Name == "ptr_of_any")
             {
                 var any = GenerateExpression(cc.Arguments[0], true);
+                // if (cc.Arguments[0].Expr.GetFlag(ExprFlags.IsLValue))
+                if (cc.Arguments[0].Expr.Type is ReferenceType)
+                    any = builder.CreateLoad(any, "");
                 var ptr = builder.CreateExtractValue(any, 0, "");
                 return ptr;
             }
@@ -223,6 +226,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (cc.Name.Name == "type_info_of_any")
             {
                 var any = GenerateExpression(cc.Arguments[0], true);
+                // if (cc.Arguments[0].Expr.GetFlag(ExprFlags.IsLValue))
+                if (cc.Arguments[0].Expr.Type is ReferenceType)
+                    any = builder.CreateLoad(any, "");
                 var ptr = builder.CreateExtractValue(any, 1, "");
                 ptr = builder.CreatePointerCast(ptr, rttiTypeInfo.GetPointerTo(), "");
                 return ptr;
@@ -367,7 +373,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var arg = cc.Arguments[0].Expr;
 
                 var value = GenerateExpression(arg, true);
-                var vals = new LLVMValueRef[type.Length];
+                var vals = new LLVMValueRef[((NumberData)type.Length).ToUlong()];
 
                 var arr = LLVM.GetUndef(CheezTypeToLLVMType(type));
 
@@ -1096,7 +1102,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (to is SliceType s2 && from is ArrayType a)
             {
                 var slice = LLVM.GetUndef(CheezTypeToLLVMType(s2));
-                slice = builder.CreateInsertValue(slice, LLVM.ConstInt(LLVM.Int64Type(), (ulong)a.Length, false), 0, "");
+                slice = builder.CreateInsertValue(slice, LLVM.ConstInt(LLVM.Int64Type(), ((NumberData)a.Length).ToUlong(), false), 0, "");
 
                 var sub = GenerateExpression(cast.SubExpression, false);
                 var ptr = builder.CreatePointerCast(sub, CheezTypeToLLVMType(s2.ToPointerType()), "");
@@ -1768,6 +1774,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 func = GenerateExpression(c.FunctionExpr, true);
                 var ftype = c.FunctionExpr.Type as FunctionType;
 
+                if (c.FunctionExpr.Type is ReferenceType r) {
+                    ftype = r.TargetType as FunctionType;
+                    func = builder.CreateLoad(func, "");
+                }
+
                 // arguments
                 IEnumerable<LLVMValueRef> GetFnArg()
                 {
@@ -2218,7 +2229,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         }
                         else if (expr.Right.Name == "length")
                         {
-                            return LLVM.ConstInt(LLVM.Int64Type(), (ulong)arr.Length, false);
+                            return LLVM.ConstInt(LLVM.Int64Type(), ((NumberData)arr.Length).ToUlong(), false);
                         }
                         break;
                     }

@@ -72,8 +72,13 @@ namespace Cheez.Types.Complex
         }
     }
 
-    public abstract class SumType : CheezType
+    public class SumType : CheezType
     {
+        public override bool IsPolyType => false;
+        public override bool IsErrorType => false;
+
+        public CheezType[] Types { get; private set; }
+
         public static CheezType GetSumType(params CheezType[] types)
         {
             var unique = new HashSet<CheezType>(types);
@@ -87,6 +92,11 @@ namespace Cheez.Types.Complex
             }
 
             return CheezType.Void;
+            // return new SumType {Types = types};
+        }
+
+        override public string ToString() {
+            return string.Join("|", Types.Select(c => c.ToString()));
         }
     }
 

@@ -716,7 +716,7 @@ namespace Cheez.Visitors
 
         public override string VisitRangeExpr(AstRangeExpr expr, int data = 0)
         {
-            return $"{expr.From.Accept(this)}..{expr.To.Accept(this)}";
+            return $"{expr.From?.Accept(this)}..{expr.To?.Accept(this)}";
         }
 
         public override string VisitLambdaExpr(AstLambdaExpr expr, int data = 0)

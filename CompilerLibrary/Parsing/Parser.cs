@@ -236,6 +236,7 @@ namespace Cheez.Parsing
                 case TokenType.Identifier:
                 case TokenType.AtSignIdentifier:
                 case TokenType.DollarIdentifier:
+                case TokenType.PeriodPeriod:
                     return true;
 
                 default:
@@ -1333,19 +1334,38 @@ namespace Cheez.Parsing
         }
 
         //[DebuggerStepThrough]
-        private AstExpression ParseRangeExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver e)
+        private AstExpression ParseRangeExpressionNoStart(AstExpression lhs, bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver e)
         {
-            var lhs = ParseAddSubExpression(allowCommaForTuple, allowFunctionExpression, e);
-
             if (CheckToken(TokenType.PeriodPeriod))
             {
-                NextToken();
-                SkipNewlines();
-                var rhs = ParseAddSubExpression(allowCommaForTuple, allowFunctionExpression, e);
-                return new AstRangeExpr(lhs, rhs, new Location(lhs.Beginning, rhs.End));
+                var loc = NextToken().location;
+                var leftLoc = lhs?.Beginning ?? loc;
+                bool inclusive = false;
+
+                if (CheckToken(TokenType.Equal))
+                {
+                    loc = NextToken().location;
+                    inclusive = true;
+                }
+
+                if (IsExprToken())
+                {
+                    var rhs = ParseAddSubExpression(allowCommaForTuple, allowFunctionExpression, e);
+                    return new AstRangeExpr(lhs, rhs, inclusive, new Location(leftLoc, rhs.End));
+                }
+                else
+                {
+                    return new AstRangeExpr(lhs, null, inclusive, new Location(leftLoc, loc));
+                }
             }
 
             return lhs;
+        }
+
+        private AstExpression ParseRangeExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver e)
+        {
+            var lhs = ParseAddSubExpression(allowCommaForTuple, allowFunctionExpression, e);
+            return ParseRangeExpressionNoStart(lhs, allowCommaForTuple, allowFunctionExpression, e);
         }
 
         [DebuggerStepThrough]
@@ -2013,6 +2033,9 @@ namespace Cheez.Parsing
             var token = PeekToken();
             switch (token.type)
             {
+                case TokenType.PeriodPeriod:
+                    return ParseRangeExpressionNoStart(null, allowCommaForTuple, allowFunctionExpression, errorMessage);
+
                 case TokenType.KwGeneric:
                     return ParseGenericExpression(allowCommaForTuple, allowFunctionExpression);
 

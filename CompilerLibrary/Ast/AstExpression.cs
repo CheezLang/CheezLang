@@ -976,21 +976,24 @@ namespace Cheez.Ast.Expressions
     {
         public AstExpression From { get; set; }
         public AstExpression To { get; set; }
+        public bool Inclusive { get; set; }
 
         public override bool IsPolymorphic => false;
 
-        public AstRangeExpr(AstExpression from, AstExpression to, ILocation Location = null) : base(Location: Location)
+        public AstRangeExpr(AstExpression from, AstExpression to, bool inclusive, ILocation Location = null) : base(Location: Location)
         {
             this.From = from;
             this.To = to;
+            this.Inclusive = inclusive;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitRangeExpr(this, data);
 
         public override AstExpression Clone()
             => CopyValuesTo(new AstRangeExpr(
-                From.Clone(),
-                To.Clone()));
+                From?.Clone(),
+                To?.Clone(),
+                Inclusive));
     }
 
     public class AstGenericExpr : AstExpression

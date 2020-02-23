@@ -1,4 +1,5 @@
-﻿using Cheez.Types.Complex;
+﻿using Cheez.Extras;
+using Cheez.Types.Complex;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -331,11 +332,11 @@ namespace Cheez.Types.Primitive
         private static Dictionary<CheezType, ArrayType> sTypes = new Dictionary<CheezType, ArrayType>();
 
         public CheezType TargetType { get; set; }
-        public int Length { get; set; }
+        public object Length { get; private set; }
         public override bool IsErrorType => TargetType.IsErrorType;
-        public override bool IsPolyType => TargetType.IsPolyType;
+        public override bool IsPolyType => TargetType.IsPolyType || Length is PolyValue;
 
-        private ArrayType(CheezType target, int length) : base()
+        private ArrayType(CheezType target, object length) : base()
         {
             TargetType = target;
             Length = length;
@@ -343,10 +344,15 @@ namespace Cheez.Types.Primitive
 
         public static ArrayType GetArrayType(CheezType targetType, int length)
         {
+            return GetArrayType(targetType, NumberData.FromBigInt(length));
+        }
+
+        public static ArrayType GetArrayType(CheezType targetType, object length)
+        {
             if (targetType == null)
                 return null;
 
-            var existing = sTypes.FirstOrDefault(t => t.Value.TargetType == targetType && t.Value.Length == length).Value;
+            var existing = sTypes.FirstOrDefault(t => t.Value.TargetType == targetType && t.Value.Length.Equals(length)).Value;
             if (existing != null)
                 return existing;
 
@@ -368,7 +374,7 @@ namespace Cheez.Types.Primitive
 
         public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
-            if (concrete is ArrayType p && Length == p.Length)
+            if (concrete is ArrayType p && Length.Equals(p.Length))
                 return this.TargetType.Match(p.TargetType, polyTypes);
             return -1;
         }
@@ -377,7 +383,7 @@ namespace Cheez.Types.Primitive
         {
             if (obj is ArrayType r)
             {
-                return TargetType == r.TargetType && Length == r.Length;
+                return TargetType == r.TargetType && Length.Equals(r.Length);
             }
             return false;
         }

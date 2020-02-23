@@ -126,7 +126,7 @@ namespace Cheez
                         {
                             var (subSize, subAlign) = ComputeSizeAndAlignmentOfType(t.TargetType, path);
 
-                            var size = subSize * t.Length;
+                            var size = subSize * (int)((NumberData)t.Length).ToLong();
                             var alignment = subAlign;
                             t.SetSizeAndAlignment(size, alignment);
                             return (size, alignment);
@@ -140,6 +140,9 @@ namespace Cheez
                             r.SetSizeAndAlignment(size, alignment);
                             return (size, alignment);
                         }
+
+                    case SumType _:
+                        return (-1, 0);
 
                     default:
                         ReportError("ERROR?");
@@ -218,8 +221,11 @@ namespace Cheez
                             return isDefaultConstructable;
                         }
 
+                    case SumType _:
+                        return false;
+
                     default:
-                        ReportError("ERROR?");
+                        ReportError($"ERROR? {type}");
                         return false;
                 }
             }

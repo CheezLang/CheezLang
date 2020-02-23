@@ -120,8 +120,10 @@ namespace Cheez
 
                 case ArrayType p:
                     {
-                        if (arg is ArrayType t)
+                        if (arg is ArrayType t) {
                             CollectPolyTypes(p.TargetType, t.TargetType, result);
+                            CollectPolyTypes(p.Length, t.Length, result);
+                        }
                         break;
                     }
 
@@ -294,7 +296,7 @@ namespace Cheez
 
             foreach (var pi in decl.PolyInstances)
             {
-                if (pi.Trait == concreteTrait && pi.TargetType == concreteTarget)
+                if (pi.Trait == concreteTrait && pi.TargetType.Equals(concreteTarget))
                 {
                     instance = pi;
                     break;
@@ -581,6 +583,14 @@ namespace Cheez
 
                 case ReferenceType p:
                     return ReferenceType.GetRefType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType);
+
+                case SliceType s:
+                    return SliceType.GetSliceType(InstantiatePolyType(s.TargetType, concreteTypes, location) as CheezType);
+
+                case ArrayType a:
+                    return ArrayType.GetArrayType(
+                        InstantiatePolyType(a.TargetType, concreteTypes, location) as CheezType,
+                        InstantiatePolyType(a.Length, concreteTypes, location));
 
                 default: throw new NotImplementedException();
             }

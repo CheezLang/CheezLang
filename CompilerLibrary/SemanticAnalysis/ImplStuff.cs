@@ -2,6 +2,7 @@
 using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Complex;
+using Cheez.Types.Primitive;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -149,6 +150,10 @@ namespace Cheez
 
         private (List<AstImplBlock> impls, bool maybeApplies) ImplAppliesToType(AstImplBlock impl, CheezType type)
         {
+            if (type is ArrayType)
+            {
+                int a = 0;
+            }
             if (type.IsErrorType)
                 WellThatsNotSupposedToHappen();
 

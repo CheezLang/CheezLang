@@ -451,7 +451,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 //return CheezTypeToLLVMType(self.traitType);
 
                 case ArrayType a:
-                    return LLVMTypeRef.ArrayType(CheezTypeToLLVMType(a.TargetType), (uint)a.Length);
+                    return LLVMTypeRef.ArrayType(CheezTypeToLLVMType(a.TargetType), (uint)((NumberData)a.Length).ToUlong());
 
                 case SliceType s:
                     {
@@ -581,7 +581,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     }
 
                 default:
-                    throw new NotImplementedException();
+                    throw new NotImplementedException(ct.ToString());
             }
         }
 
@@ -710,7 +710,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             ArrayType a => LLVM.ConstArray(
                 CheezTypeToLLVMType(a.TargetType),
-                new LLVMValueRef[a.Length].Populate(GetDefaultLLVMValue(a.TargetType))),
+                new LLVMValueRef[((NumberData)a.Length).ToUlong()].Populate(GetDefaultLLVMValue(a.TargetType))),
 
             _ => throw new NotImplementedException()
         };
