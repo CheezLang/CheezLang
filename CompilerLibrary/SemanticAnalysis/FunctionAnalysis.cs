@@ -300,6 +300,9 @@ namespace Cheez
             fo.Collection = InferType(fo.Collection, null);
             ConvertLiteralTypeToDefaultType(fo.Collection, null);
 
+            if (fo.Collection.Type.IsErrorType)
+                return fo;
+
             fo.Body.AttachTo(fo);
             fo.Body.Scope = fo.SubScope;
             fo.Body = InferType(fo.Body, CheezType.Code);

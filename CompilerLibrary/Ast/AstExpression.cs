@@ -268,22 +268,28 @@ namespace Cheez.Ast.Expressions
     {
         public AstExpression SubExpression { get; set; }
         public List<AstMatchCase> Cases { get; set; }
+        public List<AstUsingStmt> Uses { get; set; }
 
         public override bool IsPolymorphic => false;
 
         public bool IsSimpleIntMatch { get; internal set; } = false;
 
-        public AstMatchExpr(AstExpression value, List<AstMatchCase> cases, ILocation Location = null)
+        public AstMatchExpr(AstExpression value, List<AstMatchCase> cases, List<AstUsingStmt> uses, ILocation Location = null)
             : base(Location)
         {
             this.SubExpression = value;
             this.Cases = cases;
+            this.Uses = uses;
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitMatchExpr(this, data);
 
         public override AstExpression Clone()
-            => CopyValuesTo(new AstMatchExpr(SubExpression.Clone(), Cases.Select(c => c.Clone()).ToList()));
+            => CopyValuesTo(new AstMatchExpr(
+                SubExpression.Clone(),
+                Cases.Select(c => c.Clone()).ToList(),
+                Uses.Select(c => c.Clone() as AstUsingStmt).ToList()
+            ));
     }
 
     public class AstIfExpr : AstNestedExpression
@@ -455,7 +461,7 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstDotExpr(Left.Clone(), Right.Clone() as AstIdExpr));
+            => CopyValuesTo(new AstDotExpr(Left?.Clone(), Right.Clone() as AstIdExpr));
     }
 
     public class AstArgument : AstExpression

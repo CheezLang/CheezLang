@@ -29,7 +29,28 @@ namespace Cheez
             internal bool resolve_poly_expr_to_concrete_type;
             internal bool forceInfer = false;
             internal CheezType functionExpectedReturnType = null;
+            internal CheezType TypeOfExprContext = null;
             internal bool is_global = false;
+
+            internal TypeInferenceContext Clone() {
+                return new TypeInferenceContext {
+                    newPolyFunctions = newPolyFunctions,
+                    newPolyDeclarations = newPolyDeclarations,
+                    dependencies = dependencies,
+                    resolve_poly_expr_to_concrete_type = resolve_poly_expr_to_concrete_type,
+                    forceInfer = forceInfer,
+                    functionExpectedReturnType = functionExpectedReturnType,
+                    TypeOfExprContext = TypeOfExprContext,
+                    is_global = is_global
+                };
+        }
+
+            internal TypeInferenceContext WithTypeOfExprContext(CheezType type)
+            {
+                var clone = Clone();
+                clone.TypeOfExprContext = type;
+                return clone;
+            }
         }
 
         private static bool IsLiteralType(CheezType t)
@@ -331,11 +352,11 @@ namespace Cheez
 
         }
 
-        private AstExpression InferTypePipeExpr(AstPipeExpr p, CheezType expected, TypeInferenceContext context)
+        private AstExpression InferTypePipeExpr(AstPipeExpr expr, CheezType expected, TypeInferenceContext context)
         {
-            p.Left.Scope = p.Scope;
-            p.Left = InferTypeHelper(p.Left, null, context);
-            p.Right.Scope = p.Scope;
+            expr.Left.Scope = expr.Scope;
+            expr.Left = InferTypeHelper(expr.Left, null, context);
+            expr.Right.Scope = expr.Scope;
 
 
             void InsertIntoArgs(List<AstArgument> arguments) {
@@ -346,18 +367,18 @@ namespace Cheez
 
                 if (hasUnderscores)
                 {
-                    var left = new AstTempVarExpr(p.Left);
+                    var left = new AstTempVarExpr(expr.Left);
                     foreach (var arg in arguments)
                         if (arg.Expr is AstIdExpr id && id.Name == "_")
                             arg.Expr = left;
                 }
                 else
                 {
-                    arguments.Add(new AstArgument(p.Left, null, p.Left.Location));
+                    arguments.Add(new AstArgument(expr.Left, null, expr.Left.Location));
                 }
             }
 
-            switch (p.Right)
+            switch (expr.Right)
             {
                 case AstCompCallExpr cc:
                     {
@@ -371,9 +392,14 @@ namespace Cheez
                         return InferTypeHelper(cc, expected, context);
                     }
 
+                case AstDotExpr d when d.Left == null:
+                    d.Left = expr.Left;
+                    d.Replace(expr);
+                    return InferTypeHelper(d, expected, context);
+
                 default:
-                    ReportError(p, $"This kind of expression is not allowed here");
-                    return p;
+                    ReportError(expr, $"This kind of expression is not allowed here");
+                    return expr;
             }
         }
 
@@ -1006,15 +1032,33 @@ namespace Cheez
                 return expr;
             }
 
+            var matchSubScope = new Scope("match-sub", expr.Scope);
+
+            foreach (var use in expr.Uses)
+            {
+                use.Scope = matchSubScope;
+                AnalyseUseStatement(use);
+            }
+
+            var patternContext = new TypeInferenceContext();
+            {
+                var ex = expr.SubExpression.Type;
+                if (ex is ReferenceType re)
+                    ex = re.TargetType;
+                patternContext.TypeOfExprContext = ex;
+            }
+
+
             foreach (var c in expr.Cases)
             {
-                c.SubScope = new Scope("case", expr.Scope);
+                c.SubScope = new Scope("case", matchSubScope);
 
                 // pattern
                 c.Pattern.AttachTo(expr);
                 c.Pattern.Scope = c.SubScope;
                 c.Pattern.SetFlag(ExprFlags.ValueRequired, true);
-                c.Pattern = MatchPatternWithType(c, c.Pattern, expr.SubExpression, matchingReference);
+
+                c.Pattern = MatchPatternWithType(c, c.Pattern, expr.SubExpression, matchingReference, patternContext);
 
                 if (c.Pattern.Type?.IsErrorType ?? false)
                 {
@@ -1111,7 +1155,7 @@ namespace Cheez
             AstMatchCase cas,
             AstExpression pattern,
             AstExpression value,
-            bool matchingReference)
+            bool matchingReference, TypeInferenceContext context)
         {
             var expected = value.Type;
             if (value.Type is ReferenceType re)
@@ -1122,7 +1166,7 @@ namespace Cheez
                 case AstIdExpr _:
                 case AstDotExpr _:
                     {
-                        if (!(InferType(pattern, expected) is AstEnumValueExpr ev))
+                        if (!(InferTypeHelper(pattern, expected, context) is AstEnumValueExpr ev))
                             break;
                         if (ev.Type.IsErrorType)
                             return pattern;
@@ -1143,7 +1187,7 @@ namespace Cheez
                 case AstCallExpr call:
                     {
                         call.FunctionExpr.AttachTo(call);
-                        call.FunctionExpr = InferType(call.FunctionExpr, expected);
+                        call.FunctionExpr = InferTypeHelper(call.FunctionExpr, expected, context);
                         if (!(call.FunctionExpr is AstEnumValueExpr e))
                             break;
                         call.Type = e.Type;
@@ -1156,13 +1200,13 @@ namespace Cheez
                             AstExpression sub = new AstDotExpr(value, new AstIdExpr(e.Member.Name, false, call.Location), call.Location);
                             sub.AttachTo(value);
                             sub.SetFlag(ExprFlags.ValueRequired, pattern.GetFlag(ExprFlags.ValueRequired));
-                            sub = InferType(sub, null);
+                            sub = InferTypeHelper(sub, null, context);
 
                             if (matchingReference)
                                 sub = HandleReference(sub, ReferenceType.GetRefType(e.Member.AssociatedType), null);
 
                             e.Argument.AttachTo(e);
-                            e.Argument = MatchPatternWithType(cas, e.Argument, sub, matchingReference);
+                            e.Argument = MatchPatternWithType(cas, e.Argument, sub, matchingReference, context);
                         }
                         else if (call.Arguments.Count > 1)
                         {
@@ -1185,7 +1229,8 @@ namespace Cheez
             AstMatchCase cas,
             AstExpression pattern,
             AstExpression value,
-            bool matchingReference)
+            bool matchingReference,
+            TypeInferenceContext context)
         {
             var expected = value.Type;
             if (value.Type is ReferenceType re)
@@ -1205,8 +1250,8 @@ namespace Cheez
                                 p.AttachTo(te);
                                 AstExpression v = new AstArrayAccessExpr(value, new AstNumberExpr(i, Location: value.Location), value.Location);
                                 v.AttachTo(value);
-                                v = InferType(v, tt.Members[i].type);
-                                te.Values[i] = MatchPatternWithType(cas, p, v, matchingReference);
+                                v = InferTypeHelper(v, tt.Members[i].type, context);
+                                te.Values[i] = MatchPatternWithType(cas, p, v, matchingReference, context);
                             }
 
                             te.Type = tt;
@@ -1326,7 +1371,8 @@ namespace Cheez
             AstMatchCase cas,
             AstExpression pattern,
             AstExpression value,
-            bool matchingReference)
+            bool matchingReference,
+            TypeInferenceContext context)
         {
             var expected = value.Type;
             if (value.Type is ReferenceType re)
@@ -1348,10 +1394,10 @@ namespace Cheez
                     return MatchPatternWithPrimitive(cas, pattern, value, matchingReference);
 
                 case EnumType _:
-                    return MatchPatternWithEnum(cas, pattern, value, matchingReference);
+                    return MatchPatternWithEnum(cas, pattern, value, matchingReference, context);
 
                 case TupleType _ when !matchingReference:
-                    return MatchPatternWithTuple(cas, pattern, value, matchingReference);
+                    return MatchPatternWithTuple(cas, pattern, value, matchingReference, context);
 
                 case StructType _ when matchingReference:
                     return MatchPatternWithStruct(cas, pattern, value, matchingReference);
@@ -4015,6 +4061,15 @@ namespace Cheez
 
         private AstExpression InferTypeDotExpr(AstDotExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            if (expr.Left == null) {
+                if (context.TypeOfExprContext == null) {
+                    ReportError(expr, "Can't use anonymous access here");
+                    return expr;
+                }
+
+                expr.Left = new AstTypeRef(context.TypeOfExprContext, new Location(expr.Beginning));
+            }
+
             expr.Left.SetFlag(ExprFlags.ValueRequired, true);
             expr.Left.Scope = expr.Scope;
             expr.Left = InferTypeHelper(expr.Left, null, context);
@@ -4042,16 +4097,6 @@ namespace Cheez
                     {
                         expr.SetFlag(ExprFlags.IsLValue, false);
                         var name = expr.Right.Name;
-                        //if (name == "data")
-                        //{
-                        //    expr.Type = PointerType.GetPointerType(IntType.GetIntType(1, false));
-                        //    return expr;
-                        //}
-                        //if (name == "length")
-                        //{
-                        //    expr.Type = IntType.GetIntType(8, true);
-                        //    return expr;
-                        //}
                         if (name == "bytes")
                         {
                             expr.Type = SliceType.GetSliceType(IntType.GetIntType(1, false));
@@ -4063,21 +4108,6 @@ namespace Cheez
                             //expr.Type = CheezType.Void;
                             return expr;
                         }
-                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
-                    }
-
-                case RangeType range:
-                    {
-                        var name = expr.Right.Name;
-
-                        if (name == "start" || name == "end")
-                        {
-                            expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
-
-                            expr.Type = range.TargetType;
-                            return expr;
-                        }
-
                         return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
                     }
 
@@ -5519,7 +5549,7 @@ namespace Cheez
             expr.Right.Scope = expr.Scope;
 
             expr.Left = InferTypeHelper(expr.Left, null, context);
-            expr.Right = InferTypeHelper(expr.Right, null, context);
+            expr.Right = InferTypeHelper(expr.Right, null, context.WithTypeOfExprContext(expr.Left.Type));
 
             if (expr.Left.Type.IsErrorType || expr.Right.Type.IsErrorType)
                 return expr;

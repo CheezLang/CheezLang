@@ -184,7 +184,7 @@ namespace Cheez.Types.Complex
         {
             if (Arguments?.Length > 0)
             {
-                var args = string.Join(", ", Arguments.Select(a => a.ToString()));
+                var args = string.Join(", ", Arguments.Select(a => a?.ToString()));
                 return $"{Name}[{args}]";
             }
             return Name;

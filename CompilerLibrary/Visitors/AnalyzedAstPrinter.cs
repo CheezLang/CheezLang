@@ -771,10 +771,10 @@ namespace Cheez.Visitors
             var sb = new StringBuilder();
 
             sb.AppendLine($"match {expr.SubExpression.Accept(this)} {{");
+            foreach (var use in expr.Uses)
+                sb.AppendLine(use.Accept(this).Indent(4));
             foreach (var c in expr.Cases)
-            {
                 sb.AppendLine(VisitMatchCase(c).Indent(4));
-            }
             sb.Append("}");
 
             return sb.ToString();
@@ -959,7 +959,7 @@ namespace Cheez.Visitors
 
         public override string VisitDotExpr(AstDotExpr dot, int data = 0)
         {
-            return $"{dot.Left.Accept(this, 0)}.{dot.Right.Accept(this)}";
+            return $"{dot.Left?.Accept(this, 0)}.{dot.Right.Accept(this)}";
         }
 
         public override string VisitStructValueExpr(AstStructValueExpr str, int data = 0)

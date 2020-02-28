@@ -517,6 +517,7 @@ namespace Cheez.Parsing
             TokenLocation beg = null, end = null;
             AstExpression value = null;
             var cases = new List<AstMatchCase>();
+            var uses = new List<AstUsingStmt>();
 
             beg = Consume(TokenType.KwMatch, ErrMsg("keyword 'match'", "at beginning of match statement")).location;
             SkipNewlines();
@@ -534,22 +535,30 @@ namespace Cheez.Parsing
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
                     break;
 
-                var v = ParseExpression(true);
-                SkipNewlines();
-
-                AstExpression cond = null;
-                if (CheckToken(TokenType.KwIf))
+                if (CheckToken(TokenType.KwUsing))
                 {
-                    NextToken();
-                    cond = ParseExpression(true);
+                    uses.Add(ParseUsingStatement());
+                }
+                else
+                {
+                    var v = ParseExpression(true);
                     SkipNewlines();
+
+                    AstExpression cond = null;
+                    if (CheckToken(TokenType.KwIf))
+                    {
+                        NextToken();
+                        cond = ParseExpression(true);
+                        SkipNewlines();
+                    }
+
+                    Consume(TokenType.Arrow, ErrMsg("->", "after value in match case"));
+
+                    SkipNewlines();
+                    var body = ParseExpression(true);
+                    cases.Add(new AstMatchCase(v, cond, body, new Location(v.Beginning, body.End)));
                 }
 
-                Consume(TokenType.Arrow, ErrMsg("->", "after value in match case"));
-
-                SkipNewlines();
-                var body = ParseExpression(true);
-                cases.Add(new AstMatchCase(v, cond, body, new Location(v.Beginning, body.End)));
 
                 next = PeekToken();
                 if (next.type == TokenType.ClosingBrace || next.type == TokenType.EOF)
@@ -568,10 +577,10 @@ namespace Cheez.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of match statement")).location;
 
-            return new AstMatchExpr(value, cases, Location: new Location(beg, end));
+            return new AstMatchExpr(value, cases, uses, Location: new Location(beg, end));
         }
 
-        private AstStatement ParseUsingStatement()
+        private AstUsingStmt ParseUsingStatement()
         {
             var beg = Consume(TokenType.KwUsing, ErrMsg("keyword 'using'", "at beginning of using statement")).location;
             SkipNewlines();
@@ -2033,6 +2042,13 @@ namespace Cheez.Parsing
             var token = PeekToken();
             switch (token.type)
             {
+                case TokenType.Period:
+                    {
+                        var beg = NextToken().location;
+                        var expr = ParseIdentifierExpr();
+                        return new AstDotExpr(null, expr, new Location(beg, expr.End));
+                    }
+
                 case TokenType.PeriodPeriod:
                     return ParseRangeExpressionNoStart(null, allowCommaForTuple, allowFunctionExpression, errorMessage);
 
@@ -2044,6 +2060,7 @@ namespace Cheez.Parsing
 
                 case TokenType.KwBreak:
                     return ParseBreakExpr();
+
                 case TokenType.KwContinue:
                     return ParseContinueExpr();
 
