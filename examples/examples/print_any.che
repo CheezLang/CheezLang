@@ -21,7 +21,9 @@ Baz :: enum #copy {
 
 do_print_any :: (data: &void, typ: &TypeInfo) {
     match typ.kind {
-        TypeInfoKind.Int($tint) -> {
+        use TypeInfoKind
+
+        Int($tint) -> {
             if tint.signed {
                 ptr := cast(&int) data
                 C.printf("%lld", <<ptr)
@@ -31,7 +33,7 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
             }
         }
 
-        TypeInfoKind.Float -> {
+        Float -> {
             if typ.size == 4 {
                 ptr := cast(&float) data
                 C.printf("%g", double(<<ptr))
@@ -43,22 +45,22 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
             }
         }
 
-        TypeInfoKind.Bool -> {
+        Bool -> {
             ptr := cast(&bool) data
             if <<ptr then C.printf("true") else C.printf("false")
         }
 
-        TypeInfoKind.Char -> {
+        Char -> {
             ptr := cast(&char) data
             C.printf("'%c'", <<ptr)
         }
 
-        TypeInfoKind.Pointer($target) -> {
+        Pointer($target) -> {
             ptr := cast(&&void) data
             C.printf("0x%llX", <<ptr)
         }
 
-        TypeInfoKind.Slice($target) -> {
+        Slice($target) -> {
             ptr := <<cast(&[]void) data
             C.printf("[")
             for i : 0..ptr.length {
@@ -70,12 +72,12 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
             C.printf("]")
         }
 
-        TypeInfoKind.String -> {
+        String -> {
             str := <<cast(&string) data
             C.printf("%.*s", i32(str.bytes.length), str.bytes.data)
         }
 
-        TypeInfoKind.Struct($tstruct) -> {
+        Struct($tstruct) -> {
             ptr := cast(&void) data
             C.printf("%.*s", i32(tstruct.name.bytes.length), tstruct.name.bytes.data)
 

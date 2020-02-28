@@ -9,7 +9,7 @@ Main :: () {
     res := String.empty()
 
     carry := 0
-    for(reverse=true) c : 0..50 {
+    for c : {0..50}.reverse() {
         for r : 0..100 {
             digit := int(numbers[r][c] - '0')
             carry += digit

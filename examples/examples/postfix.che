@@ -12,8 +12,8 @@ use import compiler.string_database
 
 impl TokenType {
     get_precedence :: (Self) -> int {
-        use TokenType
         return match self {
+            use TokenType
             Plus        -> 5
             Minus       -> 5
             Asterisk    -> 10
@@ -30,8 +30,8 @@ impl TokenType {
 
 impl Token {
     get_text :: (ref Self) -> String {
-        use TokenType
         return match self.ttype {
+            use TokenType
             Plus        -> String.from_string("+")
             Minus       -> String.from_string("-")
             Asterisk    -> String.from_string("*")
@@ -39,8 +39,9 @@ impl Token {
 
             NumberLiteral -> {
                 match data {
-                    TokenData.Integer($val) -> String.format("{}", val)
-                    TokenData.Double($val) -> String.format("{}", val)
+                    use TokenData
+                    Integer($val) -> String.format("{}", val)
+                    Double($val) -> String.format("{}", val)
                     $_ -> {
                         @panic("TokenData was neither Integer nor Double")
                         String.empty()
@@ -69,8 +70,9 @@ infix_to_postfix :: (str: String, calculate: bool) -> (postfix: String, result: 
     while true {
         token := lexer.next_token()
 
-        use TokenType
         match token.ttype {
+            use TokenType
+
             NumberLiteral -> {
                 new_order.add(token)
             }
@@ -126,15 +128,15 @@ infix_to_postfix :: (str: String, calculate: bool) -> (postfix: String, result: 
         numbers := Stack[double].create()
         //foreach! t in new_order.iterator() {
         for t : new_order {
-            use TokenType
             match t.ttype {
-                NumberLiteral -> {
+                use TokenType
+
+                NumberLiteral -> match t.data {
                     use TokenData
-                    match t.data {
-                        Integer($val) -> numbers.push(double(val))
-                        Double($val) -> numbers.push(val)
-                        $_ -> @panic("not a number")
-                    }
+
+                    Integer($val) -> numbers.push(double(val))
+                    Double($val) -> numbers.push(val)
+                    $_ -> @panic("not a number")
                 }
 
                 Plus -> {

@@ -3,6 +3,7 @@ use import std.array
 use import std.math
 use import std.time
 use import std.rc
+use import std.box
 use import std.mem.std_heap_allocator
 mem :: import std.mem.allocator
 fmt :: import std.fmt
@@ -15,6 +16,8 @@ use import opengl.glad_binding
 ImGui :: import imgui.imgui_binding
 
 use import opengl_utils
+use import opengl_buffers
+use import shader
 use import matrix
 use import renderer
 use import math
@@ -22,6 +25,7 @@ use import layer
 use import input
 use import shmup_engine
 use import components
+use import post_vfx
 
 #export_scope
 
@@ -58,13 +62,51 @@ impl GameWindow {
 }
 
 GameWindow :: struct #extend(WindowBase) {
-    camera := Option[Ref[Camera]].None
+    camera          := Option[Ref[Camera]].None
+    pp_vertex_array := Box[VertexArray].empty()
+    max_size        := vec2i()
+    tmp_frame_buff1 := Rc[FrameBuffer].empty()
+    tmp_frame_buff2 := Rc[FrameBuffer].empty()
+    shader          := Shader(0)
 }
 
 impl GameView for GameWindow {
     initialize :: (ref Self, max_size: vec2i) -> bool {
+        self.max_size = max_size
         viewport.set_scale(1)
         viewport.set_translation(vec3())
+
+        // frame buffer
+        tmp_frame_buff1 = try(FrameBuffer.new(max_size.x, max_size.y))
+        tmp_frame_buff2 = try(FrameBuffer.new(max_size.x, max_size.y))
+
+        // vertex array
+        pp_vertex_array = {
+            vertex_array := VertexArray.new()
+
+            vertex_buffer := VertexBuffer.create([
+                -1.0f, -1.0f, 0.0f, 0.0f
+                 1.0f, -1.0f, 1.0f, 0.0f
+                 1.0f,  1.0f, 1.0f, 1.0f
+                -1.0f,  1.0f, 0.0f, 1.0f
+            ])
+            vertex_buffer.layout = BufferLayout.new([
+                BufferElement("aPos", ShaderDataType.Float2)
+                BufferElement("aTexCoord", ShaderDataType.Float2)
+            ])
+            vertex_array.add_vertex_buffer(vertex_buffer)
+
+            index_buffer := IndexBuffer.create([
+                0, 1, 2, 2, 3, 0
+            ])
+            vertex_array.set_index_buffer(index_buffer)
+
+            Box[VertexArray].from_pointer(vertex_array)
+        }
+
+        // shader
+        shader = try(Shader.from_file("../data/grey_scale.shader"))
+
         return viewport.initialize(max_size)
     }
 
@@ -194,7 +236,11 @@ impl GameView for GameWindow {
             uv1     := ImGui.ImVec2(size.x / viewport.size_max.x, 0)
             tint    := ImGui.ImVec4(1, 1, 1, 1)
             border  := ImGui.ImVec4(0, 0, 0, 0)
-            ImGui.Image(cast viewport.render_texture, size, uv0, uv1, tint, border)
+            
+            // uv0     = ImGui.ImVec2(0, 1)
+            // uv1     = ImGui.ImVec2(1, 0)
+            // ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, size, uv0, uv1, tint, border)
+            ImGui.Image(cast tmp_frame_buff1.get().render_texture.get().id, size, uv0, uv1, tint, border)
         }
         ImGui.End()
 
@@ -230,6 +276,20 @@ impl GameView for GameWindow {
     }
 
     end_render :: (ref Self) {
+        tmp_frame_buff1.get().bind()
+        glViewport(0, 0, i32(max_size.x), i32(max_size.y))
+        glClearColor(1.0f, 0.0f, 0.0f, 1.0f)
+        glClear(GL_COLOR_BUFFER_BIT)
+
+        shader.bind()
+        pp_vertex_array.get().bind()
+        pp_vertex_array.get().index_buffer.bind()
+
+        viewport.frame_buffer.get().render_texture.get().bind(0)
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null)
+        glBindVertexArray(0)
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         // renderer.end_scene()
     }
@@ -370,7 +430,7 @@ impl GameView for EditorWindow {
             uv1     := ImGui.ImVec2(size.x / viewport.size_max.x, 0)
             tint    := ImGui.ImVec4(1, 1, 1, 1)
             border  := ImGui.ImVec4(0, 0, 0, 0)
-            ImGui.Image(cast viewport.render_texture, size, uv0, uv1, tint, border)
+            ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, size, uv0, uv1, tint, border)
         }
         ImGui.End()
 
@@ -535,7 +595,7 @@ impl GameView for GameAndEditorWindow {
     begin_render :: (ref Self, world_size: vec3, renderer: ref Renderer) -> bool {
         // render game
         size := viewport.size.change_type(i32)
-        glBindFramebuffer(GL_FRAMEBUFFER, viewport.frame_buffer)
+        viewport.frame_buffer.get().bind()
         glViewport(0, 0, size.x, size.y)
 
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)
@@ -577,7 +637,7 @@ impl GameView for GameAndEditorWindow {
             uv1     := ImGui.ImVec2(size.x / viewport.size_max.x, 0)
             tint    := ImGui.ImVec4(1, 1, 1, 1)
             border  := ImGui.ImVec4(0, 0, 0, 0)
-            ImGui.Image(cast viewport.render_texture, size, uv0, uv1, tint, border)
+            ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, size, uv0, uv1, tint, border)
         }
         ImGui.End()
     }
@@ -608,12 +668,11 @@ Viewport :: struct {
     view_projection_inv     := mat4()
 
     // 
-    frame_buffer   : u32 = 0
-    render_texture : u32 = 0
-    depth_texture  : u32 = 0
-    is_focused     := false
-    lost_focus   := false
-    is_hovered     := false
+    is_focused      := false
+    lost_focus      := false
+    is_hovered      := false
+
+    frame_buffer    := Rc[FrameBuffer].empty()
 }
 
 impl Viewport {
@@ -623,50 +682,16 @@ impl Viewport {
         texture_width := i32(max_size.x)
         texture_height := i32(max_size.y)
 
-        // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
-        GL(glGenFramebuffers(1, &frame_buffer))
-        GL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer))
-
-        // The texture we're going to render to
-        GL(glGenTextures(1, &render_texture))
-
-        // "Bind" the newly created texture : all future texture functions will modify this texture
-        GL(glBindTexture(GL_TEXTURE_2D, render_texture))
-
-        // Give an empty image to OpenGL ( the last "null" )
-        GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, texture_width, texture_height, 0, GL_RGB, GL_UNSIGNED_BYTE, null))
-
-        // Poor filtering. Needed !
-        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST))
-        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST))
-
-        // The depth buffer
-        GL(glGenRenderbuffers(1, &depth_texture))
-        GL(glBindRenderbuffer(GL_RENDERBUFFER, depth_texture))
-        GL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, texture_width, texture_height))
-        GL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_texture))
-
-        // Set "render_texture" as our colour attachement #0
-        GL(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture, 0))
-
-        // Set the list of draw buffers.
-        draw_buffers := [u32(GL_COLOR_ATTACHMENT0)]
-        GL(glDrawBuffers(1, draw_buffers.data)) // "1" is the size of draw_buffers
-
-        // Always check that our framebuffer is ok
-        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
+        frame_buffer = try_with(FrameBuffer.new(max_size.x, max_size.y), {
+            io.println("[ERROR] Failed to create frame buffer")
             return false
-        }
-
-        GL(glBindTexture(GL_TEXTURE_2D, 0))
-        GL(glBindRenderbuffer(GL_RENDERBUFFER, 0))
-        GL(glBindFramebuffer(GL_FRAMEBUFFER, 0))
+        })
         return true
     }
 
     bind :: (ref Self) {
         size := self.size.change_type(i32)
-        glBindFramebuffer(GL_FRAMEBUFFER, self.frame_buffer)
+        self.frame_buffer.get().bind()
         glViewport(0, 0, size.x, size.y)
 
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w)

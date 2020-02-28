@@ -1,0 +1,21 @@
+use import shader
+
+#export_scope
+
+PostProcessingEffect :: trait {
+    apply :: (ref Self);
+}
+
+ConvertToGreyScale :: struct {
+    shader : Shader
+}
+
+impl ConvertToGreyScale {
+
+}
+
+impl PostProcessingEffect for ConvertToGreyScale {
+    apply :: (ref Self) {
+
+    }
+}

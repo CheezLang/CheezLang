@@ -31,20 +31,24 @@ try :: (code: Code) #macro {
         Ok($val) -> val
         Err($err) -> {
             ReturnType :: @function_type().return_type
-            TargetType :: ReturnType.E
-            ErrorType :: @typeof(err)
-
-            return if const @type_has_trait(ErrorType, Into[TargetType]) {
-                ReturnType.Err(cast(TargetType) @typeof(err).into(err))
+            return if const ReturnType == bool {
+                false
             } else {
-                ReturnType.Err(err)
+                TargetType :: ReturnType.E
+                ErrorType :: @typeof(err)
+
+                if const @type_has_trait(ErrorType, Into[TargetType]) {
+                    ReturnType.Err(cast(TargetType) @typeof(err).into(err))
+                } else {
+                    ReturnType.Err(err)
+                }
+                // bug?
+                // if const @type_has_trait(ErrorType, Into[TargetType]) {
+                //     return ReturnType.Err(cast(TargetType) @typeof(err).into(err))
+                // } else {
+                //     return ReturnType.Err(err)
+                // }
             }
-            // bug?
-            // if const @type_has_trait(ErrorType, Into[TargetType]) {
-            //     return ReturnType.Err(cast(TargetType) @typeof(err).into(err))
-            // } else {
-            //     return ReturnType.Err(err)
-            // }
         }
     }
 }
@@ -137,6 +141,12 @@ RangeToInclusive :: struct(T: type) {
 }
 
 RangeFull :: struct {}
+
+impl(T: type) Range[T] {
+    reverse :: (self: Range[T]) -> Range[T] {
+        return Range[T](self.end - 1, self.start - 1)
+    }
+}
 
 impl string {
     get_index :: (Self, index: int) -> ref u8 #operator("[]") {
@@ -243,15 +253,13 @@ impl(T: type, Size: int) [Size]T {
 }
 
 // standard for loops
-for_extension_range :: (r: Range[$T], code: Code, reverse: bool = false) #for {
-    start, end, inc := {
-        end := r.end - 1
-        if const reverse then (end, r.start, T(-1)) else (r.start, end, T(1))
-    }
+for_extension_range :: (r: Range[$T], code: Code) #for {
+    rev := r.end < r.start
+    inc := if rev then T(-1) else T(1)
 
-    compare :: @code(if const reverse then it >= end else it <= end)
+    compare :: @code(if rev then it > r.end else it < r.end)
 
-    while (it, it_index) := (start, 0),
+    while (it, it_index) := (r.start, 0),
             @insert(compare, link=[it], _break={}, _continue={}),
             it_index += 1; it += inc {
         @insert(code, _break=break, _continue=continue)

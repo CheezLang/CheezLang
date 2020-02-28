@@ -24,6 +24,7 @@ use import entity
 use import components
 use import command
 use import viewport
+use import post_vfx
 use import editor.inspector
 use import editor.hierarchy
 use import editor.console

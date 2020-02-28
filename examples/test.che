@@ -30,6 +30,62 @@ import examples.ShmupEngine.src.main
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
+// io   :: import std.io
+
+// impl Range[int] {
+//     reverse :: (self: Range[int]) -> Range[int] {
+//         return Range[int](self.end - 1, self.start - 1)
+//     }
+// }
+
+// reverse :: (self: Range[int]) -> Range[int] {
+//     return Range[int](self.end - 1, self.start - 1)
+// }
+
+// Main :: () {
+//     Foo :: enum #copy {
+//         A, B
+//     }
+
+//     f := Foo.B
+
+//     if f == .A {
+//         io.println("A")
+//     } else if f == .B {
+//         io.println("B")
+//     }
+
+//     match f {
+//         .A -> io.println("A")
+//         .B -> io.println("B")
+//     }
+
+//     match f {
+//         use Foo
+//         A -> io.println("A")
+//         B -> io.println("B")
+//     }
+
+
+
+
+
+    // for 0..5 {
+    //     io.println(it)
+    // }
+    // io.println("")
+
+    // for {0..5}.reverse() {
+    //     io.println(it)
+    // }
+    // io.println("")
+
+    // for 0..5 | .reverse() {
+    //     io.println(it)
+    // }
+    // io.println("")
+// }
+
 /*
 
 use import std.string

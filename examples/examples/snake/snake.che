@@ -152,7 +152,7 @@ Main :: () {
             action = Direction.None
 
             // move snake
-            for(reverse=true) i : 1..snake.length {
+            for i : {1..snake.length}.reverse() {
                 snake[i].pos = snake[i - 1].pos
             }
 

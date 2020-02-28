@@ -21,10 +21,10 @@ Main :: () {
 
     longest := 0
 
-    for(reverse=true) a : 0..1000 {
+    for a : {0..1000}.reverse() {
         if a * 999 < longest then break
 
-        for(reverse=true) b : 0..1000 {
+        for b : {0..1000}.reverse() {
             product := a * b
             if product < longest then continue
 

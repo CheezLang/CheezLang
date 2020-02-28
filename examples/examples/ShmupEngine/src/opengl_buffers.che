@@ -97,11 +97,11 @@ VertexBuffer :: struct {
 }
 
 impl VertexBuffer {
-    create :: (vertices: []f32, static: bool = true) -> &VertexBuffer {
+    create :: (vertices: []f32) -> &VertexBuffer {
         vbo : u32 = 0
         GL(glGenBuffers(1, &vbo))
         GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
-        GL(glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, if static then GL_STATIC_DRAW else GL_DYNAMIC_DRAW))
+        GL(glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, GL_STATIC_DRAW))
         GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
 
         buff := mem.alloc(VertexBuffer)
@@ -264,18 +264,7 @@ impl Texture {
 
         defer stbi_image_free(data)
 
-        internal_format : GLenum = 0
-        data_format     : GLenum = 0
-        match channels {
-            3 -> {
-                internal_format = GL_RGB8
-                data_format     = GL_RGB
-            }
-            4 -> {
-                internal_format = GL_RGBA8
-                data_format     = GL_RGBA
-            }
-        }
+        internal_format, data_format := channels_to_formats(channels)
 
         id : u32 = 0
         GL(glGenTextures(1, &id))
@@ -291,18 +280,7 @@ impl Texture {
     }
 
     from_bytes :: (width: int, height: int, channels: int, pixels: []u8) -> Rc[Texture] {
-        internal_format : GLenum = 0
-        data_format     : GLenum = 0
-        match channels {
-            3 -> {
-                internal_format = GL_RGB8
-                data_format     = GL_RGB
-            }
-            4 -> {
-                internal_format = GL_RGBA8
-                data_format     = GL_RGBA
-            }
-        }
+        internal_format, data_format := channels_to_formats(channels)
 
         id : u32 = 0
         GL(glGenTextures(1, &id))
@@ -317,6 +295,30 @@ impl Texture {
         return Rc[Texture].new(Texture(id, width, height, internal_format, data_format))
     }
 
+    empty :: (width: int, height: int, channels: int) -> Rc[Texture] {
+        internal_format, data_format := channels_to_formats(channels)
+
+        id : u32 = 0
+        GL(glGenTextures(1, &id))
+        GL(glBindTexture(GL_TEXTURE_2D, id))
+
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST))
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT))
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT))
+        GL(glTexImage2D(GL_TEXTURE_2D, 0, cast internal_format, cast width, cast height, 0, data_format, GL_UNSIGNED_BYTE, null))
+
+        return Rc[Texture].new(Texture(id, width, height, internal_format, data_format))
+    }
+
+    channels_to_formats :: (channels: int) -> (GLenum, GLenum) {
+        return match channels {
+            3 -> (GL_RGB8, GL_RGB)
+            4 -> (GL_RGBA8, GL_RGBA)
+            _ -> (0, 0)
+        }
+    }
+
     bind :: (ref Self, slot: int) {
         GL(glActiveTexture(cast GL_TEXTURE0 + slot))
         GL(glBindTexture(GL_TEXTURE_2D, id))
@@ -326,5 +328,55 @@ impl Texture {
 impl Drop for Texture {
     drop :: (ref Self) {
         glDeleteTextures(1, &id)
+    }
+}
+
+FrameBuffer :: struct {
+    id              : u32
+    render_texture  : Rc[Texture]
+    depth_texture   : u32
+}
+
+impl FrameBuffer {
+    new :: (width: int, height: int) -> Result[Rc[FrameBuffer], ()] {
+        // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
+        frame_buffer := 0u32
+        GL(glGenFramebuffers(1, &frame_buffer))
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer))
+
+        render_texture := Texture.empty(width, height, 3)
+        
+        // The depth buffer
+        depth_texture := 0u32
+        GL(glGenRenderbuffers(1, &depth_texture))
+        GL(glBindRenderbuffer(GL_RENDERBUFFER, depth_texture))
+        GL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, i32(width), i32(height)))
+        GL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_texture))
+
+        // Set "render_texture" as our colour attachement #0
+        GL(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, render_texture.get().id, 0))
+
+        // Set the list of draw buffers.
+        draw_buffers := [u32(GL_COLOR_ATTACHMENT0)]
+        GL(glDrawBuffers(1, draw_buffers.data)) // "1" is the size of draw_buffers
+
+        // Always check that our framebuffer is ok
+        if glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE {
+            return Err(())
+        }
+
+        GL(glBindTexture(GL_TEXTURE_2D, 0))
+        GL(glBindRenderbuffer(GL_RENDERBUFFER, 0))
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, 0))
+
+        return Ok(Rc[FrameBuffer].new(FrameBuffer(
+            id = frame_buffer
+            render_texture = render_texture
+            depth_texture = depth_texture
+        )))
+    }
+
+    bind :: (ref Self) {
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, id))
     }
 }

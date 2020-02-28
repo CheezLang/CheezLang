@@ -12,10 +12,15 @@ impl(T: type) Box[T] {
         <<p = v
         return Box[T](p)
     }
+
     new :: (v: $T2) -> Box[T] {
         p := alloc(T2)
         <<p = v
         return Box[T](cast p)
+    }
+
+    empty :: () -> Box[T] {
+        return Box[T](null)
     }
 
     from_pointer :: (ptr: &T) -> Box[T] {
@@ -23,10 +28,12 @@ impl(T: type) Box[T] {
     }
 
     value :: (ref Self) -> ref T {
+        @assert(_value != null)
         return <<_value
     }
 
     get :: (ref Self) -> ref T {
+        @assert(_value != null)
         return <<_value
     }
 }
