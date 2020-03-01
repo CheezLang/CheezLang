@@ -1,4 +1,6 @@
-#lib("./__TODO__.lib")
+
+#lib("./lib/glad.lib")
+#lib("./lib/glad_binding.lib")
 
 #export_scope
 
@@ -743,6 +745,7 @@ PFNGLSPECIALIZESHADERPROC :: fn(GLuint, &GLchar, GLuint, &GLuint, &GLuint) -> vo
 PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC :: fn(GLenum, &void, GLintptr, GLsizei, GLsizei) -> void
 PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC :: fn(GLenum, GLenum, &void, GLintptr, GLsizei, GLsizei) -> void
 PFNGLPOLYGONOFFSETCLAMPPROC :: fn(GLfloat, GLfloat, GLfloat) -> void
+PFNGLCLAMPCOLORARBPROC :: fn(GLenum, GLenum) -> void
 APIENTRY :: __stdcall
 APIENTRYP :: APIENTRY*
 GLAPIENTRY :: APIENTRY
@@ -2133,6 +2136,12 @@ GL_VERSION_4_3 :: 1
 GL_VERSION_4_4 :: 1
 GL_VERSION_4_5 :: 1
 GL_VERSION_4_6 :: 1
+GL_RGBA_FLOAT_MODE_ARB :: 0x8820
+GL_CLAMP_VERTEX_COLOR_ARB :: 0x891A
+GL_CLAMP_FRAGMENT_COLOR_ARB :: 0x891B
+GL_CLAMP_READ_COLOR_ARB :: 0x891C
+GL_FIXED_ONLY_ARB :: 0x891D
+GL_ARB_color_buffer_float :: 1
 gladGLversionStruct :: struct #copy {
     major : i32 = default
     minor : i32 = default
@@ -2866,6 +2875,8 @@ glSpecializeShader : PFNGLSPECIALIZESHADERPROC #extern #linkname("glad_glSpecial
 glMultiDrawArraysIndirectCount : PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC #extern #linkname("glad_glMultiDrawArraysIndirectCount")
 glMultiDrawElementsIndirectCount : PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC #extern #linkname("glad_glMultiDrawElementsIndirectCount")
 glPolygonOffsetClamp : PFNGLPOLYGONOFFSETCLAMPPROC #extern #linkname("glad_glPolygonOffsetClamp")
+GLAD_GL_ARB_color_buffer_float : i32 #extern
+glClampColorARB : PFNGLCLAMPCOLORARBPROC #extern #linkname("glad_glClampColorARB")
 
 // ==========================================================
 // ==========================================================

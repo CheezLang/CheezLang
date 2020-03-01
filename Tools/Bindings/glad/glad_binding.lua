@@ -11,6 +11,16 @@ extern "C" int gladLoadGLLoader(GLADloadproc);
 ]]
 end
 
+function prepend_to_cheez()
+	return [[
+#lib("./lib/glad.lib")
+#lib("./lib/glad_binding.lib")
+
+#export_scope
+
+]]
+end
+
 function on_global_variable(decl, name, type)
 	index = name:find("glad_gl")
 	if (index == nil)
