@@ -85,6 +85,19 @@ Result :: enum(V: type, E: type) #copy(V, E) {
 use Option
 use Result
 
+impl(T: type) Option[T] {
+    unwrap :: (Self) -> T {
+        _C.printf("1`n")
+        return match self {
+            Some($v) -> {
+                _C.printf("2`n")
+                v
+            }
+            None -> @assert(false)
+        }
+    }
+}
+
 From :: trait(T: type) {
     from :: (value: T) -> Self;
 }

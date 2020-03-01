@@ -240,12 +240,22 @@ Texture :: struct {
     id      : u32
     width   : int
     height  : int
-    internal_format : GLenum
+    internal_format : GLint
     data_format     : GLenum
 }
 
+TextureChannels :: enum {
+    RGB
+    RGBA
+}
+
+TextureFormat :: enum {
+    U8
+    F32
+}
+
 impl Texture {
-    from_file :: (path: string) -> Result[Rc[Texture], ()] {
+    from_file :: (path: string, format: TextureFormat = .U8) -> Result[Rc[Texture], ()] {
         io.println("creating texture from file")
         // load data from file
         width    : i32 = 0
@@ -264,7 +274,7 @@ impl Texture {
 
         defer stbi_image_free(data)
 
-        internal_format, data_format := channels_to_formats(channels)
+        internal_format, data_format, format := channels_to_formats(if channels == 3 then .RGB else .RGBA, format)
 
         id : u32 = 0
         GL(glGenTextures(1, &id))
@@ -274,13 +284,13 @@ impl Texture {
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST))
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT))
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT))
-        GL(glTexImage2D(GL_TEXTURE_2D, 0, cast internal_format, width, height, 0, data_format, GL_UNSIGNED_BYTE, data))
+        GL(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, data_format, format, data))
 
         return Ok(Rc[Texture].new(Texture(id, cast width, cast height, internal_format, data_format)))
     }
 
-    from_bytes :: (width: int, height: int, channels: int, pixels: []u8) -> Rc[Texture] {
-        internal_format, data_format := channels_to_formats(channels)
+    from_bytes :: (width: int, height: int, channels: TextureChannels, pixels: []u8, format: TextureFormat = .U8) -> Rc[Texture] {
+        internal_format, data_format, format := channels_to_formats(channels, format)
 
         id : u32 = 0
         GL(glGenTextures(1, &id))
@@ -290,13 +300,13 @@ impl Texture {
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST))
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT))
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT))
-        GL(glTexImage2D(GL_TEXTURE_2D, 0, cast internal_format, cast width, cast height, 0, data_format, GL_UNSIGNED_BYTE, pixels.data))
+        GL(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, cast width, cast height, 0, data_format, format, pixels.data))
 
         return Rc[Texture].new(Texture(id, width, height, internal_format, data_format))
     }
 
-    empty :: (width: int, height: int, channels: int) -> Rc[Texture] {
-        internal_format, data_format := channels_to_formats(channels)
+    empty :: (width: int, height: int, channels: TextureChannels, format: TextureFormat = .U8) -> Rc[Texture] {
+        internal_format, data_format, format := channels_to_formats(channels, format)
 
         id : u32 = 0
         GL(glGenTextures(1, &id))
@@ -306,16 +316,25 @@ impl Texture {
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST))
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT))
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT))
-        GL(glTexImage2D(GL_TEXTURE_2D, 0, cast internal_format, cast width, cast height, 0, data_format, GL_UNSIGNED_BYTE, null))
+        GL(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, cast width, cast height, 0, data_format, format, null))
 
         return Rc[Texture].new(Texture(id, width, height, internal_format, data_format))
     }
 
-    channels_to_formats :: (channels: int) -> (GLenum, GLenum) {
-        return match channels {
-            3 -> (GL_RGB8, GL_RGB)
-            4 -> (GL_RGBA8, GL_RGBA)
-            _ -> (0, 0)
+    channels_to_formats :: (channels: TextureChannels, format: TextureFormat) -> (GLint, GLenum, GLenum) {
+        return match channels, format {
+            use TextureChannels
+            use TextureFormat
+
+            (RGB, U8) -> (GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE)
+            (RGBA, U8) -> (GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE)
+            (RGB, F32) -> (GL_RGB16F, GL_RGB, GL_FLOAT)
+            (RGBA, F32) -> (GL_RGBA16F, GL_RGBA, GL_FLOAT)
+
+            // (RGB, _) -> (GL_RGB32F, GL_RGB, GL_FLOAT)
+            // (RGBA, _) -> (GL_RGBA32F, GL_RGBA, GL_FLOAT)
+
+            _ -> @assert(false)
         }
     }
 
@@ -339,13 +358,13 @@ FrameBuffer :: struct {
 }
 
 impl FrameBuffer {
-    new :: (width: int, height: int) -> Result[Rc[FrameBuffer], ()] {
+    new :: (width: int, height: int, unclamped_color: bool = false) -> Result[Rc[FrameBuffer], ()] {
         // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
         frame_buffer := 0u32
         GL(glGenFramebuffers(1, &frame_buffer))
         GL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer))
 
-        render_texture := Texture.empty(width, height, 3)
+        render_texture := Texture.empty(width, height, .RGB, if unclamped_color then .F32 else .U8)
         
         // The depth buffer
         depth_texture := 0u32

@@ -12,6 +12,7 @@ ImGui :: import imgui.imgui_binding
 use import math
 use import matrix
 use import opengl_buffers
+use import opengl_utils
 use import shader
 
 #export_scope
@@ -44,6 +45,7 @@ PointLightVertex :: struct #copy {
     position    : vec2
     light_pos   : vec2
     color       : vec3
+    params      : vec4
 }
 
 AreaLightVertex :: struct #copy {
@@ -95,12 +97,15 @@ Renderer :: struct {
     render_target       := Option[Rc[FrameBuffer]].None
     tmp_target          := Rc[FrameBuffer].empty()
     light_map           := Rc[FrameBuffer].empty()
+
+    // tmp
+    exposure := 1.0f
 }
 
 impl Renderer {
     create :: (max_size: vec2i) -> &Renderer {
         // white texture
-        white_tex := Texture.from_bytes(1, 1, 3, [255, 255, 255])
+        white_tex := Texture.from_bytes(1, 1, .RGB, [255, 255, 255])
 
         // create line va
         line_va := {
@@ -188,6 +193,7 @@ impl Renderer {
                 BufferElement("aPos", ShaderDataType.Float2)
                 BufferElement("aLightPos", ShaderDataType.Float2)
                 BufferElement("aColor", ShaderDataType.Float3)
+                BufferElement("aParams", ShaderDataType.Float4)
             ])
             vertex_array.add_vertex_buffer(vertex_buffer)
 
@@ -238,12 +244,12 @@ impl Renderer {
             vertex_array
         }
 
-        light_map := match FrameBuffer.new(max_size.x, max_size.y) {
+        light_map := match FrameBuffer.new(max_size.x, max_size.y, unclamped_color = true) {
             Ok($val) -> val
             Err(_) -> @assert(false)
         }
 
-        tmp_target := match FrameBuffer.new(max_size.x, max_size.y) {
+        tmp_target := match FrameBuffer.new(max_size.x, max_size.y, unclamped_color = true) {
             Ok($val) -> val
             Err(_) -> @assert(false)
         }
@@ -263,6 +269,7 @@ impl Renderer {
             tmp_target      = tmp_target
         )
         r.reload_shaders()
+
         return r
     }
 
@@ -354,10 +361,17 @@ impl Renderer {
         self.enable_lights = enabled
     }
 
+    set_clamping_enabled :: (ref Self, enabled: bool) {
+        val : u32 = if enabled then GL_TRUE else GL_FALSE
+        GL(glClampColorARB(GL_CLAMP_READ_COLOR_ARB, val))
+        // GL(glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, val))
+        // GL(glClampColorARB(GL_CLAMP_FRAGMENT_COLOR_ARB, val))
+    }
+
     push_render_target :: (ref Self) {}
     pop_render_target :: (ref Self) {}
 
-    add_point_light :: (ref Self, pos: vec2, color: vec3) {
+    add_point_light :: (ref Self, pos: vec2, color: vec3, radius: float, angle: float, direction: float, smoothness: float) {
         if !enable_lights {
             return
         }
@@ -371,21 +385,25 @@ impl Renderer {
             position    = vec2(-1, -1)
             light_pos   = pos
             color       = color
+            params      = vec4(radius, smoothness, angle, direction)
         ))
         point_light_cache.add(PointLightVertex(
             position    = vec2(1, -1)
             light_pos   = pos
             color       = color
+            params      = vec4(radius, smoothness, angle, direction)
         ))
         point_light_cache.add(PointLightVertex(
             position    = vec2(1, 1)
             light_pos   = pos
             color       = color
+            params      = vec4(radius, smoothness, angle, direction)
         ))
         point_light_cache.add(PointLightVertex(
             position    = vec2(-1, 1)
             light_pos   = pos
             color       = color
+            params      = vec4(radius, smoothness, angle, direction)
         ))
     }
 
@@ -500,6 +518,7 @@ impl Renderer {
         
         // bind stuff
         apply_light_shader.bind()
+        apply_light_shader.set_uniform_float("uExposure", self.exposure)
         single_quad_va.bind()
         single_quad_va.index_buffer.bind()
 

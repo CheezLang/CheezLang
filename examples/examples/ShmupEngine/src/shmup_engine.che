@@ -611,6 +611,7 @@ impl ShmupEngine {
         self.inspector.register_component_info(PathFollowComponent(null))
         self.inspector.register_component_info(BasicMoveComponent(null, vec3(), 0))
         self.inspector.register_component_info(QuadComponent(null, vec3(1, 1, 1)))
+        self.inspector.register_component_info(PointLightComponent(null, vec3(1, 1, 1), 5, 360, 0, 0.5))
         self.inspector.register_component_info(PlayerControlComponent(null, 1))
         self.inspector.register_component_info(Camera(null, vec2(10, 10)))
     }
@@ -815,6 +816,8 @@ init_imgui :: (window: &GLFWwindow) -> bool {
         io.println("[ERROR] ImGui.ImGui_ImplOpenGL3_Init failed")
         return false
     }
+
+    ImGui.SetColorEditOptions(ImGui.ImGuiColorEditFlags_.HDR)
 
     return true
 }

@@ -1,2 +1,236 @@
 [
+    {
+        id          = 1
+        name        = "Background"
+        dead        = false
+        active      = true
+        position    = {x=0, y=0, z=0}
+        size        = {x=10, y=10, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=0.524505, y=0.52451, z=0.52451}
+            }
+        ]
+    }
+    {
+        id          = 2
+        name        = "Player"
+        dead        = false
+        active      = true
+        position    = {x=2, y=0, z=0}
+        size        = {x=0.25, y=0.25, z=1}
+        angle       = 45
+        components  = [
+            CameraController {
+                max_speed   = 10
+                acc_time    = 0.2
+            }
+            Camera {
+                size = {x=10, y=10}
+            }
+            QuadComponent {
+                color = {x=1, y=0.99999, z=0.99999}
+            }
+            PointLightComponent {
+                color       = {x=1.40416, y=4.95686, z=0.311019}
+                radius      = -1
+                angle       = 75
+                direction   = 0
+                smoothness  = 0.5
+            }
+            TestComponent {
+            }
+        ]
+    }
+    {
+        id          = 3
+        name        = "3"
+        dead        = false
+        active      = true
+        position    = {x=-5, y=-5, z=0}
+        size        = {x=1, y=1, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=1, y=1, z=1}
+            }
+            PathFollowComponent {
+                speed  = 1
+                loops  = true
+                pos    = 0
+                points = [
+                    {x=-3, y=-3, z=0}
+                    {x=3, y=-3, z=0}
+                    {x=3, y=3, z=0}
+                    {x=-3, y=3, z=0}
+                ]
+                dirs = [
+                    {x=1, y=-1, z=0}
+                    {x=1, y=1, z=0}
+                    {x=-1, y=1, z=0}
+                    {x=-1, y=-1, z=0}
+                ]
+            }
+            PointLightComponent {
+                color       = {x=0.882353, y=0.0951557, z=0.0951557}
+                radius      = -1
+                angle       = 0
+                direction   = 0
+                smoothness  = 0
+            }
+        ]
+    }
+    {
+        id          = 4
+        name        = "4"
+        dead        = false
+        active      = true
+        position    = {x=5, y=-5, z=0}
+        size        = {x=1, y=1, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=1, y=0.99999, z=0.99999}
+            }
+            PathFollowComponent {
+                speed  = 2
+                loops  = true
+                pos    = 0
+                points = [
+                    {x=3, y=-3, z=0}
+                    {x=3, y=3, z=0}
+                    {x=-3, y=3, z=0}
+                    {x=-3, y=-3, z=0}
+                ]
+                dirs = [
+                    {x=2, y=2, z=0}
+                    {x=-2, y=2, z=0}
+                    {x=-2, y=-2, z=0}
+                    {x=2, y=-2, z=0}
+                ]
+            }
+            PointLightComponent {
+                color       = {x=0.720283, y=0.882353, z=0.0951557}
+                radius      = -1
+                angle       = 0
+                direction   = 0
+                smoothness  = 0
+            }
+        ]
+    }
+    {
+        id          = 5
+        name        = "5"
+        dead        = false
+        active      = true
+        position    = {x=5, y=5, z=0}
+        size        = {x=1, y=1, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=1, y=0.99999, z=0.99999}
+            }
+            PathFollowComponent {
+                speed  = 4
+                loops  = true
+                pos    = 0
+                points = [
+                    {x=3, y=3, z=0}
+                    {x=-3, y=3, z=0}
+                    {x=-3, y=-3, z=0}
+                    {x=3, y=-3, z=0}
+                ]
+                dirs = [
+                    {x=-4, y=4, z=0}
+                    {x=-4, y=-4, z=0}
+                    {x=4, y=-4, z=0}
+                    {x=4, y=4, z=0}
+                ]
+            }
+            PointLightComponent {
+                color       = {x=0.141461, y=0.882353, z=0.0951557}
+                radius      = -1
+                angle       = 0
+                direction   = 0
+                smoothness  = 0
+            }
+        ]
+    }
+    {
+        id          = 6
+        name        = "6"
+        dead        = false
+        active      = true
+        position    = {x=-5, y=5, z=0}
+        size        = {x=1, y=1, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=1, y=0.99999, z=0.99999}
+            }
+            PathFollowComponent {
+                speed  = 8
+                loops  = true
+                pos    = 0
+                points = [
+                    {x=-3, y=3, z=0}
+                    {x=-3, y=-3, z=0}
+                    {x=3, y=-3, z=0}
+                    {x=3, y=3, z=0}
+                ]
+                dirs = [
+                    {x=-8, y=-8, z=0}
+                    {x=8, y=-8, z=0}
+                    {x=8, y=8, z=0}
+                    {x=-8, y=8, z=0}
+                ]
+            }
+            PointLightComponent {
+                color       = {x=0.0951557, y=0.882353, z=0.8592}
+                radius      = -1
+                angle       = 0
+                direction   = 0
+                smoothness  = 0
+            }
+        ]
+    }
+    {
+        id          = 7
+        name        = "7"
+        dead        = false
+        active      = true
+        position    = {x=0, y=0, z=0}
+        size        = {x=1, y=1, z=1}
+        angle       = 0
+        components  = [
+            QuadComponent {
+                color = {x=1, y=0.99999, z=0.99999}
+            }
+            PathFollowComponent {
+                speed  = 2
+                loops  = true
+                pos    = 0
+                points = [
+                    {x=-3, y=-3, z=0}
+                    {x=3, y=-3, z=0}
+                    {x=3, y=3, z=0}
+                    {x=-3, y=3, z=0}
+                ]
+                dirs = [
+                    {x=1, y=-1, z=0}
+                    {x=1, y=1, z=0}
+                    {x=-1, y=1, z=0}
+                    {x=-1, y=-1, z=0}
+                ]
+            }
+            PointLightComponent {
+                color       = {x=0.488754, y=0.0951557, z=0.882353}
+                radius      = -1
+                angle       = 0
+                direction   = 0
+                smoothness  = 0
+            }
+        ]
+    }
 ]

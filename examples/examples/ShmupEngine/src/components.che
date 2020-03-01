@@ -320,6 +320,42 @@ impl Component for QuadComponent {
     }
 }
 
+PointLightComponent :: struct #extend(ComponentBase) {
+    #color
+    color       : vec3
+    radius      : float
+    angle       : float
+    direction   : float
+    smoothness  : float
+}
+
+impl Component for PointLightComponent {
+    init :: (ref Self) {}
+
+    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
+    }
+    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
+        renderer.add_point_light(entity.position.xy(), color, radius, angle, direction, smoothness)
+    }
+    render_gizmos :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
+    get_type_info   :: (ref Self) -> &TypeInfo {
+        return @type_info(Self)
+    }
+
+    base :: (ref Self) -> ref ComponentBase {
+        return self
+    }
+
+    serialize :: (ref Self, stream: ref String) {
+        stream.appendf("                color       = ``{x={}, y={}, z={}}`n", (self.color.x, self.color.y, self.color.z))
+        stream.appendf("                radius      = {}`n", self.radius)
+        stream.appendf("                angle       = {}`n", self.angle)
+        stream.appendf("                direction   = {}`n", self.direction)
+        stream.appendf("                smoothness  = {}`n", self.smoothness)
+    }
+}
+
+
 Camera :: struct #extend(ComponentBase) {
     size := vec2(10, 10)
 }

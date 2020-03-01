@@ -37,18 +37,25 @@ float smin( float a, float b, float k)
 
 void main()
 {
-    vec2 uv = vTexCoord * 2 - 1;
+    float scale = vSmooth;
 
-    // float dist_from_edge_x = min(vTexCoord.x, 1 - vTexCoord.x);
-    // float dist_from_edge_y = min(vTexCoord.y, 1 - vTexCoord.y);
-    // float dist_from_edge = smin(dist_from_edge_x, dist_from_edge_y, vSmooth) * 2;
-    // dist_from_edge = clamp(dist_from_edge, 0, 1);
-    // dist_from_edge = dist_from_edge * dist_from_edge;
-    // dist_from_edge = dist_from_edge_y;
+    vec2 uv = (vTexCoord * 2 - 1) / scale;
 
+    FragColor = vec4(uv, 0, 1);
 
+    float distance = 0.0;
 
-    float dist_from_edge = clamp(length(uv), 0, 1);
-    float brightness = smoothstep(1, clamp(vSmooth, 0, 0.999), dist_from_edge);
+    if (uv.x >= -1 && uv.x < 1 && uv.y >= -1 && uv.y < 1) {
+        distance = 1.0;
+    } else {
+        float s2 = 1 / ((1 / scale) - 1);
+        uv = clamp((abs(uv) - 1) * s2, 0, 1);
+        distance = 1 - length(uv);
+    }
+
+    float circle_dist = 1 - length(vTexCoord * 2 - 1);
+    // distance = smin(distance, circle_dist, 0.1);
+
+    float brightness = smoothstep(0, 1, distance);
     FragColor = vec4(vColor * brightness, 1);
 }
