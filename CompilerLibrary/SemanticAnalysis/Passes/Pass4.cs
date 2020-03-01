@@ -227,6 +227,12 @@ namespace Cheez
                     CollectPolyTypeNames(d.Left, result);
                     break;
 
+                case AstEnumTypeExpr _:
+                case AstStructTypeExpr _:
+                case AstTraitTypeExpr _:
+                    // @TODO: 
+                    break;
+
                 default: throw new NotImplementedException($"Type {typeExpr}");
             }
         }

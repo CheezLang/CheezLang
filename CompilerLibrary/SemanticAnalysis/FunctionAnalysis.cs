@@ -118,7 +118,7 @@ namespace Cheez
                     if (p.DefaultValue != null)
                     {
                         p.DefaultValue.Scope = func.Scope;
-                        p.DefaultValue = InferType(p.DefaultValue, p.Type);
+                        p.DefaultValue = InferTypeHelper(p.DefaultValue, p.Type, new TypeInferenceContext { TypeOfExprContext = p.Type });
                         ConvertLiteralTypeToDefaultType(p.DefaultValue, p.Type);
                         p.DefaultValue = CheckType(p.DefaultValue, p.Type);
                         if (p.DefaultValue.Type != p.Type && !p.DefaultValue.Type.IsErrorType)

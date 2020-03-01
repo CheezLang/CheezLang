@@ -5303,8 +5303,8 @@ namespace Cheez
                 { } // do nothing
                 else
                     arg.Expr.Scope = expr.Scope;
-                
-                arg.Expr = InferTypeHelper(arg.Expr, type, context);
+
+                arg.Expr = InferTypeHelper(arg.Expr, type, context.WithTypeOfExprContext(type));
                 ConvertLiteralTypeToDefaultType(arg.Expr, type);
                 arg.Type = arg.Expr.Type;
 
