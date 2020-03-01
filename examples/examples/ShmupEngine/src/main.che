@@ -33,247 +33,35 @@ use import components
 
 max_entities :: 1024
 
-n_patch :: 8
-
-MenuObject :: struct {
-    name            : String
-    id              := -1
-    enabled         := true
-
-    cell_table      := vec2i(1, 0)
-    size_in_patches := vec2i(0, 0)
-    cell_size       := vec2i(0, 0)
-    cell_padding    := vec2i(2, 0)
-    cell_cursor     := vec2i(0, 0)
-    cursor_pos      := vec2(0, 0)
-
-    cursor_item     := 0
-    top_visible_row := 0
-    total_rows      := 0
-
-    patch_size      := vec2i(n_patch, n_patch)
-
-    item_indices    := Table[string, int].create(streq_string)
-    items           : Array[MenuObject] = Array[MenuObject].create()
-}
-
-impl MenuObject {
-    new :: (name: string, id: int = -1, enabled: bool = true, table: vec2i = vec2i(1, 0)) -> MenuObject {
-        return MenuObject(
-            name        = String.from_string(name)
-            id          = id
-            enabled     = enabled
-            cell_table  = table
-        )
-    }
-
-    set_table :: (ref Self, table: vec2i) {
-        cell_table = table
-    }
-
-    get_size :: (ref Self) -> vec2i {
-        return vec2i(name.get_length(), 1)
-    }
-
-    has_children :: (ref Self) -> bool {
-        return items.get_length() > 0
-    }
-
-    draw_self :: (ref Self, renderer: ref Renderer, screen_offset: vec3, viewport: ref Viewport, proj: ref mat4) {
-        // draw background
-        for x : 0 .. size_in_patches.x {
-            for y : 0 .. size_in_patches.y {
-                screen_location := vec3(cast x, cast y, 0) * f32(n_patch) + screen_offset
-
-                source_patch := vec2(0, 0)
-                if x > 0 { source_patch.x = 1 }
-                if x == size_in_patches.x - 1 { source_patch.x = 2 }
-                if y > 0 { source_patch.y = 1 }
-                if y == size_in_patches.y - 1 { source_patch.y = 2 }
-
-                image_size := vec2(48, 24)
-                uv_min := source_patch * f32(n_patch) / image_size
-                uv_max := uv_min + vec2(f32(n_patch), f32(n_patch)) / image_size
-
-                renderer.fill_quad(screen_location, vec3(cast patch_size.x, cast patch_size.y, 0), 0, uv=vec4(uv_min.x, uv_min.y, uv_max.x, uv_max.y))
-            }
-        }
-
-        // Work out visible items
-        top_left_item     := top_visible_row + cell_table.x
-        bottom_right_item := top_left_item + cell_table.y * cell_table.x
-
-        // Clamp to size of child item vector
-        bottom_right_item = min(items.get_length(), bottom_right_item)
-        visible_items := bottom_right_item - top_left_item
-
-        // Draw Scroll Markers (if required)
-        if top_visible_row > 0 {
-            patch_pos := vec2(f32(size_in_patches.x) - 2, 0)
-            screen_location := vec3(patch_pos.x, patch_pos.y) * f32(n_patch) + screen_offset
-            source_patch := vec2(3, 0)
-
-            image_size := vec2(48, 24)
-            uv_min := source_patch * f32(n_patch) / image_size
-            uv_max := uv_min + vec2(f32(n_patch), f32(n_patch)) / image_size
-
-            renderer.fill_quad(screen_location, vec3(cast patch_size.x, cast patch_size.y, 0), 0, uv=vec4(uv_min.x, uv_min.y, uv_max.x, uv_max.y))
-        }
-
-        if total_rows - top_visible_row > cell_table.y {
-            patch_pos := vec2(f32(size_in_patches.x) - 2, f32(size_in_patches.y) - 1)
-            screen_location := vec3(patch_pos.x, patch_pos.y) * f32(n_patch) + screen_offset
-            source_patch := vec2(3, 2)
-
-            image_size := vec2(48, 24)
-            uv_min := source_patch * f32(n_patch) / image_size
-            uv_max := uv_min + vec2(f32(n_patch), f32(n_patch)) / image_size
-
-            renderer.fill_quad(screen_location, vec3(cast patch_size.x, cast patch_size.y, 0), 0, uv=vec4(uv_min.x, uv_min.y, uv_max.x, uv_max.y))
-        }
-
-        // draw items
-        for top_left_item .. top_left_item + visible_items {
-            cell            := vec2i(it_index % cell_table.x, it_index / cell_table.x)
-            patch_pos       := vec3(cast cell.x * (cell_size.x + cell_padding.x) + 1, 0.5f + cast(f32) cell.y * (cell_size.y + cell_padding.y) + 1)
-            world_location  := patch_pos * f32(n_patch) + screen_offset
-
-            screen_location := viewport.project(proj, world_location)
-
-            text_size := vec2(cast n_patch, cast n_patch)
-            text_size = viewport.project_dir(proj, text_size)
-
-            renderer.draw_text(screen_location, items[it].name.slice(), size = text_size.x)
-        }
-
-        // Calculate cursor position in screen space in case system draws it
-        cursor_pos.x = f32((cell_cursor.x * (cell_size.x + cell_padding.x)) * n_patch) + screen_offset.x - f32(n_patch)
-        cursor_pos.y = f32((cell_cursor.y - top_visible_row) * (cell_size.y + cell_padding.y)) * f32(n_patch) + screen_offset.y + f32(n_patch) * 0.5f
-
-        // temp: draw cursor
-        renderer.fill_quad(vec3(cursor_pos.x, cursor_pos.y), vec3(16, 16), 0, uv = vec4(32, 8, 48, 24) / vec4(48, 24, 48, 24))
-    }
-
-    build :: (ref Self) {
-        for kv : items {
-            if kv.has_children() {
-                kv.build()
-            }
-
-            cell_size.x = max(kv.get_size().x, cell_size.x)
-            cell_size.y = max(kv.get_size().y, cell_size.y)
-        }
-
-        size_in_patches.x = cell_table.x * cell_size.x + (cell_table.x - 1) * cell_padding.x + 2
-        size_in_patches.y = cell_table.y * cell_size.y + (cell_table.y - 1) * cell_padding.y + 2
-
-        total_rows = (items.get_length() / cell_table.x) + (if items.get_length() % cell_table.x > 0 then 1 else 0)
-    }
-
-    add_child :: (ref Self, path: string, item: MenuObject) {
-        match get_path(path) {
-            MenuObjectPath.Item($name) -> {
-                items.add(item)
-                item_indices.set(name, items.get_length() - 1)
-            }
-
-            MenuObjectPath.Folder($folder) -> {
-                match item_indices.get(folder.name) {
-                    Some($idx) -> items[idx].add_child(folder.rest, item)
-
-                    None -> {
-                        sub := MenuObject(String.from_string(folder.name))
-                        sub.add_child(folder.rest, item)
-
-                        items.add(sub)
-                        item_indices.set(folder.name, items.get_length() - 1)
-                    }
-                }
-            }
-        }
-    }
-
-    get_path :: (path: string) -> MenuObjectPath {
-        index := path.index_of('/')
-        if index == -1 {
-            return MenuObjectPath.Item(path)
-        }
-
-        name := path.sub_string(0, index)
-        rest := path.sub_string(index + 1)
-
-        return MenuObjectPath.Folder((name, rest))
-    }
-
-    on_up :: (ref Self) {
-        cell_cursor.y -= 1
-        if cell_cursor.y < 0 {
-            cell_cursor.y = 0
-        }
-
-        if cell_cursor.y < top_visible_row {
-            top_visible_row -= 1
-            if top_visible_row < 0 {
-                top_visible_row = 0
-            }
-        }
-
-        clamp_cursor()
-    }
-
-    on_down :: (ref Self) {
-        cell_cursor.y += 1
-        if cell_cursor.y == total_rows {
-            cell_cursor.y = total_rows - 1
-        }
-
-        if cell_cursor.y > top_visible_row + cell_table.y - 1 {
-            top_visible_row += 1
-            if top_visible_row > total_rows - cell_table.y {
-                top_visible_row = total_rows - cell_table.y
-            }
-        }
-
-        clamp_cursor()
-    }
-
-    clamp_cursor :: (ref Self) {
-        // find item in children
-        cursor_item = cell_cursor.y * cell_table.x + cell_cursor.x
-
-        // clamp cursor
-        if cursor_item >= items.get_length() {
-            cell_cursor.x = items.get_length() % cell_table.x - 1
-            cell_cursor.y = items.get_length() / cell_table.x
-            cursor_item = items.get_length() - 1
-        }
-    }
-}
-
-MenuObjectPath :: enum {
-    Item    : string
-    Folder  : (name: string, rest: string)
+Light :: struct {
+    pos : vec2
+    col : vec3
 }
 
 Test :: struct {
-    layer : &EntityLayer = null
-    menu  := Box[MenuObject].from_pointer(null)
-    proj := mat4()
+    layer       : &EntityLayer = null
+    proj        := mat4()
 
-    sub := vec4(0, 0, 1, 1)
+    sub         := vec4(0, 0, 1, 1)
 
-    tex := Rc[Texture].empty()
-    tex1 := Rc[Texture].empty()
-    tex2 := Rc[Texture].empty()
+    tex         := Rc[Texture].empty()
+    tex1        := Rc[Texture].empty()
+    tex2        := Rc[Texture].empty()
 
     total       := 1000
     x_count     := 100
     size        := 1.0f
     thickness   := 0.1f
 
-    time := 0.0f
+    time        := 0.0f
 
-    random      : MTwister = default
+    lights      := Array[Light].create()
+
+    area_light_pos      := vec2(4, 2)
+    area_light_size     := vec2(2, 4)
+    area_light_angle    := 0.0f
+    area_light_color    := vec3(1, 1, 0)
+    area_light_smooth   := 0.0f
 }
 
 impl EntityLayerCallbacks for Test {
@@ -282,38 +70,6 @@ impl EntityLayerCallbacks for Test {
         layer.engine.inspector.register_component_info(CameraController())
 
         layer.engine.save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))
-
-        random = MTwister.create(123456789)
-
-        // menu = Box[MenuObject].new(MenuObject(String.from_string("/"), -1, true, vec2i(2, 4)))
-
-        // // menu.get().add_child("main", MenuObject.new("main", table = vec2i(1, 10)))
-        // menu.get().add_child("Magic", MenuObject.new("Magic", id = 101))
-        // menu.get().add_child("Defend", MenuObject.new("Defend", id = 102))
-        // menu.get().add_child("Items", MenuObject.new("Items", id = 103))
-        // menu.get().add_child("Escape", MenuObject.new("Escape", id = 104))
-        // menu.get().add_child("Test1", MenuObject.new("Test1", id = 105))
-        // menu.get().add_child("Test2", MenuObject.new("Test2", id = 106))
-        // menu.get().add_child("Test3", MenuObject.new("Test3", id = 107))
-        // menu.get().add_child("Test4", MenuObject.new("Test4", id = 108))
-        // menu.get().add_child("Test5", MenuObject.new("Test5", id = 109))
-
-        // // menu.get().add_child("Magic/Black/Fire", MenuObject.new("Fire", id = 101, enabled = true, table = vec2i(1, 0)))
-        // // menu.get().add_child("Magic/Black/Ice", MenuObject.new("Ice", id = 102, enabled = false, table = vec2i(1, 0)))
-        // menu.get().build()
-
-        // cmd := Command.SetEditorMode(CommandEditorMode.Single)
-        // layer.engine.on_command(cmd)
-
-        // proj = mat4.orthographic(0, 1920, 1280, 0, 1, -1)
-
-        // tex = match Texture.from_file("../data/RetroMenu.png") {
-        //     Ok($tex) -> tex
-        //     Err(_) -> {
-        //         io.formatln("[ERROR] Failed to load image")
-        //         return false
-        //     }
-        // }
 
         tex1 = match Texture.from_file("../data/RetroMenu.png") {
             Ok($tex) -> tex
@@ -330,6 +86,12 @@ impl EntityLayerCallbacks for Test {
             }
         }
 
+        lights.clear()
+        lights.add(Light(vec2(2, 0), vec3(1, 0, 0)))
+        lights.add(Light(vec2(-2, 0), vec3(0, 1, 0)))
+        lights.add(Light(vec2(0, 2), vec3(0, 0, 1)))
+        lights.add(Light(vec2(0, -2), vec3(1, 1, 1)))
+
         return true
     }
 
@@ -338,38 +100,11 @@ impl EntityLayerCallbacks for Test {
     }
 
     render :: (ref Self, renderer: ref Renderer) {
-        // layer.engine.edit_property(PropertyEdit.EditVec4(&sub, "sub"))
-
-        // viewport_size := layer.engine.game_viewport.size * 0.1f
-        // proj = mat4.orthographic(0, viewport_size.x, 0, viewport_size.y, 1, -1)
-
-        // // renderer.draw_text(vec3(100, 100), "lol was geht", size = 50)
-        // // renderer.draw_text(vec3(100, 200), "lol was geht", color = vec3(1, 0, 0))
-        // // renderer.draw_text(vec3(100, 300), "lol was geht", color = vec3(0, 1, 1), size = 16)
-
-        // renderer.push_proj(proj)
-        // tex.get().bind(0)
-
-        // if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_UP) {
-        //     menu.get().on_up()
-        // }
-        // if layer.engine.global_input.key_pressed(glfw.GLFW_KEY_DOWN) {
-        //     menu.get().on_down()
-        // }
-        // menu.get().draw_self(renderer, vec3(10, 10), <<layer.engine.game_viewport, proj)
-
-        // // renderer.fill_quad(vec3(200, 400), vec3(400, 400), 0, sub=sub)
-        // renderer.pop_proj()
-
-        // render_menu_imgui()
-        
         layer.engine.edit_property(PropertyEdit.EditInt(&total, "Quad Count"))
         layer.engine.edit_property(PropertyEdit.EditInt(&x_count, "X Count"))
         layer.engine.edit_property(PropertyEdit.EditFloat(&size, "Quad Size", 0.1f))
         layer.engine.edit_property(PropertyEdit.EditFloat(&thickness, "Line thickness", 0.01f))
         
-        // random = MTwister.create(123456789)
-
         for 0..total {
             x := f32(it % x_count) * size
             y := f32(it / x_count) * size
@@ -382,44 +117,36 @@ impl EntityLayerCallbacks for Test {
 
             renderer.fill_quad(vec3(x, y), vec3(size, size) * 0.9f, texture = tex)
         }
+
+        for l : lights {
+            renderer.add_point_light(l.pos, l.col)
+        }
+
+        renderer.add_area_light(area_light_pos, area_light_size, area_light_angle, area_light_color, area_light_smooth)
     }
 
     imgui_render :: (ref Self) {
-    }
-
-    render_menu_imgui :: (ref Self) {
         defer ImGui.End()
-        if !ImGui.Begin("Menu Debug") {
+        if !ImGui.Begin("Lights") {
             return
         }
 
-        render_menu_object_imgui(menu.get())
-    }
-
-    render_menu_object_imgui :: (ref Self, obj: ref MenuObject) {
-        title := fmt.format("{} ({}) {} {}x{}, {}x{}, {}x{}, {}", [
-            if obj.enabled then "1" else "0"
-            obj.id
-            obj.name.slice()
-            obj.cell_table.x, obj.cell_table.y
-            obj.cell_size.x, obj.cell_size.y
-            obj.size_in_patches.x, obj.size_in_patches.y
-            obj.total_rows
-        ])
-
-        if obj.has_children() {
-            ImGui.SetNextItemOpen(true, ImGui.ImGuiCond_.Appearing)
-            if !ImGui.TreeNode(title.as_cstring()) {
-                return
-            }
-            defer ImGui.TreePop()
-
-            for entry : obj.items {
-                render_menu_object_imgui(entry)
-            }
-        } else {
-            ImGui.Text(title.as_cstring())
+        for l : lights {
+            ImGui.PushIDPtr(&l)
+            ImGui.SliderFloat2("Position", cast &l.pos, -10, 10)
+            ImGui.ColorEdit3("Color", cast &l.col)
+            ImGui.Separator()
+            ImGui.PopID()
         }
+
+        ImGui.PushIDPtr(&area_light_pos)
+        ImGui.SliderFloat2("Position", cast &area_light_pos, -10, 10)
+        ImGui.SliderFloat2("Size", cast &area_light_size, 0.1, 5)
+        ImGui.SliderAngle("Angle", cast &area_light_angle)
+        ImGui.ColorEdit3("Color", cast &area_light_color)
+        ImGui.SliderFloat("Smooth", cast &area_light_smooth, 0.0, 2)
+        ImGui.Separator()
+        ImGui.PopID()
     }
 }
 

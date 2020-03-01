@@ -161,10 +161,10 @@ impl ShmupEngine {
             }
 
             // use last monitor
-            monitor := monitors[count - 1]
+            // monitor := monitors[count - 1]
 
             // use primary monitor
-            // monitor := monitors[0]
+            monitor := monitors[0]
 
             monitor_pos := Vector2[i32]()
             glfwGetMonitorPos(monitor, &monitor_pos.x, &monitor_pos.y)
@@ -234,7 +234,7 @@ impl ShmupEngine {
         // setup renderer
         global_input = Input.new()
         game_input   = Input.new()
-        renderer     = Renderer.create()
+        renderer     = Renderer.create(viewport_size_max)
 
         // setup editors
         hierarchy.engine = &self

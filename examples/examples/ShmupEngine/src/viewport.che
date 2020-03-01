@@ -217,6 +217,7 @@ impl GameView for GameWindow {
 
     render :: (ref Self, world_size: vec3, renderer: ref Renderer) {
         begin_render(world_size, renderer)
+        renderer.set_target(Some(viewport.frame_buffer.clone()))
         data := engine.current_mode_data()
         if data != null {
             for layer : data.layer_stack {
@@ -224,6 +225,7 @@ impl GameView for GameWindow {
             }
         }
         renderer.flush()
+        renderer.apply_lights()
         end_render()
     }
 
@@ -239,8 +241,8 @@ impl GameView for GameWindow {
             
             // uv0     = ImGui.ImVec2(0, 1)
             // uv1     = ImGui.ImVec2(1, 0)
-            // ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, size, uv0, uv1, tint, border)
-            ImGui.Image(cast tmp_frame_buff1.get().render_texture.get().id, size, uv0, uv1, tint, border)
+            ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, size, uv0, uv1, tint, border)
+            // ImGui.Image(cast tmp_frame_buff1.get().render_texture.get().id, size, uv0, uv1, tint, border)
         }
         ImGui.End()
 
@@ -263,12 +265,13 @@ impl GameView for GameWindow {
                 viewport.set_scale(1)
                 viewport.update_projection_matrix(vec3(cam.get().size.x, cam.get().size.y))
                 view_proj := viewport.projection_matrix * viewport.view_matrix
-                renderer.begin_scene(view_proj)
+                renderer.begin_scene(view_proj, viewport.size.xy())
+                renderer.set_projection_inv(viewport.view_projection_inv)
             }
 
             None -> {
                 viewport.update_projection_matrix(world_size)
-                renderer.begin_scene(viewport.projection_matrix)
+                renderer.begin_scene(viewport.projection_matrix, viewport.size.xy())
             }
         }
 
@@ -276,19 +279,21 @@ impl GameView for GameWindow {
     }
 
     end_render :: (ref Self) {
-        tmp_frame_buff1.get().bind()
-        glViewport(0, 0, i32(max_size.x), i32(max_size.y))
-        glClearColor(1.0f, 0.0f, 0.0f, 1.0f)
-        glClear(GL_COLOR_BUFFER_BIT)
+        // tmp_frame_buff1.get().bind()
+        // glViewport(0, 0, i32(max_size.x), i32(max_size.y))
+        // glClearColor(1.0f, 0.0f, 0.0f, 1.0f)
+        // glClear(GL_COLOR_BUFFER_BIT)
 
-        shader.bind()
-        pp_vertex_array.get().bind()
-        pp_vertex_array.get().index_buffer.bind()
+        // shader.bind()
+        // pp_vertex_array.get().bind()
+        // pp_vertex_array.get().index_buffer.bind()
 
-        viewport.frame_buffer.get().render_texture.get().bind(0)
+        // viewport.frame_buffer.get().render_texture.get().bind(0)
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null)
-        glBindVertexArray(0)
+        // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, null)
+        // glBindVertexArray(0)
+
+        // viewport.frame_buffer.get().copy_to(tmp_frame_buff1.get())
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
         // renderer.end_scene()
@@ -409,14 +414,19 @@ impl GameView for EditorWindow {
     }
 
     render :: (ref Self, world_size: vec3, renderer: ref Renderer) {
+        renderer.set_lights_enabled(false)
+        defer renderer.set_lights_enabled(true)
         begin_render(world_size, renderer)
+        renderer.set_target(Some(viewport.frame_buffer.clone()))
         data := engine.current_mode_data()
         if data != null {
             for layer : data.layer_stack {
                 layer.render(true, renderer)
+                layer.imgui_render()
             }
         }
         renderer.draw_quad(vec3(0, 0, 0), engine.world_size)
+        renderer.clear_lights()
         renderer.flush()
         end_render()
     }
@@ -439,7 +449,7 @@ impl GameView for EditorWindow {
 
         // render mode
         view_projection := viewport.projection_matrix * viewport.view_matrix
-        renderer.begin_scene(view_projection)
+        renderer.begin_scene(view_projection, viewport.size.xy())
 
         return true
     }
@@ -581,6 +591,7 @@ impl GameView for GameAndEditorWindow {
 
     render :: (ref Self, world_size: vec3, renderer: ref Renderer) {
         begin_render(world_size, renderer)
+        renderer.set_target(Some(viewport.frame_buffer.clone()))
         data := engine.current_mode_data()
         if data != null {
             for layer : data.layer_stack {
@@ -620,7 +631,7 @@ impl GameView for GameAndEditorWindow {
 
         // render mode
         view_projection := viewport.projection_matrix * viewport.view_matrix
-        renderer.begin_scene(view_projection)
+        renderer.begin_scene(view_projection, viewport.size.xy())
 
         return false
     }

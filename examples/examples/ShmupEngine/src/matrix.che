@@ -69,6 +69,15 @@ impl(T: type) Matrix4[T] {
         ])
     }
 
+    // invert_transform :: (Self) -> Self {
+    //     return Self([
+    //         1 / values[0]   , 0             , 0                 , -values[3]
+    //         0               , 1 / values[5] , 0                 , -values[7]
+    //         0               , 0             , 1 / values[10]    , -values[11]
+    //         0               , 0             , 0                 , 1
+    //     ])
+    // }
+
     invert_orthographic :: (ref Self) -> Self {
         return Self([
             1 / values[0]   , 0             , 0                 , -values[3]

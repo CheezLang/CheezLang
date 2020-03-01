@@ -335,6 +335,7 @@ FrameBuffer :: struct {
     id              : u32
     render_texture  : Rc[Texture]
     depth_texture   : u32
+    size            : vec2i
 }
 
 impl FrameBuffer {
@@ -370,13 +371,49 @@ impl FrameBuffer {
         GL(glBindFramebuffer(GL_FRAMEBUFFER, 0))
 
         return Ok(Rc[FrameBuffer].new(FrameBuffer(
-            id = frame_buffer
-            render_texture = render_texture
-            depth_texture = depth_texture
+            id              = frame_buffer
+            render_texture  = render_texture
+            depth_texture   = depth_texture
+            size            = vec2i(width, height)
         )))
     }
 
     bind :: (ref Self) {
         GL(glBindFramebuffer(GL_FRAMEBUFFER, id))
+        glViewport(0, 0, i32(size.x), i32(size.y))
+    }
+
+    unbind :: () {
+        GL(glBindFramebuffer(GL_FRAMEBUFFER, 0))
+    }
+
+    bind_read :: (ref Self) {
+        GL(glBindFramebuffer(GL_READ_FRAMEBUFFER, id))
+    }
+
+    bind_write :: (ref Self) {
+        GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, id))
+    }
+
+    unbind_read :: () {
+        GL(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0))
+    }
+
+    unbind_write :: () {
+        GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
+    }
+
+    copy_to :: (ref Self, target: ref FrameBuffer, bit: enum #flags { Color, Depth, Stencil } = .Color) {
+        mask := match bit {
+            .Color      -> GL_COLOR_BUFFER_BIT
+            .Depth      -> GL_DEPTH_BUFFER_BIT
+            .Stencil    -> GL_STENCIL_BUFFER_BIT
+        }
+
+        GL(glBindFramebuffer(GL_READ_FRAMEBUFFER, self.id))
+        GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, target.id))
+        GL(glBlitFramebuffer(0, 0, i32(self.size.x), i32(self.size.y), 0, 0, i32(target.size.x), i32(target.size.y), u32(mask), GL_NEAREST))
+        GL(glBindFramebuffer(GL_READ_FRAMEBUFFER, 0))
+        GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
     }
 }
