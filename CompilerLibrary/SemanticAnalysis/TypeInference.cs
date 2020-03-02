@@ -4119,8 +4119,9 @@ namespace Cheez
 
                         if (mem == null)
                         {
-                            ReportError(expr, $"Type '{@enum}' has no member '{memName}'");
-                            return expr;
+                            return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
+                            // ReportError(expr, $"Type '{@enum}' has no member '{memName}'");
+                            // return expr;
                         }
 
                         if (mem.AssociatedTypeExpr == null)
