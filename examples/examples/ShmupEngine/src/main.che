@@ -104,8 +104,6 @@ impl EntityLayerCallbacks for Test {
     }
 
     render :: (ref Self, renderer: ref Renderer) {
-        exposure = &renderer.exposure
-
         layer.engine.edit_property(PropertyEdit.EditInt(&total, "Quad Count"))
         layer.engine.edit_property(PropertyEdit.EditInt(&x_count, "X Count"))
         layer.engine.edit_property(PropertyEdit.EditFloat(&size, "Quad Size", 0.1f))
@@ -287,6 +285,8 @@ Main :: () {
     test  := Test()
 
     shmup_engine := ShmupEngine.new()
-    shmup_engine.push_entity_layer(String.from_string("test layer"), &test)
+    shmup_engine.push_entity_layer(String.from_string("Test Layer"), &test)
+    shmup_engine.push_lighting_layer(String.from_string("Lighting"))
+    shmup_engine.push_debug_layer(String.from_string("Debug"))
     shmup_engine.start()
 }

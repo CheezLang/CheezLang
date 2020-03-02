@@ -281,20 +281,51 @@ impl EntityInspector {
             }
 
             _ if typ == @type_info(vec3) -> {
+                ptr := cast(&f32) ptr
                 if m.has_attribute("color") {
-                    ImGui.ColorEdit3(name.as_cstring(), cast ptr)
+                    ImGui.ColorEdit3(name.as_cstring(), ptr)
                 } else if m.has_attribute("range") {
                     range := m.get_attribute("range")
                     min := range.get_arg(0, f32)
                     max := range.get_arg(1, f32)
-                    ImGui.SliderFloat3(name.as_cstring(), cast ptr, min, max)
+                    ImGui.SliderFloat3(name.as_cstring(), ptr, min, max)
+                } else if m.has_attribute("min") and m.has_attribute("max") {
+                    min := m.get_attribute("min")
+                    max := m.get_attribute("max")
+
+                    ImGui.DragFloat3(name.as_cstring(), ptr, _v_min = min.get_arg(0, f32), _v_max = max.get_arg(0, f32))
+                } else if m.has_attribute("min") {
+                    min := m.get_attribute("min")
+                    ImGui.DragFloat3(name.as_cstring(), ptr, _v_min = min.get_arg(0, f32), _v_max = f32.max)
+                } else if m.has_attribute("max") {
+                    max := m.get_attribute("max")
+                    ImGui.DragFloat3(name.as_cstring(), ptr, _v_min = f32.min, _v_max = max.get_arg(0, f32))
                 } else {
-                    ImGui.InputFloat3(name.as_cstring(), cast ptr)
+                    ImGui.InputFloat3(name.as_cstring(), ptr)
                 }
             }
 
             _ if typ == @type_info(vec2) -> {
-                ImGui.InputFloat2(name.as_cstring(), cast ptr)
+                ptr := cast(&f32) ptr
+                if m.has_attribute("range") {
+                    range := m.get_attribute("range")
+                    min := range.get_arg(0, f32)
+                    max := range.get_arg(1, f32)
+                    ImGui.SliderFloat2(name.as_cstring(), ptr, min, max)
+                } else if m.has_attribute("min") and m.has_attribute("max") {
+                    min := m.get_attribute("min")
+                    max := m.get_attribute("max")
+
+                    ImGui.DragFloat2(name.as_cstring(), ptr, _v_min = min.get_arg(0, f32), _v_max = max.get_arg(0, f32))
+                } else if m.has_attribute("min") {
+                    min := m.get_attribute("min")
+                    ImGui.DragFloat2(name.as_cstring(), ptr, _v_min = min.get_arg(0, f32), _v_max = f32.max)
+                } else if m.has_attribute("max") {
+                    max := m.get_attribute("max")
+                    ImGui.DragFloat2(name.as_cstring(), ptr, _v_min = f32.min, _v_max = max.get_arg(0, f32))
+                } else {
+                    ImGui.InputFloat2(name.as_cstring(), ptr)
+                }
             }
 
             _ if typ == @type_info(Array[vec3]) -> {

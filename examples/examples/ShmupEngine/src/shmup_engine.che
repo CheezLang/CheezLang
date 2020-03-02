@@ -622,6 +622,18 @@ impl ShmupEngine {
         self.current_mode_data().layer_stack.add(ptr)
     }
 
+    push_lighting_layer :: (ref Self, name: String) {
+        ptr := mem.alloc(LightingLayer)
+        <<ptr = LightingLayer.new(name, self, <<Input.new())
+        self.current_mode_data().layer_stack.add(ptr)
+    }
+
+    push_debug_layer :: (ref Self, name: String) {
+        ptr := mem.alloc(DebugLayer)
+        <<ptr = DebugLayer.new(name, self, <<Input.new())
+        self.current_mode_data().layer_stack.add(ptr)
+    }
+
     on_command :: (ref Self, cmd: ref Command) {
         match cmd {
             Command.Quit -> {

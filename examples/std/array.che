@@ -34,7 +34,8 @@ impl(T: type) Array[T] {
     }
 
     reserve :: (ref Self, size: int) {
-        if capacity > size {
+        @assert(length <= size)
+        if capacity >= size {
             return
         }
 
@@ -51,6 +52,10 @@ impl(T: type) Array[T] {
     }
 
     get_length :: (ref Self) -> int {
+        return length
+    }
+
+    count :: (ref Self) -> int {
         return length
     }
 

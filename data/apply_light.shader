@@ -24,7 +24,6 @@ uniform float uExposure;
 void main()
 {
     const float gamma = 2.2;
-
     vec3 color = texture(uColorTex, vTexCoord).rgb;
     vec3 light = texture(uLightMap, vTexCoord).rgb;
     vec3 hdr_color = color * light;
@@ -41,6 +40,6 @@ void main()
     // gamma correction
     ldr_color = pow(ldr_color, vec3(1.0 / gamma));
 
-    ldr_color = light;
+    // ldr_color = light;
     FragColor = vec4(ldr_color, 1.0);
 }

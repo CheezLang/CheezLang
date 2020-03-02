@@ -92,8 +92,5 @@ void main()
 
     vec3 color = clamp(vColor, 0, 100000000);
     float attenuation = vAttenuation.x * dist * dist + vAttenuation.y * dist + vAttenuation.z;
-    // attenuation = 1.0;
     FragColor = vec4(color / attenuation * d, 1.0);
-    
-    // FragColor = vec4(clamp(d1, 0, 1));
 }

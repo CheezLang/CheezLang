@@ -34,7 +34,7 @@
             }
             PointLightComponent {
                 color       = {x=1.40416, y=4.95686, z=0.311019}
-                radius      = 10
+                radius      = 12
                 angle       = 90.0026
                 direction   = 90.0026
                 smoothness  = 0.236

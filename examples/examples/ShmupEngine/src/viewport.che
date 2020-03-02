@@ -65,9 +65,6 @@ GameWindow :: struct #extend(WindowBase) {
     camera          := Option[Ref[Camera]].None
     pp_vertex_array := Box[VertexArray].empty()
     max_size        := vec2i()
-    tmp_frame_buff1 := Rc[FrameBuffer].empty()
-    tmp_frame_buff2 := Rc[FrameBuffer].empty()
-    shader          := Shader(0)
 }
 
 impl GameView for GameWindow {
@@ -75,10 +72,6 @@ impl GameView for GameWindow {
         self.max_size = max_size
         viewport.set_scale(1)
         viewport.set_translation(vec3())
-
-        // frame buffer
-        tmp_frame_buff1 = try(FrameBuffer.new(max_size.x, max_size.y))
-        tmp_frame_buff2 = try(FrameBuffer.new(max_size.x, max_size.y))
 
         // vertex array
         pp_vertex_array = {
@@ -103,9 +96,6 @@ impl GameView for GameWindow {
 
             Box[VertexArray].from_pointer(vertex_array)
         }
-
-        // shader
-        shader = try(Shader.from_file("../data/grey_scale.shader"))
 
         return viewport.initialize(max_size)
     }
@@ -217,15 +207,25 @@ impl GameView for GameWindow {
 
     render :: (ref Self, world_size: vec3, renderer: ref Renderer) {
         begin_render(world_size, renderer)
-        renderer.set_target(Some(viewport.frame_buffer.clone()))
+
         data := engine.current_mode_data()
         if data != null {
             for layer : data.layer_stack {
-                layer.render(true, renderer)
+                renderer.push_render_target()
+                renderer.clear()
+                // renderer.clear(vec4(1, 0 ,0, 0))
+                layer.render(renderer)
+                renderer.flush()
             }
+            renderer.targets(0).color_map.get().copy_to(viewport.frame_buffer.get())
         }
-        renderer.flush()
-        renderer.apply_lights()
+
+
+        // if layer_outputs.count() > 0 {
+        //     layer_outputs.peek_last().get().copy_to(viewport.frame_buffer.get())
+        // }
+        renderer.reset_render_targets()
+
         end_render()
     }
 
@@ -238,7 +238,7 @@ impl GameView for GameWindow {
             uv1     := ImGui.ImVec2(size.x / viewport.size_max.x, 0)
             tint    := ImGui.ImVec4(1, 1, 1, 1)
             border  := ImGui.ImVec4(0, 0, 0, 0)
-            
+
             // uv0     = ImGui.ImVec2(0, 1)
             // uv1     = ImGui.ImVec2(1, 0)
             ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, size, uv0, uv1, tint, border)
@@ -417,17 +417,20 @@ impl GameView for EditorWindow {
         renderer.set_lights_enabled(false)
         defer renderer.set_lights_enabled(true)
         begin_render(world_size, renderer)
-        renderer.set_target(Some(viewport.frame_buffer.clone()))
-        data := engine.current_mode_data()
-        if data != null {
-            for layer : data.layer_stack {
-                layer.render(true, renderer)
-                layer.imgui_render()
-            }
-        }
-        renderer.draw_quad(vec3(0, 0, 0), engine.world_size)
-        renderer.clear_lights()
-        renderer.flush()
+
+        // data := engine.current_mode_data()
+        // if data != null {
+        //     for layer : data.layer_stack {
+        //         renderer.push_render_target()
+        //         layer.render(renderer)
+        //         layer.imgui_render()
+        //         renderer.flush()
+        //         renderer.clear_lights()
+        //     }
+        // }
+        // // renderer.draw_quad(vec3(0, 0, 0), engine.world_size)
+        // // renderer.flush()
+        // renderer.reset_render_targets()
         end_render()
     }
 
@@ -590,17 +593,17 @@ impl GameView for GameAndEditorWindow {
     }
 
     render :: (ref Self, world_size: vec3, renderer: ref Renderer) {
-        begin_render(world_size, renderer)
-        renderer.set_target(Some(viewport.frame_buffer.clone()))
-        data := engine.current_mode_data()
-        if data != null {
-            for layer : data.layer_stack {
-                layer.render(true, renderer)
-            }
-        }
-        renderer.draw_quad(vec3(0, 0, 0), engine.world_size)
-        renderer.flush()
-        end_render()
+        // begin_render(world_size, renderer)
+        // renderer.set_target(Some(viewport.frame_buffer.clone()))
+        // data := engine.current_mode_data()
+        // if data != null {
+        //     for layer : data.layer_stack {
+        //         layer.render(renderer)
+        //     }
+        // }
+        // renderer.draw_quad(vec3(0, 0, 0), engine.world_size)
+        // renderer.flush()
+        // end_render()
     }
 
     begin_render :: (ref Self, world_size: vec3, renderer: ref Renderer) -> bool {

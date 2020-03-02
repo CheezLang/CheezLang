@@ -50,7 +50,71 @@ impl Hierarchy {
 
                 el.remove_dead_entities()
             }
+
+            LightingLayer($ll) -> {
+                render_lighting_layer(ll)
+            }
+
+            DebugLayer($ll) -> {
+                render_debug_layer(ll)
+            }
         }
+    }
+
+    render_debug_layer :: (ref Self, layer: ref DebugLayer) {
+        defer ImGui.End()
+        if !ImGui.Begin("Hierarchy") {
+            return
+        }
+
+        data := engine.current_mode_data()
+        if data != null {
+            ImGui.Checkbox("Show Layer Output", &layer.show_layer_output)
+
+            for l : data.layer_stack {
+                if l == &layer then break
+                ImGui.PushIDPtr(l)
+                defer ImGui.PopID()
+
+                ImGui.Text(l.get_name())
+                ImGui.SameLine(ImGui.GetWindowContentRegionMax().x - 100)
+
+                {
+                    defer ImGui.PopStyleColor()
+                    if layer.layer_index == it_index and !layer.show_light_map
+                    then ImGui.PushStyleColorInt(ImGui.ImGuiCol_.Button, ImGui.Color32(200, 200, 200))
+                    else ImGui.PushStyleColorInt(ImGui.ImGuiCol_.Button, ImGui.Color32(50, 50, 50))
+                    if ImGui.SmallButton("Color") {
+                        layer.layer_index = it_index
+                        layer.show_light_map = false
+                        break
+                    }
+                }
+                ImGui.SameLine()
+                {
+                    defer ImGui.PopStyleColor()
+                    if layer.layer_index == it_index and layer.show_light_map
+                    then ImGui.PushStyleColorInt(ImGui.ImGuiCol_.Button, ImGui.Color32(200, 200, 200))
+                    else ImGui.PushStyleColorInt(ImGui.ImGuiCol_.Button, ImGui.Color32(50, 50, 50))
+                    if ImGui.SmallButton("Light") {
+                        layer.layer_index = it_index
+                        layer.show_light_map = true
+                        break
+                    }
+                }
+            }
+
+        }
+    }
+
+    render_lighting_layer :: (ref Self, layer: ref LightingLayer) {
+        defer ImGui.End()
+        if !ImGui.Begin("Hierarchy") {
+            return
+        }
+
+        ImGui.Checkbox("Disabled", &layer.disabled)
+        ImGui.DragFloat("Exposure", &layer.exposure, 0.01f, 0.0f, f32.max)
     }
 
     render_entity_list :: (ref Self, layer: ref EntityLayer) {

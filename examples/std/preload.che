@@ -87,13 +87,18 @@ use Result
 
 impl(T: type) Option[T] {
     unwrap :: (Self) -> T {
-        _C.printf("1`n")
         return match self {
-            Some($v) -> {
-                _C.printf("2`n")
-                v
-            }
+            Some($v) -> v
             None -> @assert(false)
+        }
+    }
+}
+
+impl(V: type, E: type) Result[V, E] {
+    unwrap :: (Self) -> V {
+        return match self {
+            Ok($v) -> v
+            Err(_) -> @assert(false)
         }
     }
 }

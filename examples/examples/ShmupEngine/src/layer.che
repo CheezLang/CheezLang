@@ -39,7 +39,7 @@ Layer :: trait {
     get_input       :: (ref Self) -> ref Input;
     init            :: (ref Self) -> bool;
     update          :: (ref Self, dt: float);
-    render          :: (ref Self, render_gizmos: bool, renderer: ref Renderer);
+    render          :: (ref Self, renderer: ref Renderer);
     imgui_render    :: (ref Self);
     on_key_event    :: (ref Self, key: int, action: int) -> bool;
     clone           :: (ref Self) -> Option[&Layer];
@@ -52,6 +52,148 @@ LayerBase :: struct #extendable {
     engine      : ref ShmupEngine
     input       : ref Input
     callbacks   : &EntityLayerCallbacks
+}
+
+DebugLayer :: struct #extend(LayerBase) {
+    show_layer_output := false
+    show_light_map    := false
+    layer_index       := 0
+}
+
+impl DebugLayer {
+    new :: (name: String, engine: ref ShmupEngine, input: ref Input) -> DebugLayer {
+        return DebugLayer(name, engine, input, null)
+    }
+}
+
+impl Layer for DebugLayer {
+    get_name :: (ref Self) -> c_string {
+        return name.as_cstring()
+    }
+
+    get_base :: (ref Self) -> ref LayerBase {
+        return self
+    }
+
+    get_input :: (ref Self) -> ref Input {
+        return input
+    }
+
+    init :: (ref Self) -> bool {
+        return true
+    }
+
+    update :: (ref Self, dt: float) {
+
+    }
+
+    render :: (ref Self, renderer: ref Renderer) {
+        // bind stuff
+        target := ref renderer.targets().color_map.get()
+
+        if !show_layer_output {
+            renderer.targets(1).color_map.get().copy_to(target)
+        } else {
+            data := engine.current_mode_data()
+            index := clamp(layer_index, 0, data.layer_stack.count() - 1)
+            if show_light_map {
+                renderer.targets(data.layer_stack.count() - 1 - index).light_map.get().copy_to(target)
+            } else {
+                renderer.targets(data.layer_stack.count() - 1 - index).color_map.get().copy_to(target)
+            }
+        }
+    }
+
+    imgui_render :: (ref Self) {
+
+    }
+
+    on_key_event :: (ref Self, key: int, action: int) -> bool {
+        return false
+    }
+
+    clone :: (ref Self) -> Option[&Layer] {
+        result := mem.alloc(DebugLayer)
+        <<result = DebugLayer.new(name.clone(), engine, input)
+        return Some(result)
+    }
+
+    load_from_file :: (ref Self, file: string) {
+
+    }
+
+    save_to_file :: (ref Self, file: ref String) {
+
+    }
+
+}
+
+LightingLayer :: struct #extend(LayerBase) {
+    exposure := 1.0f
+    disabled := false
+}
+
+impl LightingLayer {
+    new :: (name: String, engine: ref ShmupEngine, input: ref Input) -> LightingLayer {
+        return LightingLayer(name, engine, input, null)
+    }
+}
+
+impl Layer for LightingLayer {
+    get_name :: (ref Self) -> c_string {
+        return name.as_cstring()
+    }
+
+    get_base :: (ref Self) -> ref LayerBase {
+        return self
+    }
+
+    get_input :: (ref Self) -> ref Input {
+        return input
+    }
+
+    init :: (ref Self) -> bool {
+        return true
+    }
+
+    update :: (ref Self, dt: float) {
+
+    }
+
+    render :: (ref Self, renderer: ref Renderer) {
+        if disabled {
+            renderer.targets(1).color_map.get().copy_to(renderer.targets().color_map.get())
+            return
+        }
+
+        // apply lighting
+        renderer.apply_light_shader.bind()
+        renderer.apply_light_shader.set_uniform_float("uExposure", self.exposure)
+        renderer.render_effect(renderer.apply_light_shader)
+    }
+
+    imgui_render :: (ref Self) {
+
+    }
+
+    on_key_event :: (ref Self, key: int, action: int) -> bool {
+        return false
+    }
+
+    clone :: (ref Self) -> Option[&Layer] {
+        result := mem.alloc(LightingLayer)
+        <<result = LightingLayer.new(name.clone(), engine, input)
+        return Some(result)
+    }
+
+    load_from_file :: (ref Self, file: string) {
+
+    }
+
+    save_to_file :: (ref Self, file: ref String) {
+
+    }
+
 }
 
 EntityLayer :: struct #extend(LayerBase) {
@@ -204,7 +346,7 @@ impl Layer for EntityLayer {
         }
     }
 
-    render :: (ref Self, render_gizmos: bool, renderer: ref Renderer) {
+    render :: (ref Self, renderer: ref Renderer) {
         // io.println(fmt.format("{}", [engine.game_viewport.projection_matrix]))
         callbacks.render(renderer)
 
