@@ -161,10 +161,10 @@ impl ShmupEngine {
             }
 
             // use last monitor
-            // monitor := monitors[count - 1]
+            monitor := monitors[count - 1]
 
             // use primary monitor
-            monitor := monitors[0]
+            // monitor := monitors[0]
 
             monitor_pos := Vector2[i32]()
             glfwGetMonitorPos(monitor, &monitor_pos.x, &monitor_pos.y)
@@ -611,7 +611,7 @@ impl ShmupEngine {
         self.inspector.register_component_info(PathFollowComponent(null))
         self.inspector.register_component_info(BasicMoveComponent(null, vec3(), 0))
         self.inspector.register_component_info(QuadComponent(null, vec3(1, 1, 1)))
-        self.inspector.register_component_info(PointLightComponent(null, vec3(1, 1, 1), 5, 360, 0, 0.5))
+        self.inspector.register_component_info(PointLightComponent(null, vec3(1, 1, 1), 5, 360, 0, 0.5, vec3(1.0, 0.0, 0.1)))
         self.inspector.register_component_info(PlayerControlComponent(null, 1))
         self.inspector.register_component_info(Camera(null, vec2(10, 10)))
     }

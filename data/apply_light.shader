@@ -41,6 +41,6 @@ void main()
     // gamma correction
     ldr_color = pow(ldr_color, vec3(1.0 / gamma));
 
-    // ldr_color = light;
+    ldr_color = light;
     FragColor = vec4(ldr_color, 1.0);
 }

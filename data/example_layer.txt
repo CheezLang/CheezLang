@@ -34,10 +34,11 @@
             }
             PointLightComponent {
                 color       = {x=1.40416, y=4.95686, z=0.311019}
-                radius      = -1
-                angle       = 75
-                direction   = 0
-                smoothness  = 0.5
+                radius      = 10
+                angle       = 90.0026
+                direction   = 90.0026
+                smoothness  = 0.236
+                attenuation = {x=1, y=0, z=0.1}
             }
             TestComponent {
             }
@@ -74,10 +75,11 @@
             }
             PointLightComponent {
                 color       = {x=0.882353, y=0.0951557, z=0.0951557}
-                radius      = -1
+                radius      = 5
                 angle       = 0
                 direction   = 0
                 smoothness  = 0
+                attenuation = {x=1, y=0, z=0}
             }
         ]
     }
@@ -112,10 +114,11 @@
             }
             PointLightComponent {
                 color       = {x=0.720283, y=0.882353, z=0.0951557}
-                radius      = -1
+                radius      = 5
                 angle       = 0
                 direction   = 0
                 smoothness  = 0
+                attenuation = {x=0, y=1, z=0}
             }
         ]
     }
@@ -150,10 +153,11 @@
             }
             PointLightComponent {
                 color       = {x=0.141461, y=0.882353, z=0.0951557}
-                radius      = -1
+                radius      = 5
                 angle       = 0
                 direction   = 0
                 smoothness  = 0
+                attenuation = {x=0, y=0, z=1}
             }
         ]
     }
@@ -188,10 +192,11 @@
             }
             PointLightComponent {
                 color       = {x=0.0951557, y=0.882353, z=0.8592}
-                radius      = -1
+                radius      = 5
                 angle       = 0
                 direction   = 0
                 smoothness  = 0
+                attenuation = {x=1, y=0, z=0.1}
             }
         ]
     }
@@ -226,10 +231,11 @@
             }
             PointLightComponent {
                 color       = {x=0.488754, y=0.0951557, z=0.882353}
-                radius      = -1
+                radius      = 5
                 angle       = 0
                 direction   = 0
                 smoothness  = 0
+                attenuation = {x=0.333, y=0.333, z=0.333}
             }
         ]
     }

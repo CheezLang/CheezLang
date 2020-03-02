@@ -7,6 +7,7 @@ layout (location = 0) in vec2 aPos;
 layout (location = 1) in vec2 aLightPos;
 layout (location = 2) in vec3 aColor;
 layout (location = 3) in vec4 aParams;
+layout (location = 4) in vec3 aAttenuation;
 
 uniform mat4 m_projection;
 uniform mat4 m_projection_inv;
@@ -18,6 +19,7 @@ out float vRadius;
 out float vSmoothness;
 out float vOpen;
 out float vDirection;
+out vec3 vAttenuation;
 
 float radians(float deg) {
     return deg / 180.0 * PI;
@@ -36,6 +38,7 @@ void main()
     vSmoothness = clamp(aParams.y, 0, 0.99) * vRadius;
     vOpen = radians(aParams.z * 0.5); //radians(mod(aParams.z + 360.0, 360.0));
     vDirection = radians(mod2(aParams.w, 360.0));
+    vAttenuation = aAttenuation;
 
     gl_Position = vec4(aPos, 0.0, 1.0);
     gl_Position.w = 1.0f;
@@ -52,6 +55,7 @@ in float vRadius;
 in float vSmoothness;
 in float vOpen;
 in float vDirection;
+in vec3 vAttenuation;
 
 // polynomial smooth min (k = 0.1);
 float smin( float a, float b, float k )
@@ -84,16 +88,12 @@ void main()
     d *= d;
     FragColor = vec4(clamp(vColor, 0, 100000000) * d, 1.0);
 
+    float dist = distance(vWorldPos, vLightPos);
 
-
-    if (vRadius <= 0.0)
-    {
-        float a = 1.0;
-        float b = 0.0;
-        float c = 0.0;
-        d = distance(vWorldPos, vLightPos);
-        FragColor = vec4(clamp(vColor, 0, 100000000) / (a * d * d + b * d + c) * clamp(d1, 0, 1), 1);
-    }
+    vec3 color = clamp(vColor, 0, 100000000);
+    float attenuation = vAttenuation.x * dist * dist + vAttenuation.y * dist + vAttenuation.z;
+    // attenuation = 1.0;
+    FragColor = vec4(color / attenuation * d, 1.0);
     
     // FragColor = vec4(clamp(d1, 0, 1));
 }

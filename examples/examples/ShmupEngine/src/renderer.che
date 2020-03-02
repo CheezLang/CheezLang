@@ -46,6 +46,7 @@ PointLightVertex :: struct #copy {
     light_pos   : vec2
     color       : vec3
     params      : vec4
+    attenuation : vec3
 }
 
 AreaLightVertex :: struct #copy {
@@ -194,6 +195,7 @@ impl Renderer {
                 BufferElement("aLightPos", ShaderDataType.Float2)
                 BufferElement("aColor", ShaderDataType.Float3)
                 BufferElement("aParams", ShaderDataType.Float4)
+                BufferElement("aAttenuation", ShaderDataType.Float3)
             ])
             vertex_array.add_vertex_buffer(vertex_buffer)
 
@@ -371,7 +373,7 @@ impl Renderer {
     push_render_target :: (ref Self) {}
     pop_render_target :: (ref Self) {}
 
-    add_point_light :: (ref Self, pos: vec2, color: vec3, radius: float, angle: float, direction: float, smoothness: float) {
+    add_point_light :: (ref Self, pos: vec2, color: vec3, radius: float, angle: float, direction: float, smoothness: float, attenuation: vec3) {
         if !enable_lights {
             return
         }
@@ -386,24 +388,28 @@ impl Renderer {
             light_pos   = pos
             color       = color
             params      = vec4(radius, smoothness, angle, direction)
+            attenuation = attenuation
         ))
         point_light_cache.add(PointLightVertex(
             position    = vec2(1, -1)
             light_pos   = pos
             color       = color
             params      = vec4(radius, smoothness, angle, direction)
+            attenuation = attenuation
         ))
         point_light_cache.add(PointLightVertex(
             position    = vec2(1, 1)
             light_pos   = pos
             color       = color
             params      = vec4(radius, smoothness, angle, direction)
+            attenuation = attenuation
         ))
         point_light_cache.add(PointLightVertex(
             position    = vec2(-1, 1)
             light_pos   = pos
             color       = color
             params      = vec4(radius, smoothness, angle, direction)
+            attenuation = attenuation
         ))
     }
 
