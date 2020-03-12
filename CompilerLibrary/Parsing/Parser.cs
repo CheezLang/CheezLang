@@ -237,6 +237,7 @@ namespace Cheez.Parsing
                 case TokenType.AtSignIdentifier:
                 case TokenType.DollarIdentifier:
                 case TokenType.PeriodPeriod:
+                case TokenType.Period:
                     return true;
 
                 default:
@@ -1837,11 +1838,15 @@ namespace Cheez.Parsing
             var declarations = new List<AstDecl>();
             var directives = new List<AstDirective>();
             List<AstParameter> parameters = null;
+            AstExpression traitExpr = null;
 
             beg = Consume(TokenType.KwStruct, ErrMsg("keyword 'struct'", "at beginning of struct type")).location;
 
             if (CheckToken(TokenType.OpenParen))
                 parameters = ParseParameterList(TokenType.OpenParen, TokenType.ClosingParen, out var _, out var _);
+
+            if (IsExprToken(exclude: TokenType.OpenBrace))
+                traitExpr = ParseExpression(false);
 
             while (CheckToken(TokenType.HashIdentifier))
             {
@@ -1880,7 +1885,7 @@ namespace Cheez.Parsing
 
             end = Consume(TokenType.ClosingBrace, ErrMsg("}", "at end of struct declaration")).location;
 
-            return new AstStructTypeExpr(parameters, declarations, directives, new Location(beg, end));
+            return new AstStructTypeExpr(parameters, traitExpr, declarations, directives, new Location(beg, end));
         }
 
         private AstExpression ParseEnumTypeExpression()

@@ -40,19 +40,22 @@ GameView :: trait {
     on_event        :: (ref Self, event: Event);
 }
 
-WindowBase :: struct #extendable {
-    engine      : &ShmupEngine  = null
-    input       : &Input        = null
-    viewport    : Viewport      = default
-    clear_color : vec4          = default
-    enabled     : bool          = true
+WindowBase :: trait {
+    engine      : &ShmupEngine
+    input       : &Input
+    viewport    : Viewport
+    clear_color : vec4
+    enabled     : bool
 }
 
 impl WindowBase {
     new :: ($T: type, engine: &ShmupEngine) -> Rc[GameView] {
         return Rc[GameView].new(T(
-            engine  = engine
-            input   = Input.new()
+            engine      = engine
+            input       = Input.new()
+            viewport    = default
+            clear_color = vec4()
+            enabled     = true
         ))
     }
 }
@@ -61,7 +64,7 @@ impl GameWindow {
 
 }
 
-GameWindow :: struct #extend(WindowBase) {
+GameWindow :: struct WindowBase {
     camera          := Option[Ref[Camera]].None
     pp_vertex_array := Box[VertexArray].empty()
     max_size        := vec2i()
@@ -305,7 +308,7 @@ impl GameView for GameWindow {
     }
 }
 
-EditorWindow :: struct #extend(WindowBase) {
+EditorWindow :: struct WindowBase {
     camera_pos  := vec3()
     zoom        := 1.0f
 
@@ -470,7 +473,7 @@ impl GameView for EditorWindow {
     }
 }
 
-GameAndEditorWindow :: struct #extend(WindowBase) {
+GameAndEditorWindow :: struct WindowBase {
     camera_pos  := vec3()
     zoom        := 1.0f
 
@@ -726,8 +729,8 @@ impl Viewport {
         view_projection_inv = translation_matrix_inv * scale_matrix_inv * projection_inverse
     }
 
-    screen_to_local :: (ref Self, pos: vec3) -> vec3 {
-        return pos - self.pos
+    screen_to_local :: (ref Self, pos: vec2) -> vec2 {
+        return pos - self.pos.xy()
     }
 
     local_to_clip :: (ref Self, pos: vec3) -> vec3 {

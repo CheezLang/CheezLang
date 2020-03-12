@@ -25,6 +25,9 @@ namespace Cheez
                             foreach (var arg in dir.Arguments)
                                 CollectTypeDependencies(decl, arg);
 
+                        if (str.TraitExpr != null)
+                            CollectTypeDependencies(decl, str.TraitExpr);
+
                         foreach (var p in str.Parameters)
                             CollectTypeDependencies(decl, p.TypeExpr);
 

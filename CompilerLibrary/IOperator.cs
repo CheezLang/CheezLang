@@ -3,6 +3,7 @@ using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using CompilerLibrary.Extras;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -151,7 +152,17 @@ namespace Cheez
 
         public object Execute(object left, object right)
         {
-            throw new NotImplementedException();
+            var l = left as EnumValue;
+            var r = right as EnumValue;
+            if (l == null || r == null)
+                throw new ArgumentException($"'{nameof(left)}' and '{nameof(right)}' must be enum values, but are '{left}' and '{right}'");
+            if (l.Type != r.Type)
+                throw new ArgumentException($"'{nameof(left)}' and '{nameof(right)}' must have the same type, but have {l.Type} and {r.Type}");
+            
+            var members = new HashSet<AstEnumMemberNew>();
+            members.UnionWith(l.Members);
+            members.UnionWith(r.Members);
+            return new EnumValue(l.Type, members.ToArray());
         }
     }
 

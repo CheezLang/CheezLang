@@ -8,6 +8,7 @@ util :: import std.util
 fmt  :: import std.fmt
 io   :: import std.io
 C    :: import std.c
+time :: import std.time
 
 use import compiler.lexer
 use import compiler.string_database
@@ -47,17 +48,23 @@ Layer :: trait {
     save_to_file    :: (ref Self, file: ref String);
 }
 
-LayerBase :: struct #extendable {
+LayerBase :: trait {
     name        : String
     engine      : ref ShmupEngine
     input       : ref Input
     callbacks   : &EntityLayerCallbacks
 }
 
-DebugLayer :: struct #extend(LayerBase) {
+DebugLayer :: struct LayerBase {
     show_layer_output := false
     show_light_map    := false
     layer_index       := 0
+
+    last_time := 0
+    timer := 0.0f
+    playing := false
+
+    uiae : [20]float = default
 }
 
 impl DebugLayer {
@@ -89,19 +96,58 @@ impl Layer for DebugLayer {
 
     render :: (ref Self, renderer: ref Renderer) {
         // bind stuff
-        target := ref renderer.targets().color_map.get()
+        // target := ref renderer.targets().color_map.get()
 
-        if !show_layer_output {
-            renderer.targets(1).color_map.get().copy_to(target)
-        } else {
-            data := engine.current_mode_data()
-            index := clamp(layer_index, 0, data.layer_stack.count() - 1)
-            if show_light_map {
-                renderer.targets(data.layer_stack.count() - 1 - index).light_map.get().copy_to(target)
-            } else {
-                renderer.targets(data.layer_stack.count() - 1 - index).color_map.get().copy_to(target)
-            }
+        // if !show_layer_output {
+        //     renderer.targets(1).color_map.get().copy_to(target)
+        // } else {
+        //     data := engine.current_mode_data()
+        //     index := clamp(layer_index, 0, data.layer_stack.count() - 1)
+        //     if show_light_map {
+        //         renderer.targets(data.layer_stack.count() - 1 - index).light_map.get().copy_to(target)
+        //     } else {
+        //         renderer.targets(data.layer_stack.count() - 1 - index).color_map.get().copy_to(target)
+        //     }
+        // }
+
+        t := time.get_time_milliseconds()
+        if last_time == 0 {
+            last_time = t
         }
+        dt := float(double(t - last_time) * 0.001)
+        last_time = t
+
+        if ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGui.ImGuiKey_.Space)) {
+            playing = !playing
+        }
+        if playing {
+            timer += dt
+        }
+
+        renderer.apply_light_shader.bind()
+
+        viewport := ref engine.current_viewport()
+        if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Right) {
+            mouse_screen := ImGui.GetMousePos()
+            mouse := viewport.screen_to_local(mouse_screen.into()) / viewport.size.xy()
+            mouse.y = 1.0f - mouse.y
+            renderer.apply_light_shader.set_uniform_vec2("uMousePos", mouse)
+        }
+
+        if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Middle) {
+            mouse_screen := ImGui.GetMousePos()
+            mouse := viewport.screen_to_local(mouse_screen.into()) / viewport.size.xy()
+            mouse.y = 1.0f - mouse.y
+            renderer.apply_light_shader.set_uniform_float("uZoom", mouse.y)
+        }
+
+        scale := viewport.size_max / viewport.size
+        renderer.apply_light_shader.set_uniform_vec2("uTexCoordScale", scale.xy())
+        renderer.apply_light_shader.set_uniform_float("uAspectRatio", viewport.size.x / viewport.size.y)
+        renderer.apply_light_shader.set_uniform_float("uTime", timer)
+        renderer.apply_light_shader.set_uniform_floats("uValues", self.uiae[..])
+
+        renderer.render_effect(renderer.apply_light_shader)
     }
 
     imgui_render :: (ref Self) {
@@ -128,7 +174,7 @@ impl Layer for DebugLayer {
 
 }
 
-LightingLayer :: struct #extend(LayerBase) {
+LightingLayer :: struct LayerBase {
     exposure := 1.0f
     disabled := false
 }
@@ -196,7 +242,7 @@ impl Layer for LightingLayer {
 
 }
 
-EntityLayer :: struct #extend(LayerBase) {
+EntityLayer :: struct LayerBase {
     entities        := Array[Rc[Entity]].create()
     next_entity_id  := 0
 }

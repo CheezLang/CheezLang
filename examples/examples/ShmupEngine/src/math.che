@@ -24,6 +24,18 @@ impl Into[ImGui.ImVec2] for vec3 {
     }
 }
 
+impl Into[vec2] for ImGui.ImVec2 {
+    into :: (ref Self) -> vec2 {
+        return vec2(x, y)
+    }
+}
+
+impl Into[vec3] for ImGui.ImVec2 {
+    into :: (ref Self) -> vec3 {
+        return vec3(x, y, 0)
+    }
+}
+
 impl vec3 {
     to_color32 :: (ref Self) -> u32 {
         return ImGui.Color32(u8(x * 255), u8(y * 255), u8(z * 255))

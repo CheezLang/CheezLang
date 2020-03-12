@@ -201,6 +201,7 @@ namespace Cheez
             }
 
 
+            ComputeTraitMembers(impl.Trait.Declaration);
 
             // check if type has required members
             if (impl.Trait.Declaration.Variables.Count > 0) do
@@ -213,14 +214,14 @@ namespace Cheez
                 }
 
                 var strDecl = str.Declaration;
+                ComputeStructMembers(strDecl);
 
                 foreach (var v in impl.Trait.Declaration.Variables)
                 {
-                    ComputeStructMembers(strDecl);
-                    var member = strDecl.Members.FirstOrDefault(m => m.Name == v.Name.Name);
+                    var member = strDecl.Members.FirstOrDefault(m => m.Name == v.Name);
                     if (member == null)
                     {
-                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because it misses member '{v.Name.Name}: {v.Type}'",
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because it misses member '{v.Name}: {v.Type}'",
                             ("Trait member defined here:", v.Location));
                         continue;
                     }
@@ -232,16 +233,15 @@ namespace Cheez
                     }
                     if (member.Type != v.Type)
                     {
-                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because '{member.Name}' has a different type than the trait member",
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because '{member.Name}' has a different type ({member.Type}) than the trait member ({v.Type})",
                             ("Struct member defined here:", member.Decl.TypeExpr.Location),
-                            ("Trait member defined here:", v.TypeExpr.Location));
+                            ("Trait member defined here:", v.Decl.TypeExpr.Location));
                         continue;
                     }
                 }
             } while (false);
 
             // match functions against trait functions
-            ComputeTraitMembers(impl.Trait.Declaration);
             foreach (var traitFunc in impl.Trait.Declaration.Functions)
             {
                 // find matching function
@@ -366,6 +366,7 @@ namespace Cheez
                             case FloatType _:
                             case BoolType _:
                             case CharType _:
+                            case EnumType _:
                                 if (param.Name != null)
                                     impl.SubScope.DefineConstant(param.Name.Name, param.Type, new PolyValue(param.Name.Name));
                                 //impl.SubScope.DefineConstant(param.Name.Name, CheezType.PolyValue, new PolyValue(param.Name.Name));

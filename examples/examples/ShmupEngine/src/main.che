@@ -73,8 +73,8 @@ Test :: struct {
 impl EntityLayerCallbacks for Test {
     init :: (ref Self, layer: ref EntityLayer) -> bool {
         self.layer = &layer
-        layer.engine.inspector.register_component_info(CameraController())
-        layer.engine.inspector.register_component_info(TestComponent())
+        layer.engine.inspector.register_component_info(CameraController(null))
+        layer.engine.inspector.register_component_info(TestComponent(null))
 
         layer.engine.save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))
 
@@ -159,7 +159,7 @@ impl EntityLayerCallbacks for Test {
     }
 }
 
-TestComponent :: struct #extend(ComponentBase) {
+TestComponent :: struct ComponentBase {
     light := Option[Rc[PointLightComponent]].None
     cam   := Option[Rc[CameraController]].None
 }
@@ -209,7 +209,7 @@ impl Component for TestComponent {
     }
 }
 
-CameraController :: struct #extend(ComponentBase) {
+CameraController :: struct ComponentBase {
     zoom_speed  := 0.0f
     cam         := Option[Rc[Camera]].None
 

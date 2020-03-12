@@ -189,7 +189,9 @@ impl(T: type) Array[T] {
 // impl(T: type) Array(T) if @is_default_constructable(T) { ...
 impl(T: type) Array[T] if @is_default_constructable(T) {
     resize :: (ref Self, size: int) {
-        self.reserve(size)
+        if capacity < size {
+            self.reserve(size)
+        }
 
         for size..length do Memory.drop(data[it])
         length = size

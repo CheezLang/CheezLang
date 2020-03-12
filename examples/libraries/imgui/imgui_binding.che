@@ -349,6 +349,7 @@ ImGuiConfigFlags_ :: enum #copy #repr("C") #tag_type(i32) {
     DpiEnableScaleViewports = 0x4000
     DpiEnableScaleFonts     = 0x8000
     IsSRGB                  = 0x100000
+    
     IsTouchScreen           = 0x200000
 }
 ImGuiBackendFlags_ :: enum #copy #repr("C") #tag_type(i32) {

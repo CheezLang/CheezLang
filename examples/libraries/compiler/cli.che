@@ -258,7 +258,7 @@ command_compile :: (options: &CommandCompile) {
                     stmt := parser.parse_statement()
                     match stmt {
                         Some($stmt) -> {
-                            io.println(<<stmt)
+                            // io.println(<<stmt)
                         }
 
                         None -> {

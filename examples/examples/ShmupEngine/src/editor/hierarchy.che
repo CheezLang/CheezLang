@@ -71,6 +71,13 @@ impl Hierarchy {
         if data != null {
             ImGui.Checkbox("Show Layer Output", &layer.show_layer_output)
 
+            ImGui.Checkbox("Play", &layer.playing)
+
+            for v : layer.uiae {
+                str := fmt.format("u{}", [it_index])
+                ImGui.DragFloat(str.as_cstring(), &layer.uiae[it_index], 0.01f)
+            }
+
             for l : data.layer_stack {
                 if l == &layer then break
                 ImGui.PushIDPtr(l)

@@ -50,7 +50,22 @@ namespace Cheez
             }
 
             // not polymorphic
+            if (expr.TraitExpr != null)
+            {
+                expr.TraitExpr.AttachTo(expr, expr.SubScope);
+                expr.TraitExpr = InferType(expr.TraitExpr, CheezType.Type);
+                if (!expr.TraitExpr.Type.IsErrorType)
+                {
+                    var type = expr.BaseTrait;
+                    if (type == null)
+                    {
+                        ReportError(expr.TraitExpr, $"Expected trait type, got '{expr.TraitExpr.Value}'");
+                    }
+                }
+            }
             expr.Extendable = expr.HasDirective("extendable");
+            if (expr.HasDirective("extendable") || expr.HasDirective("extend"))
+                ReportError(expr, "#extendable/#extend no longer supported");
 
             foreach (var decl in expr.Declarations)
             {
@@ -72,6 +87,37 @@ namespace Cheez
             if (expr.Members != null)
                 return;
             expr.Members = new List<AstStructMemberNew>();
+
+            if (expr.BaseTrait != null)
+            {
+                // add all members of the trait
+                ComputeTypeMembers(expr.BaseTrait);
+                foreach (var m in expr.BaseTrait.Declaration.Variables)
+                {
+                    var clone = m.Decl.Clone() as AstVariableDecl;
+                    expr.Members.Add(new AstStructMemberNew(clone, true, false, expr.Members.Count));
+                }
+
+                // no functions, add impl automatically
+                if (expr.BaseTrait.Declaration.Functions.Count == 0)
+                {
+                    expr.Traits.Add(expr.BaseTrait);
+                    //AddTraitForType(expr.StructType,
+                    //    new AstImplBlock(
+                    //        new List<AstParameter>(),
+                    //        expr,
+                    //        expr.TraitExpr,
+                    //        new List<ImplCondition>(),
+                    //        new List<AstDecl>(),
+                    //        expr.TraitExpr));
+
+                    var impl = new AstImplBlock(null, expr, expr.TraitExpr, null, null, expr.TraitExpr);
+                    impl.TargetType = expr.StructType;
+                    impl.Trait = expr.BaseTrait;
+                    AddTraitForType(expr.StructType, impl);
+                    expr.BaseTrait.Declaration.Implementations[expr.StructType] = impl;
+                }
+            }
 
             if (expr.TryGetDirective("extend", out var dir))
             {
@@ -145,8 +191,6 @@ namespace Cheez
 
         private void ComputeStructMembers(AstStructTypeExpr expr)
         {
-            if (expr.Name == "STARTUPINFOA")
-            { }
             if (expr.TypesComputed && expr.InitializersComputed)
                 return;
             SetupStructMembers(expr);

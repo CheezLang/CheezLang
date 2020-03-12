@@ -859,6 +859,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateCastExpr(AstCastExpr cast, bool deref)
         {
+            if (cast.Beginning.line == 136)
+            {
+
+            }
+
             var to = cast.Type;
             var from = cast.SubExpression.Type;
             var toLLVM = CheezTypeToLLVMType(to);
@@ -869,29 +874,46 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 toLLVM = toLLVMPtr;
             }
 
-
             switch (to, from)
             {
                 case (EnumType e, IntType t) when e.Declaration.IsReprC && e.Declaration.TagType == t:
                     return GenerateExpression(cast.SubExpression, true);
 
-                // pointer -> pointer
-                case (PointerType t, PointerType f) when !t.IsFatPointer && !f.IsFatPointer:
-                    return builder.CreatePointerCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
-
-                case (ReferenceType t, PointerType f) when t.TargetType == f.TargetType && t.IsFatReference:
+                case (PointerType t, PointerType f) when t.TargetType is AnyType && f.TargetType is TraitType trait:
                     {
-                        var v = GenerateExpression(cast.SubExpression, true);
-                        var result = builder.CreateBitCast(v, CheezTypeToLLVMType(t), "");
+                        var traitPtr = GenerateExpression(cast.SubExpression, true);
+                        var valuePtr = GetTraitPtr(traitPtr);
+                        var vtablePtr = GetTraitVtable(traitPtr);
+                        var vtableType = vtableTypes[trait];
+                        vtablePtr = builder.CreatePointerCast(vtablePtr, vtableType.GetPointerTo(), "vtable.ptr");
+
+                        var typeInfoPtr = builder.CreateStructGEP(vtablePtr, 0, "type_info_ptr.ptr");
+                        typeInfoPtr = builder.CreateLoad(typeInfoPtr, "type_info_ptr");
+
+                        var result = LLVM.GetUndef(toLLVM);
+                        result = builder.CreateInsertValue(result, valuePtr, 0, "");
+                        result = builder.CreateInsertValue(result, typeInfoPtr, 1, "");
                         return result;
                     }
 
                 // fat pointer -> fat pointer
-                case (PointerType t, PointerType f) when f.IsFatPointer && t.IsFatPointer:
+                case (PointerType t, PointerType f) when t.IsFatPointer && f.IsFatPointer:
+                    throw new NotImplementedException();
+
+                // fat ref -> fat ref
+                case (ReferenceType t, ReferenceType f) when t.IsFatReference && f.IsFatReference:
+                    throw new NotImplementedException();
+
+                // pointer -> pointer
+                case (PointerType t, PointerType f) when !t.IsFatPointer && !f.IsFatPointer:
+                    return builder.CreatePointerCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
+
+                // ref -> ref
+                case (PointerType t, PointerType f) when !t.IsFatPointer && !f.IsFatPointer:
                     throw new NotImplementedException();
 
                 // fat pointer -> pointer
-                case (PointerType t, PointerType f) when f.IsFatPointer:
+                case (PointerType t, PointerType f) when !t.IsFatPointer && f.IsFatPointer:
                     {
                         var v = GenerateExpression(cast.SubExpression, true);
                         var ptr = builder.CreateExtractValue(v, 0, "");
@@ -899,8 +921,17 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         return ptr;
                     }
 
-                // pointer (trait) -> fat pointer
-                case (PointerType t, PointerType f) when t.TargetType is TraitType trait:
+                // fat ref -> ref
+                case (ReferenceType t, ReferenceType f) when !t.IsFatReference && f.IsFatReference:
+                    {
+                        var v = GenerateExpression(cast.SubExpression, true);
+                        var ptr = builder.CreateExtractValue(v, 0, "");
+                        ptr = builder.CreatePointerCast(ptr, toLLVM, "");
+                        return ptr;
+                    }
+
+                // pointer -> trait pointer
+                case (PointerType t, PointerType f) when t.TargetType is TraitType trait && !f.IsFatPointer:
                     {
                         var v = GenerateExpression(cast.SubExpression, true);
                         v = builder.CreatePointerCast(v, pointerType, "");
@@ -915,8 +946,24 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         return result;
                     }
 
-                // pointer (any) -> fat pointer
-                case (PointerType t, PointerType f) when t.TargetType is AnyType:
+                // ref -> trait ref
+                case (ReferenceType t, ReferenceType f) when t.TargetType is TraitType trait && !f.IsFatReference:
+                    {
+                        var v = GenerateExpression(cast.SubExpression, true);
+                        v = builder.CreatePointerCast(v, pointerType, "");
+                        var impl = GetTraitImpl(trait, f.TargetType);
+                        var vtable = vtableMap[impl];
+                        vtable = builder.CreatePointerCast(vtable, pointerType, "");
+
+                        var llvmType = CheezTypeToLLVMType(t);
+                        var result = LLVM.GetUndef(llvmType);
+                        result = builder.CreateInsertValue(result, v, 0, "");
+                        result = builder.CreateInsertValue(result, vtable, 1, "");
+                        return result;
+                    }
+
+                // pointer -> any pointer
+                case (PointerType t, PointerType f) when t.TargetType is AnyType && !f.IsFatPointer:
                     {
                         LLVMValueRef val = default;
                         val = GenerateExpression(cast.SubExpression, true);
@@ -930,10 +977,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         return result;
                     }
 
-                case (PointerType _, PointerType _):
-                    return builder.CreatePointerCast(GenerateExpression(cast.SubExpression, true), toLLVM, "");
-                case (ReferenceType _, ReferenceType _):
-                    return builder.CreatePointerCast(GenerateExpression(cast.SubExpression, deref), toLLVM, "");
+                // ref -> any ref
+                case (ReferenceType t, ReferenceType f) when t.TargetType is AnyType && !f.IsFatReference:
+                    {
+                        LLVMValueRef val = default;
+                        val = GenerateExpression(cast.SubExpression, true);
+                        val = builder.CreatePointerCast(val, LLVM.PointerType(LLVM.Int8Type(), 0), "");
+
+                        var typeInfo = typeInfoTable[f.TargetType];
+
+                        var result = LLVM.GetUndef(toLLVM);
+                        result = builder.CreateInsertValue(result, val, 0, "");
+                        result = builder.CreateInsertValue(result, typeInfo, 1, "");
+                        return result;
+                    }
 
                 case (PointerType t, CheezType _) when t.TargetType is AnyType:
                     {
@@ -2256,32 +2313,22 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case TraitType trait:
                     {
                         var decl = trait.Declaration;
-                        var member = trait.Declaration.Variables.First(v => v.Name.Name == expr.Right.Name);
+                        var member = trait.Declaration.Variables.First(v => v.Name == expr.Right.Name);
 
-                        var vtablePtr = builder.CreateStructGEP(value, 0, "");
-                        vtablePtr = builder.CreateLoad(vtablePtr, "");
-                        var toPointer = builder.CreateStructGEP(value, 1, "");
-                        toPointer = builder.CreateLoad(toPointer, "");
+                        var ptr = GetTraitPtr(value);
 
                         // check if pointer is null
                         if (checkForNullTraitObjects)
                         {
-                            CheckPointerNull(vtablePtr, expr.Left, "vtable pointer of trait object is null");
-                            CheckPointerNull(toPointer, expr.Right, "object pointer of trait object is null");
+                            CheckPointerNull(ptr, expr.Right, "object pointer of trait object is null");
                         }
 
-                        // load function pointer
-                        var vtableType = vtableTypes[trait];
-                        vtablePtr = builder.CreatePointerCast(vtablePtr, vtableType.GetPointerTo(), "");
+                        ptr = builder.CreatePtrToInt(ptr, LLVM.Int64Type(), "ptr.int");
+                        ptr = builder.CreateAdd(ptr, LLVM.ConstInt(LLVM.Int64Type(), (ulong)member.Offset, false), "");
+                        ptr = builder.CreateIntToPtr(ptr, CheezTypeToLLVMType(member.Type).GetPointerTo(), "");
 
-                        var memberOffsetIndex = vtableIndices[member];
-                        var memberOffsetPointer = builder.CreateStructGEP(vtablePtr, (uint)memberOffsetIndex, "");
-                        var memberOffset = builder.CreateLoad(memberOffsetPointer, "");
-
-                        toPointer = builder.CreateCast(LLVMOpcode.LLVMPtrToInt, toPointer, LLVM.Int64Type(), "");
-                        var result = builder.CreateAdd(toPointer, memberOffset, "");
-                        result = builder.CreateCast(LLVMOpcode.LLVMIntToPtr, result, CheezTypeToLLVMType(PointerType.GetPointerType(member.Type)), "");
-                        if (deref) result = builder.CreateLoad(result, "");
+                        var result = ptr;
+                        if (deref) result = builder.CreateLoad(ptr, "");
                         return result;
                     }
             }

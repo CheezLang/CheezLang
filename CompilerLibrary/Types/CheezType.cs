@@ -125,7 +125,7 @@ namespace Cheez.Types
         public static bool TypesMatch(CheezType a, CheezType b)
         {
             if (a == null || b == null)
-                throw new Exception();
+                throw new ArgumentNullException();
 
             if (a == b)
                 return true;

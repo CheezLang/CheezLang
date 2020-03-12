@@ -98,11 +98,14 @@ namespace Cheez.Visitors
             if (str.IsPolymorphic)
             {
                 var body = string.Join("\n", str.Declarations.Select(m => m.Accept(this)));
-                var head = $"struct ";
+                var head = $"struct";
 
                 head += "(";
                 head += string.Join(", ", str.Parameters.Select(p => $"{p.Name.Accept(this)}: {p.Type}"));
                 head += ")";
+
+                if (str.TraitExpr != null)
+                    head += " " + str.TraitExpr.Type;
 
                 var sb = new StringBuilder();
                 sb.Append($"{head} {{\n{body.Indent(4)}\n}}");
@@ -124,8 +127,13 @@ namespace Cheez.Visitors
             }
             else
             {
-                var body = string.Join("\n", str.Declarations.Select(m => m.Accept(this)));
-                var head = $"struct ";
+                
+                var body = string.Join("\n", str.Members.Select(m => m.Decl.Accept(this)));
+                //var body = string.Join("\n", str.Declarations.Select(m => m.Accept(this)));
+                var head = $"struct";
+
+                if (str.TraitExpr != null)
+                    head += " " + str.TraitExpr.Type;
 
                 var sb = new StringBuilder();
                 sb.Append($"{head} {{ // size: {str.StructType?.GetSize()}, alignment: {str.StructType?.GetAlignment()}\n{body.Indent(4)}\n}}");
@@ -144,10 +152,10 @@ namespace Cheez.Visitors
                 sb.AppendLine(") {");
 
                 foreach (var f in trait.Variables)
-                    sb.AppendLine(f.Accept(this).Indent(4));
+                    sb.AppendLine(f.Decl.Accept(this).Indent(4));
 
                 foreach (var f in trait.Functions)
-                    sb.AppendLine(f.Accept(this).Indent(4));
+                    sb.AppendLine($"{f.Name} :: f.Accept(this)".Indent(4));
 
                 sb.Append("}");
 
@@ -172,10 +180,10 @@ namespace Cheez.Visitors
                 sb.AppendLine("trait {");
 
                 foreach (var f in trait.Variables)
-                    sb.AppendLine(f.Accept(this).Indent(4));
+                    sb.AppendLine(f.Decl.Accept(this).Indent(4));
 
                 foreach (var f in trait.Functions)
-                    sb.AppendLine(f.Accept(this).Indent(4));
+                    sb.AppendLine($"{f.Name} :: f.Accept(this)".Indent(4));
 
                 sb.Append("}");
 
@@ -823,10 +831,17 @@ namespace Cheez.Visitors
 
         public override string VisitCallExpr(AstCallExpr call, int data = 0)
         {
-            var args = call.Arguments.Select(a => a.Accept(this));
-            var argsStr = string.Join(", ", args);
-            var func = call.FunctionExpr.Accept(this);
-            return $"{func}({argsStr})";
+            if (call.UnifiedFunctionCall) {
+                var args = call.Arguments.Skip(1).Select(a => a.Accept(this));
+                var argsStr = string.Join(", ", args);
+                var func = call.FunctionExpr.Accept(this);
+                return $"{func}({argsStr})";
+            } else {
+                var args = call.Arguments.Select(a => a.Accept(this));
+                var argsStr = string.Join(", ", args);
+                var func = call.FunctionExpr.Accept(this);
+                return $"{func}({argsStr})";
+            }
         }
 
         public override string VisitCharLiteralExpr(AstCharLiteral expr, int data = 0)

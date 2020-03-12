@@ -133,7 +133,7 @@ impl(T: type) Printable for Option[T] if T: Printable {
 
 impl(T: type) Printable for Box[T] {
     print :: (ref Self, str: ref String, format: string) {
-        msg := fmt.format("Box({})", [<<_value])
+        msg := fmt.format("Box({})", [_value])
         str.append(msg)
     }
 }

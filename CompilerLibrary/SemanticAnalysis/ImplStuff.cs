@@ -91,7 +91,9 @@ namespace Cheez
                     var type = kv.Key;
                     var lists = kv.Value;
 
-                    foreach (var impl in lists.potentialImpls)
+                    var potentialImpls = new List<AstImplBlock>(lists.potentialImpls);
+
+                    foreach (var impl in potentialImpls)
                     {
                         var (concreteImpls, maybeApplies) = ImplAppliesToType(impl, type);
                         if (concreteImpls != null)
@@ -106,6 +108,9 @@ namespace Cheez
                         }
                     }
 
+                    if (potentialImpls.Count != lists.potentialImpls.Count)
+                    {
+                    }
 
                     lists.potentialImpls.Clear();
 

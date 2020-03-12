@@ -16,6 +16,7 @@ using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using Cheez.Util;
 using Cheez.Visitors;
+using CompilerLibrary.Extras;
 
 namespace Cheez
 {
@@ -1802,6 +1803,12 @@ namespace Cheez
                 case (PointerType _, PointerType f) when f.TargetType == CheezType.Void:
                     return cast;
 
+                case (PointerType t, PointerType f) when t.TargetType is AnyType && f.TargetType is TraitType trait:
+                    {
+                        MarkTypeAsRequiredAtRuntime(trait);
+                        return cast;
+                    }
+
                 case (PointerType t, PointerType f) when t.IsFatPointer && f.IsFatPointer:
                     {
                         ReportError(cast, $"Can't convert from {f} to {t}");
@@ -1850,11 +1857,19 @@ namespace Cheez
                     return cast;
 
                 // cast(&any) T
+                case (PointerType t, CheezType c) when t.TargetType is AnyType && c is TraitType:
+                    {
+                        ReportError(cast, $"Can't convert trait to any");
+                        return cast;
+                    }
                 case (PointerType t, CheezType c) when t.TargetType is AnyType:
                     {
                         MarkTypeAsRequiredAtRuntime(c);
                         return cast;
                     }
+
+                case (ReferenceType t, ReferenceType f) when t.TargetType is TraitType trait && TypeHasTrait(f.TargetType, trait):
+                    return cast;
 
                 case (ReferenceType t, ReferenceType f) 
                     when t.TargetType is StructType ts && f.TargetType is StructType fs
@@ -2295,6 +2310,9 @@ namespace Cheez
                     case StructType s:
                         {
                             ComputeStructMembers(s.Declaration);
+                            if (s.Declaration.BaseTrait != null)
+                                MarkTypeAsRequiredAtRuntime(s.Declaration.BaseTrait);
+
                             foreach (var m in s.Declaration.Members)
                             {
                                 MarkTypeAsRequiredAtRuntime(m.Type);
@@ -3754,7 +3772,11 @@ namespace Cheez
             // calculate value if all args are comptime values
             if (expr.Arguments.All(arg => arg.Expr.IsCompTimeValue))
             {
-                var values = from arg in expr.Arguments select (NumberData)arg.Expr.Value;
+                var values = from arg in expr.Arguments select arg.Expr.Value switch {
+                    NumberData d => d,
+                    EnumValue v => NumberData.FromBigInt(v.Tag),
+                    _ => throw new Exception("Unhandled switch case")
+                };
                 var result = compute(values);
                 expr.Type = expectedArgType;
                 expr.Value = result;
@@ -4236,7 +4258,7 @@ namespace Cheez
 
                         if (func == null)
                         {
-                            var mem = t.Declaration.Variables.FirstOrDefault(v => v.Name.Name == name);
+                            var mem = t.Declaration.Variables.FirstOrDefault(v => v.Name == name);
 
                             if (mem == null)
                             {
@@ -4245,6 +4267,7 @@ namespace Cheez
                             }
 
                             expr.Type = mem.Type;
+                            expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
                             return expr;
                         }
 
@@ -4736,6 +4759,7 @@ namespace Cheez
                     case FloatType _:
                     case BoolType _:
                     case CharType _:
+                    case EnumType _:
                         break;
 
                     case PolyValueType _:
@@ -4744,6 +4768,9 @@ namespace Cheez
 
                     case CheezTypeType _:
                         if ((arg.Value as CheezType).IsPolyType) anyArgIsPoly = true;
+                        break;
+
+                    case CheezType c when c.IsErrorType:
                         break;
 
                     default:
@@ -5408,7 +5435,7 @@ namespace Cheez
                     inits.Add(mem.Name);
 
                     mi.Value.AttachTo(expr);
-                    mi.Value = InferTypeHelper(mi.Value, mem.Type, context);
+                    mi.Value = InferTypeHelper(mi.Value, mem.Type, context.WithTypeOfExprContext(mem.Type));
                     ConvertLiteralTypeToDefaultType(mi.Value, mem.Type);
 
                     mi.Name = new AstIdExpr(mem.Name, false, mi.Value);
@@ -5449,7 +5476,7 @@ namespace Cheez
                     mi.Index = memIndex;
 
                     mi.Value.AttachTo(expr);
-                    mi.Value = InferTypeHelper(mi.Value, mem.Type, context);
+                    mi.Value = InferTypeHelper(mi.Value, mem.Type, context.WithTypeOfExprContext(mem.Type));
                     ConvertLiteralTypeToDefaultType(mi.Value, mem.Type);
 
                     if (mi.Value.Type.IsErrorType) continue;
@@ -6081,6 +6108,7 @@ namespace Cheez
                 case BoolType _: return true;
                 case CharType _: return true;
                 case CheezTypeType _: return true;
+                case EnumType _: return true;
 
                 case CheezType c when c.IsErrorType:
                     return false;

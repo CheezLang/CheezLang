@@ -34,10 +34,10 @@
             }
             PointLightComponent {
                 color       = {x=1.40416, y=4.95686, z=0.311019}
-                radius      = 12
-                angle       = 90.0026
+                radius      = 24
+                angle       = 360.011
                 direction   = 90.0026
-                smoothness  = 0.236
+                smoothness  = 0.776
                 attenuation = {x=1, y=0, z=0.1}
             }
             TestComponent {

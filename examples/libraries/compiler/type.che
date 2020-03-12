@@ -3,61 +3,61 @@ use import std.string
 
 #export_scope
 
-Type :: struct #extendable {
+Type :: trait {
     id    : int
     size  : int
     align : int
 }
 
-ErrorType :: struct #extend(Type) {}
+ErrorType :: struct Type {}
 
-VoidType :: struct #extend(Type) {}
-TypeType :: struct #extend(Type) {}
+VoidType :: struct Type {}
+TypeType :: struct Type {}
 
-IntType :: struct #extend(Type) {
+IntType :: struct Type {
     sign : bool
 }
 
-CharType  :: struct #extend(Type) {}
-FloatType :: struct #extend(Type) {}
-BoolType  :: struct #extend(Type) {}
+CharType  :: struct Type {}
+FloatType :: struct Type {}
+BoolType  :: struct Type {}
 
-StringType :: struct #extend(Type) {}
+StringType :: struct Type {}
 
-PointerType :: struct #extend(Type) {
+PointerType :: struct Type {
     target : ref Type
 }
 
-ReferenceType :: struct #extend(Type) {
+ReferenceType :: struct Type {
     target : ref Type
 }
 
-SliceType :: struct #extend(Type) {
+SliceType :: struct Type {
     target : ref Type
 }
 
-ArrayType :: struct #extend(Type) {
+ArrayType :: struct Type {
     target : ref Type
     length : int
 }
 
-impl Printable for Type {
-    print :: (ref Self, str: ref String, format: string) {
-        match self {
-            VoidType($t)      -> str.appendf("void", ())
-            TypeType($t)      -> str.appendf("type", ())
-            IntType($t)       -> str.appendf("{}{}", (if t.sign then "i" else "u", t.size * 8))
-            CharType($t)      -> str.appendf("char{}", t.size * 8)
-            FloatType($t)     -> str.appendf("f{}", t.size * 8)
-            BoolType($t)      -> str.appendf("bool", ())
-            StringType($t)    -> str.appendf("string", ())
-            PointerType($t)   -> str.append_printables("&{}", [&t.target])
-            ReferenceType($t) -> str.append_printables("ref {}", [&t.target])
-            SliceType($t)     -> str.append_printables("[]{}", [&t.target])
-            ArrayType($t)     -> str.append_printables("[{}]{}", [&t.length, &t.target])
-        }
-    }
-}
+// impl Printable for Type {
+//     print :: (ref Self, str: ref String, format: string) {
+//         match self {
+//             VoidType($t)      -> str.appendf("void", ())
+//             TypeType($t)      -> str.appendf("type", ())
+//             IntType($t)       -> str.appendf("{}{}", (if t.sign then "i" else "u", t.size * 8))
+//             CharType($t)      -> str.appendf("char{}", t.size * 8)
+//             FloatType($t)     -> str.appendf("f{}", t.size * 8)
+//             BoolType($t)      -> str.appendf("bool", ())
+//             StringType($t)    -> str.appendf("string", ())
+//             PointerType($t)   -> str.append_printables("&{}", [&t.target])
+//             ReferenceType($t) -> str.append_printables("ref {}", [&t.target])
+//             SliceType($t)     -> str.append_printables("[]{}", [&t.target])
+//             ArrayType($t)     -> str.append_printables("[{}]{}", [&t.length, &t.target])
+//         }
+//     }
+// }
 
 t_i8  := IntType(1, 1, 1, true)
 t_i16 := IntType(1, 2, 2, true)

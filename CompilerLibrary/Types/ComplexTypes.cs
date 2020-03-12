@@ -3,6 +3,7 @@ using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Types.Primitive;
 using Cheez.Util;
+using Cheez.Visitors;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,7 +34,7 @@ namespace Cheez.Types.Complex
         public object[] Arguments { get; }
 
         public TraitType(AstTraitTypeExpr decl, object[] args = null)
-            : base(0, 0, false)
+            : base(false)
         {
             Declaration = decl;
             Arguments = args ?? decl.Parameters?.Select(p => p.Value)?.ToArray() ?? Array.Empty<object>();
@@ -182,6 +183,11 @@ namespace Cheez.Types.Complex
 
         public override string ToString()
         {
+            if (Name == "#anonymous")
+            {
+                return Declaration.Accept(new AnalysedAstPrinter());
+            }
+
             if (Arguments?.Length > 0)
             {
                 var args = string.Join(", ", Arguments.Select(a => a?.ToString()));
@@ -271,6 +277,11 @@ namespace Cheez.Types.Complex
 
         public override string ToString()
         {
+            if (Declaration.Name == "#anonymous")
+            {
+                return Declaration.Accept(new AnalysedAstPrinter());
+            }
+
             if (Arguments?.Length > 0)
             {
                 var args = string.Join(", ", Arguments.Select(a => a.ToString()));

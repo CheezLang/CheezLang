@@ -445,7 +445,7 @@ namespace Cheez.Ast.Expressions
     {
         public AstExpression Left { get; set; }
         public AstIdExpr Right { get; set; }
-        public override bool IsPolymorphic => Left.IsPolymorphic;
+        public override bool IsPolymorphic => Left?.IsPolymorphic ?? false;
 
         public int DerefCount { get; set; } = 0;
 

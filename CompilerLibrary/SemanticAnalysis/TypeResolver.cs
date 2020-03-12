@@ -7,6 +7,7 @@ using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using CompilerLibrary.Extras;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -76,6 +77,7 @@ namespace Cheez
                                 string v => (StringType.StringLiteral, v),
                                 bool v => (CheezType.Bool, v),
                                 char v => (CharType.LiteralType, v),
+                                EnumValue v => (v.Type, v),
                             };
                         }
                         break;
@@ -97,6 +99,7 @@ namespace Cheez
                                 string v => (StringType.StringLiteral, v),
                                 bool v => (CheezType.Bool, v),
                                 char v => (CharType.LiteralType, v),
+                                EnumValue v => (v.Type, v),
                             };
                         }
                     }

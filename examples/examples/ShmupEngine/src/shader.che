@@ -153,6 +153,16 @@ impl Shader {
         }
     }
 
+    set_uniform_vec2 :: (ref Self, name: string, value: vec2) -> bool {
+        loc := get_uniform_location(name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniform2f(loc, value.x, value.y))
+        return true
+    }
+
     set_uniform_vec3 :: (ref Self, name: string, value: vec3) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
@@ -180,6 +190,16 @@ impl Shader {
         }
 
         GL(glUniform1f(loc, value))
+        return true
+    }
+
+    set_uniform_floats :: (ref Self, name: string, values: []f32) -> bool {
+        loc := get_uniform_location(name)
+        if loc == -1 {
+            return false
+        }
+
+        GL(glUniform1fv(loc, cast values.length, values.data))
         return true
     }
 

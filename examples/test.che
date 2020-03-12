@@ -30,60 +30,158 @@ import examples.ShmupEngine.src.main
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
-// io   :: import std.io
+// io :: import std.io
 
-// impl Range[int] {
-//     reverse :: (self: Range[int]) -> Range[int] {
-//         return Range[int](self.end - 1, self.start - 1)
-//     }
-// }
-
-// reverse :: (self: Range[int]) -> Range[int] {
-//     return Range[int](self.end - 1, self.start - 1)
+// Foo :: struct {
+//     x : int
+//     y : int
+//     z : int
 // }
 
 // Main :: () {
-//     Foo :: enum #copy {
-//         A, B
+//     b := FooBuilder.new()
+//     io.formatln(b)
+//     f1 := FooBuilder.new().build()                      // compiler error, FooBuilder[Empty] has no method build
+//     f2 := FooBuilder.new().z(1).build()                 // compiler error, FooBuilder[X] has no method build
+//     f3 := FooBuilder.new().x(1).y(2).build()            // compiler error, FooBuilder[X or Y] has no method build
+//     f4 := FooBuilder.new().x(1).y(2).z(3).build()       // works
+//     // f4 := FooBuilder.new().y(1).x(2).z(3).x(-1).build() // works
+
+//     // io.formatln(f4)
+// }
+
+// FooBuilder :: struct(Flags: int) {
+//     _x : int = default
+//     _y : int = default
+//     _z : int = default
+// }
+
+// impl FooBuilder {
+//     new :: () -> FooBuilder[0] {
+//         return FooBuilder[0]()
+//     }
+// }
+
+// impl(Flags: int) FooBuilder[Flags] {
+//     x :: (Self, v: int) -> FooBuilder[@bin_or(Flags, 1)] {
+//         return @expected()(v, _y, _z)
+//     }
+//     y :: (Self, v: int) -> FooBuilder[@bin_or(Flags, 2)] {
+//         return @expected()(_x, v, _z)
+//     }
+//     z :: (Self, v: int) -> FooBuilder[@bin_or(Flags, 4)] {
+//         return @expected()(_x, _y, v)
+//     }
+// }
+
+// impl FooBuilder[7] {
+//     build :: (Self) -> Foo {
+//         return Foo(_x, _y, _z)
+//     }
+// }
+
+// FooBuilderFlags :: enum #flags {
+//     Empty, X, Y, Z
+// }
+
+// FooBuilder :: struct(Flags: FooBuilderFlags) {
+//     _x : int = default
+//     _y : int = default
+//     _z : int = default
+// }
+
+// impl FooBuilder {
+//     new :: () -> FooBuilder[FooBuilderFlags.Empty] {
+//         return @expected()()
+//     }
+// }
+
+// impl(Flags: FooBuilderFlags) FooBuilder[Flags] {
+//     x :: (Self, v: int) -> FooBuilder[Flags or FooBuilderFlags.X] {
+//         return @expected()(v, _y, _z)
+//     }
+//     y :: (Self, v: int) -> FooBuilder[Flags or FooBuilderFlags.Y] {
+//         return @expected()(_x, v, _z)
+//     }
+//     z :: (Self, v: int) -> FooBuilder[Flags or FooBuilderFlags.Z] {
+//         return @expected()(_x, _y, v)
+//     }
+// }
+
+// impl FooBuilder[FooBuilderFlags.X or FooBuilderFlags.Y or FooBuilderFlags.Z] {
+//     build :: (Self) -> Foo {
+//         return Foo(_x, _y, _z)
+//     }
+// }
+
+// use import std.string
+// io   :: import std.io
+// fmt  :: import std.fmt
+
+// Expr :: trait {
+//     id  : int
+//     typ : string
+//     eval :: (ref Self) -> int;
+//     to_string :: (ref Self) -> String;
+// }
+
+// Const :: struct Expr {
+//     value   : int
+// }
+
+// Binary :: struct Expr {
+//     op      : enum #copy {Add, Sub, Mul, Div}
+//     left    : &Expr
+//     right   : &Expr
+// }
+
+// impl Expr for Const {
+//     eval :: (ref Self) -> int {
+//         return value
 //     }
 
-//     f := Foo.B
+//     to_string :: (ref Self) -> String {
+//         return fmt.format("{}:{}", [value, typ])
+//     }
+// }
 
-//     if f == .A {
-//         io.println("A")
-//     } else if f == .B {
-//         io.println("B")
+// impl Expr for Binary {
+//     eval :: (ref Self) -> int {
+//         return match op {
+//             .Add -> left.eval() + right.eval()
+//             .Sub -> left.eval() - right.eval()
+//             .Mul -> left.eval() * right.eval()
+//             .Div -> left.eval() / right.eval()
+//         }
 //     }
 
-//     match f {
-//         .A -> io.println("A")
-//         .B -> io.println("B")
+//     to_string :: (ref Self) -> String {
+//         l := left.to_string()
+//         r := right.to_string()
+//         o := match op {
+//             .Add -> "+"
+//             .Sub -> "-"
+//             .Mul -> "*"
+//             .Div -> "/"
+//         }
+//         return fmt.format("({}){}({}):{}", [l.slice(), o, r.slice(), typ])
 //     }
+// }
 
-//     match f {
-//         use Foo
-//         A -> io.println("A")
-//         B -> io.println("B")
-//     }
+// Main :: () {
+//     a := Const(id=0, typ="int", value=1)
+//     b := Const(id=1, typ="int", value=2)
+//     c := Const(id=2, typ="int", value=3)
+//     d := Binary(id=3, typ="int", op = .Mul, left=&b, right=&c)
+//     e := Binary(id=4, typ="int", op = .Add, left=&a, right=&d)
 
+//     expr : &Expr = &e
 
+//     io.println(expr.id)
+//     io.println(expr.typ)
+//     io.println(expr.to_string())
+//     io.println(expr.eval())
 
-
-
-    // for 0..5 {
-    //     io.println(it)
-    // }
-    // io.println("")
-
-    // for {0..5}.reverse() {
-    //     io.println(it)
-    // }
-    // io.println("")
-
-    // for 0..5 | .reverse() {
-    //     io.println(it)
-    // }
-    // io.println("")
 // }
 
 /*

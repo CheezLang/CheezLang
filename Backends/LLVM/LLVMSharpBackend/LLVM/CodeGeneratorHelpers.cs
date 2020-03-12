@@ -604,6 +604,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     LLVM.ConstPointerNull(pointerType)
                 });
 
+                case EnumType e: return new LLVMValueRef();
+
                 case FunctionType f when v is AstFuncExpr:
                     return valueMap[v];
 
@@ -720,12 +722,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // create vtable type
             foreach (var trait in workspace.Traits)
             {
-                var funcTypes = new List<LLVMTypeRef>();
-                foreach (var v in trait.Variables)
-                {
-                    vtableIndices[v] = funcTypes.Count;
-                    funcTypes.Add(LLVM.Int64Type());
-                }
+                var entryTypes = new List<LLVMTypeRef>();
+
+                // entry for type info
+                entryTypes.Add(rttiTypeInfo.GetPointerTo());
+
+                // entries for functions
                 foreach (var func in trait.Functions)
                 {
                     // if (func.ExcludeFromVTable)
@@ -735,17 +737,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         throw new NotImplementedException();
                     }
-                    // else if (func.SelfType == SelfParamType.Reference)
-                    {
-                        vtableIndices[func] = funcTypes.Count;
 
-                        var funcType = CheezTypeToLLVMType(func.Type);
-                        funcTypes.Add(funcType);
-                    }
+                    vtableIndices[func] = entryTypes.Count;
+
+                    var funcType = CheezTypeToLLVMType(func.Type);
+                    entryTypes.Add(funcType);
                 }
 
                 var vtableType = LLVM.StructCreateNamed(context, $"__vtable_type_{trait.TraitType}");
-                LLVM.StructSetBody(vtableType, funcTypes.ToArray(), false);
+                LLVM.StructSetBody(vtableType, entryTypes.ToArray(), false);
                 vtableTypes[trait.TraitType] = vtableType;
             }
 
@@ -767,7 +767,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void SetVTables()
         {
-
             foreach (var kv in workspace.TypeTraitMap)
             {
                 var type = kv.Key;
@@ -777,44 +776,34 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
                     var trait = impl.Trait;
                     var vtableType = vtableTypes[trait];
-                    var vfuncTypes = LLVM.GetStructElementTypes(vtableType);
-                    var vfuncCount = vfuncTypes.Length;
+                    var entryTypes = LLVM.GetStructElementTypes(vtableType);
 
-
-                    var functions = new LLVMValueRef[vfuncCount];
-                    for (int i = 0; i < functions.Length; i++)
+                    var entries = new LLVMValueRef[entryTypes.Length];
+                    for (int i = 0; i < entries.Length; i++)
                     {
-                        var funcType = vfuncTypes[i];
-                        functions[i] = LLVM.ConstNull(funcType);
+                        entries[i] = LLVM.ConstNull(entryTypes[i]);
                     }
 
-                    if (impl.TargetType is StructType str && impl.Trait.Declaration.Variables.Count > 0)
+                    // set type info if available
+                    if (typeInfoTable.TryGetValue(impl.TargetType, out var ptr))
                     {
-                        var strType = CheezTypeToLLVMType(str);
-                        foreach (var v in impl.Trait.Declaration.Variables)
-                        {
-                            var mem = str.Declaration.Members.First(m => m.Name == v.Name.Name);
-                            var offset = LLVM.OffsetOfElement(targetData, strType, (uint)mem.Index);
-                            var index = vtableIndices[v];
-                            functions[index] = LLVM.ConstInt(LLVM.Int64Type(), offset, false);
-                        }
+                        entries[0] = ptr;
                     }
 
+                    // set function pointers
                     foreach (var func in impl.Functions)
                     {
                         var traitFunc = func.TraitFunction;
                         if (traitFunc == null)
                             continue;
-                        // if (traitFunc == null || func.SelfType != SelfParamType.Reference)
-                        //     continue;
                         // if (traitFunc.ExcludeFromVTable)
                         //     continue;
 
                         var index = vtableIndices[traitFunc];
-                        functions[index] = LLVM.ConstPointerCast(valueMap[func], vfuncTypes[index]);
+                        entries[index] = LLVM.ConstPointerCast(valueMap[func], entryTypes[index]);
                     }
 
-                    var defValue = LLVM.ConstNamedStruct(vtableType, functions);
+                    var defValue = LLVM.ConstNamedStruct(vtableType, entries);
 
                     var vtable = vtableMap[impl];
                     LLVM.SetInitializer(vtable, defValue);
@@ -1371,6 +1360,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             result = builder.CreateInsertValue(result, length, 0, "");
             result = builder.CreateInsertValue(result, value, 1, "");
             return result;
+        }
+
+        private LLVMValueRef GetTraitPtr(LLVMValueRef value)
+        {
+            return builder.CreateExtractValue(value, 0, "ptr");
+        }
+
+        private LLVMValueRef GetTraitVtable(LLVMValueRef value)
+        {
+            return builder.CreateExtractValue(value, 1, "vtable");
         }
     }
 }

@@ -42,7 +42,7 @@ namespace Cheez
                         break;
 
                     case AstVariableDecl mem:
-                        expr.Variables.Add(mem);
+                        expr.Variables.Add(new AstTraitMember(mem, false, expr.Variables.Count));
                         break;
                 }
             }
@@ -85,16 +85,17 @@ namespace Cheez
 
             foreach (var v in trait.Variables)
             {
-                v.TypeExpr.Scope = trait.SubScope;
-                v.TypeExpr = ResolveTypeNow(v.TypeExpr, out var type);
-                v.Type = type;
+                var decl = v.Decl;
+                decl.TypeExpr.Scope = trait.SubScope;
+                decl.TypeExpr = ResolveTypeNow(decl.TypeExpr, out var type);
+                decl.Type = type;
 
-                var res = trait.SubScope.DefineSymbol(v);
+                var res = trait.SubScope.DefineSymbol(decl);
                 if (!res.ok)
                 {
                     (string, ILocation)? detail = null;
                     if (res.other != null) detail = ("Other declaration here:", res.other);
-                    ReportError(v.Name, $"A symbol with name '{v.Name.Name}' already exists in current scope", detail);
+                    ReportError(decl.Name, $"A symbol with name '{decl.Name.Name}' already exists in current scope", detail);
                 }
             }
 

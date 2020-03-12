@@ -277,11 +277,13 @@ namespace Cheez.Ast.Statements
     {
         public string Name { get; set; } = "#anonymous";
         public List<AstParameter> Parameters { get; set; }
+        public AstExpression TraitExpr { get; set; }
         public List<AstDecl> Declarations { get; }
         public List<AstStructMemberNew> Members { get; set; }
         public IReadOnlyList<AstStructMemberNew> PublicMembers => Members.Where(m => m.IsPublic).ToList();
 
         public StructType StructType => Value as StructType;
+        public TraitType BaseTrait => TraitExpr?.Value as TraitType;
 
         public AstStructTypeExpr Template { get; set; } = null;
 
@@ -303,10 +305,11 @@ namespace Cheez.Ast.Statements
         public bool TypesComputed { get; set; }
         public bool InitializersComputed { get; set; }
 
-        public AstStructTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
+        public AstStructTypeExpr(List<AstParameter> param, AstExpression traitExpr, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Location)
         {
             this.Parameters = param ?? new List<AstParameter>();
+            this.TraitExpr = traitExpr;
             this.Declarations = declarations;
             this.IsGeneric = Parameters.Count > 0;
             this.Directives = Directives;
@@ -318,6 +321,7 @@ namespace Cheez.Ast.Statements
         public override AstExpression Clone() => CopyValuesTo(
             new AstStructTypeExpr(
                 Parameters.Select(p => p.Clone()).ToList(),
+                TraitExpr?.Clone(),
                 Declarations.Select(m => m.Clone() as AstDecl).ToList(),
                 Directives.Select(d => d.Clone()).ToList()));
 
@@ -361,6 +365,24 @@ namespace Cheez.Ast.Statements
     #endregion
 
     #region Trait
+    public class AstTraitMember
+    {
+        public bool IsReadOnly { get; }
+        public AstVariableDecl Decl { get; }
+        public string Name => Decl.Name.Name;
+        public CheezType Type => Decl.Type;
+        public ILocation Location => Decl.Location;
+        public int Index { get; }
+        public int Offset { get; set; }
+
+        public AstTraitMember(AstVariableDecl decl, bool readOnly, int index)
+        {
+            Decl = decl;
+            IsReadOnly = readOnly;
+            Index = index;
+        }
+    }
+
     public class AstTraitTypeExpr : AstExpression
     {
         public string Name { get; set; } = "#anonymous";
@@ -369,7 +391,7 @@ namespace Cheez.Ast.Statements
 
         public List<AstDecl> Declarations { get; }
         public List<AstFuncExpr> Functions { get; } = new List<AstFuncExpr>();
-        public List<AstVariableDecl> Variables { get; } = new List<AstVariableDecl>();
+        public List<AstTraitMember> Variables { get; } = new List<AstTraitMember>();
 
         public Dictionary<CheezType, AstImplBlock> Implementations { get; } = new Dictionary<CheezType, AstImplBlock>();
 

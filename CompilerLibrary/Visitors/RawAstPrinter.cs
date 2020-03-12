@@ -89,10 +89,10 @@ namespace Cheez.Visitors
             sb.AppendLine("trait {");
 
             foreach (var f in trait.Variables)
-                sb.AppendLine(f.Accept(this).Indent(4));
+                sb.AppendLine(f.Decl.Accept(this).Indent(4));
 
             foreach (var f in trait.Functions)
-                sb.AppendLine(f.Accept(this).Indent(4));
+                sb.AppendLine($"{f.Name} :: f.Accept(this)".Indent(4));
 
             sb.Append("}");
 

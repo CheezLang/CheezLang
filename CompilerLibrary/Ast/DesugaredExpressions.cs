@@ -3,6 +3,7 @@ using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Complex;
 using Cheez.Visitors;
+using CompilerLibrary.Extras;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,6 +27,9 @@ namespace Cheez.Ast.Expressions
             Type = ed.EnumType;
             Argument = arg;
             EnumDecl = ed;
+
+            if (ed.IsFlags)
+                Value = new EnumValue(ed.EnumType, member);
         }
 
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitEnumValueExpr(this, data);

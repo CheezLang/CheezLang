@@ -35,17 +35,17 @@ CustomParser :: trait {
     get_value :: (result: &void, expr: ref CustomExpr);
 }
 
-Expr :: struct #extendable {
+Expr :: trait {
     typ : &TypeInfo
     loc : Location
 }
 
-EnumExpr :: struct #extend(Expr) {
+EnumExpr :: struct Expr {
     mem := Option[&TypeInfoEnumMember].None
     sub := Option[Box[Expr]].None
 }
 
-StructExpr :: struct #extend(Expr) {
+StructExpr :: struct Expr {
     subs := Array[StructMember].create()
 }
 
@@ -55,14 +55,14 @@ StructMember :: struct {
     sub : Option[Box[Expr]]
 }
 
-ValueExpr :: struct #extend(Expr) {
+ValueExpr :: struct Expr {
     raw : String
 }
 
-EmptyExpr :: struct #extend(Expr) {
+EmptyExpr :: struct Expr {
 }
 
-CustomExpr :: struct #extend(Expr) {
+CustomExpr :: struct Expr {
     sub : Box[Expr]
 }
 

@@ -6,38 +6,38 @@ use import std.string
 
 #export_scope
 
-Stmt :: struct #extendable {
+Stmt :: trait {
     id       : int
-    location : Location = default
+    location : Location
 }
 
-DeclStmt :: struct #extend(Stmt) {
+DeclStmt :: struct Stmt {
     is_const : bool
     pattern  : ref Expr
     typ      : Option[ref Expr]
     init     : Option[ref Expr]
 }
 
-UseStmt :: struct #extend(Stmt) {
+UseStmt :: struct Stmt {
     expr : ref Expr
 }
 
 // expressions
-Expr :: struct #extendable {
+Expr :: trait {
     id       : int
-    location : Location = default
-    typ      : &Type    = null
+    location : Location
+    typ      : &Type
 }
 
-IdExpr :: struct #extend(Expr) {
+IdExpr :: struct Expr {
     name : string
 }
 
-NumberExpr :: struct #extend(Expr) {
+NumberExpr :: struct Expr {
     value : int
 }
 
-BinaryExpr :: struct #extend(Expr) {
+BinaryExpr :: struct Expr {
     op    : Operator
     left  : ref Expr
     right : ref Expr
@@ -45,19 +45,19 @@ BinaryExpr :: struct #extend(Expr) {
     Operator :: enum #copy { Add, Sub, Mul, Div, Mod, And, Or, Less, LessEq, Greater, GreaterEq, Equal, NotEqual }
 }
 
-UnaryExpr :: struct #extend(Expr) {
+UnaryExpr :: struct Expr {
     op  : Operator
     sub : ref Expr
 
     Operator :: enum #copy { Neg, Not }
 }
 
-MoveExpr :: struct #extend(Expr) {
+MoveExpr :: struct Expr {
     target : ref Expr
     source : ref Expr
 }
 
-PipeExpr :: struct #extend(Expr) {
+PipeExpr :: struct Expr {
     left  : ref Expr
     right : ref Expr
 }
@@ -91,43 +91,43 @@ impl Printable for UnaryExpr.Operator {
     }
 }
 
-impl Printable for Expr {
-    print :: (ref Self, str: ref String, format: string) {
-        match self {
-            IdExpr($expr)     -> str.appendf("{}", expr.name)
-            NumberExpr($expr) -> str.appendf("{}", expr.value)
-            BinaryExpr($expr) -> str.append_printables("({} {} {})", [&expr.left, &expr.op, &expr.right])
-            UnaryExpr($expr)  -> str.append_printables("{}{}", [&expr.op, &expr.sub])
-            MoveExpr($expr)   -> str.append_printables("({} <- {})", [&expr.target, &expr.source])
-            PipeExpr($expr)   -> str.append_printables("{} | {}", [&expr.left, &expr.right])
-        }
-    }
-}
+// impl Printable for Expr {
+//     print :: (ref Self, str: ref String, format: string) {
+//         match self {
+//             IdExpr($expr)     -> str.appendf("{}", expr.name)
+//             NumberExpr($expr) -> str.appendf("{}", expr.value)
+//             BinaryExpr($expr) -> str.append_printables("({} {} {})", [&expr.left, &expr.op, &expr.right])
+//             UnaryExpr($expr)  -> str.append_printables("{}{}", [&expr.op, &expr.sub])
+//             MoveExpr($expr)   -> str.append_printables("({} <- {})", [&expr.target, &expr.source])
+//             PipeExpr($expr)   -> str.append_printables("{} | {}", [&expr.left, &expr.right])
+//         }
+//     }
+// }
 
-impl Printable for Stmt {
-    print :: (ref Self, str: ref String, format: string) {
-        match self {
-            DeclStmt($stmt) -> {
-                str.append_printables("{} :", [&stmt.pattern])
+// impl Printable for Stmt {
+//     print :: (ref Self, str: ref String, format: string) {
+//         match self {
+//             DeclStmt($stmt) -> {
+//                 str.append_printables("{} :", [&stmt.pattern])
 
-                match ref stmt.typ {
-                    Some($expr) -> {
-                        str.append_printables(" {} ", [&expr])
-                    }
-                }
+//                 match ref stmt.typ {
+//                     Some($expr) -> {
+//                         str.append_printables(" {} ", [&expr])
+//                     }
+//                 }
 
-                str.append_char(if stmt.is_const then ':' else '=')
+//                 str.append_char(if stmt.is_const then ':' else '=')
 
-                match ref stmt.init {
-                    Some($expr) -> {
-                        str.append_printables(" {}", [&expr])
-                    }
-                }
-            }
+//                 match ref stmt.init {
+//                     Some($expr) -> {
+//                         str.append_printables(" {}", [&expr])
+//                     }
+//                 }
+//             }
 
-            UseStmt($stmt) -> {
-                str.append_printables("use {}", [&stmt.expr])
-            }
-        }
-    }
-}
+//             UseStmt($stmt) -> {
+//                 str.append_printables("use {}", [&stmt.expr])
+//             }
+//         }
+//     }
+// }
