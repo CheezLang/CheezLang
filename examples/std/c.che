@@ -6,6 +6,7 @@ printf    :: (format: c_string) #varargs;
 sprintf   :: (buff: c_string, f: c_string) -> i32 #varargs;
 puts      :: (str: c_string);
 scanf     :: (format: c_string) -> i32 #varargs;
+sscanf    :: (str: c_string, format: c_string) -> i32 #varargs;
 gets      :: (string: c_string) -> c_string;
 getchar   :: () -> i32;
 strtol    :: (str: c_string, endptr: &&char8, base: i32) -> int;

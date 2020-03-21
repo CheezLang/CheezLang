@@ -582,6 +582,18 @@ impl char {
     is_alpha :: (Self) -> bool {
         return (self >= 'a'  and self <= 'z') or (self >= 'A' and self <= 'Z')
     }
+
+    is_digit :: (Self) -> bool {
+        return (self >= '0'  and self <= '9')
+    }
+
+    is_bin_digit :: (Self) -> bool {
+        return (self >= '0'  and self <= '1')
+    }
+
+    is_hex_digit :: (Self) -> bool {
+        return (self >= '0'  and self <= '9') or (self >= 'a'  and self <= 'f') or (self >= 'A' and self <= 'F')
+    }
 }
 
 impl c_string {

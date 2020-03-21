@@ -1,4 +1,5 @@
 use import std.array
+use import std.hash_table
 use import std.string
 use import std.box
 use import std.math
@@ -128,6 +129,34 @@ impl(T: type) Printable for Option[T] if T: Printable {
             }
             None -> str.append_string("None")
         }
+    }
+}
+
+impl(T: type) Printable for Array[T] if T: Printable {
+    print :: (ref Self, str: ref String, format: string) {
+        str += "["
+        for(by_ref=true) v : self.slice() {
+            if it_index > 0 {
+                str += ", "
+            }
+            v.print(str, "")
+        }
+        str += "]"
+    }
+}
+
+impl(K: type, V: type) Printable for Table[K, V] if K: Printable, V: Printable {
+    print :: (ref Self, str: ref String, format: string) {
+        str += "{"
+        for v : <<&self {
+            if it_index > 0 {
+                str += ", "
+            }
+            v.name.print(str, "")
+            str += ": "
+            v.value.print(str, "")
+        }
+        str += "}"
     }
 }
 

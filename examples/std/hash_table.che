@@ -25,6 +25,9 @@ Entry :: struct(K: type, V: type) {
 impl(K: type, V: type) Drop for Table[K, V] {
     drop :: (ref Self) {
         if entries.data != null {
+            for(by_ref=true) e, _ : entries {
+                if e.filled then Memory.drop(e.value <- None)
+            }
             free_n(entries, allocator)
         }
     }
@@ -204,11 +207,12 @@ impl(K: type, V: type) Table[K, V] {
 }
 
 for_extension_table :: (r: ref Table[$K, $V], code: Code) #for {
-    for(by_ref=true) e : r.get_entries() {
+    it_index := 0
+    for(by_ref=true) e, _ : r.get_entries() {
         if !e.filled then continue
         it : (name: K, value: ref V) = e.key, ref e.value.Some
-        it_index := it_index
         @insert(code, _break=@link(break), _continue=@link(continue))
+        it_index += 1
     }
 }
 
