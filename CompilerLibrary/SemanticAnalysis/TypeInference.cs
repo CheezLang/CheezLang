@@ -4623,6 +4623,11 @@ namespace Cheez
 
                         var assType = e.Member.AssociatedType;
 
+                        if (e.Member.AssociatedTypeExpr == null) {
+                            ReportError(expr, $"{e.EnumDecl.Name}.{e.Member.Name} has no associated type");
+                            return expr;
+                        }
+
                         if (expr.Arguments.Count == 1)
                         {
                             e.Argument = expr.Arguments[0].Expr;
