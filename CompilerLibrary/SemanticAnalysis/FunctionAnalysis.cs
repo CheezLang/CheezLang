@@ -811,7 +811,10 @@ namespace Cheez
             {
                 ret.ReturnValue.SetFlag(ExprFlags.ValueRequired, true);
                 ret.ReturnValue.AttachTo(ret);
-                ret.ReturnValue = InferType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
+                ret.ReturnValue = InferType(
+                    ret.ReturnValue,
+                    currentFunction.FunctionType.ReturnType,
+                    typeOfExprContext: currentFunction.FunctionType.ReturnType);
 
                 ConvertLiteralTypeToDefaultType(ret.ReturnValue, currentFunction.FunctionType.ReturnType);
 

@@ -125,14 +125,15 @@ namespace Cheez
             return expr;
         }
 
-        public AstExpression InferType(AstExpression expr, CheezType expected, bool resolvePolyExprToConcreteType = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false)
+        public AstExpression InferType(AstExpression expr, CheezType expected, bool resolvePolyExprToConcreteType = false, HashSet<AstDecl> dependencies = null, bool forceInfer = false, CheezType typeOfExprContext = null)
         {
             var context = new TypeInferenceContext
             {
                 newPolyFunctions = new List<AstFuncExpr>(),
                 resolve_poly_expr_to_concrete_type = resolvePolyExprToConcreteType,
                 dependencies = dependencies,
-                forceInfer = forceInfer
+                forceInfer = forceInfer,
+                TypeOfExprContext = typeOfExprContext
             };
             var newExpr = InferTypeHelper(expr, expected, context);
 
