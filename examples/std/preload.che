@@ -176,6 +176,37 @@ impl string {
         length := range.end - range.start
         return string(cast data, length)
     }
+
+    get_range_inclusive :: (Self, range: RangeInclusive[int]) -> string #operator("[]") {
+        data := int(self.bytes.data) + range.start
+        length := range.end - range.start + 1
+        return string(cast data, length)
+    }
+
+    get_range_to :: (Self, range: RangeTo[int]) -> string #operator("[]") {
+        @assert(range.end >= 0 and range.end <= self.bytes.length)
+        data := int(self.bytes.data)
+        length := range.end
+        return string(cast data, length)
+    }
+
+    get_range_to_incl :: (Self, range: RangeToInclusive[int]) -> string #operator("[]") {
+        @assert(range.end >= 0 and range.end < self.bytes.length)
+        data := int(self.bytes.data)
+        length := range.end + 1
+        return string(cast data, length)
+    }
+
+    get_range_from :: (Self, range: RangeFrom[int]) -> string #operator("[]") {
+        @assert(range.start >= 0 and range.start <= self.bytes.length)
+        data := int(self.bytes.data) + range.start
+        length := self.bytes.length - range.start
+        return string(cast data, length)
+    }
+
+    get_range_full :: (Self, range: RangeFull) -> string #operator("[]") {
+        return self
+    }
 }
 
 impl(T: type) []T {

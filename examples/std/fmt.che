@@ -1,9 +1,26 @@
 use import std.string
 use import std.printable
 use import std.util
-C :: import std.c
+C  :: import std.c
+io :: import std.io
 
 #export_scope
+
+FmtAlign :: struct #copy {
+    amount: int
+}
+
+align :: (amount: int) -> FmtAlign {
+    return FmtAlign(amount)
+}
+
+impl Printable for FmtAlign {
+    print :: (ref Self, str: ref String, format: string) {
+        while str.get_length() < amount {
+            str += ' '
+        }
+    }
+}
 
 parse_int :: (str: string) -> int {
     val := 0
@@ -11,6 +28,7 @@ parse_int :: (str: string) -> int {
 
     if str.bytes.length > 0 and char(str[0]) == '-' {
         sign = -1
+        str = str[1..]
     }
 
     for c : str {
@@ -63,7 +81,7 @@ format_any :: (arg: &any) -> String {
     return format("{}", [arg])
 }
 
-format :: (text: string, args: []&any) -> String {
+format :: (text: string, args: []&any = []) -> String {
     State :: enum #copy { Text, Format, Escape }
     use State
 

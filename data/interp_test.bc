@@ -1,0 +1,40 @@
+# faculty of n
+fn fac n {
+    load_local n
+    const 1
+    igt
+    branch_if body
+
+    const 1
+    return
+
+body:
+    load_local n
+    load_local n
+    const 1
+    sub
+    call fac 1
+    mul
+    return
+}
+
+#main
+fn main {
+    const 0
+
+loop:
+    load_local 0
+    call fac 1
+    print
+    load_local 0
+    const 1
+    add
+    store_local 0
+    
+    load_local 0
+    const 50
+    ilt
+    branch_if loop
+
+    halt
+}

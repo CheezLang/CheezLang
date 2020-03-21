@@ -130,6 +130,26 @@ impl(K: type, V: type) Table[K, V] {
         }
     }
 
+    get_or_insert :: (ref Self, key: K, value: fn() -> V) -> ref V {
+        if entries.data == null {
+            adjust_capacity(13)
+        }
+
+        entry := find_entry(entries, key)
+        if !entry.filled {
+            entry.key = key
+            entry.value = Some(value())
+            entry.filled = true
+            entry.is_tombstone = false
+            count += 1
+        }
+
+        return match ref entry.value {
+            Some($val)  -> val
+            None        -> @assert(false)
+        }
+    }
+
     get_unchecked :: (ref Self, key: K) -> ref V #operator("[]") {
         entry := find_entry(entries, key)
         return entry.value.Some
@@ -142,7 +162,10 @@ impl(K: type, V: type) Table[K, V] {
         if !entry.filled { return false }
 
         entry.filled = false
+        entry.value = None
         entry.is_tombstone = true
+
+        count -= 1
 
         return true
     }

@@ -356,6 +356,42 @@ for_extension_string_line_iterator :: (self: StringLineIterator, body: Code) #fo
     }
 }
 
+StringSplitCharIterator :: struct {
+    remaining   : string
+    split_at    : char
+    remove_empty: bool
+}
+
+impl StringSplitCharIterator {
+    to_array :: (Self) -> Array[string] {
+        result := Array[string].create()
+        for part : self {
+            result.add(part)
+        }
+        return result
+    }
+}
+
+for_extension_string_split_char_iterator :: (self: StringSplitCharIterator, body: Code) #for {
+    it_index := 0
+
+    while self.remaining.bytes.length > 0 {
+        index := self.remaining.index_of(self.split_at)
+        it := if index < 0 {
+            self.remaining <- ""
+        } else {
+            tmp := self.remaining[..index]
+            self.remaining = self.remaining[(index+1)..]
+            tmp
+        }
+
+        if it.bytes.length != 0 {
+            @insert(body)
+            it_index += 1
+        }
+    }
+}
+
 impl Printable for String {
     print :: (ref Self, str: ref String, format: string) {
         str += self
@@ -426,6 +462,11 @@ impl string {
     lines :: (Self) -> StringLineIterator {
         return StringLineIterator(self)
     }
+    
+
+    split_at_char :: (Self, c: char, remove_empty: bool = false) -> StringSplitCharIterator {
+        return StringSplitCharIterator(self, c, remove_empty)
+    }
 
     starts_with :: (Self, prefix: string) -> bool {
         self_bytes := self.bytes
@@ -485,7 +526,17 @@ impl string {
         return self.sub_string(start, end)
     }
 
-    index_of :: (ref Self, ch: char) -> int {
+    contains :: (Self, ch: char) -> bool {
+        for c : self {
+            if c == ch {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    index_of :: (Self, ch: char) -> int {
         bytes := self.bytes
         for i : 0..bytes.length {
             if bytes[i] == u8(ch) {
@@ -526,6 +577,10 @@ impl char {
             '`n' -> true
             _ -> false
         }
+    }
+
+    is_alpha :: (Self) -> bool {
+        return (self >= 'a'  and self <= 'z') or (self >= 'A' and self <= 'Z')
     }
 }
 

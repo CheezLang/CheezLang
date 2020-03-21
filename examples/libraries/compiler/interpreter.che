@@ -1,0 +1,715 @@
+use import std.array
+use import std.hash_table
+use import std.string
+use import std.math
+
+io  :: import std.io
+fs  :: import std.io.fs
+fmt :: import std.fmt
+mem :: import std.mem.allocator
+
+DEBUG_INTERPRETER :: false
+
+Main :: () {
+    io.println("interpreter")
+
+    code := match fs.read_file("../data/interp_test.bc") {
+        Ok($content) -> content
+        Err($err) -> {
+            io.formatln(err)
+            return
+        }
+    }
+
+    prog := compile_program(code.slice())
+    if prog == null {
+        io.println("[ERROR] failed to compile program")
+        return
+    }
+    prog.call("main")
+    prog.run()
+}
+
+compile_program :: (code: string) -> &Interpreter {
+    interp := Interpreter.new()
+
+    labels := Array[(string, int)].create()
+    branches := Table[string, Array[int]].create(strings_equal)
+    parameters := Table[string, int].create(strings_equal)
+    func := InstructionBuilder.new()
+
+    current_function := ""
+
+    has_errors := false
+
+    for line : code.lines() {
+        trimmed := line.trim()
+        if trimmed.bytes.length == 0 or char(trimmed[0]) == '#' {
+            continue
+        }
+
+        if trimmed.starts_with("}") {
+            // end function
+
+            code := func.code_view()
+
+            // fix up branches
+            for label : labels {
+                match branches.get(label[0]) {
+                    Some($arr) -> {
+                        for index : arr.slice() {
+                            code[index] = u64(label[1])
+                        }
+                    }
+                    None -> {
+                        io.formatln("[ERROR] label '{}' is never used", [label[0]])
+                        has_errors = true
+                    }
+                }
+                branches.delete(label[0])
+            }
+
+            if branches.get_count() > 0 {
+                io.formatln("[ERROR] {} unresolved labels", [branches.get_count()])
+                for label : branches {
+                    io.formatln("[ERROR] unknown label '{}'", [label[0]])
+                }
+                has_errors = true
+            }
+
+            labels.clear()
+            branches.clear()
+            parameters.clear()
+
+            interp.register_function(current_function, func.code())
+            current_function = ""
+        } else if trimmed.starts_with("fn ") {
+            brace := trimmed.index_of('{')
+            if brace < 0 {
+                brace = trimmed.bytes.length
+            }
+            parts := trimmed[3..brace].split_at_char(' ', true).to_array()
+            @assert(parts.count() > 0)
+
+            for i : 1..parts.count() {
+                parameters[parts[i]] = -i
+            }
+
+            current_function = parts[0]
+        } else if brace := trimmed.index_of(':'), brace >= 0 {
+            name := trimmed[..brace]
+            labels.add((name, func.next()))
+        } else {
+            parts := trimmed.split_at_char(' ', true).to_array()
+            @assert(parts.count() > 0)
+
+            inst := parts[0].trim()
+
+            if strings_equal(inst, "noop") {
+                func.build_noop()
+            } else if strings_equal(inst, "halt") {
+                func.build_halt()
+            } else if strings_equal(inst, "print") {
+                func.build_print()
+            } else if strings_equal(inst, "const") {
+                arg := fmt.parse_int(parts[1])
+                func.build_const(arg)
+            } else if strings_equal(inst, "load_local") {
+                arg : int = if char(parts[1][0]).is_alpha() {
+                    <<&parameters[parts[1]]
+                } else {
+                    fmt.parse_int(parts[1])
+                }
+                func.build_load_local(arg)
+            } else if strings_equal(inst, "store_local") {
+                arg : int = if char(parts[1][0]).is_alpha() {
+                    <<&parameters[parts[1]]
+                } else {
+                    fmt.parse_int(parts[1])
+                }
+                func.build_store_local(arg)
+            } else if strings_equal(inst, "add") {
+                func.build_add()
+            } else if strings_equal(inst, "sub") {
+                func.build_sub()
+            } else if strings_equal(inst, "mul") {
+                func.build_mul()
+            } else if strings_equal(inst, "div") {
+                func.build_div()
+            } else if strings_equal(inst, "mod") {
+                func.build_mod()
+            } else if strings_equal(inst, "and") {
+                func.build_and()
+            } else if strings_equal(inst, "or") {
+                func.build_or()
+            } else if strings_equal(inst, "ieq") {
+                func.build_ieq()
+            } else if strings_equal(inst, "ilt") {
+                func.build_ilt()
+            } else if strings_equal(inst, "ile") {
+                func.build_ile()
+            } else if strings_equal(inst, "igt") {
+                func.build_igt()
+            } else if strings_equal(inst, "ige") {
+                func.build_ige()
+            } else if strings_equal(inst, "branch") {
+                label := parts[1]
+                branches.get_or_insert(label, () => Array[int].create()).add(func.build_branch(-1))
+            } else if strings_equal(inst, "branch_if") {
+                label := parts[1]
+                branches.get_or_insert(label, () => Array[int].create()).add(func.build_branch_if(-1))
+            } else if strings_equal(inst, "call") {
+                name    := parts[1]
+                arity   := fmt.parse_int(parts[2])
+                func.build_call(name, arity)
+            } else if strings_equal(inst, "return") {
+                func.build_return()
+            } else if strings_equal(inst, "return_void") {
+                func.build_return_void()
+            } else {
+                io.formatln("[ERROR] unknown instruction '{}'", [inst])
+                has_errors = true
+            }
+        }
+    }
+
+    if has_errors {
+        // @fixme: for some reason this crashes
+        // Memory.drop(<<interp)
+        return null
+    }
+
+    return interp
+}
+
+sample_program_2 :: () {
+    fac := InstructionBuilder.new()
+    fac.build_load_local(-1)
+    fac.build_const(1)
+    fac.build_igt()
+    br_body := fac.build_branch_if(0)
+    fac.build_const(1)
+    fac.build_return()
+    fac.code_view()[br_body] = u64(fac.next())
+    fac.build_load_local(-1)
+    fac.build_load_local(-1)
+    fac.build_const(1)
+    fac.build_sub()
+    fac.build_call("fac", 1)
+    fac.build_mul()
+    fac.build_return()
+    
+    main := InstructionBuilder.new()
+    main.build_const(4)
+    main.build_call("fac", 1)
+    main.build_print()
+    main.build_halt()
+
+    interp := Interpreter.new()
+    interp.register_function("fac", fac.code())
+
+    interp.push_frame(main.code_view())
+    interp.run()
+}
+
+sample_program_1 :: () {
+    add := InstructionBuilder.new()
+    add.build_load_local(-2)
+    add.build_load_local(-1)
+    add.build_add()
+    add.build_return()
+
+    mul := InstructionBuilder.new()
+    mul.build_load_local(-2)
+    mul.build_load_local(-1)
+    mul.build_mul()
+    mul.build_return()
+
+    foo := InstructionBuilder.new()
+    foo.build_const(1)
+    foo.build_const(2)
+    foo.build_const(3)
+    foo.build_call("mul", 2)
+    foo.build_call("add", 2)
+    foo.build_return()
+
+    bar := InstructionBuilder.new()
+    bar.build_const(1)
+    bar.build_const(2)
+    bar.build_call("add", 2)
+    bar.build_const(3)
+    bar.build_call("mul", 2)
+    bar.build_return()
+
+    func := InstructionBuilder.new()
+    func.build_call("foo")
+    func.build_print()
+    func.build_call("bar")
+    func.build_print()
+    func.build_return_void()
+    
+    main := InstructionBuilder.new()
+    main.build_call("func")
+    main.build_halt()
+
+    interp := Interpreter.new()
+    interp.register_function("func", func.code())
+    interp.register_function("foo", foo.code())
+    interp.register_function("bar", bar.code())
+    interp.register_function("add", add.code())
+    interp.register_function("mul", mul.code())
+
+    interp.push_frame(main.code_view())
+    interp.run()
+}
+
+InstructionBuilder :: struct {
+    instructions := Array[u64].create()
+}
+
+impl InstructionBuilder {
+    new :: () -> InstructionBuilder {
+        return InstructionBuilder()
+    }
+
+    code_view :: (ref Self) -> []u64 {
+        return instructions.slice()
+    }
+
+    code :: (ref Self) -> Array[u64] {
+        return instructions <- Array[u64].create()
+    }
+
+    next :: (ref Self) -> int {
+        return instructions.get_length()
+    }
+
+    build_noop :: (ref Self) {
+        instructions.add(cast Instruction.Noop)
+    }
+
+    build_const :: (ref Self, value: int) {
+        instructions.add(cast Instruction.Const)
+        instructions.add(<<cast(&u64)&value)
+    }
+
+    build_load_local :: (ref Self, index: int) {
+        instructions.add(cast Instruction.LoadLocal)
+        instructions.add(<<cast(&u64)&index)
+    }
+
+    build_store_local :: (ref Self, index: int) {
+        instructions.add(cast Instruction.StoreLocal)
+        instructions.add(<<cast(&u64)&index)
+    }
+
+    build_add :: (ref Self) {
+        instructions.add(cast Instruction.Add)
+    }
+
+    build_sub :: (ref Self) {
+        instructions.add(cast Instruction.Sub)
+    }
+
+    build_mul :: (ref Self) {
+        instructions.add(cast Instruction.Mul)
+    }
+
+    build_div :: (ref Self) {
+        instructions.add(cast Instruction.Div)
+    }
+
+    build_mod :: (ref Self) {
+        instructions.add(cast Instruction.Mod)
+    }
+
+    build_and :: (ref Self) {
+        instructions.add(cast Instruction.And)
+    }
+
+    build_or :: (ref Self) {
+        instructions.add(cast Instruction.Or)
+    }
+
+    build_ieq :: (ref Self) {
+        instructions.add(cast Instruction.Ieq)
+    }
+
+    build_ilt :: (ref Self) {
+        instructions.add(cast Instruction.Ilt)
+    }
+
+    build_ile :: (ref Self) {
+        instructions.add(cast Instruction.Ile)
+    }
+
+    build_igt :: (ref Self) {
+        instructions.add(cast Instruction.Igt)
+    }
+
+    build_ige :: (ref Self) {
+        instructions.add(cast Instruction.Ige)
+    }
+
+    build_branch :: (ref Self, address: int) -> int {
+        instructions.add(cast Instruction.Branch)
+        instructions.add(cast address)
+        return instructions.count() - 1
+    }
+
+    build_branch_if :: (ref Self, address: int) -> int {
+        instructions.add(cast Instruction.BranchIf)
+        instructions.add(cast address)
+        return instructions.count() - 1
+    }
+
+    build_call :: (ref Self, function: string, arity: int = 0) {
+        instructions.add(cast Instruction.Call)
+        instructions.add(cast function.bytes.data)
+        instructions.add(cast function.bytes.length)
+        instructions.add(cast arity)
+    }
+
+    build_return :: (ref Self) {
+        instructions.add(cast Instruction.Return)
+    }
+
+    build_return_void :: (ref Self) {
+        instructions.add(cast Instruction.ReturnVoid)
+    }
+
+    build_print :: (ref Self) {
+        instructions.add(cast Instruction.Print)
+    }
+
+    build_halt :: (ref Self) {
+        instructions.add(cast Instruction.Halt)
+    }
+}
+
+StackFrame :: struct {
+    ip      : int   = default
+    sp      : int   = default
+    bp      : int   = default
+    code    : []u64 = default
+    stack   : []int = default
+}
+
+impl StackFrame {
+    dump_stack :: (ref Self) -> String {
+        str := String.with_capacity(128)
+
+        str += "[ "
+
+        // parameters
+        for i : 0..bp {
+            if i > 0 {
+                str += ", "
+            }
+            str.appendf("{}", stack[i])
+        }
+
+        // locals
+        str += " | "
+
+        for i : max(bp, sp - 5) .. sp {
+            str.appendf("{}", stack[i])
+            if i < sp - 1 {
+                str += ", "
+            }
+        }
+
+        str += " ]"
+
+        return str
+    }
+}
+
+Interpreter :: struct {
+    sp          : int
+    fp          : int
+    frames      : [1024]StackFrame
+    stack       : [1024]int
+    functions   : Table[string, Array[u64]]
+}
+
+impl Interpreter {
+    new :: () -> &Interpreter {
+        interp := mem.alloc(Interpreter)
+        <<interp = Interpreter(
+            sp          = 0
+            fp          = -1
+            frames      = default
+            stack       = default
+            functions   = Table[string, Array[u64]].create(strings_equal)
+        )
+        return interp
+    }
+
+    register_function :: (ref Self, name: string, code: Array[u64]) {
+        functions[name] = code
+    }
+
+    call :: (ref Self, name: string, arg_count: int = 0) {
+        match functions.get(name) {
+            Some($code) -> {
+                push_frame(code.slice(), arg_count)
+            }
+            None -> {
+                io.formatln("[ERROR] 'Call {}' failed. Unknown function '{}'", [name, name])
+            }
+        }
+    }
+
+    push_frame :: (ref Self, code: []u64, arg_count: int = 0) {
+        _fp, _sp := fp, sp
+        defer { if const DEBUG_INTERPRETER then io.formatln("push_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp]) }
+
+        if fp >= 0 {
+            sp += frames[fp].sp - frames[fp].bp
+        }
+        fp += 1
+        frames[fp] = StackFrame(
+            ip = 0
+            sp = arg_count
+            bp = arg_count
+            code = code
+            stack = stack[sp-arg_count .. ]
+        )
+    }
+
+    pop_frame :: (ref Self) {
+        _fp, _sp := fp, sp
+        defer { if const DEBUG_INTERPRETER then io.formatln("pop_code (fp = {} -> {}, sp = {} -> {})", [_fp, fp, _sp, sp]) }
+
+        fp -= 1
+        if fp >= 0 {
+            sp -= frames[fp].sp - frames[fp].bp
+            (&frames[fp]).sp -= frames[fp + 1].bp
+        }
+    }
+
+    step :: (ref Self) -> enum { Continue, Done } {
+        @assert(fp >= 0)
+        frame := &frames[fp]
+        arg :: (T: type) #macro {
+            val := <<cast(&T)&frame.code[frame.ip]
+            frame.ip += 1
+            val
+        }
+
+        push :: (val: int) #macro {
+            frame.stack[frame.sp] = val
+            frame.sp += 1
+        }
+
+        pop :: () #macro {
+            @assert(frame.sp > 0)
+            frame.sp -= 1
+            frame.stack[frame.sp]
+        }
+
+        // fetch
+        opcode := frame.code[frame.ip]
+
+        if const DEBUG_INTERPRETER {
+            io.formatln("{}{}{}{}{}{}{}{}{}", [
+                fp
+                fmt.align(6), frame.sp
+                fmt.align(12), frame.ip
+                fmt.align(20), Instruction.pretty_print(frame.code[frame.ip..])
+                fmt.align(40), frame.dump_stack()
+            ])
+        }
+        
+        frame.ip += 1
+
+        // decode and execute
+        match Instruction(opcode) {
+            .Noop -> {}
+            
+            .Const -> {
+                val := arg(int)
+                push(val)
+            }
+            .LoadLocal -> {
+                index := arg(int)
+                push(frame.stack[frame.bp + index])
+            }
+            .StoreLocal -> {
+                index := arg(int)
+                frame.stack[frame.bp + index] = pop()
+            }
+
+            .Add -> {
+                b, a := pop(), pop()
+                push(a + b)
+            }
+            .Sub -> {
+                b, a := pop(), pop()
+                push(a - b)
+            }
+            .Mul -> {
+                b, a := pop(), pop()
+                push(a * b)
+            }
+            .Div -> {
+                b, a := pop(), pop()
+                push(a / b)
+            }
+            .Mod -> {
+                b, a := pop(), pop()
+                push(a % b)
+            }
+            .And -> {
+                b, a := pop() != 0, pop() != 0
+                push(cast a and b)
+            }
+            .Or -> {
+                b, a := pop() != 0, pop() != 0
+                push(cast a or b)
+            }
+            .Ieq -> {
+                b, a := pop(), pop()
+                push(cast a == b)
+            }
+            .Ilt -> {
+                b, a := pop(), pop()
+                push(cast a < b)
+            }
+            .Ile -> {
+                b, a := pop(), pop()
+                push(cast a <= b)
+            }
+            .Igt -> {
+                b, a := pop(), pop()
+                push(cast a > b)
+            }
+            .Ige -> {
+                b, a := pop(), pop()
+                push(cast a >= b)
+            }
+
+            .Branch -> {
+                frame.ip = arg(int)
+            }
+            .BranchIf -> {
+                address := arg(int)
+                if pop() != 0 {
+                    frame.ip = address
+                }
+            }
+
+            .Call -> {
+                str := string(arg(&u8), arg(int))
+                count := arg(int)
+                match functions.get(str) {
+                    Some($code) -> {
+                        push_frame(code.slice(), count)
+                    }
+                    None -> {
+                        io.formatln("[ERROR] 'Call {}' failed. Unknown function '{}'", [str, str])
+                        return .Done
+                    }
+                }
+            }
+            .Return -> {
+                @assert(frame.sp > 0)
+                frame.stack[0] = frame.stack[frame.sp - 1]
+                pop_frame()
+                if fp >= 0 {
+                    // @fixme frames[fp].sp += 1 // fails to compile
+                    (&frames[fp]).sp += 1
+                }
+            }
+            .ReturnVoid -> {
+                pop_frame()
+            }
+
+            .Print -> {
+                val := pop()
+
+                io.set_console_color(.Green, .Black)
+                io.println(val)
+                io.set_console_color(.White, .Black)
+            }
+            .Halt -> {
+                return .Done
+            }
+        }
+
+        return .Continue
+    }
+
+    run :: (ref Self) {
+        @assert(fp >= 0)
+        frame := &frames[fp]
+        while frame.ip >= 0 and frame.ip < frame.code.length {
+            if step() == .Done {
+                return
+            }
+        }
+    }
+}
+
+Instruction :: enum #repr("C") #tag_type(u64) {
+    Noop
+
+    Const
+    LoadLocal, StoreLocal
+
+    Add, Sub, Mul, Div, Mod
+    And, Or
+    Ieq, Ilt, Ile, Igt, Ige
+
+    Branch, BranchIf
+
+    Call
+    Return, ReturnVoid
+
+    Print
+    Halt
+}
+
+impl Instruction {
+    pretty_print :: (code: []u64) -> String {
+        @assert(code.length > 0)
+
+        arg :: (T: type, index: int) #macro {
+            <<cast(&T)&code[index + 1]
+        }
+
+        return match Instruction(code[0]) {
+            .Noop           -> fmt.format("Noop")
+
+            .Const          -> fmt.format("Const {}", [arg(int, 0)])
+            .LoadLocal      -> fmt.format("LoadLocal {}", [arg(int, 0)])
+            .StoreLocal     -> fmt.format("StoreLocal {}", [arg(int, 0)])
+
+            .Add            -> fmt.format("Add")
+            .Sub            -> fmt.format("Sub")
+            .Mul            -> fmt.format("Mul")
+            .Div            -> fmt.format("Div")
+            .Mod            -> fmt.format("Mod")
+
+            .And            -> fmt.format("And")
+            .Or             -> fmt.format("Or")
+            .Ieq            -> fmt.format("Ieq")
+            .Ilt            -> fmt.format("Ilt")
+            .Ile            -> fmt.format("Ile")
+            .Igt            -> fmt.format("Igt")
+            .Ige            -> fmt.format("Ige")
+
+            .Branch         -> fmt.format("Branch {}", [arg(int, 0)])
+            .BranchIf       -> fmt.format("BranchIf {}", [arg(int, 0)])
+
+            .Call           -> fmt.format("Call {} {}", [string(arg(&u8, 0), arg(int, 1)), arg(int, 2)])
+            .Return         -> fmt.format("Return")
+            .ReturnVoid     -> fmt.format("ReturnVoid")
+
+            .Print          -> fmt.format("Print")
+            .Halt           -> fmt.format("Halt")
+            _               -> fmt.format("Unknown {}", [code[0]])
+        }
+    }
+}

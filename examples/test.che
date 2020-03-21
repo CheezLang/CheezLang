@@ -10,7 +10,9 @@
 // import examples.command_line_parser
 // import compiler.cli
 // import compiler.compiler_test
-import examples.ShmupEngine.src.main
+// import examples.ShmupEngine.src.main
+
+import compiler.interpreter
 
 // examples which are not working currently
 // import examples.image_processing
