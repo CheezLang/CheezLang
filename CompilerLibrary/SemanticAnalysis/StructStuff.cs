@@ -275,6 +275,7 @@ namespace Cheez
                 return null;
             }
 
+
             AstStructTypeExpr instance = null;
 
             // check if instance already exists
@@ -286,6 +287,10 @@ namespace Cheez
                 for (int i = 0; i < pi.Parameters.Count; i++)
                 {
                     var param = pi.Parameters[i];
+                    if (param.Type.IsErrorType) {
+                        eq = false;
+                        break;
+                    }
                     var arg = args[i];
                     if (!param.Value.Equals(arg.value))
                     //if (param.Value != arg.value)

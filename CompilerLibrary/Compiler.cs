@@ -81,6 +81,7 @@ namespace Cheez
             ModulePaths["libclang"] = exePath + "/libraries";
             ModulePaths["serpa"]    = exePath + "/libraries";
             ModulePaths["json"]     = exePath + "/libraries";
+            ModulePaths["dap"]      = exePath + "/libraries";
 
             mGlobalConstIfScope = new Scope("global_const_if");
             mGlobalConstIfScope.DefineBuiltInTypes();

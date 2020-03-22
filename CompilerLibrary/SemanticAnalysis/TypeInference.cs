@@ -800,6 +800,7 @@ namespace Cheez
 
             var funcType = expected as FunctionType;
 
+            bool ok = true;
             for (int i = 0; i < expr.Parameters.Count; i++)
             {
                 var param = expr.Parameters[i];
@@ -821,9 +822,14 @@ namespace Cheez
                 if (param.Type == null)
                 {
                     ReportError(param, $"Failed to infer type of lambda parameter");
+                    ok = false;
                 }
 
                 param.Scope.DefineSymbol(param);
+            }
+
+            if (!ok) {
+                return expr;
             }
 
             var expectedRetType = funcType?.ReturnType;
@@ -2729,6 +2735,49 @@ namespace Cheez
                         return expr;
                     }
 
+                case "impl":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr.Location, "@impl takes 2 arguments");
+                            return expr;
+                        }
+
+                        // arg 0: type
+                        var typeArg = InferArg(0, CheezType.Type);
+                        if (typeArg.Type != CheezType.Type)
+                        {
+                            ReportError(typeArg, $"First argument must be a type, but is {typeArg.Type}");
+                            return expr;
+                        }
+
+                        var type = typeArg.Value as CheezType;
+
+                        // arg 1: trait
+                        var traitTypeArg = InferArg(1, CheezType.Type);
+                        if (traitTypeArg.Type != CheezType.Type)
+                        {
+                            ReportError(traitTypeArg, $"Second argument must be a type, but is {traitTypeArg.Type}");
+                            return expr;
+                        }
+                        var trait = traitTypeArg.Value as TraitType;
+                        if (trait == null)
+                        {
+                            ReportError(traitTypeArg, $"Second argument must be a trait type, but is {traitTypeArg.Value}");
+                            return expr;
+                        }
+
+                        if (trait.Declaration.Implementations.TryGetValue(type, out var impl)) {
+                            expr.Type = CheezType.Impl;
+                            expr.Value = impl;
+                        } else {
+                            ReportError(expr, $"Type {type} does not implement the trait {trait}");
+                        }
+                        
+                        return expr;
+                    }
+
+
                 case "for_tuple_values":
                     {
                         if (expr.Arguments.Count != 2)
@@ -4250,6 +4299,24 @@ namespace Cheez
 
                         expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
                         break;
+                    }
+
+                case ImplType i: {
+                        var impl = expr.Left.Value as AstImplBlock;
+                        var name = expr.Right.Name;
+
+                        var func = impl.Functions.FirstOrDefault(f => f.Name == name);
+
+                        if (func == null) {
+                            ReportError(expr.Right,
+                                $"Type '{impl.TargetType}' has no function or member '{name}' in impl block this",
+                                ("Impl block here:", impl.Location));
+                            return expr;
+                        }
+
+                        expr.Type = func.Type;
+                        expr.Value = func;
+                        return expr;
                     }
 
                 case TraitType t:

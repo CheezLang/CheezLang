@@ -414,7 +414,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         }
                         else
                         {
-                            if (p.TargetType == VoidType.Intance)
+                            if (p.TargetType == VoidType.Instance)
                                 return LLVM.Int8Type().GetPointerTo();
                             return CheezTypeToLLVMType(p.TargetType).GetPointerTo();
                         }

@@ -9,7 +9,8 @@ namespace Cheez.Types
 {
     public abstract class CheezType
     {
-        public static CheezType Void => VoidType.Intance;
+        public static CheezType Void => VoidType.Instance;
+        public static CheezType Impl => ImplType.Instance;
         public static CheezType CString => PointerType.GetPointerType(CharType.GetCharType(1));
         public static CheezType String => StringType.Instance;
         public static CheezType StringLiteral => StringLiteralType.Instance;
@@ -250,6 +251,18 @@ namespace Cheez.Types
 
             return false;
         }
+    }
+
+    public class ImplType : CheezType
+    {
+        public static readonly ImplType Instance = new ImplType();
+
+        public override bool IsPolyType => false;
+
+        public override bool IsErrorType => false;
+
+        public ImplType() : base(0, 1, false)
+        { }
     }
 
     public class ModuleType : CheezType

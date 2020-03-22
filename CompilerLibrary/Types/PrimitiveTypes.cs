@@ -9,7 +9,7 @@ namespace Cheez.Types.Primitive
 {
     public class VoidType : CheezType
     {
-        public static VoidType Intance { get; } = new VoidType();
+        public static VoidType Instance { get; } = new VoidType();
         public override string ToString() => "void";
         public override bool IsPolyType => false;
         public override bool IsErrorType => false;
