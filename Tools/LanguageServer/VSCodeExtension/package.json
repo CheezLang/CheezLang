@@ -43,6 +43,12 @@
           "CheezLang"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "cheezbc",
+        "extensions": [
+          ".cbc"
+        ]
       }
     ],
     "grammars": [
@@ -80,7 +86,28 @@
           "description": "Traces the communication between VSCode and the language server."
         }
       }
-    }
+    },
+    "debuggers": [
+      {
+        "type": "cheezbc",
+        "label": "Cheez Bytecode",
+        "program": "P:/dev/CheezLang/gen/test.exe",
+        "languages": ["cheezbc"],
+        "initialConfigurations": [
+          {
+            "type": "cheezbc",
+            "request": "launch",
+            "name": "TODO",
+            "program": "${workspaceFolder}/TODO"
+          }
+        ]
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "cheezbc"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "tnpm run compile",
