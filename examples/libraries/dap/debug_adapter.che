@@ -1,0 +1,263 @@
+use import json.json
+use import clap.clap
+use import std.array
+use import std.hash_table
+use import std.string
+use import std.box
+use import std.thread
+
+use import std.os.windows
+use import std.os.windows_functions
+
+io  :: import std.io
+fmt :: import std.fmt
+fs  :: import std.io.fs
+
+#export_scope
+
+Logger :: struct {
+    log_file : String
+    mutex    : Mutex
+}
+
+impl Logger {
+    new :: (log_file: string) -> Box[Logger] {
+        return Box[Logger].new(Logger(
+            log_file = log_file.to_owned()
+            mutex    = Mutex.new()
+        ))
+    }
+
+    clear :: (ref Self) {
+        mutex.lock()
+        fs.write_file(log_file.slice(), "")
+        mutex.release()
+    }
+
+    log :: (ref Self, format: string, args: []&any = [], prefix: string = "") {
+        msg := fmt.format(format, args)
+        str := fmt.format("[{}] {} {}`n", [Thread.current().id, prefix, msg])
+        
+        mutex.lock()
+        fs.append_file(log_file.slice(), str.slice())
+        mutex.release()
+    }
+
+    log_error :: (ref Self, format: string, args: []&any = []) {
+        self.log(format, args, "[ERROR]")
+    }
+}
+
+impl Logger {
+    log_command :: (ref Self, format: string, args: []&any = []) {
+        self.log(format, args, "-> (C) ")
+    }
+
+    log_response :: (ref Self, format: string, args: []&any = []) {
+        self.log(format, args, "<- (R) ")
+    }
+
+    log_event :: (ref Self, format: string, args: []&any = []) {
+        self.log(format, args, "<- (E) ")
+    }
+}
+
+ENDLINE_CHARS   :: "`r`n`r`n"
+CONTENT_LENGTH  :: "Content-Length: "
+
+CommandHandler :: trait {
+    adapter : &DebugAdapter
+
+    initialize :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    launch :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    threads :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    set_breakpoints :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    stacktrace :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    pause :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    resume :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    next :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    step_in :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    step_out :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    scopes :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+}
+
+DebugAdapter :: struct {
+    Func :: fn(ref CommandHandler, ref Table[string, JsonValue]) -> Result[JsonValue, String]
+
+    logger          : ref Logger
+    std_out_mutex   : Mutex
+    command_handler : Box[CommandHandler]
+    command_table   : Table[string, Func]
+
+    _seq_counter    := 0
+}
+
+impl DebugAdapter {
+    new :: (handler: Box[CommandHandler], logger: ref Logger) -> Box[DebugAdapter] {
+        Func :: Self.Func
+
+        commands := Table[string, Func].create(strings_equal)
+        commands["initialize"] = cast(Func) (handler, arguments) => handler.initialize(arguments)
+        commands["launch"] = cast(Func) (handler, arguments) => handler.launch(arguments)
+        commands["threads"] = cast(Func) (handler, arguments) => handler.threads(arguments)
+        commands["setBreakpoints"] = cast(Func) (handler, arguments) => handler.set_breakpoints(arguments)
+        commands["stackTrace"] = cast(Func) (handler, arguments) => handler.stacktrace(arguments)
+        commands["pause"] = cast(Func) (handler, arguments) => handler.pause(arguments)
+        commands["continue"] = cast(Func) (handler, arguments) => handler.resume(arguments)
+        commands["next"] = cast(Func) (handler, arguments) => handler.next(arguments)
+        commands["stepIn"] = cast(Func) (handler, arguments) => handler.step_in(arguments)
+        commands["stepOut"] = cast(Func) (handler, arguments) => handler.step_out(arguments)
+        commands["scopes"] = cast(Func) (handler, arguments) => handler.scopes(arguments)
+
+
+        adapter := Box[DebugAdapter].new(DebugAdapter(
+            logger              = logger
+            command_handler     = handler
+            std_out_mutex       = Mutex.new()
+            command_table       = commands
+        ))
+
+        adapter.get().command_handler.get().adapter = &adapter.get()
+        return adapter
+    }
+
+    run :: (ref Self) {
+        command_loop()
+    }
+
+    handle_command :: (ref Self, handler: ref CommandHandler, command: String, arguments: Table[string, JsonValue]) -> Result[JsonValue, String] {
+        logger.log("handle_command('{}', {} args)", [command, arguments.get_count()])
+
+        return match command_table.get(command.slice()) {
+            Some($func) -> func(handler, arguments)
+            None -> Err(fmt.format("Failed to handle command '{}'", [command]))
+        }
+    }
+
+    command_loop :: (ref Self) {
+        loop {
+            request_text := read_request_string()
+            if request_text.get_length() == 0 then break
+            logger.log_command("{}", [request_text.slice()])
+
+            json := parse_json(JsonValue, request_text.slice())
+
+
+            match json {
+                Some($val) -> {
+                    {
+                        request_pretty := serialize_json_value(val, pretty = true)
+                        logger.log_command("{}", [request_pretty])
+                    }
+                    request := val.to_map()
+
+                    seq := cast(int) request.at("seq").to_number()
+                    command := request.at("command").to_string()
+                    arguments := match request.get("arguments") {
+                        Some($args) -> args.as_map().clone()
+                        None -> Table[string, JsonValue].create(strings_equal)
+                    }
+
+                    response := Table[string, JsonValue].create(strings_equal)
+                    response["type"] = JsonValue.JsonString("response".to_owned())
+                    response["command"] = JsonValue.JsonString(command.clone())
+                    response["request_seq"] = JsonValue.JsonNumber(cast(double) seq)
+
+                    match handle_command(command_handler.get(), command, arguments) {
+                        Ok($body) -> {
+                            response["success"] = JsonValue.JsonBool(true)
+                            response["body"] = body
+                        }
+
+                        Err($msg) -> {
+                            response["success"] = JsonValue.JsonBool(false)
+                            response["message"] = JsonValue.JsonString(msg)
+                        }
+                    }
+
+                    response["seq"] = JsonValue.JsonNumber(double(_seq_counter))
+                    _seq_counter += 1
+
+                    response_obj := JsonValue.JsonObject(response)
+                    response_string := serialize_json_value(response_obj, pretty = true)
+                    logger.log_response("{}", [response_string])
+
+                    send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
+                }
+            }
+
+
+            logger.log("===================================================")
+        }
+    }
+
+    read_request_string :: (ref Self) -> String {
+        read_char :: (c: &char) -> bool {
+            read := 0u32
+
+            b := 0u8
+            ReadFile(__std_in_handle, &b, 1, &read, null)
+            <<c = cast b
+            return read > 0
+        }
+
+        header := String.empty()
+
+        loop {
+            c := char(0)
+            if !read_char(&c) {
+                return String.empty()
+            }
+
+            header += c
+
+            if !header.slice().ends_with(ENDLINE_CHARS) then continue
+
+            length_index := header.slice().index_of_string(CONTENT_LENGTH)
+            if length_index < 0 then continue
+
+            content_length := {
+                str := header.slice()[length_index + CONTENT_LENGTH.bytes.length ..].trim()
+                fmt.parse_int(str)
+            }
+
+            result := String.with_capacity(content_length + 1)
+            read := 0u32
+            ReadFile(__std_in_handle, result.get_raw(), cast content_length, &read, null)
+            result.resize(content_length)
+            return result
+        }
+
+        @assert(false)
+    }
+
+    send_message :: (ref Self, format: string, args: []&any = []) {
+        std_out_mutex.lock()
+        io.formatln(format, args)
+        std_out_mutex.release()
+    }
+    
+    emit_event :: (ref Self, name: string, body: JsonValue) {
+        response := Table[string, JsonValue].create(strings_equal)
+        response["type"] = JsonValue.JsonString("event".to_owned())
+        response["event"] = JsonValue.JsonString(name.to_owned())
+        response["body"] = body
+        response["seq"] = JsonValue.JsonNumber(double(_seq_counter))
+        _seq_counter += 1
+
+        response_obj := JsonValue.JsonObject(response)
+        response_string := serialize_json_value(response_obj, pretty = true)
+        logger.log_event("{}", [response_string])
+
+        send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
+    }
+
+    emit_stop_event :: (ref Self, reason: string) {
+        body := Table[string, JsonValue].create(strings_equal)
+        body["reason"] = JsonValue.JsonString(reason.to_owned())
+        body["threadId"] = JsonValue.JsonNumber(0)
+        emit_event("stopped", JsonValue.JsonObject(body))
+    }
+}
+
+#file_scope

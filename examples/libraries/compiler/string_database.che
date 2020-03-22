@@ -18,15 +18,11 @@ StringDatabase :: struct {
     db      : Table[string, string]
 }
 
-sdb_compare_strings :: (a: string, b: string) -> bool {
-    return streq(a, b)
-}
-
 impl StringDatabase {
     new :: () -> Self {
         sdb := Self(
             pool    = ArenaAllocator.create(1024),
-            db      = Table[string, string].create(sdb_compare_strings)
+            db      = Table[string, string].create(strings_equal)
         )
 
         return sdb

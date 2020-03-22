@@ -18,13 +18,40 @@ body:
     return
 }
 
+# fib of n
+fn fib n {
+    load_local n
+    const 1
+    igt
+    branch_if body
+
+    const 1
+    return
+
+body:
+    # fib n - 2
+    load_local n
+    const 2
+    sub
+    call fib 1
+
+    # fib n - 1
+    load_local n
+    const 1
+    sub
+    call fib 1
+
+    add
+    return
+}
+
 #main
 fn main {
     const 0
 
 loop:
     load_local 0
-    call fac 1
+    call fib 1
     print
     load_local 0
     const 1

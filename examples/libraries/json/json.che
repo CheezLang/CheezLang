@@ -21,10 +21,154 @@ JsonValue :: enum {
     JsonObject  : Table[string, JsonValue]
 }
 
+impl JsonValue {
+    to_number :: (ref Self) -> double {
+        return match self {
+            .JsonNumber($val) -> val
+            _ -> @assert(false)
+        }
+    }
+
+    to_string :: (ref Self) -> String {
+        return match self {
+            .JsonNull -> "null".to_owned()
+            .JsonBool($val) -> fmt.format_any(val)
+            .JsonNumber($val) -> fmt.format_any(val)
+            .JsonString($val) -> fmt.format_any(val.slice())
+            .JsonObject(_) -> "{...}".to_owned()
+            .JsonArray(_) -> "[...]".to_owned()
+        }
+    }
+
+    to_array :: (Self) -> Array[JsonValue] {
+        return match self {
+            .JsonArray($arr) -> arr
+            _ -> @assert(false)
+        }
+    }
+
+    to_map :: (Self) -> Table[string, JsonValue] {
+        return match self {
+            .JsonObject($map) -> map
+            _ -> @assert(false)
+        }
+    }
+
+    as_map :: (ref Self) -> ref Table[string, JsonValue] {
+        return match self {
+            .JsonObject($map) -> map
+            _ -> @assert(false)
+        }
+    }
+}
+
 impl Printable for JsonValue {
     print :: (ref Self, str: ref String, format: string) {
         s := fmt.format_any(self)
         str += s
+    }
+}
+
+impl Clone for JsonValue {
+    clone :: (ref Self) -> Self {
+        return match self {
+            .JsonNull -> .JsonNull
+            .JsonBool($val) -> .JsonBool(val)
+            .JsonNumber($val) -> .JsonNumber(val)
+            .JsonString($val) -> .JsonString(val.clone())
+            .JsonArray($arr) -> .JsonArray(arr.clone())
+            .JsonObject($obj) -> .JsonObject(obj.clone())
+        }
+    }
+}
+
+serialize_json_value :: (val: ref JsonValue, pretty: bool = false) -> String {
+    result := String.empty()
+    if pretty then serialize_json_value_helper_pretty(result, val)
+    else serialize_json_value_helper(result, val)
+    return result
+}
+
+serialize_json_value_helper_pretty :: (result: ref String, val: ref JsonValue) {
+    match val {
+        .JsonNull -> result.append_string("null")
+        .JsonBool($val) -> result.appendf("{}", val)
+        .JsonNumber($val) -> result.appendf("{}", val)
+        .JsonString($val) -> result.appendf("`"{}`"", val.slice())
+        .JsonArray($arr) -> {
+            result += "[`n"
+
+            body := String.empty()
+            for(by_ref=true) v : arr.slice() {
+                if it_index > 0 {
+                    body += ",`n"
+                }
+                serialize_json_value_helper_pretty(body, v)
+            }
+            for line : body.slice().split_at_char('`n') {
+                result += "    "
+                result += line
+                result += "`n"
+            }
+            result += "`n]"
+        }
+        .JsonObject($map) -> {
+            result += "{`n"
+            body := String.empty()
+            for kv : <<&map {
+                if it_index > 0 {
+                    body += ",`n"
+                }
+
+                body += '"'
+                body += kv.name
+                body += '"'
+                body += ": "
+
+                serialize_json_value_helper_pretty(body, kv.value)
+            }
+            for line : body.slice().split_at_char('`n') {
+                result += "    "
+                result += line
+                result += "`n"
+            }
+            result += "`n}"
+        }
+    }
+}
+
+serialize_json_value_helper :: (result: ref String, val: ref JsonValue) {
+    match val {
+        .JsonNull -> result.append_string("null")
+        .JsonBool($val) -> result.appendf("{}", val)
+        .JsonNumber($val) -> result.appendf("{}", val)
+        .JsonString($val) -> result.appendf("`"{}`"", val.slice())
+        .JsonArray($arr) -> {
+            result += "["
+            for(by_ref=true) v : arr.slice() {
+                if it_index > 0 {
+                    result += ","
+                }
+                serialize_json_value_helper(result, v)
+            }
+            result += "]"
+        }
+        .JsonObject($map) -> {
+            result += "{"
+            for kv : <<&map {
+                if it_index > 0 {
+                    result += ","
+                }
+
+                result += '"'
+                result += kv.name
+                result += '"'
+                result += ":"
+
+                serialize_json_value_helper(result, kv.value)
+            }
+            result += "}"
+        }
     }
 }
 
@@ -177,10 +321,22 @@ JsonTokenType :: enum #copy {
 next_json_token :: (json: string) -> (string, JsonTokenType) {
     use JsonTokenType
 
+    // skip whitespace and comments
     while json.bytes.length > 0 {
         c := char(json[0])
-        if !c.is_whitespace() then break
-        json = json[1..]
+
+        if json.starts_with("//") {
+            nl := json.index_of('`n')
+            if nl >= 0 {
+                json = json[nl..]
+            } else {
+                json = ""
+            }
+        } else if !c.is_whitespace() {
+            break
+        } else {
+            json = json[1..]
+        }
     }
 
     if json.bytes.length == 0 {

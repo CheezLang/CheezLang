@@ -12,7 +12,342 @@
 // import compiler.compiler_test
 // import examples.ShmupEngine.src.main
 
-import compiler.interpreter
+use import compiler.interpreter
+use import json.json
+use import clap.clap
+use import dap.debug_adapter
+
+
+use import std.array
+use import std.hash_table
+use import std.map
+use import std.string
+use import std.box
+use import std.rc
+use import std.thread
+
+use import std.os.windows
+use import std.os.windows_functions
+
+io  :: import std.io
+mem :: import std.mem.allocator
+fmt :: import std.fmt
+fs  :: import std.io.fs
+
+LOG_PATH :: "P:/dev/CheezLang/data/log.txt"
+CBC_FILE :: "p:/dev/debug_adapter_test/fac.cbc"
+
+CBCDebugger :: struct {
+    interp  : &Interpreter
+    mutex   : Mutex
+    thread  : Thread
+    running : bool
+    _step   : bool
+    logger  : ref Logger
+    adapter : &DebugAdapter
+
+    break_when_fp_is_less_than  := 0
+}
+
+impl CBCDebugger {
+    new :: (logger: ref Logger) -> Rc[CBCDebugger] {
+        interp := {
+            code : String = match fs.read_file(CBC_FILE) {
+                Ok($content) -> content
+                Err($err) -> {
+                    logger.log_error("{}", [err]) 
+                    String.empty()
+                }
+            }
+
+            prog := compile_program(code.slice(), CBC_FILE)
+            if prog == null {
+                logger.log_error("failed to compile program")
+                @assert(false)
+            }
+            prog.call("main")
+            prog
+        }
+
+        cbc_debugger := mem.alloc(CBCDebugger)
+        <<cbc_debugger = CBCDebugger(
+            interp  = interp
+            mutex   = Mutex.new()
+            thread  = Thread.create((p: &CBCDebugger) => p.run(), cbc_debugger)
+            running = false
+            _step   = true
+            logger  = logger
+            adapter = null
+        )
+
+        cbc_debugger.thread.start()
+        
+        return Rc[CBCDebugger].from_pointer(cbc_debugger, owned = true)
+    }
+
+    wait_for_mutex :: (ref Self) {
+        mutex.lock()
+        mutex.release()
+    }
+
+    pause :: (ref Self) {
+        running = false
+    }
+
+    resume :: (ref Self) {
+        _step = false
+        running = true
+    }
+
+    step :: (ref Self) {
+        running = false
+        wait_for_mutex()
+        logger.log("step")
+        _step = false
+        break_when_fp_is_less_than = interp.fp + 1
+        running = true
+    }
+
+    step_in :: (ref Self) {
+        running = false
+        wait_for_mutex()
+        logger.log("step_in")
+        _step = true
+        break_when_fp_is_less_than = 0
+        running = true
+    }
+
+    step_out :: (ref Self) {
+        running = false
+        wait_for_mutex()
+        logger.log("step_out")
+        _step = false
+        break_when_fp_is_less_than = interp.fp
+        running = true
+    }
+
+    run :: (ref Self) {
+        loop {
+            if running {
+                mutex.lock()
+                loop {
+                    if !running then break
+                    interp.step()
+
+                    if _step {
+                        running = false
+                        adapter.emit_stop_event("step")
+                    } else if interp.fp < break_when_fp_is_less_than {
+                        break_when_fp_is_less_than = -1
+                        running = false
+                        adapter.emit_stop_event("step")
+                    }
+                }
+                mutex.release()
+            } else {
+                Thread.sleep(10)
+            }
+        }
+    }
+
+    get_stackframes :: (ref Self) -> []StackFrame {
+        pause()
+        mutex.lock()
+        mutex.release()
+        return interp.get_stackframes()
+    }
+}
+
+CheezDebugAdapter :: struct CommandHandler {
+    cbc_debugger    : Rc[CBCDebugger]
+}
+
+impl CheezDebugAdapter {
+    new :: (cbc_debugger: Rc[CBCDebugger]) -> Box[CommandHandler] {
+        return Box[CommandHandler].new(CheezDebugAdapter(
+            adapter         = null
+            cbc_debugger    = cbc_debugger
+        ))
+    }
+}
+
+impl CommandHandler for CheezDebugAdapter {
+    initialize :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        body := Table[string, JsonValue].create(strings_equal)
+
+        adapter.emit_event("initialized", JsonValue.JsonNull)
+
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    launch :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        body := Table[string, JsonValue].create(strings_equal)
+        adapter.emit_stop_event("breakpoint")
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    threads :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        thread0 := Table[string, JsonValue].create(strings_equal)
+        thread0["id"] = JsonValue.JsonNumber(0)
+        thread0["name"] = JsonValue.JsonString("Main Thread".to_owned())
+
+        threads := Array[JsonValue].create()
+        threads.add(JsonValue.JsonObject(thread0))
+
+        body := Table[string, JsonValue].create(strings_equal)
+        body["threads"] = JsonValue.JsonArray(threads)
+
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    set_breakpoints :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        body := Table[string, JsonValue].create(strings_equal)
+        adapter.logger.log("set_breakpoints")
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    stacktrace :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        cbc_debugger.get().pause()
+        frames := cbc_debugger.get().get_stackframes()
+
+        stack_frames := Array[JsonValue].create()
+
+        use_prev_ip := false
+        for(by_ref=true, reverse=true) frame : frames {
+            defer { use_prev_ip = true }
+            ip := if use_prev_ip then frame.ip_prev else frame.ip
+            line := frame.func.debug_info.get_line_for_ip(ip, adapter.logger)
+
+            adapter.logger.log("stackframe: line: {}, func: '{}', path: '{}'", [line, frame.func.name, frame.func.debug_info.path])
+
+            json := Table[string, JsonValue].create(strings_equal)
+            json["id"] = JsonValue.JsonNumber(0)
+            json["name"] = JsonValue.JsonString(frame.func.name.clone())
+
+            frame_source := Table[string, JsonValue].create(strings_equal)
+            frame_source["name"] = JsonValue.JsonString("fac.cbc".to_owned()) // @todo
+            frame_source["path"] = JsonValue.JsonString(frame.func.debug_info.path.clone())
+
+            json["source"] = JsonValue.JsonObject(frame_source)
+            json["line"] = JsonValue.JsonNumber(cast(double) line + 1)
+            json["column"] = JsonValue.JsonNumber(5) // @todo
+
+            stack_frames.add(JsonValue.JsonObject(json))
+        }
+
+        body := Table[string, JsonValue].create(strings_equal)
+        body["stackFrames"] = JsonValue.JsonArray(stack_frames)
+        
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    scopes :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        frame_id := cast(int) arguments.at("frameId").to_number()
+
+        adapter.logger.log("scopes({})", [frame_id])
+
+        // cbc_debugger.get().pause()
+        frame := cbc_debugger.get().get_stackframes()[frame_id]
+
+
+        parameters := Table[string, JsonValue].create(strings_equal)
+        parameters["name"] = JsonValue.JsonString("Arguments".to_owned())
+        parameters["presentationHint"] = JsonValue.JsonString("arguments".to_owned())
+        parameters["variablesReference"] = JsonValue.JsonNumber(cast(double) frame_id)
+
+        registers := Table[string, JsonValue].create(strings_equal)
+        registers["name"] = JsonValue.JsonString("Registers".to_owned())
+        registers["presentationHint"] = JsonValue.JsonString("registers".to_owned())
+        registers["variablesReference"] = JsonValue.JsonNumber(cast(double) frame_id)
+
+        locals := Table[string, JsonValue].create(strings_equal)
+        locals["name"] = JsonValue.JsonString("Locals".to_owned())
+        locals["presentationHint"] = JsonValue.JsonString("locals".to_owned())
+        locals["variablesReference"] = JsonValue.JsonNumber(cast(double) frame_id)
+
+
+        scopes := Array[JsonValue].create()
+        scopes.add(JsonValue.JsonObject(parameters))
+        scopes.add(JsonValue.JsonObject(registers))
+        scopes.add(JsonValue.JsonObject(locals))
+
+        body := Table[string, JsonValue].create(strings_equal)
+        body["scopes"] = JsonValue.JsonArray(scopes)
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    pause :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        body := Table[string, JsonValue].create(strings_equal)
+        cbc_debugger.get().pause()
+        adapter.emit_stop_event("pause")
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    resume :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        body := Table[string, JsonValue].create(strings_equal)
+        cbc_debugger.get().resume()
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    next :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        body := Table[string, JsonValue].create(strings_equal)
+        cbc_debugger.get().step()
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    step_in :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        body := Table[string, JsonValue].create(strings_equal)
+        cbc_debugger.get().step_in()
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    step_out :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        body := Table[string, JsonValue].create(strings_equal)
+        cbc_debugger.get().step_out()
+        return Ok(JsonValue.JsonObject(body))
+    }
+}
+
+Main :: () {
+    logger := Logger.new(LOG_PATH)
+    logger.get().clear()
+
+    cbc_debugger := CBCDebugger.new(logger.get())
+    handler := CheezDebugAdapter.new(cbc_debugger.clone())
+    adapter := DebugAdapter.new(handler, logger.get())
+    cbc_debugger.get().adapter = &adapter.get()
+
+    adapter.get().run()
+
+    // args_array := get_cmd_args()
+    // io.formatln(args_array.slice())
+
+    // if args_array.count() == 1 {
+    //     io.println("missing arg")
+    //     return
+    // }
+
+    // match fs.read_file(args_array[1].slice()) {
+    //     Ok($file_content) -> {
+    //         val := parse_json(JsonValue, file_content.slice())
+
+    //         match ref val {
+    //             Some($val) -> {
+    //                 io.formatln("{:p}", [val])
+
+    //                 io.println("========================")
+    //                 // fs.write_file("../data/")
+    //                 io.println(serialize_json_value(val))
+    //             }
+    //         }
+    //     }
+
+    //     Err($err) -> {
+    //         io.formatln(err)
+    //     }
+    // }
+
+}
 
 // examples which are not working currently
 // import examples.image_processing

@@ -1,7 +1,11 @@
 use import std.array
 use import std.hash_table
+use import std.map
 use import std.string
 use import std.math
+
+use import compiler.string_database
+use import dap.debug_adapter
 
 io  :: import std.io
 fs  :: import std.io.fs
@@ -10,7 +14,9 @@ mem :: import std.mem.allocator
 
 DEBUG_INTERPRETER :: false
 
-Main :: () {
+#export_scope
+
+Main2 :: () {
     io.println("interpreter")
 
     code := match fs.read_file("../data/interp_test.bc") {
@@ -21,7 +27,7 @@ Main :: () {
         }
     }
 
-    prog := compile_program(code.slice())
+    prog := compile_program(code.slice(), "")
     if prog == null {
         io.println("[ERROR] failed to compile program")
         return
@@ -30,13 +36,13 @@ Main :: () {
     prog.run()
 }
 
-compile_program :: (code: string) -> &Interpreter {
+compile_program :: (code: string, path: string) -> &Interpreter {
     interp := Interpreter.new()
 
     labels := Array[(string, int)].create()
     branches := Table[string, Array[int]].create(strings_equal)
     parameters := Table[string, int].create(strings_equal)
-    func := InstructionBuilder.new()
+    func := InstructionBuilder.new(interp.strings)
 
     current_function := ""
 
@@ -81,7 +87,9 @@ compile_program :: (code: string) -> &Interpreter {
             branches.clear()
             parameters.clear()
 
-            interp.register_function(current_function, func.code())
+            f := func.end_function()
+
+            interp.register_function(current_function, f)
             current_function = ""
         } else if trimmed.starts_with("fn ") {
             brace := trimmed.index_of('{')
@@ -96,12 +104,15 @@ compile_program :: (code: string) -> &Interpreter {
             }
 
             current_function = parts[0]
+            func.begin_function(current_function, path)
         } else if brace := trimmed.index_of(':'), brace >= 0 {
             name := trimmed[..brace]
             labels.add((name, func.next()))
         } else {
             parts := trimmed.split_at_char(' ', true).to_array()
             @assert(parts.count() > 0)
+
+            func.set_current_line(it_index)
 
             inst := parts[0].trim()
 
@@ -183,216 +194,308 @@ compile_program :: (code: string) -> &Interpreter {
 }
 
 sample_program_2 :: () {
-    fac := InstructionBuilder.new()
-    fac.build_load_local(-1)
-    fac.build_const(1)
-    fac.build_igt()
-    br_body := fac.build_branch_if(0)
-    fac.build_const(1)
-    fac.build_return()
-    fac.code_view()[br_body] = u64(fac.next())
-    fac.build_load_local(-1)
-    fac.build_load_local(-1)
-    fac.build_const(1)
-    fac.build_sub()
-    fac.build_call("fac", 1)
-    fac.build_mul()
-    fac.build_return()
-    
-    main := InstructionBuilder.new()
-    main.build_const(4)
-    main.build_call("fac", 1)
-    main.build_print()
-    main.build_halt()
+    //     interp := Interpreter.new()
 
-    interp := Interpreter.new()
-    interp.register_function("fac", fac.code())
+    //     fac := InstructionBuilder.new(interp.strings)
+    //     fac.build_load_local(-1)
+    //     fac.build_const(1)
+    //     fac.build_igt()
+    //     br_body := fac.build_branch_if(0)
+    //     fac.build_const(1)
+    //     fac.build_return()
+    //     fac.code_view()[br_body] = u64(fac.next())
+    //     fac.build_load_local(-1)
+    //     fac.build_load_local(-1)
+    //     fac.build_const(1)
+    //     fac.build_sub()
+    //     fac.build_call("fac", 1)
+    //     fac.build_mul()
+    //     fac.build_return()
+        
+    //     main := InstructionBuilder.new(interp.strings)
+    //     main.build_const(4)
+    //     main.build_call("fac", 1)
+    //     main.build_print()
+    //     main.build_halt()
 
-    interp.push_frame(main.code_view())
-    interp.run()
+    //     interp.register_function("fac", fac.end_function())
+
+    //     interp.push_frame(main.code_view())
+    //     interp.run()
 }
 
 sample_program_1 :: () {
-    add := InstructionBuilder.new()
-    add.build_load_local(-2)
-    add.build_load_local(-1)
-    add.build_add()
-    add.build_return()
+    //     interp := Interpreter.new()
 
-    mul := InstructionBuilder.new()
-    mul.build_load_local(-2)
-    mul.build_load_local(-1)
-    mul.build_mul()
-    mul.build_return()
+    //     add := InstructionBuilder.new(interp.strings)
+    //     add.build_load_local(-2)
+    //     add.build_load_local(-1)
+    //     add.build_add()
+    //     add.build_return()
 
-    foo := InstructionBuilder.new()
-    foo.build_const(1)
-    foo.build_const(2)
-    foo.build_const(3)
-    foo.build_call("mul", 2)
-    foo.build_call("add", 2)
-    foo.build_return()
+    //     mul := InstructionBuilder.new(interp.strings)
+    //     mul.build_load_local(-2)
+    //     mul.build_load_local(-1)
+    //     mul.build_mul()
+    //     mul.build_return()
 
-    bar := InstructionBuilder.new()
-    bar.build_const(1)
-    bar.build_const(2)
-    bar.build_call("add", 2)
-    bar.build_const(3)
-    bar.build_call("mul", 2)
-    bar.build_return()
+    //     foo := InstructionBuilder.new(interp.strings)
+    //     foo.build_const(1)
+    //     foo.build_const(2)
+    //     foo.build_const(3)
+    //     foo.build_call("mul", 2)
+    //     foo.build_call("add", 2)
+    //     foo.build_return()
 
-    func := InstructionBuilder.new()
-    func.build_call("foo")
-    func.build_print()
-    func.build_call("bar")
-    func.build_print()
-    func.build_return_void()
-    
-    main := InstructionBuilder.new()
-    main.build_call("func")
-    main.build_halt()
+    //     bar := InstructionBuilder.new(interp.strings)
+    //     bar.build_const(1)
+    //     bar.build_const(2)
+    //     bar.build_call("add", 2)
+    //     bar.build_const(3)
+    //     bar.build_call("mul", 2)
+    //     bar.build_return()
 
-    interp := Interpreter.new()
-    interp.register_function("func", func.code())
-    interp.register_function("foo", foo.code())
-    interp.register_function("bar", bar.code())
-    interp.register_function("add", add.code())
-    interp.register_function("mul", mul.code())
+    //     func := InstructionBuilder.new(interp.strings)
+    //     func.build_call("foo")
+    //     func.build_print()
+    //     func.build_call("bar")
+    //     func.build_print()
+    //     func.build_return_void()
+        
+    //     main := InstructionBuilder.new(interp.strings)
+    //     main.build_call("func")
+    //     main.build_halt()
 
-    interp.push_frame(main.code_view())
-    interp.run()
+    //     interp.register_function("func", func.code())
+    //     interp.register_function("foo", foo.code())
+    //     interp.register_function("bar", bar.code())
+    //     interp.register_function("add", add.code())
+    //     interp.register_function("mul", mul.code())
+
+    //     interp.push_frame(main.code_view())
+    //     interp.run()
+}
+
+LineInfo :: struct #copy {
+    line  : int
+    count : int
+}
+
+CBCDebugInfo :: struct {
+    path    := String.empty()
+    lines   := Array[LineInfo].create()
+}
+
+impl CBCDebugInfo {
+    get_line_for_ip :: (ref Self, ip: int, logger: ref Logger) -> int {
+        logger.log("get_line_for_ip({})", [ip])
+        logger.log("lines.count: {}", [lines.count()])
+        logger.log("lines: {}", [lines.slice()])
+        i := 0
+        for lines {
+            if i >= ip {
+                return it.line
+            }
+            i += it.count
+        }
+
+        return -1
+    }
+}
+
+CBCFunction :: struct {
+    name            := String.empty()
+    instructions    := Array[u64].create()
+    debug_info      := CBCDebugInfo()
 }
 
 InstructionBuilder :: struct {
-    instructions := Array[u64].create()
+    function        : CBCFunction 
+    current_line    : int
+    strings         : ref StringDatabase
 }
 
 impl InstructionBuilder {
-    new :: () -> InstructionBuilder {
-        return InstructionBuilder()
+    new :: (strings: ref StringDatabase) -> InstructionBuilder {
+        return InstructionBuilder(
+            function        = CBCFunction()
+            current_line    = -1
+            strings         = strings
+        )
+    }
+
+    begin_function :: (ref Self, name: string, path: string) {
+        current_line = -1
+        function.debug_info.lines.clear()
+        function.instructions.clear()
+
+        function.name = name.to_owned()
+        function.debug_info.path = path.to_owned()
+    }
+
+    end_function :: (ref Self) -> CBCFunction {
+        return function <- CBCFunction()
     }
 
     code_view :: (ref Self) -> []u64 {
-        return instructions.slice()
+        return function.instructions.slice()
     }
 
-    code :: (ref Self) -> Array[u64] {
-        return instructions <- Array[u64].create()
+    set_current_line :: (ref Self, line: int) {
+        if current_line != line {
+            function.debug_info.lines.add(LineInfo(line, 0))
+        }
+        current_line = line
     }
 
     next :: (ref Self) -> int {
-        return instructions.get_length()
+        return function.instructions.get_length()
+    }
+
+    add_debug_info_line :: () #macro #transparent {
+        @assert(function.debug_info.lines.count() > 0)
+        current_instruction_count := function.instructions.count()
+        defer {
+            new_instruction_count := function.instructions.count()
+            function.debug_info.lines.peek_last().count += new_instruction_count - current_instruction_count
+        }
     }
 
     build_noop :: (ref Self) {
-        instructions.add(cast Instruction.Noop)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Noop)
     }
 
     build_const :: (ref Self, value: int) {
-        instructions.add(cast Instruction.Const)
-        instructions.add(<<cast(&u64)&value)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Const)
+        function.instructions.add(<<cast(&u64)&value)
     }
 
     build_load_local :: (ref Self, index: int) {
-        instructions.add(cast Instruction.LoadLocal)
-        instructions.add(<<cast(&u64)&index)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.LoadLocal)
+        function.instructions.add(<<cast(&u64)&index)
     }
 
     build_store_local :: (ref Self, index: int) {
-        instructions.add(cast Instruction.StoreLocal)
-        instructions.add(<<cast(&u64)&index)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.StoreLocal)
+        function.instructions.add(<<cast(&u64)&index)
     }
 
     build_add :: (ref Self) {
-        instructions.add(cast Instruction.Add)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Add)
     }
 
     build_sub :: (ref Self) {
-        instructions.add(cast Instruction.Sub)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Sub)
     }
 
     build_mul :: (ref Self) {
-        instructions.add(cast Instruction.Mul)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Mul)
     }
 
     build_div :: (ref Self) {
-        instructions.add(cast Instruction.Div)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Div)
     }
 
     build_mod :: (ref Self) {
-        instructions.add(cast Instruction.Mod)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Mod)
     }
 
     build_and :: (ref Self) {
-        instructions.add(cast Instruction.And)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.And)
     }
 
     build_or :: (ref Self) {
-        instructions.add(cast Instruction.Or)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Or)
     }
 
     build_ieq :: (ref Self) {
-        instructions.add(cast Instruction.Ieq)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Ieq)
     }
 
     build_ilt :: (ref Self) {
-        instructions.add(cast Instruction.Ilt)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Ilt)
     }
 
     build_ile :: (ref Self) {
-        instructions.add(cast Instruction.Ile)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Ile)
     }
 
     build_igt :: (ref Self) {
-        instructions.add(cast Instruction.Igt)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Igt)
     }
 
     build_ige :: (ref Self) {
-        instructions.add(cast Instruction.Ige)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Ige)
     }
 
     build_branch :: (ref Self, address: int) -> int {
-        instructions.add(cast Instruction.Branch)
-        instructions.add(cast address)
-        return instructions.count() - 1
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Branch)
+        function.instructions.add(cast address)
+        return function.instructions.count() - 1
     }
 
     build_branch_if :: (ref Self, address: int) -> int {
-        instructions.add(cast Instruction.BranchIf)
-        instructions.add(cast address)
-        return instructions.count() - 1
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.BranchIf)
+        function.instructions.add(cast address)
+        return function.instructions.count() - 1
     }
 
-    build_call :: (ref Self, function: string, arity: int = 0) {
-        instructions.add(cast Instruction.Call)
-        instructions.add(cast function.bytes.data)
-        instructions.add(cast function.bytes.length)
-        instructions.add(cast arity)
+    build_call :: (ref Self, name: string, arity: int = 0) {
+        add_debug_info_line()
+        name = strings.intern(name)
+        function.instructions.add(cast Instruction.Call)
+        function.instructions.add(cast name.bytes.data)
+        function.instructions.add(cast name.bytes.length)
+        function.instructions.add(cast arity)
     }
 
     build_return :: (ref Self) {
-        instructions.add(cast Instruction.Return)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Return)
     }
 
     build_return_void :: (ref Self) {
-        instructions.add(cast Instruction.ReturnVoid)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.ReturnVoid)
     }
 
     build_print :: (ref Self) {
-        instructions.add(cast Instruction.Print)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Print)
     }
 
     build_halt :: (ref Self) {
-        instructions.add(cast Instruction.Halt)
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Halt)
     }
 }
 
 StackFrame :: struct {
+    ip_prev : int   = default
     ip      : int   = default
     sp      : int   = default
     bp      : int   = default
     code    : []u64 = default
     stack   : []int = default
+    func    : &CBCFunction = null
 }
 
 impl StackFrame {
@@ -430,7 +533,8 @@ Interpreter :: struct {
     fp          : int
     frames      : [1024]StackFrame
     stack       : [1024]int
-    functions   : Table[string, Array[u64]]
+    functions   : Map[String, CBCFunction]
+    strings     : StringDatabase
 }
 
 impl Interpreter {
@@ -441,19 +545,24 @@ impl Interpreter {
             fp          = -1
             frames      = default
             stack       = default
-            functions   = Table[string, Array[u64]].create(strings_equal)
+            functions   = Map[String, CBCFunction].new()
+            strings     = StringDatabase.new()
         )
         return interp
     }
 
-    register_function :: (ref Self, name: string, code: Array[u64]) {
+    get_stackframes :: (ref Self) -> []StackFrame {
+        return frames[..=fp]
+    }
+
+    register_function :: (ref Self, name: string, code: CBCFunction) {
         functions[name] = code
     }
 
     call :: (ref Self, name: string, arg_count: int = 0) {
         match functions.get(name) {
-            Some($code) -> {
-                push_frame(code.slice(), arg_count)
+            Some($func) -> {
+                push_frame(func, arg_count)
             }
             None -> {
                 io.formatln("[ERROR] 'Call {}' failed. Unknown function '{}'", [name, name])
@@ -461,7 +570,7 @@ impl Interpreter {
         }
     }
 
-    push_frame :: (ref Self, code: []u64, arg_count: int = 0) {
+    push_frame :: (ref Self, func: ref CBCFunction, arg_count: int = 0) {
         _fp, _sp := fp, sp
         defer { if const DEBUG_INTERPRETER then io.formatln("push_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp]) }
 
@@ -473,8 +582,9 @@ impl Interpreter {
             ip = 0
             sp = arg_count
             bp = arg_count
-            code = code
+            code = func.instructions.slice()
             stack = stack[sp-arg_count .. ]
+            func = &func
         )
     }
 
@@ -510,6 +620,7 @@ impl Interpreter {
         }
 
         // fetch
+        frame.ip_prev = frame.ip
         opcode := frame.code[frame.ip]
 
         if const DEBUG_INTERPRETER {
@@ -604,8 +715,8 @@ impl Interpreter {
                 str := string(arg(&u8), arg(int))
                 count := arg(int)
                 match functions.get(str) {
-                    Some($code) -> {
-                        push_frame(code.slice(), count)
+                    Some($func) -> {
+                        push_frame(func, count)
                     }
                     None -> {
                         io.formatln("[ERROR] 'Call {}' failed. Unknown function '{}'", [str, str])
