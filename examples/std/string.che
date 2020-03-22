@@ -4,6 +4,7 @@ C    :: import std.c
 fmt  :: import std.fmt
 
 use import std.array
+use import std.hash
 use import std.unicode
 use import std.printable
 use import std.mem.allocator
@@ -115,12 +116,6 @@ impl String {
         }
     }
 
-    clone :: (ref Self) -> Self {
-        other := Self.empty()
-        other.append(self)
-        return other
-    }
-
     clear :: (ref Self) {
         length = 0
     }
@@ -203,6 +198,42 @@ impl String {
         reserve(length + 1)
         data[length] = 0u8
         return cast data.data
+    }
+}
+
+impl Equatable[String] for String {
+    equal :: (ref Self, other: ref String) -> bool {
+        str := self.slice()
+        oth := other.slice()
+        return streq_string(str, oth)
+    }
+}
+
+impl Equatable[string] for String {
+    equal :: (ref Self, other: ref string) -> bool {
+        str := self.slice()
+        return streq_string(str, other)
+    }
+}
+
+impl Equatable[string] for string {
+    equal :: (ref Self, b: ref string) -> bool {
+        return streq_string(self, b)
+    }
+}
+
+impl Hashable for String {
+    hash :: (ref Self) -> uint {
+        str := self.slice()
+        return str.hash()
+    }
+}
+
+impl Clone for String {
+    clone :: (ref Self) -> Self {
+        other := String.empty()
+        other.append(self)
+        return other
     }
 }
 
@@ -450,6 +481,10 @@ impl string {
         return String.from_string(self)
     }
 
+    to_owned :: (Self) -> String {
+        return String.from_string(self)
+    }
+
     slice :: (Self, from: int = 0, length: int = -1) -> string {
         if length < 0 {
             length = self.bytes.length - from
@@ -462,7 +497,6 @@ impl string {
     lines :: (Self) -> StringLineIterator {
         return StringLineIterator(self)
     }
-    
 
     split_at_char :: (Self, c: char, remove_empty: bool = false) -> StringSplitCharIterator {
         return StringSplitCharIterator(self, c, remove_empty)
@@ -477,6 +511,24 @@ impl string {
 
         for i : 0 .. pref_bytes.length {
             if self_bytes[i] != pref_bytes[i] {
+                return false
+            }
+        }
+
+        return true
+    }
+
+    ends_with :: (Self, postfix: string) -> bool {
+        self_bytes := self.bytes
+        post_bytes := postfix.bytes
+        if post_bytes.length > self_bytes.length {
+            return false
+        }
+
+        offset := self_bytes.length - post_bytes.length
+
+        for i : 0 .. post_bytes.length {
+            if self_bytes[offset + i] != post_bytes[i] {
                 return false
             }
         }
@@ -547,6 +599,23 @@ impl string {
         return -1
     }
 
+    index_of_string :: (Self, str: string) -> int {
+        if str.bytes.length == 0 {
+            return 0
+        }
+
+        bytes := self.bytes
+        for i : 0..self.bytes.length #label outer {
+            for k : 0..str.bytes.length {
+                if self[i + k] != str[k] then continue outer
+            }
+
+            return i
+        }
+
+        return -1
+    }
+
     to_cstring :: (Self) -> c_string {
         str_c := alloc_raw(char8, cast self.bytes.length + 1)
         str_c[self.bytes.length] = cast 0
@@ -565,6 +634,12 @@ impl string {
             return Err(())
         }
         return Ok(wide_char_str)
+    }
+}
+
+impl Into[String] for string {
+    into :: (ref Self) -> String {
+        return self.to_owned()
     }
 }
 

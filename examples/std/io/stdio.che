@@ -21,6 +21,7 @@ clearerr_s  :: (_Stream: &FILE) -> errno_t;
 fopen_s     :: (_Stream: &&FILE, _FileName: c_string, _Mode: c_string) -> errno_t;
 // fopen       :: (_Stream: &&FILE, _FileName: c_string, _Mode: c_string) -> errno_t;
 fread_s     :: (_Buffer: &void, _BufferSize: size_t, _ElementSize: size_t, _ElementCount: size_t, _Stream: &FILE) -> size_t;
+// fread       :: (ptr: &void, size: u64, count: u64, stream: &FILE)
 fseek       :: (_Stream: &FILE, _Offset: i64, _Rel: i32);
 ftell       :: (_Stream: &FILE) -> i64;
 fclose      :: (_Stream: &FILE) -> i32;

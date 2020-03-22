@@ -1,3 +1,5 @@
+#export_scope
+
 Hashable :: trait {
     hash :: (ref Self) -> uint;
 }

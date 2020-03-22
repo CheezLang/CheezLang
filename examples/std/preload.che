@@ -123,6 +123,20 @@ impl From[()] for () {
     }
 }
 
+Clone :: trait {
+    clone :: (ref Self) -> Self;
+}
+
+impl Clone for string {
+    clone :: (ref Self) -> Self {
+        return self
+    }
+}
+
+Equatable :: trait(T: type) {
+    equal :: (ref Self, ref T) -> bool;
+}
+
 // impl(F: type, T: type) From[F] for T if F : Into[T], #notyet {
 //     from :: (value: F) -> T {
 //         return F.into(value)
@@ -198,6 +212,9 @@ impl string {
     }
 
     get_range_from :: (Self, range: RangeFrom[int]) -> string #operator("[]") {
+        if !(range.start >= 0 and range.start <= self.bytes.length) {
+            _C.printf("%lld, %lld`n", range.start, self.bytes.length)
+        }
         @assert(range.start >= 0 and range.start <= self.bytes.length)
         data := int(self.bytes.data) + range.start
         length := self.bytes.length - range.start

@@ -25,6 +25,16 @@ impl(T: type) Drop for Array[T] {
     }
 }
 
+impl(T: type) Clone for Array[T] if T : Clone {
+    clone :: (ref Self) -> Self {
+        result := Array[T].create(self.count())
+        for(by_ref=true) v : self.slice() {
+            result.add(v.clone())
+        }
+        return result
+    }
+}
+
 impl(T: type) Array[T] {
     create :: (initial_capacity: int = 10, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         s := Array[T](null, 0, 0, allocator)

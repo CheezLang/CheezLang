@@ -93,6 +93,10 @@ impl Thread {
     terminate :: (ref Self) {
         TerminateThread(data.handle, -1)
     }
+
+    sleep :: (millis: int) {
+        Sleep(cast millis)
+    }
 }
 
 impl Drop for Thread {
@@ -107,7 +111,7 @@ Mutex :: struct {
 }
 
 impl Mutex {
-    create :: () -> Mutex {
+    new :: () -> Mutex {
         handle := CreateMutexA(null, 0, null)
         if handle == null {
             @panic("Failed to create mutex")
@@ -168,7 +172,7 @@ impl ThreadPool {
         <<data = ThreadPoolData(
             threads = Array[Thread].create(num_threads)
             functions = RingQueue[ThreadPoolFunc].new(10)
-            mutex = Mutex.create()
+            mutex = Mutex.new()
             running = true
             empty_queue  = false
         )

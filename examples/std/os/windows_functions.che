@@ -81,6 +81,7 @@ Sleep                     :: (millis: DWORD) #stdcall;
 
 // file stuff
 GetStdHandle     :: (nStdHandle: DWORD) -> HANDLE #stdcall;
+SetFilePointerEx :: (hFile: HANDLE, liDistanceToMove: LARGE_INTEGER, lpNewFilePointer: &LARGE_INTEGER, dwMoveMethod: DWORD) -> BOOL #stdcall;
 WriteFile        :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
 ReadFile         :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
 CreateFileA      :: (lpFileName: &u8,  dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &SECURITY_ATTRIBUTES, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;

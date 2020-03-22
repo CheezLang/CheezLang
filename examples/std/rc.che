@@ -50,12 +50,6 @@ impl(T: type) Rc[T] {
         return Rc[T](data, cast ptr, drop_impl, true)
     }
 
-    clone :: (ref Self) -> Rc[T] {
-        data.count += 1
-        data.internal_count += 1
-        return Rc[T](data, value, drop_impl, owns_memory)
-    }
-
     borrow :: (ref Self) -> Ref[T] {
         data.internal_count += 1
         return Ref[T](data, value, owns_memory)
@@ -96,14 +90,17 @@ impl(T: type) Rc[T] {
     }
 }
 
+impl(T: type) Clone for Rc[T] {
+    clone :: (ref Self) -> Self {
+        data.count += 1
+        data.internal_count += 1
+        return Self(data, value, drop_impl, owns_memory)
+    }
+}
+
 impl(T: type) Ref[T] {
     empty :: () -> Ref[T] {
         return Ref[T](null, null, false)
-    }
-
-    clone :: (ref Self) -> Ref[T] {
-        data.internal_count += 1
-        return Ref[T](data, value, owns_memory)
     }
 
     count :: (ref Self) -> int {
@@ -138,6 +135,13 @@ impl(T: type) Ref[T] {
         data = null
         value = null
         return result
+    }
+}
+
+impl(T: type) Clone for Ref[T] {
+    clone :: (ref Self) -> Self {
+        data.internal_count += 1
+        return Self(data, value, owns_memory)
     }
 }
 
