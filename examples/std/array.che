@@ -261,3 +261,13 @@ for_extension_array_T :: (arr: ref Array[$T], code: Code, reverse: bool = false,
         }
     }
 }
+
+impl(T: type) Into[Array[T]] for []T if T : Clone {
+    into :: (ref Self) -> Array[T] {
+        result := Array[T].create(self.length)
+        for(by_ref=true) v : self[..] {
+            result.add(v.clone())
+        }
+        return result
+    }
+}

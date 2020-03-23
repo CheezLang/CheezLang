@@ -4,6 +4,7 @@ use import std.array
 use import std.hash_table
 use import std.string
 use import std.box
+use import std.rc
 use import std.thread
 
 use import std.os.windows
@@ -20,12 +21,16 @@ Logger :: struct {
     mutex    : Mutex
 }
 
+LOGGER : &Logger = null
+
 impl Logger {
     new :: (log_file: string) -> Box[Logger] {
-        return Box[Logger].new(Logger(
+        logger := Box[Logger].new(Logger(
             log_file = log_file.to_owned()
             mutex    = Mutex.new()
         ))
+        LOGGER = &logger.get()
+        return logger
     }
 
     clear :: (ref Self) {
@@ -65,52 +70,266 @@ impl Logger {
 ENDLINE_CHARS   :: "`r`n`r`n"
 CONTENT_LENGTH  :: "Content-Length: "
 
+DapThread :: struct {
+    id   : int
+    name : String
+}
+DapBreakpoint :: struct {
+    line : int
+}
+
+impl Into[DapBreakpoint] for JsonValue {
+    into :: (json: ref Self) -> DapBreakpoint {
+        return match json {
+            .JsonObject($map) -> DapBreakpoint(cast(int) map.at("line").to_number())
+            _ -> DapBreakpoint(-1)
+        }
+    }
+}
+
+DapSource :: struct {
+    name : String
+    path : String
+}
+
+impl Into[JsonValue] for DapSource {
+    into :: (ref Self) -> JsonValue {
+        json := Table[string, JsonValue].create(strings_equal)
+        json["name"] = JsonValue.JsonString(self.name.clone())
+        json["path"] = JsonValue.JsonString(self.path.clone())
+        return JsonValue.JsonObject(json)
+    }
+}
+
+impl Into[DapSource] for JsonValue {
+    into :: (ref Self) -> DapSource {
+        map := ref self.as_map()
+        name := map.at("name").to_string()
+        path := map.at("path").to_string()
+        return DapSource(name, path)
+    }
+}
+
+DapSetBreakpoints :: struct {
+    source      : DapSource
+    breakpoints : Array[DapBreakpoint]
+}
+
+impl Into[DapSetBreakpoints] for JsonValue {
+    into :: (ref Self) -> DapSetBreakpoints {
+        map := ref self.as_map()
+        return DapSetBreakpoints(
+            source      = map.at("source").into()
+            breakpoints = map.at("breakpoints").as_array().into()
+        )
+    }
+}
+
+DapStackFrame :: struct {
+    id      : int
+    name    : String
+    line    : int
+    column  : int
+    source  : DapSource
+}
+
+impl Into[JsonValue] for DapStackFrame {
+    into :: (ref Self) -> JsonValue {
+        json := Table[string, JsonValue].create(strings_equal)
+        json["id"] = JsonValue.JsonNumber(cast(double) self.id)
+        json["name"] = JsonValue.JsonString(self.name.clone())
+        json["source"] = cast(JsonValue) source.into()
+        json["line"] = JsonValue.JsonNumber(cast(double) line)
+        json["column"] = JsonValue.JsonNumber(cast(double) column)
+        return JsonValue.JsonObject(json)
+    }
+}
+
+DapReqVariables :: struct {
+    variables_reference : int
+}
+
+impl Into[DapReqVariables] for JsonValue {
+    into :: (ref Self) -> DapReqVariables {
+        map := ref self.as_map()
+        variablesReference := map.at("variablesReference").to_number()
+        return DapReqVariables(cast(int) variablesReference)
+    }
+}
+
+DapReqScopes :: struct {
+    frame_id : int
+}
+
+impl Into[DapReqScopes] for JsonValue {
+    into :: (ref Self) -> DapReqScopes {
+        map := ref self.as_map()
+        frameId := map.at("frameId").to_number()
+        return DapReqScopes(cast(int) frameId)
+    }
+}
+
+DapScope :: struct {
+    variables_reference : int
+    name                : String
+    presentation_hint   : String
+}
+
+impl Into[JsonValue] for DapScope {
+    into :: (ref Self) -> JsonValue {
+        json := Table[string, JsonValue].create(strings_equal)
+        json["name"] = JsonValue.JsonString(self.name.clone())
+        json["presentationHint"] = JsonValue.JsonString(self.presentation_hint.clone())
+        json["variablesReference"] = JsonValue.JsonNumber(cast(double) self.variables_reference)
+        return JsonValue.JsonObject(json)
+    }
+}
+
+DapVariable :: struct {
+    variables_reference : int
+    name                : String
+    value               : String
+}
+
+impl Into[JsonValue] for DapVariable {
+    into :: (ref Self) -> JsonValue {
+        json := Table[string, JsonValue].create(strings_equal)
+        json["name"] = JsonValue.JsonString(self.name.clone())
+        json["value"] = JsonValue.JsonString(self.value.clone())
+        json["variablesReference"] = JsonValue.JsonNumber(cast(double) self.variables_reference)
+        return JsonValue.JsonObject(json)
+    }
+}
+
 CommandHandler :: trait {
     adapter : &DebugAdapter
 
-    initialize :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    launch :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    threads :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    set_breakpoints :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    stacktrace :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    pause :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    resume :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    next :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    step_in :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    step_out :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    scopes :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
-    variables :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    initialize      :: (ref Self) -> Result[(), String];
+    launch          :: (ref Self) -> Result[(), String];
+    pause           :: (ref Self) -> Result[(), String];
+    resume          :: (ref Self) -> Result[(), String];
+    next            :: (ref Self) -> Result[(), String];
+    step_in         :: (ref Self) -> Result[(), String];
+    step_out        :: (ref Self) -> Result[(), String];
+    threads         :: (ref Self) -> Result[Array[DapThread], String];
+    stacktrace      :: (ref Self) -> Result[Array[DapStackFrame], String];
+    set_breakpoints :: (ref Self, arguments: DapSetBreakpoints) -> Result[(), String];
+    scopes          :: (ref Self, arguments: DapReqScopes) -> Result[Array[DapScope], String];
+    variables       :: (ref Self, arguments: DapReqVariables) -> Result[Array[DapVariable], String];
 }
 
 DebugAdapter :: struct {
-    Func :: fn(ref CommandHandler, ref Table[string, JsonValue]) -> Result[JsonValue, String]
+    Func :: fn(ref CommandHandler, JsonValue) -> Result[JsonValue, String]
 
     logger          : ref Logger
     std_out_mutex   : Mutex
-    command_handler : Box[CommandHandler]
+    command_handler : Rc[CommandHandler]
     command_table   : Table[string, Func]
 
     _seq_counter    := 0
 }
 
 impl DebugAdapter {
-    new :: (handler: Box[CommandHandler], logger: ref Logger) -> Box[DebugAdapter] {
+    new :: (handler: Rc[CommandHandler], logger: ref Logger) -> Box[DebugAdapter] {
         Func :: Self.Func
 
         commands := Table[string, Func].create(strings_equal)
-        commands["initialize"] = cast(Func) (handler, arguments) => handler.initialize(arguments)
-        commands["launch"] = cast(Func) (handler, arguments) => handler.launch(arguments)
-        commands["threads"] = cast(Func) (handler, arguments) => handler.threads(arguments)
-        commands["setBreakpoints"] = cast(Func) (handler, arguments) => handler.set_breakpoints(arguments)
-        commands["stackTrace"] = cast(Func) (handler, arguments) => handler.stacktrace(arguments)
-        commands["pause"] = cast(Func) (handler, arguments) => handler.pause(arguments)
-        commands["continue"] = cast(Func) (handler, arguments) => handler.resume(arguments)
-        commands["next"] = cast(Func) (handler, arguments) => handler.next(arguments)
-        commands["stepIn"] = cast(Func) (handler, arguments) => handler.step_in(arguments)
-        commands["stepOut"] = cast(Func) (handler, arguments) => handler.step_out(arguments)
-        commands["scopes"] = cast(Func) (handler, arguments) => handler.scopes(arguments)
-        commands["variables"] = cast(Func) (handler, arguments) => handler.variables(arguments)
+        commands["initialize"] = cast(Func) (handler, arguments) => {
+            match handler.initialize() {
+                Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["launch"] = cast(Func) (handler, arguments) => {
+            match handler.launch() {
+                Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["threads"] = cast(Func) (handler, arguments) => {
+            match handler.threads() {
+                Ok($arr) -> {
+                    threads_json := Array[JsonValue].create()
+                    for thread : arr {
+                        thread_json := Table[string, JsonValue].create(strings_equal)
+                        thread_json["id"] = JsonValue.JsonNumber(cast(double) thread.id)
+                        thread_json["name"] = JsonValue.JsonString(thread.name.clone())
+                        threads_json.add(JsonValue.JsonObject(thread_json))
+                    }
 
+                    body := Table[string, JsonValue].create(strings_equal)
+                    body["threads"] = JsonValue.JsonArray(threads_json)
+                    Ok(JsonValue.JsonObject(body))
+                }
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["setBreakpoints"] = cast(Func) (handler, arguments) => {
+            match handler.set_breakpoints(arguments.into()) {
+                Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["stackTrace"] = cast(Func) (handler, arguments) => {
+            match handler.stacktrace() {
+                Ok($arr) -> {
+                    body := Table[string, JsonValue].create(strings_equal)
+                    body["stackFrames"] = JsonValue.JsonArray(arr.into())
+                    Ok(JsonValue.JsonObject(body))
+                }
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["pause"] = cast(Func) (handler, arguments) => {
+            match handler.pause() {
+                Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["continue"] = cast(Func) (handler, arguments) => {
+            match handler.resume() {
+                Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["next"] = cast(Func) (handler, arguments) => {
+            match handler.next() {
+                Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["stepIn"] = cast(Func) (handler, arguments) => {
+            match handler.step_in() {
+                Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["stepOut"] = cast(Func) (handler, arguments) => {
+            match handler.step_out() {
+                Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["scopes"] = cast(Func) (handler, arguments) => {
+            match handler.scopes(arguments.into()) {
+                Ok($arr) -> {
+                    body := Table[string, JsonValue].create(strings_equal)
+                    body["scopes"] = JsonValue.JsonArray(arr.into())
+                    Ok(JsonValue.JsonObject(body))
+                }
+                Err($msg) -> Err(msg)
+            }
+        }
+        commands["variables"] = cast(Func) (handler, arguments) => {
+            match handler.variables(arguments.into()) {
+                Ok($arr) -> {
+                    body := Table[string, JsonValue].create(strings_equal)
+                    body["variables"] = JsonValue.JsonArray(arr.into())
+                    Ok(JsonValue.JsonObject(body))
+                }
+                Err($msg) -> Err(msg)
+            }
+        }
 
         adapter := Box[DebugAdapter].new(DebugAdapter(
             logger              = logger
@@ -127,10 +346,13 @@ impl DebugAdapter {
         command_loop()
     }
 
-    handle_command :: (ref Self, handler: ref CommandHandler, command: String, arguments: Table[string, JsonValue]) -> Result[JsonValue, String] {
+    handle_command :: (ref Self, handler: ref CommandHandler, command: String, arguments: JsonValue) -> Result[JsonValue, String] {
         return match command_table.get(command.slice()) {
             Some($func) -> func(handler, arguments)
-            None -> Err(fmt.format("Failed to handle command '{}'", [command]))
+            None -> {
+                Memory.drop(arguments)
+                Err(fmt.format("Failed to handle command '{}'", [command]))
+            }
         }
     }
 
@@ -162,7 +384,7 @@ impl DebugAdapter {
                     response["command"] = JsonValue.JsonString(command.clone())
                     response["request_seq"] = JsonValue.JsonNumber(cast(double) seq)
 
-                    match handle_command(command_handler.get(), command, arguments) {
+                    match handle_command(command_handler.get(), command, JsonValue.JsonObject(arguments)) {
                         Ok($body) -> {
                             response["success"] = JsonValue.JsonBool(true)
                             response["body"] = body
@@ -251,6 +473,11 @@ impl DebugAdapter {
         send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
     }
 
+    emit_initialized_event :: (ref Self) {
+        body := Table[string, JsonValue].create(strings_equal)
+        emit_event("initialized", JsonValue.JsonObject(body))
+    }
+
     emit_stop_event :: (ref Self, reason: string) {
         body := Table[string, JsonValue].create(strings_equal)
         body["reason"] = JsonValue.JsonString(reason.to_owned())
@@ -264,6 +491,7 @@ impl DebugAdapter {
     }
 
     emit_output_event :: (ref Self, output: String, category: string = "console") {
+        output += "\n"
         body := Table[string, JsonValue].create(strings_equal)
         body["output"] = JsonValue.JsonString(output)
         body["category"] = JsonValue.JsonString(category.to_owned())
