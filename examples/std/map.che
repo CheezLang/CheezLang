@@ -42,10 +42,10 @@ impl(K: type, V: type) Map[K, V] {
     }
 
     clear :: (ref Self) {
-        // @todo
         for(by_ref=true) entry : entries {
             entry.filled = false
             entry.is_tombstone = false
+            entry.key = None
             entry.value = None
         }
         _count = 0

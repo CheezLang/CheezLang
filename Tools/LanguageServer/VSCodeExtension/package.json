@@ -100,7 +100,8 @@
             "name": "TODO",
             "program": "${workspaceFolder}/TODO"
           }
-        ]
+        ],
+        "args": [ "test123" ]
       }
     ],
     "breakpoints": [

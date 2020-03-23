@@ -1,5 +1,3 @@
-use import json.json
-use import clap.clap
 use import std.array
 use import std.hash_table
 use import std.string
@@ -14,198 +12,22 @@ io  :: import std.io
 fmt :: import std.fmt
 fs  :: import std.io.fs
 
-#export_scope
+use import json.json
+use import clap.clap
+use import logging.logger
 
-Logger :: struct {
-    log_file : String
-    mutex    : Mutex
-}
-
-LOGGER : &Logger = null
-
-impl Logger {
-    new :: (log_file: string) -> Box[Logger] {
-        logger := Box[Logger].new(Logger(
-            log_file = log_file.to_owned()
-            mutex    = Mutex.new()
-        ))
-        LOGGER = &logger.get()
-        return logger
-    }
-
-    clear :: (ref Self) {
-        mutex.lock()
-        fs.write_file(log_file.slice(), "")
-        mutex.release()
-    }
-
-    log :: (ref Self, format: string, args: []&any = [], prefix: string = "") {
-        msg := fmt.format(format, args)
-        str := fmt.format("[{}] {} {}`n", [Thread.current().id, prefix, msg])
-        
-        mutex.lock()
-        fs.append_file(log_file.slice(), str.slice())
-        mutex.release()
-    }
-
-    log_error :: (ref Self, format: string, args: []&any = []) {
-        self.log(format, args, "[ERROR]")
-    }
-}
-
-impl Logger {
-    log_command :: (ref Self, format: string, args: []&any = []) {
-        self.log(format, args, "-> (C) ")
-    }
-
-    log_response :: (ref Self, format: string, args: []&any = []) {
-        self.log(format, args, "<- (R) ")
-    }
-
-    log_event :: (ref Self, format: string, args: []&any = []) {
-        self.log(format, args, "<- (E) ")
-    }
-}
+#file_scope
 
 ENDLINE_CHARS   :: "`r`n`r`n"
 CONTENT_LENGTH  :: "Content-Length: "
 
-DapThread :: struct {
-    id   : int
-    name : String
-}
-DapBreakpoint :: struct {
-    line : int
-}
-
-impl Into[DapBreakpoint] for JsonValue {
-    into :: (json: ref Self) -> DapBreakpoint {
-        return match json {
-            .JsonObject($map) -> DapBreakpoint(cast(int) map.at("line").to_number())
-            _ -> DapBreakpoint(-1)
-        }
-    }
-}
-
-DapSource :: struct {
-    name : String
-    path : String
-}
-
-impl Into[JsonValue] for DapSource {
-    into :: (ref Self) -> JsonValue {
-        json := Table[string, JsonValue].create(strings_equal)
-        json["name"] = JsonValue.JsonString(self.name.clone())
-        json["path"] = JsonValue.JsonString(self.path.clone())
-        return JsonValue.JsonObject(json)
-    }
-}
-
-impl Into[DapSource] for JsonValue {
-    into :: (ref Self) -> DapSource {
-        map := ref self.as_map()
-        name := map.at("name").to_string()
-        path := map.at("path").to_string()
-        return DapSource(name, path)
-    }
-}
-
-DapSetBreakpoints :: struct {
-    source      : DapSource
-    breakpoints : Array[DapBreakpoint]
-}
-
-impl Into[DapSetBreakpoints] for JsonValue {
-    into :: (ref Self) -> DapSetBreakpoints {
-        map := ref self.as_map()
-        return DapSetBreakpoints(
-            source      = map.at("source").into()
-            breakpoints = map.at("breakpoints").as_array().into()
-        )
-    }
-}
-
-DapStackFrame :: struct {
-    id      : int
-    name    : String
-    line    : int
-    column  : int
-    source  : DapSource
-}
-
-impl Into[JsonValue] for DapStackFrame {
-    into :: (ref Self) -> JsonValue {
-        json := Table[string, JsonValue].create(strings_equal)
-        json["id"] = JsonValue.JsonNumber(cast(double) self.id)
-        json["name"] = JsonValue.JsonString(self.name.clone())
-        json["source"] = cast(JsonValue) source.into()
-        json["line"] = JsonValue.JsonNumber(cast(double) line)
-        json["column"] = JsonValue.JsonNumber(cast(double) column)
-        return JsonValue.JsonObject(json)
-    }
-}
-
-DapReqVariables :: struct {
-    variables_reference : int
-}
-
-impl Into[DapReqVariables] for JsonValue {
-    into :: (ref Self) -> DapReqVariables {
-        map := ref self.as_map()
-        variablesReference := map.at("variablesReference").to_number()
-        return DapReqVariables(cast(int) variablesReference)
-    }
-}
-
-DapReqScopes :: struct {
-    frame_id : int
-}
-
-impl Into[DapReqScopes] for JsonValue {
-    into :: (ref Self) -> DapReqScopes {
-        map := ref self.as_map()
-        frameId := map.at("frameId").to_number()
-        return DapReqScopes(cast(int) frameId)
-    }
-}
-
-DapScope :: struct {
-    variables_reference : int
-    name                : String
-    presentation_hint   : String
-}
-
-impl Into[JsonValue] for DapScope {
-    into :: (ref Self) -> JsonValue {
-        json := Table[string, JsonValue].create(strings_equal)
-        json["name"] = JsonValue.JsonString(self.name.clone())
-        json["presentationHint"] = JsonValue.JsonString(self.presentation_hint.clone())
-        json["variablesReference"] = JsonValue.JsonNumber(cast(double) self.variables_reference)
-        return JsonValue.JsonObject(json)
-    }
-}
-
-DapVariable :: struct {
-    variables_reference : int
-    name                : String
-    value               : String
-}
-
-impl Into[JsonValue] for DapVariable {
-    into :: (ref Self) -> JsonValue {
-        json := Table[string, JsonValue].create(strings_equal)
-        json["name"] = JsonValue.JsonString(self.name.clone())
-        json["value"] = JsonValue.JsonString(self.value.clone())
-        json["variablesReference"] = JsonValue.JsonNumber(cast(double) self.variables_reference)
-        return JsonValue.JsonObject(json)
-    }
-}
+#export_scope
 
 CommandHandler :: trait {
     adapter : &DebugAdapter
 
     initialize      :: (ref Self) -> Result[(), String];
-    launch          :: (ref Self) -> Result[(), String];
+    launch          :: (ref Self, arguments: DapReqLaunch) -> Result[(), String];
     pause           :: (ref Self) -> Result[(), String];
     resume          :: (ref Self) -> Result[(), String];
     next            :: (ref Self) -> Result[(), String];
@@ -222,9 +44,9 @@ DebugAdapter :: struct {
     Func :: fn(ref CommandHandler, JsonValue) -> Result[JsonValue, String]
 
     logger          : ref Logger
-    std_out_mutex   : Mutex
     command_handler : Rc[CommandHandler]
     command_table   : Table[string, Func]
+    std_out_mutex   : Mutex
 
     _seq_counter    := 0
 }
@@ -241,7 +63,7 @@ impl DebugAdapter {
             }
         }
         commands["launch"] = cast(Func) (handler, arguments) => {
-            match handler.launch() {
+            match handler.launch(arguments.into()) {
                 Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
                 Err($msg) -> Err(msg)
             }
@@ -496,6 +318,155 @@ impl DebugAdapter {
         body["output"] = JsonValue.JsonString(output)
         body["category"] = JsonValue.JsonString(category.to_owned())
         emit_event("output", JsonValue.JsonObject(body))
+    }
+}
+
+// 
+
+DapReqLaunch :: struct {
+    program : String
+}
+
+impl Into[DapReqLaunch] for JsonValue {
+    into :: (json: ref Self) -> DapReqLaunch {
+        map := ref json.as_map()
+        return DapReqLaunch(
+            program = match map.get("program") {
+                Some($prog) -> prog.to_string()
+                None -> "".to_owned()
+            }
+        )
+    }
+}
+
+DapThread :: struct {
+    id   : int
+    name : String
+}
+DapBreakpoint :: struct {
+    line : int
+}
+
+impl Into[DapBreakpoint] for JsonValue {
+    into :: (json: ref Self) -> DapBreakpoint {
+        return match json {
+            .JsonObject($map) -> DapBreakpoint(cast(int) map.at("line").to_number())
+            _ -> DapBreakpoint(-1)
+        }
+    }
+}
+
+DapSource :: struct {
+    name : String
+    path : String
+}
+
+impl Into[JsonValue] for DapSource {
+    into :: (ref Self) -> JsonValue {
+        json := Table[string, JsonValue].create(strings_equal)
+        json["name"] = JsonValue.JsonString(self.name.clone())
+        json["path"] = JsonValue.JsonString(self.path.clone())
+        return JsonValue.JsonObject(json)
+    }
+}
+
+impl Into[DapSource] for JsonValue {
+    into :: (ref Self) -> DapSource {
+        map := ref self.as_map()
+        name := map.at("name").to_string()
+        path := map.at("path").to_string()
+        return DapSource(name, path)
+    }
+}
+
+DapSetBreakpoints :: struct {
+    source      : DapSource
+    breakpoints : Array[DapBreakpoint]
+}
+
+impl Into[DapSetBreakpoints] for JsonValue {
+    into :: (ref Self) -> DapSetBreakpoints {
+        map := ref self.as_map()
+        return DapSetBreakpoints(
+            source      = map.at("source").into()
+            breakpoints = map.at("breakpoints").as_array().into()
+        )
+    }
+}
+
+DapStackFrame :: struct {
+    id      : int
+    name    : String
+    line    : int
+    column  : int
+    source  : DapSource
+}
+
+impl Into[JsonValue] for DapStackFrame {
+    into :: (ref Self) -> JsonValue {
+        json := Table[string, JsonValue].create(strings_equal)
+        json["id"] = JsonValue.JsonNumber(cast(double) self.id)
+        json["name"] = JsonValue.JsonString(self.name.clone())
+        json["source"] = cast(JsonValue) source.into()
+        json["line"] = JsonValue.JsonNumber(cast(double) line)
+        json["column"] = JsonValue.JsonNumber(cast(double) column)
+        return JsonValue.JsonObject(json)
+    }
+}
+
+DapReqVariables :: struct {
+    variables_reference : int
+}
+
+impl Into[DapReqVariables] for JsonValue {
+    into :: (ref Self) -> DapReqVariables {
+        map := ref self.as_map()
+        variablesReference := map.at("variablesReference").to_number()
+        return DapReqVariables(cast(int) variablesReference)
+    }
+}
+
+DapReqScopes :: struct {
+    frame_id : int
+}
+
+impl Into[DapReqScopes] for JsonValue {
+    into :: (ref Self) -> DapReqScopes {
+        map := ref self.as_map()
+        frameId := map.at("frameId").to_number()
+        return DapReqScopes(cast(int) frameId)
+    }
+}
+
+DapScope :: struct {
+    variables_reference : int
+    name                : String
+    presentation_hint   : String
+}
+
+impl Into[JsonValue] for DapScope {
+    into :: (ref Self) -> JsonValue {
+        json := Table[string, JsonValue].create(strings_equal)
+        json["name"] = JsonValue.JsonString(self.name.clone())
+        json["presentationHint"] = JsonValue.JsonString(self.presentation_hint.clone())
+        json["variablesReference"] = JsonValue.JsonNumber(cast(double) self.variables_reference)
+        return JsonValue.JsonObject(json)
+    }
+}
+
+DapVariable :: struct {
+    variables_reference : int
+    name                : String
+    value               : String
+}
+
+impl Into[JsonValue] for DapVariable {
+    into :: (ref Self) -> JsonValue {
+        json := Table[string, JsonValue].create(strings_equal)
+        json["name"] = JsonValue.JsonString(self.name.clone())
+        json["value"] = JsonValue.JsonString(self.value.clone())
+        json["variablesReference"] = JsonValue.JsonNumber(cast(double) self.variables_reference)
+        return JsonValue.JsonObject(json)
     }
 }
 

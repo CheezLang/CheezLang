@@ -38,6 +38,8 @@ Main2 :: () {
 compile_program :: (code: string, path: string) -> &Interpreter {
     interp := Interpreter.new()
 
+    path = interp.strings.intern(path)
+
     labels := Array[(string, int)].create()
     branches := Table[string, Array[int]].create(strings_equal)
     parameters := Table[string, int].create(strings_equal)

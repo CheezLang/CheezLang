@@ -1,0 +1,56 @@
+use import std.string
+use import std.thread
+use import std.rc
+
+fmt :: import std.fmt
+fs  :: import std.io.fs
+
+#export_scope
+
+Logger :: struct {
+    log_file : String
+    mutex    : Mutex
+}
+
+impl Logger {
+    new :: (log_file: string) -> Rc[Logger] {
+        logger := Rc[Logger].new(Logger(
+            log_file = log_file.to_owned()
+            mutex    = Mutex.new()
+        ))
+        return logger
+    }
+
+    clear :: (ref Self) {
+        mutex.lock()
+        fs.write_file(log_file.slice(), "")
+        mutex.release()
+    }
+
+    log :: (ref Self, format: string, args: []&any = [], prefix: string = "") {
+        msg := fmt.format(format, args)
+        str := fmt.format("[{}] {} {}`n", [Thread.current().id, prefix, msg])
+        
+        mutex.lock()
+        fs.append_file(log_file.slice(), str.slice())
+        mutex.release()
+    }
+
+    log_error :: (ref Self, format: string, args: []&any = []) {
+        self.log(format, args, "[ERROR]")
+    }
+}
+
+impl Logger {
+    log_command :: (ref Self, format: string, args: []&any = []) {
+        self.log(format, args, "-> (C) ")
+    }
+
+    log_response :: (ref Self, format: string, args: []&any = []) {
+        self.log(format, args, "<- (R) ")
+    }
+
+    log_event :: (ref Self, format: string, args: []&any = []) {
+        self.log(format, args, "<- (E) ")
+    }
+}

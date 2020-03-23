@@ -1,33 +1,33 @@
 {
-	"version": "0.2.0",
-	// List of configurations. Add new configurations or edit existing ones.
-	"configurations": [
-	{
-		"name": ".NET Core Launch (console)",
-		"type": "coreclr",
-		"request": "launch",
-		// "preLaunchTask": "build",
-		"program": "${workspaceFolder}/bin/Debug/cheezc.dll",
-		"args": ["examples/test.che", "--out", "gen", "--stdlib", "examples", "--time", "--run"],
-		"cwd": "${workspaceFolder}",
-		"stopAtEntry": false,
-		"console": "internalConsole"
-	},
-		{
-			"name": "Launch Client",
-			"type": "extensionHost",
-			"request": "launch",
-			"runtimeExecutable": "${execPath}",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceRoot}/Tools/LanguageServer/VSCodeExtension"
-			],
-			"stopOnEntry": false,
-			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceRoot}/Tools/LanguageServer/VSCodeExtension/out/**/*.js"
-			]
-			
-			//,"preLaunchTask": "watch:client"
-		}
-	]
+    "version": "0.2.0",
+    // List of configurations. Add new configurations or edit existing ones.
+    "configurations": [
+        {
+            "name": ".NET Core Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            // "preLaunchTask": "build",
+            "program": "${workspaceFolder}/bin/Debug/cheezc.dll",
+            "args": ["examples/test.che", "--out", "gen", "--stdlib", "examples", "--time", "--run"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Launch Client",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceRoot}/Tools/LanguageServer/VSCodeExtension"
+            ],
+            "stopOnEntry": false,
+            "sourceMaps": true,
+            "outFiles": [
+                "${workspaceRoot}/Tools/LanguageServer/VSCodeExtension/out/**/*.js"
+            ]
+            
+            //,"preLaunchTask": "watch:client"
+        }
+    ]
 }

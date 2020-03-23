@@ -1479,6 +1479,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 var left = GenerateExpression(bin.Left, true);
                 var right = GenerateExpression(bin.Right, true);
+
+                // @todo: handle fat functions
+
                 if (fun.Name == "==")
                     return builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, left, right, "");
                 if (fun.Name == "!=")
