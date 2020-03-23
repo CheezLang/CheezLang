@@ -208,6 +208,13 @@ impl(K: type, V: type) Table[K, V] {
         entries = entries_new
     }
 
+    contains :: (ref Self, key: $K2) -> bool {
+        if count == 0 or entries.data == null { return false }
+        entry := find_entry(entries, key)
+        if !entry.filled { return false }
+        return true
+    }
+
     iterator :: (ref Self) -> TableIterator[K, V] {
         return TableIterator[K, V](self, 0)
     }

@@ -37,6 +37,10 @@ fs  :: import std.io.fs
 LOG_PATH :: "P:/dev/CheezLang/data/log.txt"
 CBC_FILE :: "p:/dev/debug_adapter_test/fac.cbc"
 
+Breakpoint :: struct #copy {
+    line : int
+}
+
 CBCDebugger :: struct {
     interp  : &Interpreter
     mutex   : Mutex
@@ -46,7 +50,10 @@ CBCDebugger :: struct {
     logger  : ref Logger
     adapter : &DebugAdapter
 
+    breakpoints : Array[Breakpoint]
+
     break_when_fp_is_less_than  := 0
+    ignore_breakpoints          := false
 }
 
 impl CBCDebugger {
@@ -78,7 +85,10 @@ impl CBCDebugger {
             _step   = true
             logger  = logger
             adapter = null
+            breakpoints = Array[Breakpoint].create()
         )
+
+        interp.printer = cast cbc_debugger.print
 
         cbc_debugger.thread.start()
         
@@ -94,36 +104,49 @@ impl CBCDebugger {
         running = false
     }
 
+    launch :: (ref Self) {
+        _step = false
+        break_when_fp_is_less_than = 0
+        ignore_breakpoints = false
+        running = true
+    }
+
     resume :: (ref Self) {
         _step = false
+        break_when_fp_is_less_than = 0
+        ignore_breakpoints = true
         running = true
     }
 
     step :: (ref Self) {
         running = false
         wait_for_mutex()
-        logger.log("step")
         _step = false
         break_when_fp_is_less_than = interp.fp + 1
+        ignore_breakpoints = true
         running = true
     }
 
     step_in :: (ref Self) {
         running = false
         wait_for_mutex()
-        logger.log("step_in")
         _step = true
         break_when_fp_is_less_than = 0
+        ignore_breakpoints = true
         running = true
     }
 
     step_out :: (ref Self) {
         running = false
         wait_for_mutex()
-        logger.log("step_out")
         _step = false
         break_when_fp_is_less_than = interp.fp
+        ignore_breakpoints = true
         running = true
+    }
+
+    print :: (ref Self, value: int) {
+        adapter.emit_output_event(fmt.format("{}\n", [value]))
     }
 
     run :: (ref Self) {
@@ -131,16 +154,40 @@ impl CBCDebugger {
             if running {
                 mutex.lock()
                 loop {
+                    if !ignore_breakpoints and breakpoints.count() > 0 {
+                        frame := ref interp.get_stackframes()[interp.fp]
+                        line := frame.func.debug_info.get_line_for_ip(frame.ip, logger)
+                        for breakpoint : breakpoints {
+                            if breakpoint.line == line {
+                                running = false
+                                adapter.emit_stop_event("breakpoint")
+                                break
+                            }
+                        }
+
+                        if !running then break
+                    } else {
+                        ignore_breakpoints = false
+                    }
                     if !running then break
-                    interp.step()
+
+                    match interp.step() {
+                        .Done -> {
+                            running = false
+                            adapter.emit_terminated_event()
+                            break
+                        }
+                    }
 
                     if _step {
                         running = false
                         adapter.emit_stop_event("step")
+                        break
                     } else if interp.fp < break_when_fp_is_less_than {
-                        break_when_fp_is_less_than = -1
+                        break_when_fp_is_less_than = 0
                         running = false
                         adapter.emit_stop_event("step")
+                        break
                     }
                 }
                 mutex.release()
@@ -158,8 +205,109 @@ impl CBCDebugger {
     }
 }
 
+VariableRef :: trait {
+    interp  : &Interpreter
+    frame   : int
+    name    : String
+    hint    : String
+    index   : int
+
+    get_variables :: (ref Self) -> Array[Rc[VariableRef]];
+}
+
+ArgumentsScope :: struct VariableRef {
+
+}
+
+impl ArgumentsScope {
+    new :: (interp: &Interpreter, frame: int) -> Rc[ArgumentsScope] {
+        return Rc[ArgumentsScope].new(ArgumentsScope(interp, frame, "Arguments".to_string(), "arguments".to_string(), -1))
+    }
+}
+
+impl VariableRef for ArgumentsScope {
+    get_variables :: (ref Self) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+        stackframe := ref interp.get_stackframes()[self.frame]
+        for name : stackframe.func.debug_info.parameters {
+            value := stackframe.stack[stackframe.bp - it_index - 1]
+            var := Variable.new(interp, frame, name.clone(), fmt.format("{}", [value]))
+            result.add(var.clone().change_type(VariableRef))
+        }
+        return result
+    }
+}
+
+LocalsScope :: struct VariableRef {
+
+}
+
+impl LocalsScope {
+    new :: (interp: &Interpreter, frame: int) -> Rc[LocalsScope] {
+        return Rc[LocalsScope].new(LocalsScope(interp, frame, "Locals".to_string(), "locals".to_string(), -1))
+    }
+}
+
+impl VariableRef for LocalsScope {
+    get_variables :: (ref Self) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+        stackframe := ref interp.get_stackframes()[self.frame]
+        for name : stackframe.func.debug_info.locals {
+            value := stackframe.stack[stackframe.bp + it_index]
+            var := Variable.new(interp, frame, name.clone(), fmt.format("{}", [value]))
+            result.add(var.clone().change_type(VariableRef))
+        }
+        return result
+    }
+}
+
+RegistersScope :: struct VariableRef {
+
+}
+
+impl RegistersScope {
+    new :: (interp: &Interpreter, frame: int) -> Rc[RegistersScope] {
+        return Rc[RegistersScope].new(RegistersScope(interp, frame, "Registers".to_string(), "registers".to_string(), -1))
+    }
+}
+
+impl VariableRef for RegistersScope {
+    get_variables :: (ref Self) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+
+        stackframe := ref interp.get_stackframes()[self.frame]
+
+        ip := Variable.new(interp, frame, "ip".to_owned(), fmt.format("{}", [stackframe.ip]))
+        result.add(ip.clone().change_type(VariableRef))
+        sp := Variable.new(interp, frame, "sp".to_owned(), fmt.format("{}", [stackframe.sp]))
+        result.add(sp.clone().change_type(VariableRef))
+        bp := Variable.new(interp, frame, "bp".to_owned(), fmt.format("{}", [stackframe.bp]))
+        result.add(bp.clone().change_type(VariableRef))
+
+        return result
+    }
+}
+
+Variable :: struct VariableRef {
+    value : String
+}
+
+impl Variable {
+    new :: (interp: &Interpreter, frame: int, name: String, value: String) -> Rc[Variable] {
+        return Rc[Variable].new(Variable(interp, frame, name, String.empty(), -1, value))
+    }
+}
+
+impl VariableRef for Variable {
+    get_variables :: (ref Self) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+        return result
+    }
+}
+
 CheezDebugAdapter :: struct CommandHandler {
     cbc_debugger    : Rc[CBCDebugger]
+    variable_refs   : Array[Rc[VariableRef]]
 }
 
 impl CheezDebugAdapter {
@@ -167,6 +315,7 @@ impl CheezDebugAdapter {
         return Box[CommandHandler].new(CheezDebugAdapter(
             adapter         = null
             cbc_debugger    = cbc_debugger
+            variable_refs   = Array[Rc[VariableRef]].create()
         ))
     }
 }
@@ -180,9 +329,25 @@ impl CommandHandler for CheezDebugAdapter {
         return Ok(JsonValue.JsonObject(body))
     }
 
+    clear_variable_refs :: (ref Self) {
+        variable_refs.clear()
+    }
+
+    get_variable_reference :: (ref Self, index: int) -> ref VariableRef {
+        @assert(index >= 1 and index <= variable_refs.count())
+        return variable_refs[index - 1].get()
+    }
+
+    add_variable_ref :: (ref Self, var_ref: Rc[VariableRef]) -> int {
+        index := variable_refs.count() + 1
+        var_ref.get().index = index
+        variable_refs.add(var_ref)
+        return index
+    }
+
     launch :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
         body := Table[string, JsonValue].create(strings_equal)
-        adapter.emit_stop_event("breakpoint")
+        cbc_debugger.get().launch()
         return Ok(JsonValue.JsonObject(body))
     }
 
@@ -202,7 +367,16 @@ impl CommandHandler for CheezDebugAdapter {
 
     set_breakpoints :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
         body := Table[string, JsonValue].create(strings_equal)
-        adapter.logger.log("set_breakpoints")
+
+        breakpoints := arguments.at("breakpoints").as_array().clone()
+        cbc_debugger.get().breakpoints.clear()
+
+        for(by_ref=true) br_json : breakpoints.slice() {
+            br := br_json.as_map().clone()
+            line := cast(int) br.at("line").to_number()
+            cbc_debugger.get().breakpoints.add(Breakpoint(line - 1))
+        }
+
         return Ok(JsonValue.JsonObject(body))
     }
 
@@ -221,7 +395,7 @@ impl CommandHandler for CheezDebugAdapter {
             adapter.logger.log("stackframe: line: {}, func: '{}', path: '{}'", [line, frame.func.name, frame.func.debug_info.path])
 
             json := Table[string, JsonValue].create(strings_equal)
-            json["id"] = JsonValue.JsonNumber(0)
+            json["id"] = JsonValue.JsonNumber(cast(double) frames.length - it_index - 1)
             json["name"] = JsonValue.JsonString(frame.func.name.clone())
 
             frame_source := Table[string, JsonValue].create(strings_equal)
@@ -241,38 +415,77 @@ impl CommandHandler for CheezDebugAdapter {
         return Ok(JsonValue.JsonObject(body))
     }
 
+    collect_scopes :: (ref Self, frame: int) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+
+
+        locals := LocalsScope.new(cbc_debugger.get().interp, frame)
+        result.add(locals.clone().change_type(VariableRef))
+        args := ArgumentsScope.new(cbc_debugger.get().interp, frame)
+        result.add(args.clone().change_type(VariableRef))
+
+        registers := RegistersScope.new(cbc_debugger.get().interp, frame)
+        result.add(registers.clone().change_type(VariableRef))
+
+        return result
+    }
+
     scopes :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
         frame_id := cast(int) arguments.at("frameId").to_number()
 
-        adapter.logger.log("scopes({})", [frame_id])
-
         // cbc_debugger.get().pause()
-        frame := cbc_debugger.get().get_stackframes()[frame_id]
+        frame := ref cbc_debugger.get().get_stackframes()[frame_id]
+        scopes_json := Array[JsonValue].create()
 
+        scopes := collect_scopes(frame_id)
+        for scope : scopes {
+            add_variable_ref(scope.clone().change_type(VariableRef))
 
-        parameters := Table[string, JsonValue].create(strings_equal)
-        parameters["name"] = JsonValue.JsonString("Arguments".to_owned())
-        parameters["presentationHint"] = JsonValue.JsonString("arguments".to_owned())
-        parameters["variablesReference"] = JsonValue.JsonNumber(cast(double) frame_id)
+            json := Table[string, JsonValue].create(strings_equal)
+            json["name"] = JsonValue.JsonString(scope.get().name.clone())
+            json["presentationHint"] = JsonValue.JsonString(scope.get().hint.clone())
+            json["variablesReference"] = JsonValue.JsonNumber(cast(double) scope.get().index)
 
-        registers := Table[string, JsonValue].create(strings_equal)
-        registers["name"] = JsonValue.JsonString("Registers".to_owned())
-        registers["presentationHint"] = JsonValue.JsonString("registers".to_owned())
-        registers["variablesReference"] = JsonValue.JsonNumber(cast(double) frame_id)
-
-        locals := Table[string, JsonValue].create(strings_equal)
-        locals["name"] = JsonValue.JsonString("Locals".to_owned())
-        locals["presentationHint"] = JsonValue.JsonString("locals".to_owned())
-        locals["variablesReference"] = JsonValue.JsonNumber(cast(double) frame_id)
-
-
-        scopes := Array[JsonValue].create()
-        scopes.add(JsonValue.JsonObject(parameters))
-        scopes.add(JsonValue.JsonObject(registers))
-        scopes.add(JsonValue.JsonObject(locals))
+            scopes_json.add(JsonValue.JsonObject(json))
+        }
 
         body := Table[string, JsonValue].create(strings_equal)
-        body["scopes"] = JsonValue.JsonArray(scopes)
+        body["scopes"] = JsonValue.JsonArray(scopes_json)
+        return Ok(JsonValue.JsonObject(body))
+    }
+
+    variables :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        index := cast(int) arguments.at("variablesReference").to_number()
+
+        cbc_debugger.get().pause()
+        variables_json := Array[JsonValue].create()
+
+        var_ref := ref get_variable_reference(index)
+        vars := var_ref.get_variables()
+        for var : vars {
+            add_variable_ref(var.clone())
+
+            json := Table[string, JsonValue].create(strings_equal)
+
+            json["name"] = JsonValue.JsonString(var.get().name.clone())
+
+            match ref var.get() {
+                Variable($var) -> {
+                    json["value"] = JsonValue.JsonString(var.value.clone())
+                    json["variablesReference"] = JsonValue.JsonNumber(0)
+                }
+
+                $scope -> {
+                    json["presentationHint"] = JsonValue.JsonString(scope.hint.clone())
+                    json["variablesReference"] = JsonValue.JsonNumber(cast(double) scope.index)
+                }
+            }
+
+            variables_json.add(JsonValue.JsonObject(json))
+        }
+
+        body := Table[string, JsonValue].create(strings_equal)
+        body["variables"] = JsonValue.JsonArray(variables_json)
         return Ok(JsonValue.JsonObject(body))
     }
 
@@ -284,24 +497,28 @@ impl CommandHandler for CheezDebugAdapter {
     }
 
     resume :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        clear_variable_refs()
         body := Table[string, JsonValue].create(strings_equal)
         cbc_debugger.get().resume()
         return Ok(JsonValue.JsonObject(body))
     }
 
     next :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        clear_variable_refs()
         body := Table[string, JsonValue].create(strings_equal)
         cbc_debugger.get().step()
         return Ok(JsonValue.JsonObject(body))
     }
 
     step_in :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        clear_variable_refs()
         body := Table[string, JsonValue].create(strings_equal)
         cbc_debugger.get().step_in()
         return Ok(JsonValue.JsonObject(body))
     }
 
     step_out :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String] {
+        clear_variable_refs()
         body := Table[string, JsonValue].create(strings_equal)
         cbc_debugger.get().step_out()
         return Ok(JsonValue.JsonObject(body))

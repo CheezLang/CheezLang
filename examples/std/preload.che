@@ -137,6 +137,12 @@ Equatable :: trait(T: type) {
     equal :: (ref Self, ref T) -> bool;
 }
 
+impl Equatable[int] for int {
+    equal :: (ref Self, other: ref int) -> bool {
+        return self == other
+    }
+}
+
 // impl(F: type, T: type) From[F] for T if F : Into[T], #notyet {
 //     from :: (value: F) -> T {
 //         return F.into(value)

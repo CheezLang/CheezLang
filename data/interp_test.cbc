@@ -47,18 +47,18 @@ body:
 
 #main
 fn main {
-    const 0
+    local a
 
 loop:
-    load_local 0
+    load_local a
     call fib 1
     print
-    load_local 0
+    load_local a
     const 1
     add
-    store_local 0
+    store_local a
     
-    load_local 0
+    load_local a
     const 50
     ilt
     branch_if loop

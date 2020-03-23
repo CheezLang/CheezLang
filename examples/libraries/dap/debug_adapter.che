@@ -79,6 +79,7 @@ CommandHandler :: trait {
     step_in :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
     step_out :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
     scopes :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
+    variables :: (ref Self, arguments: ref Table[string, JsonValue]) -> Result[JsonValue, String];
 }
 
 DebugAdapter :: struct {
@@ -108,6 +109,7 @@ impl DebugAdapter {
         commands["stepIn"] = cast(Func) (handler, arguments) => handler.step_in(arguments)
         commands["stepOut"] = cast(Func) (handler, arguments) => handler.step_out(arguments)
         commands["scopes"] = cast(Func) (handler, arguments) => handler.scopes(arguments)
+        commands["variables"] = cast(Func) (handler, arguments) => handler.variables(arguments)
 
 
         adapter := Box[DebugAdapter].new(DebugAdapter(
@@ -126,8 +128,6 @@ impl DebugAdapter {
     }
 
     handle_command :: (ref Self, handler: ref CommandHandler, command: String, arguments: Table[string, JsonValue]) -> Result[JsonValue, String] {
-        logger.log("handle_command('{}', {} args)", [command, arguments.get_count()])
-
         return match command_table.get(command.slice()) {
             Some($func) -> func(handler, arguments)
             None -> Err(fmt.format("Failed to handle command '{}'", [command]))
@@ -141,7 +141,6 @@ impl DebugAdapter {
             logger.log_command("{}", [request_text.slice()])
 
             json := parse_json(JsonValue, request_text.slice())
-
 
             match json {
                 Some($val) -> {
@@ -257,6 +256,18 @@ impl DebugAdapter {
         body["reason"] = JsonValue.JsonString(reason.to_owned())
         body["threadId"] = JsonValue.JsonNumber(0)
         emit_event("stopped", JsonValue.JsonObject(body))
+    }
+
+    emit_terminated_event :: (ref Self) {
+        body := Table[string, JsonValue].create(strings_equal)
+        emit_event("terminated", JsonValue.JsonObject(body))
+    }
+
+    emit_output_event :: (ref Self, output: String, category: string = "console") {
+        body := Table[string, JsonValue].create(strings_equal)
+        body["output"] = JsonValue.JsonString(output)
+        body["category"] = JsonValue.JsonString(category.to_owned())
+        emit_event("output", JsonValue.JsonObject(body))
     }
 }
 

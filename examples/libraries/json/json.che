@@ -47,6 +47,13 @@ impl JsonValue {
         }
     }
 
+    as_array :: (ref Self) -> ref Array[JsonValue] {
+        return match self {
+            .JsonArray($arr) -> arr
+            _ -> @assert(false)
+        }
+    }
+
     to_map :: (Self) -> Table[string, JsonValue] {
         return match self {
             .JsonObject($map) -> map

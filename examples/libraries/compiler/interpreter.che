@@ -45,6 +45,7 @@ compile_program :: (code: string, path: string) -> &Interpreter {
     func := InstructionBuilder.new(interp.strings)
 
     current_function := ""
+    local_index := 0
 
     has_errors := false
 
@@ -99,12 +100,14 @@ compile_program :: (code: string, path: string) -> &Interpreter {
             parts := trimmed[3..brace].split_at_char(' ', true).to_array()
             @assert(parts.count() > 0)
 
+            params := Array[String].create()
             for i : 1..parts.count() {
                 parameters[parts[i]] = -i
+                params.add(parts[i].to_owned())
             }
 
             current_function = parts[0]
-            func.begin_function(current_function, path)
+            func.begin_function(current_function, path, params)
         } else if brace := trimmed.index_of(':'), brace >= 0 {
             name := trimmed[..brace]
             labels.add((name, func.next()))
@@ -116,7 +119,21 @@ compile_program :: (code: string, path: string) -> &Interpreter {
 
             inst := parts[0].trim()
 
-            if strings_equal(inst, "noop") {
+            if strings_equal(inst, "local") {
+                name := parts[1]
+                if parameters.contains(name) {
+                    io.formatln("[ERROR] there is already a parameter or local named '{}'", [name])
+                    has_errors = true
+                } else if func.function.instructions.count() > 0 {
+                    io.formatln("[ERROR] local variables can only be created at the beginning of a function", [])
+                    has_errors = true
+                } else {
+                    parameters[name] = local_index
+                    func.function.debug_info.locals.add(name.to_owned())
+                    local_index += 1
+                    func.build_const(0)
+                }
+            } else if strings_equal(inst, "noop") {
                 func.build_noop()
             } else if strings_equal(inst, "halt") {
                 func.build_halt()
@@ -282,15 +299,14 @@ LineInfo :: struct #copy {
 }
 
 CBCDebugInfo :: struct {
-    path    := String.empty()
-    lines   := Array[LineInfo].create()
+    path        := String.empty()
+    lines       := Array[LineInfo].create()
+    locals      := Array[String].create()
+    parameters  := Array[String].create()
 }
 
 impl CBCDebugInfo {
     get_line_for_ip :: (ref Self, ip: int, logger: ref Logger) -> int {
-        logger.log("get_line_for_ip({})", [ip])
-        logger.log("lines.count: {}", [lines.count()])
-        logger.log("lines: {}", [lines.slice()])
         i := 0
         for lines {
             if i >= ip {
@@ -324,13 +340,14 @@ impl InstructionBuilder {
         )
     }
 
-    begin_function :: (ref Self, name: string, path: string) {
+    begin_function :: (ref Self, name: string, path: string, params: Array[String]) {
         current_line = -1
         function.debug_info.lines.clear()
         function.instructions.clear()
 
         function.name = name.to_owned()
         function.debug_info.path = path.to_owned()
+        function.debug_info.parameters = params
     }
 
     end_function :: (ref Self) -> CBCFunction {
@@ -535,6 +552,7 @@ Interpreter :: struct {
     stack       : [1024]int
     functions   : Map[String, CBCFunction]
     strings     : StringDatabase
+    printer     : Fn(int)
 }
 
 impl Interpreter {
@@ -547,6 +565,7 @@ impl Interpreter {
             stack       = default
             functions   = Map[String, CBCFunction].new()
             strings     = StringDatabase.new()
+            printer     = null
         )
         return interp
     }
@@ -739,6 +758,10 @@ impl Interpreter {
 
             .Print -> {
                 val := pop()
+
+                // if printer != null {
+                    printer(val)
+                // }
 
                 io.set_console_color(.Green, .Black)
                 io.println(val)
