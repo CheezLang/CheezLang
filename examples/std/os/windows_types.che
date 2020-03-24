@@ -17,6 +17,7 @@ UINT                 :: u32
 LONG                 :: i32
 ULONG                :: u32
 LONGLONG             :: i64
+LONG64               :: i64
 LARGE_INTEGER        :: LONGLONG
 UINT_PTR             :: u64
 LONG_PTR             :: i64

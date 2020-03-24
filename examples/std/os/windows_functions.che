@@ -173,6 +173,9 @@ WakeAllConditionVariable                :: (var: &CONDITION_VARIABLE) #stdcall;
 SleepConditionVariableCS                :: (var: &CONDITION_VARIABLE, section: &CRITICAL_SECTION, milliseconds: DWORD) -> BOOL #stdcall;
 // SleepConditionVariableSRW               :: (var: &CONDITION_VARIABLE, SRWLock: &SRWLOCK, milliseconds: DWORD, flags: ULONG) -> BOOL #stdcall;
 
+_InterlockedCompareExchange64           :: (dest: &LONG64, value: LONG64, compare_to: LONG64) -> LONG64 #stdcall;
+_InterlockedExchange64                  :: (dest: &LONG64, value: LONG64) -> LONG64 #stdcall;
+
 
 // somehow not linking
 // GetCurrentDirectory :: (nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;
