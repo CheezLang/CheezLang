@@ -171,11 +171,11 @@ impl CheezDebugAdapter {
             adapter = null
             interp  = null
             mutex   = Mutex.new()
-            thread  = Thread.create((p: &CheezDebugAdapter) => p.run(), debugger)
+            thread  = Thread.new(cast debugger.run)
             running = false
             _step   = true
             adapter = null
-            breakpoints = Map[String, Array[Breakpoint]].new()
+            breakpoints     = Map[String, Array[Breakpoint]].new()
             variable_refs   = Array[Rc[VariableRef]].create()
         )
 

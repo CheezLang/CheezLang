@@ -57,16 +57,6 @@ MyGame :: struct {
     last_file_change    : double = -1
 }
 
-dir_change_thread_func :: (game: &MyGame) {
-    while true {
-        res := WaitForSingleObject(game.wait_handle, 1000)
-        if res == 0 {
-            game.file_changed()
-            FindNextChangeNotification(game.wait_handle)
-        }
-    }
-}
-
 map :: (x: double, a: double, b: double, c: double, d: double) -> double {
     return (x - a) / (b - a) * (d - c) + c
 }
@@ -83,17 +73,27 @@ impl Game for MyGame {
         variables["t"]  = Complex(0.0)
 
         // start thread for file changes
-        fullpath := C._fullpath(null, "."c, 512)
+        fullpath := C._fullpath(null, "../data"c, 512)
         defer free(fullpath)
         wait_handle = FindFirstChangeNotificationA(fullpath, 0, 0x00000008)
         if wait_handle == null {
             io.printfln("Failed to create file change watcher for file '{}'", string(cast fullpath, cast C.strlen(fullpath)))
         } else {
             dir_change_thread = alloc(Thread)
-            <<dir_change_thread = Thread.create(dir_change_thread_func, &self)
+            <<dir_change_thread = Thread.new(cast self.dir_change_thread_func)
             dir_change_thread.start()
         }
         return true
+    }
+
+    dir_change_thread_func :: (ref Self) {
+        while true {
+            res := WaitForSingleObject(self.wait_handle, 1000)
+            if res == 0 {
+                self.file_changed()
+                FindNextChangeNotification(self.wait_handle)
+            }
+        }
     }
 
     on_destroy :: (ref Self) -> bool {
@@ -130,7 +130,7 @@ impl Game for MyGame {
 
         function = None
 
-        match load_file("function.txt") {
+        match load_file("../data/function.txt") {
             Ok($content) -> {
                 var_name_allocator.clear()
                 function = compile(content.slice(), &var_name_allocator)

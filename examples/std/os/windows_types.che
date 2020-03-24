@@ -15,10 +15,12 @@ HFILE                :: i32
 BOOL                 :: i32
 UINT                 :: u32
 LONG                 :: i32
+ULONG                :: u32
 LONGLONG             :: i64
 LARGE_INTEGER        :: LONGLONG
 UINT_PTR             :: u64
 LONG_PTR             :: i64
+ULONG_PTR            :: u64
 WPARAM               :: UINT_PTR
 LPARAM               :: LONG_PTR
 LRESULT              :: LONG_PTR
@@ -177,6 +179,19 @@ PROCESS_INFORMATION :: struct {
   hThread     : HANDLE = default
   dwProcessId : DWORD  = default
   dwThreadId  : DWORD  = default
+}
+
+CRITICAL_SECTION :: struct {
+    DebugInfo      : &void      = default
+    LockCount      : LONG       = default
+    RecursionCount : LONG       = default
+    OwningThread   : HANDLE     = default // from the thread's ClientId->UniqueThread
+    LockSemaphore  : HANDLE     = default
+    SpinCount      : ULONG      = default // force size on 64-bit systems when packed
+}
+
+CONDITION_VARIABLE :: struct { 
+    ptr : &void = default
 }
 
 // #define UNICODE_NOCHAR                  0xFFFF

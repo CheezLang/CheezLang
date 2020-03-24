@@ -158,11 +158,11 @@ impl Compiler {
 
         threads := Array[Thread].create()
         for 0..thread_count {
-            threads.add(Thread.create(thread_func, comp))
+            threads.add(Thread.new(cast comp.thread_func))
         }
 
         <<comp = Compiler(
-            mutex = Mutex.create()
+            mutex = Mutex.new()
             threads = threads
         )
 
@@ -177,7 +177,7 @@ impl Compiler {
         if threads.get_length() > 1 then mutex.release()
     }
 
-    thread_func :: (self: &Compiler) {
+    thread_func :: (ref Self) {
         profile_function()
         Fiber.init()
         thread_id := Thread.current().id
@@ -188,7 +188,7 @@ impl Compiler {
                 self.lock()
                 defer self.release()
 
-                self.active_threads -= 1
+                active_threads -= 1
 
                 // if fiber made progress or finished, move all stuff from q2 to q
                 if current_fiber != null {
@@ -227,7 +227,7 @@ impl Compiler {
 
                 current_fiber = self.fiber_q.pop()
                 current_fiber.thread = thread_id
-                self.active_threads += 1
+                active_threads += 1
             }
 
             expr_id := current_fiber.expr.id

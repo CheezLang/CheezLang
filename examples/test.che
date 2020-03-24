@@ -10,8 +10,63 @@
 // import examples.command_line_parser
 // import compiler.cli
 // import compiler.compiler_test
-// import examples.ShmupEngine.src.main
 import examples.debugger
+// import examples.ShmupEngine.src.main
+
+// use import std.thread
+// use import std.rc
+
+// io :: import std.io
+
+// g_lock      : &ReentrantLock        = null
+// g_cond_var  : &ConditionVariable    = null
+
+// foo :: (b: &Bar) {
+//     loop {
+//         g_cond_var.wait(<<g_lock)
+//         defer g_lock.release()
+
+//         io.formatln("foo: in thread {}, bar.counter: {}", [Thread.current().id, b.counter])
+//     }
+// }
+
+// Bar :: struct {
+//     counter : int = 0
+// }
+
+// impl Bar {
+//     baz :: (ref Self) {
+//         loop {
+//             g_cond_var.wait(<<g_lock)
+//             defer g_lock.release()
+
+//             io.formatln("Bar.baz({}): in thread {}", [counter, Thread.current().id])
+//             counter += 1
+//         }
+//     }
+// }
+
+// Main :: () {
+//     lock := ReentrantLock.new()
+//     g_lock = &lock.get()
+//     cond_var := ConditionVariable.new()
+//     g_cond_var = &cond_var.get()
+
+//     b := Bar()
+
+//     t1 := Thread.new(cast b.baz)
+//     t1.start()
+    
+//     t2 := Thread.create(cast(Fn(&Bar)) foo, &b)
+//     t2.start()
+
+//     loop {
+//         io.formatln("Main: in thread {}", [Thread.current().id])
+//         Thread.sleep(500)
+//         cond_var.get().notify()
+//         Thread.sleep(500)
+//     }
+// }
 
 
 // examples which are not working currently

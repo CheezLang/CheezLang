@@ -69,20 +69,20 @@ CompileOptions :: struct {
     out    : String
 }
 
-impl(T: type) Printable for Array[T] if T : Printable, #notyet {
-    print :: (ref Self, str: ref String, format: string) {
-        str += "["
-        for(by_ref=true) v : self.slice() {
-            if it_index > 0 {
-                str += ", "
-            }
+// impl(T: type) Printable for Array[T] if T : Printable, #notyet {
+//     print :: (ref Self, str: ref String, format: string) {
+//         str += "["
+//         for(by_ref=true) v : self.slice() {
+//             if it_index > 0 {
+//                 str += ", "
+//             }
 
-            p : &Printable = &v
-            p.print(str, "")
-        }
-        str += "]"
-    }
-}
+//             p : &Printable = &v
+//             p.print(str, "")
+//         }
+//         str += "]"
+//     }
+// }
 
 to_args_array :: (strings: []string) -> Array[String] {
     array := Array[String].create(strings.length)

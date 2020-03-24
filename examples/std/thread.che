@@ -5,6 +5,7 @@ use import std.os.windows_types
 use import std.os.windows_constants
 use import std.os.windows_macros
 use import std.array
+use import std.rc
 use import std.ring_queue
 
 C :: import std.c
@@ -21,7 +22,7 @@ Thread :: struct {
 ThreadData :: struct {
     handle  : HANDLE
     user    : &void
-    func    : fn(&void)
+    func    : Fn(&void)
     id      : int
 }
 
@@ -39,7 +40,7 @@ impl Thread {
         return current_thread_data
     }
 
-    create :: (func: fn(&$T), user_data: &$T) -> Thread {
+    create :: (func: Fn(&$T), user_data: &$T) -> Thread {
         thread_func :: (data: &void) -> u32 #stdcall {
             thread_data := @cast(&ThreadData, data)
             current_thread_data = thread_data
@@ -53,18 +54,22 @@ impl Thread {
 
         td.handle   = handle
         td.id       = cast GetThreadId(handle)
-        td.func     = @cast(fn(&void), func)
+        td.func     = @cast(Fn(&void), func)
         td.user     = @cast(&void, user_data)
 
         return Thread(td)
     }
 
-    create_without_data :: (func: fn()) -> Thread {
+    new :: (func: Fn()) -> Thread {
+        return create_without_data(func)
+    }
+
+    create_without_data :: (func: Fn()) -> Thread {
         thread_func :: (data: &void) -> u32 #stdcall {
             thread_data := @cast(&ThreadData, data)
             current_thread_data = thread_data
 
-            func := @cast(fn(), thread_data.func)
+            func := @cast(Fn(), thread_data.func)
             func()
             return 0
         }
@@ -75,7 +80,7 @@ impl Thread {
 
         td.handle   = handle
         td.id       = cast GetThreadId(handle)
-        td.func     = @cast(fn(&void), func)
+        td.func     = @cast(Fn(&void), func)
         td.user     = null
 
         return Thread(td)
@@ -151,6 +156,63 @@ impl Drop for Mutex {
     }
 }
 
+// 
+ConditionVariable :: struct {
+    _impl : CONDITION_VARIABLE
+}
+
+impl ConditionVariable {
+    new :: () -> Rc[ConditionVariable] {
+        cond_var := Rc[ConditionVariable].new(CONDITION_VARIABLE())
+        InitializeConditionVariable(&cond_var.get()._impl)
+        return cond_var
+    }
+
+    wait :: (ref Self, lock: ref ReentrantLock) {
+        SleepConditionVariableCS(&_impl, &lock._impl, INFINITE)
+    }
+
+    notify :: (ref Self) {
+        WakeConditionVariable(&_impl)
+    }
+
+    notify_all :: (ref Self) {
+        WakeAllConditionVariable(&_impl)
+    }
+}
+
+
+// lock
+ReentrantLock :: struct {
+    _impl : CRITICAL_SECTION
+}
+
+impl ReentrantLock {
+    new :: () -> Rc[ReentrantLock] {
+        lock := Rc[ReentrantLock].new(CRITICAL_SECTION())
+        InitializeCriticalSection(&lock.get()._impl)
+        return lock
+    }
+
+    try_lock :: (ref Self, timeout: int) -> bool {
+        return TryEnterCriticalSection(&_impl) != 0
+    }
+
+    lock :: (ref Self) {
+        EnterCriticalSection(&_impl)
+    }
+
+    release :: (ref Self) {
+        LeaveCriticalSection(&_impl)
+    }
+}
+
+impl Drop for ReentrantLock {
+    drop :: (ref Self) {
+        DeleteCriticalSection(&self._impl)
+    }
+}
+
 // thread pool
 ThreadPoolFunc :: (function: fn(&void), data: &void)
 
@@ -200,7 +262,7 @@ impl ThreadPool {
         }
 
         for 0..num_threads {
-            t := Thread.create(worker, data)
+            t := Thread.create(cast(Fn(&ThreadPoolData)) worker, data)
             t.start()
             data.threads.add(t)
         }

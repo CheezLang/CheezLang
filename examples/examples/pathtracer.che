@@ -537,7 +537,7 @@ thread_pool     : &ThreadPool = null
 
 Main :: () {
     tp := ThreadPool.create(thread_count)
-    m  := Mutex.create()
+    m  := Mutex.new()
     thread_pool     = &tp
     thread_pool_mut = &m
 

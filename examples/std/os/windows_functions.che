@@ -158,5 +158,21 @@ TerminateThread    :: (hThread: HANDLE, dwExitCode: DWORD) -> BOOL #stdcall;
 ReleaseMutex       :: (handle: HANDLE) -> BOOL #stdcall;
 CreateMutexA       :: (lpMutexAttributes: &void, bInitialOwner: BOOL, lpName: &char) -> HANDLE #stdcall;
 
+InitializeCriticalSection               :: (section: &CRITICAL_SECTION) #stdcall;
+EnterCriticalSection                    :: (section: &CRITICAL_SECTION) #stdcall;
+LeaveCriticalSection                    :: (section: &CRITICAL_SECTION) #stdcall;
+InitializeCriticalSectionAndSpinCount   :: (section: &CRITICAL_SECTION, spin_count: DWORD) -> BOOL #stdcall;
+InitializeCriticalSectionEx             :: (section: &CRITICAL_SECTION, spin_count: DWORD, flags: DWORD) -> BOOL #stdcall;
+SetCriticalSectionSpinCount             :: (section: &CRITICAL_SECTION, spin_count: DWORD) -> DWORD #stdcall;
+TryEnterCriticalSection                 :: (section: &CRITICAL_SECTION) -> BOOL #stdcall;
+DeleteCriticalSection                   :: (section: &CRITICAL_SECTION) #stdcall;
+
+InitializeConditionVariable             :: (var: &CONDITION_VARIABLE) #stdcall;
+WakeConditionVariable                   :: (var: &CONDITION_VARIABLE) #stdcall;
+WakeAllConditionVariable                :: (var: &CONDITION_VARIABLE) #stdcall;
+SleepConditionVariableCS                :: (var: &CONDITION_VARIABLE, section: &CRITICAL_SECTION, milliseconds: DWORD) -> BOOL #stdcall;
+// SleepConditionVariableSRW               :: (var: &CONDITION_VARIABLE, SRWLock: &SRWLOCK, milliseconds: DWORD, flags: ULONG) -> BOOL #stdcall;
+
+
 // somehow not linking
 // GetCurrentDirectory :: (nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;

@@ -56,7 +56,7 @@ impl Instrumentor {
 
         m : &Mutex = if thread_safe {
             m := alloc(Mutex)
-            <<m = Mutex.create()
+            <<m = Mutex.new()
             m
         } else {
             null
