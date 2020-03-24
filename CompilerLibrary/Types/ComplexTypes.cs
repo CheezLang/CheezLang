@@ -329,6 +329,20 @@ namespace Cheez.Types.Complex
         public (string name, CheezType type, AstExpression defaultValue)[] Parameters { get; private set; }
         public CheezType ReturnType { get; private set; }
 
+        private FunctionType _underlyingFuncType = null;
+        public FunctionType UnderlyingFuncType {
+            get {
+                if (_underlyingFuncType == null && IsFatFunction) {
+                    var parameterTypes = Enumerable.Prepend(
+                            Parameters, 
+                            ("_data", PointerType.GetPointerType(CheezType.Void), null))
+                        .ToArray();
+                    _underlyingFuncType = new FunctionType(parameterTypes, ReturnType, false, CC);
+                }
+                return _underlyingFuncType;
+            }
+        }
+
         public override bool IsErrorType => ReturnType.IsErrorType || Parameters.Any(p => p.type.IsErrorType);
 
         public CallingConvention CC { get; } = CallingConvention.Default;

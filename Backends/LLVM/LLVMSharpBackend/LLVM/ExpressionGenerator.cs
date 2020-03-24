@@ -1120,7 +1120,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     case (true, true):
                         {
-                            throw new NotImplementedException();
+                            var fat_func = GenerateExpression(cast.SubExpression, true);
+                            var func = builder.CreateExtractValue(fat_func, 0, "fat_function_cast.func");
+                            var data = builder.CreateExtractValue(fat_func, 1, "fat_function_cast.data");
+
+                            var underlyingType = tf.UnderlyingFuncType;
+                            // System.Console.WriteLine($"fat function cast cast({tf}) {ff}, underlying type: {underlyingType}");
+                            func = builder.CreatePointerCast(func, CheezTypeToLLVMType(underlyingType), "");
+                            
+                            var result = LLVM.GetUndef(CheezTypeToLLVMType(to));
+                            result = builder.CreateInsertValue(result, func, 0, "");
+                            result = builder.CreateInsertValue(result, data, 1, "");
+                            return result;
                         }
 
                     case (true, false):
@@ -1139,7 +1150,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     case (false, true):
                         {
                             // not possible
-                            throw new NotImplementedException();
+                            throw new NotImplementedException("cast(fn) Fn");
                         }
                 }
             }
