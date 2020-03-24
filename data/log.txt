@@ -1,5 +1,5 @@
-[9768] -> (C)  {"command":"initialize","arguments":{"clientID":"vscode","clientName":"Visual Studio Code","adapterID":"cheezbc","pathFormat":"path","linesStartAt1":true,"columnsStartAt1":true,"supportsVariableType":true,"supportsVariablePaging":true,"supportsRunInTerminalRequest":true,"locale":"en-us"},"type":"request","seq":1}
-[9768] -> (C)  {
+[3356] -> (C)  {"command":"initialize","arguments":{"clientID":"vscode","clientName":"Visual Studio Code","adapterID":"cheezbc","pathFormat":"path","linesStartAt1":true,"columnsStartAt1":true,"supportsVariableType":true,"supportsVariablePaging":true,"supportsRunInTerminalRequest":true,"locale":"en-us"},"type":"request","seq":1}
+[3356] -> (C)  {
     "type": "request",
     "seq": 1,
     "arguments": {
@@ -17,7 +17,7 @@
     "command": "initialize"
 
 }
-[9768] <- (E)  {
+[3356] <- (E)  {
     "type": "event",
     "seq": 0,
     "event": "initialized",
@@ -25,7 +25,7 @@
     }
 
 }
-[9768] <- (R)  {
+[3356] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -35,9 +35,9 @@
     "command": "initialize"
 
 }
-[9768]  ===================================================
-[9768] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"swap.cbc","path":"p:\\dev\\debug_adapter_test\\swap.cbc"},"lines":[25],"breakpoints":[{"line":25}],"sourceModified":false},"type":"request","seq":2}
-[9768] -> (C)  {
+[3356]  ===================================================
+[3356] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"swap.cbc","path":"p:\\dev\\debug_adapter_test\\swap.cbc"},"lines":[25],"breakpoints":[{"line":25}],"sourceModified":false},"type":"request","seq":2}
+[3356] -> (C)  {
     "type": "request",
     "seq": 2,
     "arguments": {
@@ -58,7 +58,7 @@
     "command": "setBreakpoints"
 
 }
-[9768] <- (R)  {
+[3356] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -68,9 +68,9 @@
     "command": "setBreakpoints"
 
 }
-[9768]  ===================================================
-[9768] -> (C)  {"command":"launch","arguments":{"name":"cheez bitcode test","type":"cheezbc","request":"launch","program":"p:\\dev\\debug_adapter_test\\swap.cbc","args":["123"],"internalConsoleOptions":"openOnSessionStart","__sessionId":"973ef8cf-4927-495d-a719-bd24420a693c"},"type":"request","seq":3}
-[9768] -> (C)  {
+[3356]  ===================================================
+[3356] -> (C)  {"command":"launch","arguments":{"name":"cheez bitcode test","type":"cheezbc","request":"launch","program":"p:\\dev\\debug_adapter_test\\swap.cbc","args":["123"],"internalConsoleOptions":"openOnSessionStart","__sessionId":"a86c388a-c368-4bdd-8a63-78f66d0ad45f"},"type":"request","seq":3}
+[3356] -> (C)  {
     "type": "request",
     "seq": 3,
     "arguments": {
@@ -82,25 +82,14 @@
         "args": [
             "123"
         ],
-        "__sessionId": "973ef8cf-4927-495d-a719-bd24420a693c"
+        "__sessionId": "a86c388a-c368-4bdd-8a63-78f66d0ad45f"
     },
     "command": "launch"
 
 }
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 3,
-    "request_seq": 3,
-    "command": "launch"
-
-}
-[9768]  ===================================================
-[15396] <- (E)  {
+[3356] <- (E)  {
     "type": "event",
-    "seq": 4,
+    "seq": 3,
     "event": "stopped",
     "body": {
         "threadId": 0,
@@ -108,8 +97,19 @@
     }
 
 }
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":4}
-[9768] -> (C)  {
+[3356] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+    },
+    "seq": 4,
+    "request_seq": 3,
+    "command": "launch"
+
+}
+[3356]  ===================================================
+[3356] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":4}
+[3356] -> (C)  {
     "type": "request",
     "seq": 4,
     "arguments": {
@@ -120,8 +120,8 @@
     "command": "stackTrace"
 
 }
-[9768]  stackframe: line: 24, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
+[3356]  stackframe: line: 24, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
+[3356] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -143,17 +143,17 @@
     "command": "stackTrace"
 
 }
-[9768]  ===================================================
-[9768] -> (C)  {"command":"threads","type":"request","seq":5}
-[9768] -> (C)  {
+[3356]  ===================================================
+[3356] -> (C)  {"command":"threads","type":"request","seq":5}
+[3356] -> (C)  {
     "type": "request",
     "seq": 5,
     "command": "threads"
 
 }
-[9768]  request threads
-[9768]  [DapThread(id = 0, name = Main Thread)]
-[9768] <- (R)  {
+[3356]  request threads
+[3356]  [DapThread(id = 0, name = Main Thread)]
+[3356] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -169,9 +169,9 @@
     "command": "threads"
 
 }
-[9768]  ===================================================
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":6}
-[9768] -> (C)  {
+[3356]  ===================================================
+[3356] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":6}
+[3356] -> (C)  {
     "type": "request",
     "seq": 6,
     "arguments": {
@@ -182,8 +182,8 @@
     "command": "stackTrace"
 
 }
-[9768]  stackframe: line: 24, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
+[3356]  stackframe: line: 24, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
+[3356] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -205,9 +205,9 @@
     "command": "stackTrace"
 
 }
-[9768]  ===================================================
-[9768] -> (C)  {"command":"scopes","arguments":{"frameId":0},"type":"request","seq":7}
-[9768] -> (C)  {
+[3356]  ===================================================
+[3356] -> (C)  {"command":"scopes","arguments":{"frameId":0},"type":"request","seq":7}
+[3356] -> (C)  {
     "type": "request",
     "seq": 7,
     "arguments": {
@@ -216,7 +216,7 @@
     "command": "scopes"
 
 }
-[9768] <- (R)  {
+[3356] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -243,9 +243,9 @@
     "command": "scopes"
 
 }
-[9768]  ===================================================
-[9768] -> (C)  {"command":"variables","arguments":{"variablesReference":1},"type":"request","seq":8}
-[9768] -> (C)  {
+[3356]  ===================================================
+[3356] -> (C)  {"command":"variables","arguments":{"variablesReference":1},"type":"request","seq":8}
+[3356] -> (C)  {
     "type": "request",
     "seq": 8,
     "arguments": {
@@ -254,7 +254,7 @@
     "command": "variables"
 
 }
-[9768] <- (R)  {
+[3356] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -276,1035 +276,30 @@
     "command": "variables"
 
 }
-[9768]  ===================================================
-[9768] -> (C)  {"command":"variables","arguments":{"variablesReference":3},"type":"request","seq":9}
-[9768] -> (C)  {
+[3356]  ===================================================
+[3356] -> (C)  {"command":"continue","arguments":{"threadId":0},"type":"request","seq":9}
+[3356] -> (C)  {
     "type": "request",
     "seq": 9,
     "arguments": {
-        "variablesReference": 3
+        "threadId": 0
     },
-    "command": "variables"
+    "command": "continue"
 
 }
-[9768] <- (R)  {
+[3356] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
-        "variables": [
-            {
-                "name": "ip",
-                "value": "0",
-                "variablesReference": 0
-            },
-            {
-                "name": "sp",
-                "value": "0",
-                "variablesReference": 0
-            },
-            {
-                "name": "bp",
-                "value": "0",
-                "variablesReference": 0
-            }
-        ]
     },
     "seq": 10,
     "request_seq": 9,
-    "command": "variables"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"variables","arguments":{"variablesReference":2},"type":"request","seq":10}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 10,
-    "arguments": {
-        "variablesReference": 2
-    },
-    "command": "variables"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "variables": [
-        ]
-    },
-    "seq": 11,
-    "request_seq": 10,
-    "command": "variables"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":11}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 11,
-    "arguments": {
-        "threadId": 0
-    },
-    "command": "next"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 12,
-    "request_seq": 11,
-    "command": "next"
-
-}
-[9768]  ===================================================
-[15396] <- (E)  {
-    "type": "event",
-    "seq": 13,
-    "event": "stopped",
-    "body": {
-        "threadId": 0,
-        "reason": "step"
-    }
-
-}
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":12}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 12,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 1
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 25, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 26
-            }
-        ]
-    },
-    "seq": 14,
-    "request_seq": 12,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"threads","type":"request","seq":13}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 13,
-    "command": "threads"
-
-}
-[9768]  request threads
-[9768]  [DapThread(id = 0, name = Main Thread)]
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "threads": [
-            {
-                "id": 0,
-                "name": "Main Thread"
-            }
-        ]
-    },
-    "seq": 15,
-    "request_seq": 13,
-    "command": "threads"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":14}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 14,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 20
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 25, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 26
-            }
-        ]
-    },
-    "seq": 16,
-    "request_seq": 14,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":15}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 15,
-    "arguments": {
-        "threadId": 0
-    },
-    "command": "next"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 17,
-    "request_seq": 15,
-    "command": "next"
-
-}
-[9768]  ===================================================
-[15396] <- (E)  {
-    "type": "event",
-    "seq": 18,
-    "event": "stopped",
-    "body": {
-        "threadId": 0,
-        "reason": "step"
-    }
-
-}
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":16}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 16,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 1
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 27, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 28
-            }
-        ]
-    },
-    "seq": 19,
-    "request_seq": 16,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"threads","type":"request","seq":17}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 17,
-    "command": "threads"
-
-}
-[9768]  request threads
-[9768]  [DapThread(id = 0, name = Main Thread)]
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "threads": [
-            {
-                "id": 0,
-                "name": "Main Thread"
-            }
-        ]
-    },
-    "seq": 20,
-    "request_seq": 17,
-    "command": "threads"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":18}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 18,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 20
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 27, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 28
-            }
-        ]
-    },
-    "seq": 21,
-    "request_seq": 18,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":19}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 19,
-    "arguments": {
-        "threadId": 0
-    },
-    "command": "next"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 22,
-    "request_seq": 19,
-    "command": "next"
-
-}
-[9768]  ===================================================
-[15396] <- (E)  {
-    "type": "event",
-    "seq": 23,
-    "event": "stopped",
-    "body": {
-        "threadId": 0,
-        "reason": "step"
-    }
-
-}
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":20}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 20,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 1
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 28, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 29
-            }
-        ]
-    },
-    "seq": 24,
-    "request_seq": 20,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"threads","type":"request","seq":21}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 21,
-    "command": "threads"
-
-}
-[9768]  request threads
-[9768]  [DapThread(id = 0, name = Main Thread)]
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "threads": [
-            {
-                "id": 0,
-                "name": "Main Thread"
-            }
-        ]
-    },
-    "seq": 25,
-    "request_seq": 21,
-    "command": "threads"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":22}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 22,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 20
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 28, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 29
-            }
-        ]
-    },
-    "seq": 26,
-    "request_seq": 22,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":23}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 23,
-    "arguments": {
-        "threadId": 0
-    },
-    "command": "next"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 27,
-    "request_seq": 23,
-    "command": "next"
-
-}
-[9768]  ===================================================
-[15396] <- (E)  {
-    "type": "event",
-    "seq": 28,
-    "event": "stopped",
-    "body": {
-        "threadId": 0,
-        "reason": "step"
-    }
-
-}
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":24}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 24,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 1
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 30, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 31
-            }
-        ]
-    },
-    "seq": 29,
-    "request_seq": 24,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"threads","type":"request","seq":25}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 25,
-    "command": "threads"
-
-}
-[9768]  request threads
-[9768]  [DapThread(id = 0, name = Main Thread)]
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "threads": [
-            {
-                "id": 0,
-                "name": "Main Thread"
-            }
-        ]
-    },
-    "seq": 30,
-    "request_seq": 25,
-    "command": "threads"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":26}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 26,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 20
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 30, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 31
-            }
-        ]
-    },
-    "seq": 31,
-    "request_seq": 26,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":27}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 27,
-    "arguments": {
-        "threadId": 0
-    },
-    "command": "next"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 32,
-    "request_seq": 27,
-    "command": "next"
-
-}
-[9768]  ===================================================
-[15396] <- (E)  {
-    "type": "event",
-    "seq": 33,
-    "event": "stopped",
-    "body": {
-        "threadId": 0,
-        "reason": "step"
-    }
-
-}
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":28}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 28,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 1
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 31, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 32
-            }
-        ]
-    },
-    "seq": 34,
-    "request_seq": 28,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"threads","type":"request","seq":29}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 29,
-    "command": "threads"
-
-}
-[9768]  request threads
-[9768]  [DapThread(id = 0, name = Main Thread)]
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "threads": [
-            {
-                "id": 0,
-                "name": "Main Thread"
-            }
-        ]
-    },
-    "seq": 35,
-    "request_seq": 29,
-    "command": "threads"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":30}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 30,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 20
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 31, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 32
-            }
-        ]
-    },
-    "seq": 36,
-    "request_seq": 30,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":31}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 31,
-    "arguments": {
-        "threadId": 0
-    },
-    "command": "next"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 37,
-    "request_seq": 31,
-    "command": "next"
-
-}
-[9768]  ===================================================
-[15396] <- (E)  {
-    "type": "event",
-    "seq": 38,
-    "event": "stopped",
-    "body": {
-        "threadId": 0,
-        "reason": "step"
-    }
-
-}
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":32}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 32,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 1
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 34, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 35
-            }
-        ]
-    },
-    "seq": 39,
-    "request_seq": 32,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"threads","type":"request","seq":33}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 33,
-    "command": "threads"
-
-}
-[9768]  request threads
-[9768]  [DapThread(id = 0, name = Main Thread)]
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "threads": [
-            {
-                "id": 0,
-                "name": "Main Thread"
-            }
-        ]
-    },
-    "seq": 40,
-    "request_seq": 33,
-    "command": "threads"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":34}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 34,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 20
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 34, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 35
-            }
-        ]
-    },
-    "seq": 41,
-    "request_seq": 34,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"scopes","arguments":{"frameId":0},"type":"request","seq":35}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 35,
-    "arguments": {
-        "frameId": 0
-    },
-    "command": "scopes"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "scopes": [
-            {
-                "name": "Locals",
-                "variablesReference": 1,
-                "presentationHint": "locals"
-            },
-            {
-                "name": "Arguments",
-                "variablesReference": 2,
-                "presentationHint": "arguments"
-            },
-            {
-                "name": "Registers",
-                "variablesReference": 3,
-                "presentationHint": "registers"
-            }
-        ]
-    },
-    "seq": 42,
-    "request_seq": 35,
-    "command": "scopes"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"variables","arguments":{"variablesReference":1},"type":"request","seq":36}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 36,
-    "arguments": {
-        "variablesReference": 1
-    },
-    "command": "variables"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "variables": [
-            {
-                "name": "t1",
-                "value": "123",
-                "variablesReference": 0
-            },
-            {
-                "name": "t2",
-                "value": "456",
-                "variablesReference": 0
-            }
-        ]
-    },
-    "seq": 43,
-    "request_seq": 36,
-    "command": "variables"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"variables","arguments":{"variablesReference":2},"type":"request","seq":37}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 37,
-    "arguments": {
-        "variablesReference": 2
-    },
-    "command": "variables"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "variables": [
-        ]
-    },
-    "seq": 44,
-    "request_seq": 37,
-    "command": "variables"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"variables","arguments":{"variablesReference":3},"type":"request","seq":38}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 38,
-    "arguments": {
-        "variablesReference": 3
-    },
-    "command": "variables"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "variables": [
-            {
-                "name": "ip",
-                "value": "12",
-                "variablesReference": 0
-            },
-            {
-                "name": "sp",
-                "value": "2",
-                "variablesReference": 0
-            },
-            {
-                "name": "bp",
-                "value": "0",
-                "variablesReference": 0
-            }
-        ]
-    },
-    "seq": 45,
-    "request_seq": 38,
-    "command": "variables"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"fac.cbc","path":"p:\\dev\\debug_adapter_test\\swap.cbc"},"lines":[25,42],"breakpoints":[{"line":25},{"line":42}],"sourceModified":false},"type":"request","seq":39}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 39,
-    "arguments": {
-        "lines": [
-            25,
-            42
-        ],
-        "source": {
-            "name": "fac.cbc",
-            "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-        },
-        "breakpoints": [
-            {
-                "line": 25
-            },
-            {
-                "line": 42
-            }
-        ],
-        "sourceModified": false
-    },
-    "command": "setBreakpoints"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 46,
-    "request_seq": 39,
-    "command": "setBreakpoints"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"continue","arguments":{"threadId":0},"type":"request","seq":40}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 40,
-    "arguments": {
-        "threadId": 0
-    },
     "command": "continue"
 
 }
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 47,
-    "request_seq": 40,
-    "command": "continue"
-
-}
-[9768]  ===================================================
-[15396] <- (E)  {
+[12232] <- (E)  {
     "type": "event",
-    "seq": 48,
+    "seq": 11,
     "event": "output",
     "body": {
         "output": "123\n",
@@ -1312,9 +307,10 @@
     }
 
 }
-[15396] <- (E)  {
+[3356]  ===================================================
+[12232] <- (E)  {
     "type": "event",
-    "seq": 49,
+    "seq": 12,
     "event": "output",
     "body": {
         "output": "456\n",
@@ -1322,270 +318,9 @@
     }
 
 }
-[15396] <- (E)  {
+[12232] <- (E)  {
     "type": "event",
-    "seq": 50,
-    "event": "stopped",
-    "body": {
-        "threadId": 0,
-        "reason": "breakpoint"
-    }
-
-}
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":41}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 41,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 1
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 41, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 42
-            }
-        ]
-    },
-    "seq": 51,
-    "request_seq": 41,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"threads","type":"request","seq":42}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 42,
-    "command": "threads"
-
-}
-[9768]  request threads
-[9768]  [DapThread(id = 0, name = Main Thread)]
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "threads": [
-            {
-                "id": 0,
-                "name": "Main Thread"
-            }
-        ]
-    },
-    "seq": 52,
-    "request_seq": 42,
-    "command": "threads"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":43}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 43,
-    "arguments": {
-        "startFrame": 0,
-        "threadId": 0,
-        "levels": 20
-    },
-    "command": "stackTrace"
-
-}
-[9768]  stackframe: line: 41, func: 'main', path: 'p:\\dev\\debug_adapter_test\\swap.cbc'
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "stackFrames": [
-            {
-                "column": 5,
-                "id": 0,
-                "name": "main",
-                "source": {
-                    "name": "fac.cbc",
-                    "path": "p:\\dev\\debug_adapter_test\\swap.cbc"
-                },
-                "line": 42
-            }
-        ]
-    },
-    "seq": 53,
-    "request_seq": 43,
-    "command": "stackTrace"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"scopes","arguments":{"frameId":0},"type":"request","seq":44}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 44,
-    "arguments": {
-        "frameId": 0
-    },
-    "command": "scopes"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "scopes": [
-            {
-                "name": "Locals",
-                "variablesReference": 1,
-                "presentationHint": "locals"
-            },
-            {
-                "name": "Arguments",
-                "variablesReference": 2,
-                "presentationHint": "arguments"
-            },
-            {
-                "name": "Registers",
-                "variablesReference": 3,
-                "presentationHint": "registers"
-            }
-        ]
-    },
-    "seq": 54,
-    "request_seq": 44,
-    "command": "scopes"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"variables","arguments":{"variablesReference":1},"type":"request","seq":45}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 45,
-    "arguments": {
-        "variablesReference": 1
-    },
-    "command": "variables"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "variables": [
-            {
-                "name": "t1",
-                "value": "123",
-                "variablesReference": 0
-            },
-            {
-                "name": "t2",
-                "value": "456",
-                "variablesReference": 0
-            }
-        ]
-    },
-    "seq": 55,
-    "request_seq": 45,
-    "command": "variables"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"variables","arguments":{"variablesReference":2},"type":"request","seq":46}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 46,
-    "arguments": {
-        "variablesReference": 2
-    },
-    "command": "variables"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "variables": [
-        ]
-    },
-    "seq": 56,
-    "request_seq": 46,
-    "command": "variables"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"variables","arguments":{"variablesReference":3},"type":"request","seq":47}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 47,
-    "arguments": {
-        "variablesReference": 3
-    },
-    "command": "variables"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-        "variables": [
-            {
-                "name": "ip",
-                "value": "20",
-                "variablesReference": 0
-            },
-            {
-                "name": "sp",
-                "value": "3",
-                "variablesReference": 0
-            },
-            {
-                "name": "bp",
-                "value": "0",
-                "variablesReference": 0
-            }
-        ]
-    },
-    "seq": 57,
-    "request_seq": 47,
-    "command": "variables"
-
-}
-[9768]  ===================================================
-[9768] -> (C)  {"command":"continue","arguments":{"threadId":0},"type":"request","seq":48}
-[9768] -> (C)  {
-    "type": "request",
-    "seq": 48,
-    "arguments": {
-        "threadId": 0
-    },
-    "command": "continue"
-
-}
-[9768] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 58,
-    "request_seq": 48,
-    "command": "continue"
-
-}
-[9768]  ===================================================
-[15396] <- (E)  {
-    "type": "event",
-    "seq": 59,
+    "seq": 13,
     "event": "output",
     "body": {
         "output": "456\n",
@@ -1593,9 +328,9 @@
     }
 
 }
-[15396] <- (E)  {
+[12232] <- (E)  {
     "type": "event",
-    "seq": 60,
+    "seq": 14,
     "event": "output",
     "body": {
         "output": "123\n",
@@ -1603,31 +338,31 @@
     }
 
 }
-[15396] <- (E)  {
+[12232] <- (E)  {
     "type": "event",
-    "seq": 61,
+    "seq": 15,
     "event": "terminated",
     "body": {
     }
 
 }
-[9768] -> (C)  {"command":"disconnect","arguments":{"restart":false},"type":"request","seq":49}
-[9768] -> (C)  {
+[3356] -> (C)  {"command":"disconnect","arguments":{"restart":false},"type":"request","seq":10}
+[3356] -> (C)  {
     "type": "request",
-    "seq": 49,
+    "seq": 10,
     "arguments": {
         "restart": false
     },
     "command": "disconnect"
 
 }
-[9768] <- (R)  {
+[3356] <- (R)  {
     "type": "response",
     "success": false,
     "message": "Failed to handle command 'disconnect'",
-    "seq": 62,
-    "request_seq": 49,
+    "seq": 16,
+    "request_seq": 10,
     "command": "disconnect"
 
 }
-[9768]  ===================================================
+[3356]  ===================================================

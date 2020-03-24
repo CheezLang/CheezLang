@@ -1,8 +1,5 @@
-extern "C" bool lol(bool);
-bool foo(bool);
+#include <Windows.h>
 
-struct S {
-    bool b;
-};
-
-extern "C" S bar(S, bool),
+int main() {
+    InterlockedCompareExchange64
+}

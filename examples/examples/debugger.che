@@ -33,6 +33,448 @@ Main :: () {
     adapter.get().run()
 }
 
+// AtomicBool :: struct {
+//     value: int
+// }
+
+// impl AtomicBool {
+//     set :: (ref Self, val: bool) {
+//         _InterlockedExchange64(&value, int(val))
+//     }
+
+//     get :: (ref Self) -> bool {
+//         return _InterlockedCompareExchange64(&value, 1, 1) != 0
+//     }
+// }
+
+CodeRunner :: trait {
+    run :: (ref Self);
+}
+
+DebuggerCallbacks :: trait {
+    hit_breakpoint :: (ref Self);
+    step_done :: (ref Self);
+    paused :: (ref Self);
+    terminated :: (ref Self);
+}
+
+Debugger :: struct {
+    interp      : &Interpreter
+    cond_run    : Rc[ConditionVariable]
+    lock_run    : Rc[ReentrantLock]
+    cond_pause  : Rc[ConditionVariable]
+    lock_pause  : Rc[ReentrantLock]
+    callbacks   : &DebuggerCallbacks
+
+    breakpoints : Map[String, Array[Breakpoint]]
+
+    running     : bool
+    fp_break    : int
+    no_break    : bool
+    run_thread  : Thread
+}
+
+impl Debugger {
+    new :: () -> Rc[Debugger] {
+        return Rc[Debugger].new(Debugger(
+            interp      = null
+            cond_run    = ConditionVariable.new()
+            lock_run    = ReentrantLock.new()
+            cond_pause  = ConditionVariable.new()
+            lock_pause  = ReentrantLock.new()
+            breakpoints = Map[String, Array[Breakpoint]].new()
+            running     = false
+            fp_break    = 0
+            no_break    = false
+            callbacks   = null
+            run_thread  = Thread(null)
+        ))
+    }
+
+    set_interpreter :: (ref Self, interp: &Interpreter) {
+        self.interp = interp
+    }
+
+    set_callbacks :: (ref Self, callbacks: &DebuggerCallbacks) {
+        self.callbacks = callbacks
+    }
+
+    launch :: (ref Self) {
+        if run_thread.data != null {
+            return
+        }
+
+        run_thread = Thread.new(cast self.execute_code)
+        run_thread.start()
+
+        if self.is_on_breakpoint() {
+            if callbacks != null then callbacks.hit_breakpoint()
+        } else {
+            resume()
+        }
+    }
+
+    pause :: (ref Self) {
+        running = false
+        // cond_pause.get().wait(lock_pause.get())
+        // lock_pause.get().release()
+    }
+
+    resume :: (ref Self) {
+        running = true
+        self.fp_break = 0
+        cond_run.get().notify()
+    }
+
+    step :: (ref Self) {
+        running = true
+        self.fp_break = interp.fp + 1
+        cond_run.get().notify()
+    }
+
+    step_in :: (ref Self) {
+        running = true
+        self.fp_break = int.max
+        cond_run.get().notify()
+    }
+
+    step_out :: (ref Self) {
+        running = true
+        self.fp_break = interp.fp
+        cond_run.get().notify()
+    }
+
+    execute_code :: (ref Self) {
+        self.run()
+    }
+
+    is_on_breakpoint :: (ref Self) -> bool {
+        if breakpoints.count() == 0 {
+            return false
+        }
+
+        frame := ref interp.get_stackframes()[interp.fp]
+
+        path := frame.func.debug_info.path.slice()
+        line := frame.func.debug_info.get_line_for_ip(frame.ip)
+
+        match breakpoints.get(path) {
+            Some($arr) -> {
+                for(by_ref=true) breakpoint : arr.slice() {
+                    if breakpoint.line == line {
+                        return true
+                    }
+                }
+            }
+        }
+
+        return false
+    }
+}
+
+impl CodeRunner for Debugger {
+    run :: (ref Self) {
+        loop {
+            while !running {
+                cond_run.get().wait(lock_run.get())
+            }
+            defer lock_run.get().release()
+
+            // dont break on breakpoints on first iteration
+            no_break = true
+
+            // 
+            while running {
+                if !no_break and self.is_on_breakpoint() {
+                    running = false
+                    if callbacks != null then callbacks.hit_breakpoint()
+                    break
+                }
+                // if !no_break and breakpoints.count() > 0 {
+                //     frame := ref interp.get_stackframes()[interp.fp]
+
+                //     path := frame.func.debug_info.path.slice()
+                //     line := frame.func.debug_info.get_line_for_ip(frame.ip)
+
+                //     match breakpoints.get(path) {
+                //         Some($arr) -> {
+                //             for(by_ref=true) breakpoint : arr.slice() {
+                //                 if breakpoint.line == line {
+                                    
+                //                 }
+                //             }
+                //         }
+                //     }
+
+                //     if !running then break
+                // }
+                no_break = false
+
+                match interp.step() {
+                    .Done -> {
+                        running = false
+                        if callbacks != null then callbacks.terminated()
+                        return
+                    }
+                }
+
+                if interp.fp < fp_break {
+                    fp_break = 0
+                    running = false
+                    if callbacks != null then callbacks.step_done()
+                    break
+                }
+            }
+
+            running = false
+            // cond_pause.get().notify()
+        }
+    }
+}
+
+CheezDebugAdapter :: struct CommandHandler {
+    debugger: Rc[Debugger]
+    interp  : &Interpreter
+    variable_refs   : Array[Rc[VariableRef]]
+}
+
+impl CheezDebugAdapter {
+    new :: () -> Rc[CommandHandler] {
+        command_handler := mem.alloc(CheezDebugAdapter)
+        <<command_handler = CheezDebugAdapter(
+            adapter = null
+            debugger = Debugger.new()
+            interp  = null
+            variable_refs   = Array[Rc[VariableRef]].create()
+        )
+
+        return Rc[CommandHandler].from_pointer(command_handler, owned = true)
+    }
+
+    print :: (ref Self, format: string, args: []&any = [], category: string = "console") {
+        adapter.emit_output_event(fmt.format(format, args), category)
+    }
+
+    clear_variable_refs :: (ref Self) {
+        variable_refs.clear()
+    }
+
+    get_variable_reference :: (ref Self, index: int) -> ref VariableRef {
+        @assert(index >= 1 and index <= variable_refs.count())
+        return variable_refs[index - 1].get()
+    }
+
+    add_variable_ref :: (ref Self, var_ref: Rc[VariableRef]) -> int {
+        index := variable_refs.count() + 1
+        var_ref.get().index = index
+        variable_refs.add(var_ref)
+        return index
+    }
+
+    collect_scopes :: (ref Self, frame: int) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+
+
+        locals := LocalsScope.new(interp, frame)
+        result.add(locals.clone().change_type(VariableRef))
+
+        args := ArgumentsScope.new(interp, frame)
+        result.add(args.clone().change_type(VariableRef))
+
+        registers := RegistersScope.new(interp, frame)
+        result.add(registers.clone().change_type(VariableRef))
+
+        return result
+    }
+}
+
+impl DebuggerCallbacks for CheezDebugAdapter {
+    hit_breakpoint :: (ref Self) {
+        self.adapter.emit_stop_event("breakpoint")
+    }
+
+    step_done :: (ref Self) {
+        self.adapter.emit_stop_event("step")
+    }
+
+    paused :: (ref Self) {
+        self.adapter.emit_stop_event("pause")
+    }
+
+    terminated :: (ref Self) {
+        self.adapter.emit_terminated_event()
+    }
+}
+
+impl CommandHandler for CheezDebugAdapter {
+    initialize :: (ref Self) -> Result[(), String] {
+        adapter.emit_initialized_event()
+        return Ok()
+    }
+
+    launch :: (ref Self, arguments: DapReqLaunch) -> Result[(), String] {
+        debugger.get().pause()
+
+        // create interpreter
+        interp = {
+            code : String = match fs.read_file(arguments.program.slice()) {
+                Ok($content) -> content
+                Err($err) -> {
+                    adapter.logger.log_error("{}", [err]) 
+                    String.empty()
+                }
+            }
+
+            prog := compile_program(code.slice(), arguments.program.slice())
+            if prog == null {
+                adapter.logger.log_error("failed to compile program")
+                @assert(false)
+            }
+
+            prog.printer = cast self.print
+            prog.call("main")
+            prog
+        }
+
+        debugger.get().set_interpreter(interp)
+        debugger.get().set_callbacks(&self)
+        debugger.get().launch()
+
+        return Ok()
+    }
+
+    threads :: (ref Self) -> Result[Array[DapThread], String] {
+        adapter.logger.log("request threads")
+        result := Array[DapThread].create()
+        result.add(DapThread(0, "Main Thread".to_owned()))
+        adapter.logger.log("{}", [result.slice()])
+        return Ok(result)
+    }
+
+    set_breakpoints :: (ref Self, arguments: DapSetBreakpoints) -> Result[(), String] {
+        breaks := Array[Breakpoint].create()
+        for br : arguments.breakpoints {
+            breaks.add(Breakpoint(br.line - 1))
+        }
+        debugger.get().breakpoints[arguments.source.path.slice()] = breaks
+
+        return Ok()
+    }
+
+    stacktrace :: (ref Self) -> Result[Array[DapStackFrame], String] {
+        debugger.get().pause()
+
+        frames := interp.get_stackframes()
+
+        stack_frames := Array[DapStackFrame].create()
+
+        use_prev_ip := false
+        for(by_ref=true, reverse=true) frame : frames {
+            defer { use_prev_ip = true }
+            ip := if use_prev_ip then frame.ip_prev else frame.ip
+            line := frame.func.debug_info.get_line_for_ip(ip)
+
+            adapter.logger.log("stackframe: line: {}, func: '{}', path: '{}'", [line, frame.func.name, frame.func.debug_info.path])
+
+            stack_frames.add(DapStackFrame(
+                id     = frames.length - it_index - 1
+                name   = frame.func.name.clone()
+                source = DapSource(
+                    name = "fac.cbc".to_owned()
+                    path = frame.func.debug_info.path.clone()
+                )
+                line   = line + 1
+                column = 5 // @todo
+            ))
+        }
+
+        return Ok(stack_frames)
+    }
+
+    scopes :: (ref Self, arguments: DapReqScopes) -> Result[Array[DapScope], String] {
+        debugger.get().pause()
+
+        frame_id := arguments.frame_id
+
+        frame := ref interp.get_stackframes()[frame_id]
+        scopes_json := Array[DapScope].create()
+
+        scopes := self.collect_scopes(frame_id)
+        for scope : scopes {
+            self.add_variable_ref(scope.clone().change_type(VariableRef))
+
+            scopes_json.add(DapScope(
+                variables_reference = scope.get().index
+                name                = scope.get().name.clone()
+                presentation_hint   = scope.get().hint.clone()
+            ))
+        }
+
+        return Ok(scopes_json)
+    }
+
+    variables :: (ref Self, arguments: DapReqVariables) -> Result[Array[DapVariable], String] {
+        debugger.get().pause()
+
+        index := arguments.variables_reference
+        variables_json := Array[DapVariable].create()
+
+        var_ref := ref self.get_variable_reference(index)
+        vars := var_ref.get_variables()
+        for var : vars {
+            self.add_variable_ref(var.clone())
+
+            match ref var.get() {
+                Variable($var) -> {
+
+                    variables_json.add(DapVariable(
+                        name = var.name.clone()
+                        value = var.value.clone()
+                        variables_reference = 0
+                    ))
+                }
+                _ -> { @assert(false) }
+            }
+        }
+
+        return Ok(variables_json)
+    }
+
+    pause :: (ref Self) -> Result[(), String] {
+        debugger.get().pause()
+        adapter.emit_stop_event("pause")
+        return Ok()
+    }
+
+    resume :: (ref Self) -> Result[(), String] {
+        self.clear_variable_refs()
+        debugger.get().resume()
+        return Ok()
+    }
+
+    next :: (ref Self) -> Result[(), String] {
+        self.clear_variable_refs()
+        debugger.get().step()
+        return Ok()
+    }
+
+    step_in :: (ref Self) -> Result[(), String] {
+        self.clear_variable_refs()
+        debugger.get().step_in()
+        return Ok()
+    }
+
+    step_out :: (ref Self) -> Result[(), String] {
+        self.clear_variable_refs()
+        debugger.get().step_out()
+        return Ok()
+    }
+}
+
+#file_scope
+
+
+
 Breakpoint :: struct #copy {
     line : int
 }
@@ -134,463 +576,5 @@ impl VariableRef for Variable {
     get_variables :: (ref Self) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         return result
-    }
-}
-
-CheezDebugAdapter :: struct CommandHandler {
-    interp  : &Interpreter
-    mutex   : Mutex
-    thread  : Thread
-    running : bool
-    _step   : bool
-
-    breakpoints : Map[String, Array[Breakpoint]]
-
-    break_when_fp_is_less_than  := 0
-    ignore_breakpoints          := false
-
-    variable_refs   : Array[Rc[VariableRef]]
-
-    next_step := StepType.NotStarted
-}
-
-StepType :: enum {
-    NotStarted
-    Terminated
-    Paused
-    Running
-    Step
-    StepIn
-    StepOut
-}
-
-impl CheezDebugAdapter {
-    new :: () -> Rc[CommandHandler] {
-        debugger := mem.alloc(CheezDebugAdapter)
-        <<debugger = CheezDebugAdapter(
-            adapter = null
-            interp  = null
-            mutex   = Mutex.new()
-            thread  = Thread.new(cast debugger.run)
-            running = false
-            _step   = true
-            adapter = null
-            breakpoints     = Map[String, Array[Breakpoint]].new()
-            variable_refs   = Array[Rc[VariableRef]].create()
-        )
-
-        debugger.thread.start()
-        
-        return Rc[CommandHandler].from_pointer(debugger, owned = true)
-    }
-
-    wait_for_mutex :: (ref Self) {
-        mutex.lock()
-        mutex.release()
-    }
-
-    print :: (ref Self, format: string, args: []&any = [], category: string = "console") {
-        adapter.emit_output_event(fmt.format(format, args), category)
-    }
-
-    run :: (ref Self) {
-        // hit_breakpoint :: () #macro #transparent {
-        //     if breakpoints.count() > 0 {
-        //         frame := ref interp.get_stackframes()[interp.fp]
-
-        //         path := frame.func.debug_info.path.slice()
-        //         line := frame.func.debug_info.get_line_for_ip(frame.ip)
-
-        //         hit := false
-
-        //         match breakpoints.get(path) {
-        //             Some($arr) -> {
-        //                 for(by_ref=true) breakpoint : arr.slice() {
-        //                     if breakpoint.line == line {
-        //                         hit = true
-        //                         adapter.emit_stop_event("breakpoint")
-        //                         break
-        //                     }
-        //                 }
-        //             }
-        //         }
-
-
-        //     } else {
-        //         false
-        //     }
-        // }
-
-        // loop {
-        //     match next_step {
-        //         .NotStarted -> {
-        //             while next_step != .NotStarted {
-        //                 Thread.sleep(1)
-        //             }
-        //             if next_step != .Paused {
-        //                 if interp.step() == .Done {
-        //                     adapter.emit_terminated_event()
-        //                     next_step = .Terminated
-        //                 }
-        //             }
-        //         }
-
-        //         .Running -> {
-        //             running = true
-        //             mutex.lock()
-        //             defer mutex.release()
-
-        //             while next_step == .Running {
-        //                 if interp.step() == .Done {
-        //                     adapter.emit_terminated_event()
-        //                     next_step = .Terminated
-        //                     break
-        //                 }
-        //             }
-
-        //             running = false
-        //             next_step = .Paused
-        //             adapter.emit_stop_event("step")
-        //         }
-
-        //         .StepIn -> {
-        //             running = true
-        //             mutex.lock()
-        //             defer mutex.release()
-
-        //             match interp.step() {
-        //                 .Done -> {
-        //                     adapter.emit_terminated_event()
-        //                     next_step = .Terminated
-        //                 }
-        //             }
-        //             running = false
-        //             next_step = .Paused
-        //             adapter.emit_stop_event("step")
-        //         }
-
-        //         .StepOut -> {
-        //             running = true
-        //             mutex.lock()
-        //             defer mutex.release()
-
-        //             start_depth := interp.fp
-
-        //             loop {
-        //                 if interp.step() == .Done {
-        //                     adapter.emit_terminated_event()
-        //                     next_step = .Terminated
-        //                     break
-        //                 }
-
-        //                 if interp.fp < start_depth {
-        //                     break
-        //                 }
-        //             }
-
-        //             running = false
-        //             next_step = .Paused
-        //             adapter.emit_stop_event("step")
-        //         }
-
-        //         .StepOut -> {
-        //             running = true
-        //             mutex.lock()
-        //             defer mutex.release()
-
-        //             start_depth := interp.fp
-
-        //             loop {
-        //                 if interp.step() == .Done {
-        //                     adapter.emit_terminated_event()
-        //                     next_step = .Terminated
-        //                     break
-        //                 }
-
-        //                 if interp.fp <= start_depth {
-        //                     break
-        //                 }
-        //             }
-
-        //             running = false
-        //             next_step = .Paused
-        //             adapter.emit_stop_event("step")
-        //         }
-        //     }
-        // }
-
-        loop {
-            if running {
-                mutex.lock()
-                loop {
-                    if !ignore_breakpoints and breakpoints.count() > 0 {
-                        frame := ref interp.get_stackframes()[interp.fp]
-
-                        path := frame.func.debug_info.path.slice()
-                        line := frame.func.debug_info.get_line_for_ip(frame.ip)
-
-                        match breakpoints.get(path) {
-                            Some($arr) -> {
-                                for(by_ref=true) breakpoint : arr.slice() {
-                                    if breakpoint.line == line {
-                                        running = false
-                                        adapter.emit_stop_event("breakpoint")
-                                        break
-                                    }
-                                }
-                            }
-                        }
-
-                        if !running then break
-                    } else {
-                        ignore_breakpoints = false
-                    }
-                    if !running then break
-
-                    match interp.step() {
-                        .Done -> {
-                            running = false
-                            adapter.emit_terminated_event()
-                            break
-                        }
-                    }
-
-                    if _step {
-                        running = false
-                        adapter.emit_stop_event("step")
-                        break
-                    } else if interp.fp < break_when_fp_is_less_than {
-                        break_when_fp_is_less_than = 0
-                        running = false
-                        adapter.emit_stop_event("step")
-                        break
-                    }
-                }
-                mutex.release()
-            } else {
-                Thread.sleep(10)
-            }
-        }
-    }
-
-    get_stackframes :: (ref Self) -> []StackFrame {
-        running = false
-        wait_for_mutex()
-        return interp.get_stackframes()
-    }
-
-    clear_variable_refs :: (ref Self) {
-        variable_refs.clear()
-    }
-
-    get_variable_reference :: (ref Self, index: int) -> ref VariableRef {
-        @assert(index >= 1 and index <= variable_refs.count())
-        return variable_refs[index - 1].get()
-    }
-
-    add_variable_ref :: (ref Self, var_ref: Rc[VariableRef]) -> int {
-        index := variable_refs.count() + 1
-        var_ref.get().index = index
-        variable_refs.add(var_ref)
-        return index
-    }
-
-    collect_scopes :: (ref Self, frame: int) -> Array[Rc[VariableRef]] {
-        result := Array[Rc[VariableRef]].create()
-
-
-        locals := LocalsScope.new(interp, frame)
-        result.add(locals.clone().change_type(VariableRef))
-
-        args := ArgumentsScope.new(interp, frame)
-        result.add(args.clone().change_type(VariableRef))
-
-        registers := RegistersScope.new(interp, frame)
-        result.add(registers.clone().change_type(VariableRef))
-
-        return result
-    }
-}
-
-impl CommandHandler for CheezDebugAdapter {
-    initialize :: (ref Self) -> Result[(), String] {
-        adapter.emit_initialized_event()
-        return Ok()
-    }
-
-    launch :: (ref Self, arguments: DapReqLaunch) -> Result[(), String] {
-        @assert(!running)
-
-        // create interpreter
-        interp = {
-            code : String = match fs.read_file(arguments.program.slice()) {
-                Ok($content) -> content
-                Err($err) -> {
-                    adapter.logger.log_error("{}", [err]) 
-                    String.empty()
-                }
-            }
-
-            prog := compile_program(code.slice(), arguments.program.slice())
-            if prog == null {
-                adapter.logger.log_error("failed to compile program")
-                @assert(false)
-            }
-
-            prog.printer = cast self.print
-            prog.call("main")
-            prog
-        }
-
-        _step = false
-        break_when_fp_is_less_than = 0
-        ignore_breakpoints = false
-        running = true
-        return Ok()
-    }
-
-    threads :: (ref Self) -> Result[Array[DapThread], String] {
-        adapter.logger.log("request threads")
-        result := Array[DapThread].create()
-        result.add(DapThread(0, "Main Thread".to_owned()))
-        adapter.logger.log("{}", [result.slice()])
-        return Ok(result)
-    }
-
-    set_breakpoints :: (ref Self, arguments: DapSetBreakpoints) -> Result[(), String] {
-        breaks := Array[Breakpoint].create()
-        for br : arguments.breakpoints {
-            breaks.add(Breakpoint(br.line - 1))
-        }
-        self.breakpoints[arguments.source.path.slice()] = breaks
-
-        return Ok()
-    }
-
-    stacktrace :: (ref Self) -> Result[Array[DapStackFrame], String] {
-        @assert(!running)
-
-        frames := self.get_stackframes()
-
-        stack_frames := Array[DapStackFrame].create()
-
-        use_prev_ip := false
-        for(by_ref=true, reverse=true) frame : frames {
-            defer { use_prev_ip = true }
-            ip := if use_prev_ip then frame.ip_prev else frame.ip
-            line := frame.func.debug_info.get_line_for_ip(ip)
-
-            adapter.logger.log("stackframe: line: {}, func: '{}', path: '{}'", [line, frame.func.name, frame.func.debug_info.path])
-
-            stack_frames.add(DapStackFrame(
-                id     = frames.length - it_index - 1
-                name   = frame.func.name.clone()
-                source = DapSource(
-                    name = "fac.cbc".to_owned()
-                    path = frame.func.debug_info.path.clone()
-                )
-                line   = line + 1
-                column = 5 // @todo
-            ))
-        }
-
-        return Ok(stack_frames)
-    }
-
-    scopes :: (ref Self, arguments: DapReqScopes) -> Result[Array[DapScope], String] {
-        @assert(!running)
-
-        frame_id := arguments.frame_id
-
-        frame := ref self.get_stackframes()[frame_id]
-        scopes_json := Array[DapScope].create()
-
-        scopes := self.collect_scopes(frame_id)
-        for scope : scopes {
-            self.add_variable_ref(scope.clone().change_type(VariableRef))
-
-            scopes_json.add(DapScope(
-                variables_reference = scope.get().index
-                name                = scope.get().name.clone()
-                presentation_hint   = scope.get().hint.clone()
-            ))
-        }
-
-        return Ok(scopes_json)
-    }
-
-    variables :: (ref Self, arguments: DapReqVariables) -> Result[Array[DapVariable], String] {
-        @assert(!running)
-
-        index := arguments.variables_reference
-        variables_json := Array[DapVariable].create()
-
-        var_ref := ref self.get_variable_reference(index)
-        vars := var_ref.get_variables()
-        for var : vars {
-            self.add_variable_ref(var.clone())
-
-            match ref var.get() {
-                Variable($var) -> {
-
-                    variables_json.add(DapVariable(
-                        name = var.name.clone()
-                        value = var.value.clone()
-                        variables_reference = 0
-                    ))
-                }
-                _ -> { @assert(false) }
-            }
-        }
-
-        return Ok(variables_json)
-    }
-
-    pause :: (ref Self) -> Result[(), String] {
-        running = false
-        adapter.emit_stop_event("pause")
-        return Ok()
-    }
-
-    resume :: (ref Self) -> Result[(), String] {
-        self.clear_variable_refs()
-        self._step = false
-        self.break_when_fp_is_less_than = 0
-        self.ignore_breakpoints = true
-        self.running = true
-        return Ok()
-    }
-
-    next :: (ref Self) -> Result[(), String] {
-        self.clear_variable_refs()
-        self.running = false
-        self.wait_for_mutex()
-        self._step = false
-        self.break_when_fp_is_less_than = interp.fp + 1
-        self.ignore_breakpoints = true
-        self.running = true
-        return Ok()
-    }
-
-    step_in :: (ref Self) -> Result[(), String] {
-        self.clear_variable_refs()
-        self.running = false
-        self.wait_for_mutex()
-        self._step = true
-        self.break_when_fp_is_less_than = 0
-        self.ignore_breakpoints = true
-        self.running = true
-        return Ok()
-    }
-
-    step_out :: (ref Self) -> Result[(), String] {
-        self.clear_variable_refs()
-        self.running = false
-        self.wait_for_mutex()
-        self._step = false
-        self.break_when_fp_is_less_than = interp.fp
-        self.ignore_breakpoints = true
-        self.running = true
-        return Ok()
     }
 }
