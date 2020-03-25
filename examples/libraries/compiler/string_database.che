@@ -8,7 +8,7 @@ C :: import std.c
 #export_scope
 
 impl string {
-    equal :: (a: Self, b: Self) -> bool #operator("==") {
+    same :: (a: Self, b: Self) -> bool {
         return a.bytes.length == b.bytes.length and a.bytes.data == b.bytes.data
     }
 }

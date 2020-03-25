@@ -1,0 +1,61 @@
+use import std.string
+use import std.array
+
+use import compiler.ast
+
+fmt :: import std.fmt
+
+#export_scope
+
+dump_ast :: (node: ref AstNode) -> String {
+    result := String.empty()
+    dump_ast_helper(result, node, 0)
+    return result
+}
+
+#file_scope
+
+dump_ast_helper :: (result: ref String, node: ref AstNode, indent: int) {
+    for 0 .. indent {
+        result += "  "
+    }
+    match node {
+        AstConstDecl($decl) -> {
+            result.appendf("AstConstDecl ({})`n", decl.location)
+            dump_ast_helper(result, decl.name, indent + 1)
+            dump_ast_helper(result, decl.value, indent + 1)
+        }
+
+        AstFunction($func) -> {
+            result.appendf("AstFunction ({})`n", func.location)
+            dump_ast_helper(result, <<func.body, indent + 1)
+        }
+
+        AstBlock($block) -> {
+            result.appendf("AstBlock ({})`n", block.location)
+            for child : block.children {
+                dump_ast_helper(result, <<child, indent + 1)
+            }
+        }
+
+        AstIdentifier($id) -> {
+            result.appendf("AstIdentifier '{}' ({})`n", (id.value, id.location))
+        }
+
+        AstNumberLiteral($num) -> {
+            result.appendf("AstNumberLiteral {}` ({})`n", (num.value, num.location))
+        }
+
+        AstCall($call) -> {
+            result.appendf("AstCall ({})`n", call.location)
+            dump_ast_helper(result, call.function, indent + 1)
+            for arg : call.arguments {
+                dump_ast_helper(result, <<arg, indent + 1)
+            }
+        }
+
+        $node -> {
+            result += "<ERROR> not implemented`n"
+        }
+    }
+}

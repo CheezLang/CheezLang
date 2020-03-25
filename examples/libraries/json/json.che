@@ -40,10 +40,24 @@ impl JsonValue {
         }
     }
 
+    as_string_or :: (ref Self, def: fn() -> String) -> String {
+        return match self {
+            .JsonString($str) -> str.clone()
+            _ -> def()
+        }
+    }
+
     to_array :: (Self) -> Array[JsonValue] {
         return match self {
             .JsonArray($arr) -> arr
             _ -> @assert(false)
+        }
+    }
+
+    as_array_or :: (ref Self, def: fn() -> Array[JsonValue]) -> Array[JsonValue] {
+        return match self {
+            .JsonArray($arr) -> arr.clone()
+            _ -> def()
         }
     }
 

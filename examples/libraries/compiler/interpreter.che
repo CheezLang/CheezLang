@@ -5,6 +5,7 @@ use import std.string
 use import std.math
 
 use import compiler.string_database
+use import compiler.bytecode_generator
 
 io  :: import std.io
 fs  :: import std.io.fs
@@ -35,6 +36,18 @@ Main2 :: () {
     prog.run()
 }
 
+allocate_function :: (name: string, path: string, params: Array[String]) -> &CBCFunction {
+    func := mem.alloc(CBCFunction)
+    <<func = CBCFunction(
+        name        = name.to_owned()
+        debug_info  = CBCDebugInfo(
+            path       = path.to_owned()
+            parameters = params
+        )
+    )
+    return func
+}
+
 compile_program :: (code: string, path: string) -> &Interpreter {
     interp := Interpreter.new()
 
@@ -47,6 +60,7 @@ compile_program :: (code: string, path: string) -> &Interpreter {
 
     current_function := ""
     local_index := 0
+    bytecode : &CBCFunction = null
 
     has_errors := false
 
@@ -89,9 +103,10 @@ compile_program :: (code: string, path: string) -> &Interpreter {
             branches.clear()
             parameters.clear()
 
-            f := func.end_function()
+            func.end_function()
 
-            interp.register_function(current_function, f)
+            interp.register_function(current_function, bytecode)
+            bytecode = null
             current_function = ""
         } else if trimmed.starts_with("fn ") {
             brace := trimmed.index_of('{')
@@ -108,7 +123,9 @@ compile_program :: (code: string, path: string) -> &Interpreter {
             }
 
             current_function = parts[0]
-            func.begin_function(current_function, path, params)
+
+            bytecode = allocate_function(current_function, path, params)
+            func.begin_function(bytecode)
             local_index = 0
         } else if brace := trimmed.index_of(':'), brace >= 0 {
             name := trimmed[..brace]
@@ -117,7 +134,7 @@ compile_program :: (code: string, path: string) -> &Interpreter {
             parts := trimmed.split_at_char(' ', true).to_array()
             @assert(parts.count() > 0)
 
-            func.set_current_line(it_index)
+            func.set_current_line(it_index + 1)
 
             inst := parts[0].trim()
 
@@ -223,89 +240,6 @@ compile_program :: (code: string, path: string) -> &Interpreter {
     return interp
 }
 
-sample_program_2 :: () {
-    //     interp := Interpreter.new()
-
-    //     fac := InstructionBuilder.new(interp.strings)
-    //     fac.build_load_local(-1)
-    //     fac.build_const(1)
-    //     fac.build_igt()
-    //     br_body := fac.build_branch_if(0)
-    //     fac.build_const(1)
-    //     fac.build_return()
-    //     fac.code_view()[br_body] = u64(fac.next())
-    //     fac.build_load_local(-1)
-    //     fac.build_load_local(-1)
-    //     fac.build_const(1)
-    //     fac.build_sub()
-    //     fac.build_call("fac", 1)
-    //     fac.build_mul()
-    //     fac.build_return()
-        
-    //     main := InstructionBuilder.new(interp.strings)
-    //     main.build_const(4)
-    //     main.build_call("fac", 1)
-    //     main.build_print()
-    //     main.build_halt()
-
-    //     interp.register_function("fac", fac.end_function())
-
-    //     interp.push_frame(main.code_view())
-    //     interp.run()
-}
-
-sample_program_1 :: () {
-    //     interp := Interpreter.new()
-
-    //     add := InstructionBuilder.new(interp.strings)
-    //     add.build_load_local(-2)
-    //     add.build_load_local(-1)
-    //     add.build_add()
-    //     add.build_return()
-
-    //     mul := InstructionBuilder.new(interp.strings)
-    //     mul.build_load_local(-2)
-    //     mul.build_load_local(-1)
-    //     mul.build_mul()
-    //     mul.build_return()
-
-    //     foo := InstructionBuilder.new(interp.strings)
-    //     foo.build_const(1)
-    //     foo.build_const(2)
-    //     foo.build_const(3)
-    //     foo.build_call("mul", 2)
-    //     foo.build_call("add", 2)
-    //     foo.build_return()
-
-    //     bar := InstructionBuilder.new(interp.strings)
-    //     bar.build_const(1)
-    //     bar.build_const(2)
-    //     bar.build_call("add", 2)
-    //     bar.build_const(3)
-    //     bar.build_call("mul", 2)
-    //     bar.build_return()
-
-    //     func := InstructionBuilder.new(interp.strings)
-    //     func.build_call("foo")
-    //     func.build_print()
-    //     func.build_call("bar")
-    //     func.build_print()
-    //     func.build_return_void()
-        
-    //     main := InstructionBuilder.new(interp.strings)
-    //     main.build_call("func")
-    //     main.build_halt()
-
-    //     interp.register_function("func", func.code())
-    //     interp.register_function("foo", foo.code())
-    //     interp.register_function("bar", bar.code())
-    //     interp.register_function("add", add.code())
-    //     interp.register_function("mul", mul.code())
-
-    //     interp.push_frame(main.code_view())
-    //     interp.run()
-}
-
 LineInfo :: struct #copy {
     line  : int
     count : int
@@ -320,15 +254,22 @@ CBCDebugInfo :: struct {
 
 impl CBCDebugInfo {
     get_line_for_ip :: (ref Self, ip: int) -> int {
+        // io.formatln("get_line_for_ip({}, lines: {})", [ip, lines.slice()])
         i := 0
         for lines {
-            if i >= ip {
+            if it.count == 0 then continue
+            i += it.count
+            if i > ip {
                 return it.line
             }
-            i += it.count
         }
 
         return -1
+    }
+    get_line_for_ip2 :: (ref Self, ip: int, print: Fn(string, []&any, string)) -> int {
+        line := get_line_for_ip(ip)
+        // print("get_line_for_ip({}) -> {}  (lines: {})", [ip, line, lines.slice()], "console")
+        return line
     }
 }
 
@@ -336,202 +277,6 @@ CBCFunction :: struct {
     name            := String.empty()
     instructions    := Array[u64].create()
     debug_info      := CBCDebugInfo()
-}
-
-InstructionBuilder :: struct {
-    function        : CBCFunction 
-    current_line    : int
-    strings         : ref StringDatabase
-}
-
-impl InstructionBuilder {
-    new :: (strings: ref StringDatabase) -> InstructionBuilder {
-        return InstructionBuilder(
-            function        = CBCFunction()
-            current_line    = -1
-            strings         = strings
-        )
-    }
-
-    begin_function :: (ref Self, name: string, path: string, params: Array[String]) {
-        current_line = -1
-        function.debug_info.lines.clear()
-        function.instructions.clear()
-
-        function.name = name.to_owned()
-        function.debug_info.path = path.to_owned()
-        function.debug_info.parameters = params
-    }
-
-    end_function :: (ref Self) -> CBCFunction {
-        return function <- CBCFunction()
-    }
-
-    code_view :: (ref Self) -> []u64 {
-        return function.instructions.slice()
-    }
-
-    set_current_line :: (ref Self, line: int) {
-        if current_line != line {
-            function.debug_info.lines.add(LineInfo(line, 0))
-        }
-        current_line = line
-    }
-
-    next :: (ref Self) -> int {
-        return function.instructions.get_length()
-    }
-
-    add_debug_info_line :: () #macro #transparent {
-        @assert(function.debug_info.lines.count() > 0)
-        current_instruction_count := function.instructions.count()
-        defer {
-            new_instruction_count := function.instructions.count()
-            function.debug_info.lines.peek_last().count += new_instruction_count - current_instruction_count
-        }
-    }
-
-    build_noop :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Noop)
-    }
-
-    build_const :: (ref Self, value: int) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Const)
-        function.instructions.add(<<cast(&u64)&value)
-    }
-
-    build_address_of :: (ref Self, index: int) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.AddressOf)
-        function.instructions.add(<<cast(&u64)&index)
-    }
-
-    build_load :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Load)
-    }
-
-    build_store :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Store)
-    }
-
-    build_load_local :: (ref Self, index: int) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.LoadLocal)
-        function.instructions.add(<<cast(&u64)&index)
-    }
-
-    build_store_local :: (ref Self, index: int) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.StoreLocal)
-        function.instructions.add(<<cast(&u64)&index)
-    }
-
-    build_add :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Add)
-    }
-
-    build_sub :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Sub)
-    }
-
-    build_mul :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Mul)
-    }
-
-    build_div :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Div)
-    }
-
-    build_mod :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Mod)
-    }
-
-    build_and :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.And)
-    }
-
-    build_or :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Or)
-    }
-
-    build_ieq :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Ieq)
-    }
-
-    build_ilt :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Ilt)
-    }
-
-    build_ile :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Ile)
-    }
-
-    build_igt :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Igt)
-    }
-
-    build_ige :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Ige)
-    }
-
-    build_branch :: (ref Self, address: int) -> int {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Branch)
-        function.instructions.add(cast address)
-        return function.instructions.count() - 1
-    }
-
-    build_branch_if :: (ref Self, address: int) -> int {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.BranchIf)
-        function.instructions.add(cast address)
-        return function.instructions.count() - 1
-    }
-
-    build_call :: (ref Self, name: string, arity: int = 0) {
-        add_debug_info_line()
-        name = strings.intern(name)
-        function.instructions.add(cast Instruction.Call)
-        function.instructions.add(cast name.bytes.data)
-        function.instructions.add(cast name.bytes.length)
-        function.instructions.add(cast arity)
-    }
-
-    build_return :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Return)
-    }
-
-    build_return_void :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.ReturnVoid)
-    }
-
-    build_print :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Print)
-    }
-
-    build_halt :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Halt)
-    }
 }
 
 StackFrame :: struct {
@@ -579,7 +324,7 @@ Interpreter :: struct {
     fp          : int
     frames      : [1024]StackFrame
     stack       : [1024]int
-    functions   : Map[String, CBCFunction]
+    functions   : Map[String, &CBCFunction]
     strings     : StringDatabase
     printer     : Fn(string, []&any, string)
 }
@@ -592,7 +337,7 @@ impl Interpreter {
             fp          = -1
             frames      = default
             stack       = default
-            functions   = Map[String, CBCFunction].new()
+            functions   = Map[String, &CBCFunction].new()
             strings     = StringDatabase.new()
             printer     = null
         )
@@ -603,7 +348,7 @@ impl Interpreter {
         return frames[..=fp]
     }
 
-    register_function :: (ref Self, name: string, code: CBCFunction) {
+    register_function :: (ref Self, name: string, code: &CBCFunction) {
         functions[name] = code
     }
 
@@ -618,7 +363,7 @@ impl Interpreter {
         }
     }
 
-    push_frame :: (ref Self, func: ref CBCFunction, arg_count: int = 0) {
+    push_frame :: (ref Self, func: &CBCFunction, arg_count: int = 0) {
         _fp, _sp := fp, sp
         defer { if const DEBUG_INTERPRETER then io.formatln("push_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp]) }
 
@@ -632,13 +377,13 @@ impl Interpreter {
             bp = arg_count
             code = func.instructions.slice()
             stack = stack[sp-arg_count .. ]
-            func = &func
+            func = func
         )
     }
 
     pop_frame :: (ref Self) {
         _fp, _sp := fp, sp
-        defer { if const DEBUG_INTERPRETER then io.formatln("pop_code (fp = {} -> {}, sp = {} -> {})", [_fp, fp, _sp, sp]) }
+        defer { if const DEBUG_INTERPRETER then io.formatln("pop_frame (fp = {} -> {}, sp = {} -> {})", [_fp, fp, _sp, sp]) }
 
         fp -= 1
         if fp >= 0 {
@@ -672,13 +417,23 @@ impl Interpreter {
         opcode := frame.code[frame.ip]
 
         if const DEBUG_INTERPRETER {
-            io.formatln("{}{}{}{}{}{}{}{}{}", [
-                fp
-                fmt.align(6), frame.sp
-                fmt.align(12), frame.ip
-                fmt.align(20), Instruction.pretty_print(frame.code[frame.ip..])
-                fmt.align(40), frame.dump_stack()
-            ])
+            printer("{}{}{}{}{}{}{}{}{}{}{}", [
+                frame.func.debug_info.get_line_for_ip(frame.ip)
+                fmt.align(6), fp
+                fmt.align(11), frame.sp
+                fmt.align(17), frame.ip
+                fmt.align(25), Instruction.pretty_print(frame.code[frame.ip..])
+                fmt.align(45), frame.dump_stack()
+            ], "stdout")
+
+            // io.formatln("{}{}{}{}{}{}{}{}{}{}{}", [
+            //     frame.func.debug_info.get_line_for_ip(frame.ip)
+            //     fmt.align(6), fp
+            //     fmt.align(11), frame.sp
+            //     fmt.align(17), frame.ip
+            //     fmt.align(25), Instruction.pretty_print(frame.code[frame.ip..])
+            //     fmt.align(45), frame.dump_stack()
+            // ])
         }
 
         frame.ip += 1
@@ -793,10 +548,15 @@ impl Interpreter {
                 if fp >= 0 {
                     // @fixme frames[fp].sp += 1 // fails to compile
                     (&frames[fp]).sp += 1
+                } else {
+                    return .Done
                 }
             }
             .ReturnVoid -> {
                 pop_frame()
+                if fp < 0 {
+                    return .Done
+                }
             }
 
             .Print -> {
@@ -805,24 +565,22 @@ impl Interpreter {
                 // if printer != null {
                     printer("{}", [val], "console")
                 // }
-
-                // io.set_console_color(.Green, .Black)
-                // io.println(val)
-                // io.set_console_color(.White, .Black)
             }
             .Halt -> {
                 return .Done
             }
         }
 
-        frame = &frames[fp]
-        // printer("{}{}{}{}{}{}{}{}{}", [
-        //         fp
-        //         fmt.align(6), frame.sp
-        //         fmt.align(12), frame.ip
-        //         fmt.align(20), Instruction.pretty_print(frame.code[frame.ip..])
-        //         fmt.align(40), frame.dump_stack()
-        //     ], "stdout")
+        // frame = &frames[fp]
+        // line := frame.func.debug_info.get_line_for_ip(frame.ip)
+        // printer("{}{}{}{}{}{}{}{}{}{}{}", [
+        //     line
+        //     fmt.align(6), fp
+        //     fmt.align(11), frame.sp
+        //     fmt.align(17), frame.ip
+        //     fmt.align(25), Instruction.pretty_print(frame.code[frame.ip..])
+        //     fmt.align(45), frame.dump_stack()
+        // ], "stdout")
 
         return .Continue
     }

@@ -125,21 +125,21 @@ impl Lexer {
 
     expect_token :: (ref Self, typ: TokenType) -> bool, Token {
         token := next_token()
-        if int(token.ttype) == int(typ) {
+        if int(token.typ) == int(typ) {
             return true, token
         } else {
             return false, token
         }
     }
 
-    peek_token :: (ref Self) -> Token {
-        return match peek {
+    peek_token :: (ref Self) -> ref Token {
+        return match ref peek {
             Some($tok) -> tok
 
             None -> {
                 tok := next_token()
                 peek = Some(tok)
-                tok
+                peek.Some
             }
         }
     }
@@ -155,7 +155,7 @@ impl Lexer {
         match skip_newlines_and_comments() {
             Some($loc) -> {
                 return Token(
-                    ttype = TokenType.NewLine
+                    typ = TokenType.NewLine
                     location = loc
                     suffix = None
                     data = TokenData.None
@@ -166,9 +166,40 @@ impl Lexer {
         return read_token()
     }
 
+    skip_whitespace :: (ref Self) {
+        while true {
+            tok := self.peek_token()
+
+            match tok.typ {
+                TokenType.NewLine -> {
+                    self.next_token()
+                }
+
+                $_ -> {
+                    break
+                }
+            }
+        }
+    }
+
+    skip_line :: (ref Self) {
+        while true {
+            tok := self.next_token()
+
+            match tok.typ {
+                TokenType.EOF -> {
+                    return
+                }
+                TokenType.NewLine -> {
+                    return
+                }
+            }
+        }
+    }
+
     read_token :: (ref Self) -> Token {
         token := Token(
-            ttype = TokenType.EOF
+            typ = TokenType.EOF
             data = TokenData.None
             location = location
             suffix = None
@@ -264,18 +295,19 @@ impl Lexer {
             }
 
             _, _ -> {
-                token.ttype = TokenType.Unknown
+                token.typ = TokenType.Unknown
                 location.byte_index += 1
             }
         }
 
         token.location.byte_length = location.byte_index - token.location.byte_index
+        token.location.end_line = location.line
 
         return token
     }
 
     parse_number_literal :: (ref Self, token: ref Token) {
-        token.ttype = TokenType.NumberLiteral
+        token.typ = TokenType.NumberLiteral
         base := 10
         str := {
             raw := @alloca(u8, 128)
@@ -486,7 +518,7 @@ impl Lexer {
 
         match state {
             Error -> {
-                token.ttype = TokenType.Error
+                token.typ = TokenType.Error
                 token.data = TokenData.String("Invalid number literal")
                 return
             }
@@ -517,14 +549,14 @@ impl Lexer {
         }
     }
 
-    simple_token :: (ref Self, token: ref Token, ttype: TokenType, len: int, chars: int) {
-        token.ttype = ttype
+    simple_token :: (ref Self, token: ref Token, typ: TokenType, len: int, chars: int) {
+        token.typ = typ
         location.byte_index += len
         location.column += chars
     }
 
-    parse_identifier :: (ref Self, token: ref Token, ttype: TokenType) {
-        token.ttype = ttype
+    parse_identifier :: (ref Self, token: ref Token, typ: TokenType) {
+        token.typ = typ
         start := location.byte_index
 
         while location.byte_index < text.bytes.length {
@@ -538,8 +570,8 @@ impl Lexer {
         token.data = TokenData.String(string_db.intern(str))
     }
 
-    parse_string_literal :: (ref Self, token: ref Token, ttype: TokenType, end: char) {
-        token.ttype = ttype
+    parse_string_literal :: (ref Self, token: ref Token, typ: TokenType, end: char) {
+        token.typ = typ
         location.byte_index += 1
         location.column += 1
         start := location.byte_index
@@ -666,40 +698,40 @@ impl Lexer {
     check_keywords :: (ref Self, token: ref Token) {
         match token.data {
             TokenData.String($str) -> {
-                token.ttype =
-                    if str == KwLambda          then TokenType.KwLambda
-                    else if str == KwReturn     then TokenType.KwReturn
-                    else if str == KwRef        then TokenType.KwRef
-                    else if str == Kwfn         then TokenType.Kwfn
-                    else if str == KwFn         then TokenType.KwFn
-                    else if str == KwStruct     then TokenType.KwStruct
-                    else if str == KwEnum       then TokenType.KwEnum
-                    else if str == KwImpl       then TokenType.KwImpl
-                    else if str == KwIf         then TokenType.KwIf
-                    else if str == KwElse       then TokenType.KwElse
-                    else if str == KwFor        then TokenType.KwFor
-                    else if str == KwWhile      then TokenType.KwWhile
-                    else if str == KwLoop       then TokenType.KwLoop
-                    else if str == KwAnd        then TokenType.KwAnd
-                    else if str == KwOr         then TokenType.KwOr
-                    else if str == KwTrue       then TokenType.KwTrue
-                    else if str == KwFalse      then TokenType.KwFalse
-                    else if str == KwNull       then TokenType.KwNull
-                    else if str == KwUsing      then TokenType.KwUsing
-                    else if str == KwDefer      then TokenType.KwDefer
-                    else if str == KwMatch      then TokenType.KwMatch
-                    else if str == KwBreak      then TokenType.KwBreak
-                    else if str == KwContinue   then TokenType.KwContinue
-                    else if str == KwTrait      then TokenType.KwTrait
-                    else if str == KwCast       then TokenType.KwCast
-                    else if str == KwConst      then TokenType.KwConst
-                    else if str == KwDefault    then TokenType.KwDefault
-                    else if str == KwPub        then TokenType.KwPub
-                    else if str == KwThen       then TokenType.KwThen
-                    else if str == KwDo         then TokenType.KwDo
-                    else if str == KwMut        then TokenType.KwMut
-                    else if str == KwImport     then TokenType.KwImport
-                    else token.ttype
+                token.typ =
+                    if string.same(str, KwLambda)          then TokenType.KwLambda
+                    else if string.same(str, KwReturn)     then TokenType.KwReturn
+                    else if string.same(str, KwRef)        then TokenType.KwRef
+                    else if string.same(str, Kwfn)         then TokenType.Kwfn
+                    else if string.same(str, KwFn)         then TokenType.KwFn
+                    else if string.same(str, KwStruct)     then TokenType.KwStruct
+                    else if string.same(str, KwEnum)       then TokenType.KwEnum
+                    else if string.same(str, KwImpl)       then TokenType.KwImpl
+                    else if string.same(str, KwIf)         then TokenType.KwIf
+                    else if string.same(str, KwElse)       then TokenType.KwElse
+                    else if string.same(str, KwFor)        then TokenType.KwFor
+                    else if string.same(str, KwWhile)      then TokenType.KwWhile
+                    else if string.same(str, KwLoop)       then TokenType.KwLoop
+                    else if string.same(str, KwAnd)        then TokenType.KwAnd
+                    else if string.same(str, KwOr)         then TokenType.KwOr
+                    else if string.same(str, KwTrue)       then TokenType.KwTrue
+                    else if string.same(str, KwFalse)      then TokenType.KwFalse
+                    else if string.same(str, KwNull)       then TokenType.KwNull
+                    else if string.same(str, KwUsing)      then TokenType.KwUsing
+                    else if string.same(str, KwDefer)      then TokenType.KwDefer
+                    else if string.same(str, KwMatch)      then TokenType.KwMatch
+                    else if string.same(str, KwBreak)      then TokenType.KwBreak
+                    else if string.same(str, KwContinue)   then TokenType.KwContinue
+                    else if string.same(str, KwTrait)      then TokenType.KwTrait
+                    else if string.same(str, KwCast)       then TokenType.KwCast
+                    else if string.same(str, KwConst)      then TokenType.KwConst
+                    else if string.same(str, KwDefault)    then TokenType.KwDefault
+                    else if string.same(str, KwPub)        then TokenType.KwPub
+                    else if string.same(str, KwThen)       then TokenType.KwThen
+                    else if string.same(str, KwDo)         then TokenType.KwDo
+                    else if string.same(str, KwMut)        then TokenType.KwMut
+                    else if string.same(str, KwImport)     then TokenType.KwImport
+                    else token.typ
             }
         }
     }
@@ -712,10 +744,11 @@ Location :: struct #copy {
     byte_length : int    = default
     line        : int    = default
     column      : int    = default
+    end_line    : int    = default
 }
 
 Token :: struct #copy {
-    ttype   : TokenType
+    typ   : TokenType
     location: Location
     suffix  : Option[string]
     data    : TokenData
@@ -730,13 +763,13 @@ TokenData :: enum #copy {
 
 impl Printable for Location {
     print :: (ref Self, str: ref String, format: string) {
-        str.appendf("{}:{}", (line, column))
+        str.appendf("{}:{}->{}", (line, column, end_line))
     }
 }
 
 impl Printable for Token {
     print :: (ref Self, str: ref String, format: string) {
-        str.appendf("{} ({})", (ttype, location))
+        str.appendf("{} ({})", (typ, location))
         match data {
             TokenData.String($s) -> str.appendf(" String({})", s)
             TokenData.Integer($s) -> str.appendf(" Int({})", s)

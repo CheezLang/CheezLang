@@ -13,62 +13,6 @@
 import examples.debugger
 // import examples.ShmupEngine.src.main
 
-// use import std.thread
-// use import std.rc
-
-// io :: import std.io
-
-// g_lock      : &ReentrantLock        = null
-// g_cond_var  : &ConditionVariable    = null
-
-// foo :: (b: &Bar) {
-//     loop {
-//         g_cond_var.wait(<<g_lock)
-//         defer g_lock.release()
-
-//         io.formatln("foo: in thread {}, bar.counter: {}", [Thread.current().id, b.counter])
-//     }
-// }
-
-// Bar :: struct {
-//     counter : int = 0
-// }
-
-// impl Bar {
-//     baz :: (ref Self) {
-//         loop {
-//             g_cond_var.wait(<<g_lock)
-//             defer g_lock.release()
-
-//             io.formatln("Bar.baz({}): in thread {}", [counter, Thread.current().id])
-//             counter += 1
-//         }
-//     }
-// }
-
-// Main :: () {
-//     lock := ReentrantLock.new()
-//     g_lock = &lock.get()
-//     cond_var := ConditionVariable.new()
-//     g_cond_var = &cond_var.get()
-
-//     b := Bar()
-
-//     t1 := Thread.new(cast b.baz)
-//     t1.start()
-    
-//     t2 := Thread.create(cast(Fn(&Bar)) foo, &b)
-//     t2.start()
-
-//     loop {
-//         io.formatln("Main: in thread {}", [Thread.current().id])
-//         Thread.sleep(500)
-//         cond_var.get().notify()
-//         Thread.sleep(500)
-//     }
-// }
-
-
 // examples which are not working currently
 // import examples.image_processing
 // import examples.postfix
@@ -86,6 +30,78 @@ import examples.debugger
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
+
+// use import std.mem.allocator
+// use import std.mem.std_heap_allocator
+// use import std.array
+
+// io :: import std.io
+
+// use import compiler.ast
+// use import compiler.error_handler
+// use import compiler.lexer
+// use import compiler.parser
+// use import compiler.string_database
+// use import compiler.type
+// use import compiler.ast_dumper
+// use import compiler.interpreter
+// use import compiler.bytecode_generator
+
+// Main :: () {
+//     string_db     := StringDatabase.new()
+//     error_handler := ConsoleErrorHandler.new(null)
+//     lexer         := Lexer.from_file("P:/dev/CheezLang/data/basic_cheez.che", string_db)
+//     match lexer {
+//         Ok($lexer) -> {
+//             error_handler.text_provider = &lexer
+//             allocator := DEFAULT_STD_HEAP_ALLOCATOR
+//             parser := Parser.new(lexer, &error_handler, &allocator)
+
+//             funcs := Array[&AstNode].create()
+
+//             loop {
+//                 decl := parser.parse_constant_declaration()
+//                 if decl == null then break
+//                 io.println(dump_ast(<<decl))
+
+//                 funcs.add(decl)
+//             }
+
+//             compile_and_run(string_db, error_handler, &allocator, funcs)
+//         }
+
+//         Err(_) -> {
+//             io.println("Failed to load file")
+//         }
+//     }
+// }
+
+// print :: (format: string, args: []&any = [], category: string = "console") {
+//     io.formatln(format, args)
+// }
+
+// compile_and_run :: (string_db: ref StringDatabase, error_handler: ref ErrorHandler, allocator: &Allocator, nodes: Array[&AstNode]) {
+//     io.formatln("compile and run {} functions", [nodes.count()])
+
+//     code_generator := ByteCodeGenerator.new(string_db, error_handler, allocator)
+
+//     interp := Interpreter.new()
+//     interp.printer = cast print
+    
+//     for node : nodes {
+//         decl := cast(&AstConstDecl) node
+//         name := decl.name.value
+//         func := cast(&AstFunction) &decl.value
+
+//         code_generator.get().generate_code_for_function(func, name)
+
+//         interp.register_function(name, func.bytecode)
+//     }
+
+//     interp.call("Main")
+//     interp.run()
+// }
+
 
 // io :: import std.io
 

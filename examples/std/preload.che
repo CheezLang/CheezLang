@@ -616,7 +616,7 @@ impl TypeInfoTrait {
 }
 
 
-strings_equal :: (a: string, b: string) -> bool {
+strings_equal :: (a: string, b: string) -> bool #operator("==") {
     a_bytes := a.bytes
     b_bytes := b.bytes
     if a_bytes.length != b_bytes.length {

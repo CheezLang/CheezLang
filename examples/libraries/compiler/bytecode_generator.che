@@ -1,0 +1,302 @@
+use import std.array
+use import std.string
+use import std.rc
+
+mem :: import std.mem.allocator
+io :: import std.io
+
+use import compiler.ast
+use import compiler.error_handler
+use import compiler.type
+use import compiler.interpreter
+use import compiler.string_database
+
+#export_scope
+
+CodeGenerator :: trait {
+    generate_code_for_function :: (ref Self, func: &AstFunction, name: string);
+}
+
+ByteCodeGenerator :: struct {
+    strings         : ref StringDatabase
+    error_handler   : ref ErrorHandler
+    allocator       : &mem.Allocator
+    builder         : InstructionBuilder
+}
+
+impl ByteCodeGenerator {
+    new :: (strings: ref StringDatabase, error_handler: ref ErrorHandler, allocator: &mem.Allocator) -> Rc[ByteCodeGenerator] {
+        return Rc[ByteCodeGenerator].new(ByteCodeGenerator(
+            strings         = strings
+            error_handler   = error_handler
+            allocator       = allocator
+            builder         = InstructionBuilder.new(strings)
+        ))
+    }
+
+    allocate_function :: (ref Self, name: string, path: string, params: Array[String]) -> &CBCFunction {
+        func := mem.alloc(CBCFunction, allocator)
+        <<func = CBCFunction(
+            name        = name.to_owned()
+            debug_info  = CBCDebugInfo(
+                path       = path.to_owned()
+                parameters = params
+            )
+        )
+        return func
+    }
+}
+
+impl CodeGenerator for ByteCodeGenerator {
+    generate_code_for_function :: (ref Self, func: &AstFunction, name: string) {
+        file_path := func.location.file
+        params := Array[String].create()
+
+        func.bytecode = allocate_function(name, file_path, params)
+        builder.begin_function(func.bytecode)
+
+        builder.set_current_line(func.body.location.line)
+        generate_expression(<<func.body)
+        builder.set_current_line(func.body.location.end_line)
+        builder.build_return_void()
+
+        builder.end_function()
+    }
+
+    generate_expression :: (ref Self, node: ref AstNode) {
+        builder.set_current_line(node.location.line)
+        match node {
+            AstBlock($block)        -> generate_block(block)
+            AstCall($call)          -> generate_call(call)
+            AstNumberLiteral($num)  -> generate_number_literal(num)
+        }
+    }
+
+    generate_block :: (ref Self, block: ref AstBlock) {
+        builder.set_current_line(block.location.line)
+        for child : block.children {
+            generate_expression(<<child)
+        }
+    }
+
+    generate_call :: (ref Self, call: ref AstCall) {
+        builder.set_current_line(call.location.line)
+        match call.function {
+            AstIdentifier($id) -> {
+                for arg : call.arguments {
+                    generate_expression(<<arg)
+                }
+
+                builder.set_current_line(call.location.line)
+                if id.value == "print" {
+                    builder.build_print()
+                } else {
+                    builder.build_call(id.value, 0)
+                }
+            }
+
+            _ -> {
+                error_handler.report_error(call.function.location, "Can't call non-identifier")
+            }
+        }
+    }
+
+    generate_number_literal :: (ref Self, num: ref AstNumberLiteral) {
+        builder.set_current_line(num.location.line)
+        builder.build_const(num.value)
+    }
+}
+
+InstructionBuilder :: struct {
+    function        : &CBCFunction
+    current_line    : int
+    strings         : ref StringDatabase
+}
+
+impl InstructionBuilder {
+    new :: (strings: ref StringDatabase) -> InstructionBuilder {
+        return InstructionBuilder(
+            function        = null
+            current_line    = -1
+            strings         = strings
+        )
+    }
+
+    begin_function :: (ref Self, func: &CBCFunction) {
+        current_line = -1
+        function = func
+    }
+
+    end_function :: (ref Self) {
+        function = null
+    }
+
+    code_view :: (ref Self) -> []u64 {
+        return function.instructions.slice()
+    }
+
+    set_current_line :: (ref Self, line: int) {
+        lines := ref function.debug_info.lines
+        if lines.count() > 0 and lines.peek_last().count == 0 {
+            lines.peek_last().line = line
+        } else if current_line != line {
+            function.debug_info.lines.add(LineInfo(line, 0))
+        }
+        current_line = line
+    }
+
+    next :: (ref Self) -> int {
+        return function.instructions.get_length()
+    }
+
+    add_debug_info_line :: () #macro #transparent {
+        @assert(function.debug_info.lines.count() > 0)
+        current_instruction_count := function.instructions.count()
+        defer {
+            new_instruction_count := function.instructions.count()
+            function.debug_info.lines.peek_last().count += new_instruction_count - current_instruction_count
+        }
+    }
+
+    build_noop :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Noop)
+    }
+
+    build_const :: (ref Self, value: int) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Const)
+        function.instructions.add(<<cast(&u64)&value)
+    }
+
+    build_address_of :: (ref Self, index: int) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.AddressOf)
+        function.instructions.add(<<cast(&u64)&index)
+    }
+
+    build_load :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Load)
+    }
+
+    build_store :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Store)
+    }
+
+    build_load_local :: (ref Self, index: int) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.LoadLocal)
+        function.instructions.add(<<cast(&u64)&index)
+    }
+
+    build_store_local :: (ref Self, index: int) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.StoreLocal)
+        function.instructions.add(<<cast(&u64)&index)
+    }
+
+    build_add :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Add)
+    }
+
+    build_sub :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Sub)
+    }
+
+    build_mul :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Mul)
+    }
+
+    build_div :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Div)
+    }
+
+    build_mod :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Mod)
+    }
+
+    build_and :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.And)
+    }
+
+    build_or :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Or)
+    }
+
+    build_ieq :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Ieq)
+    }
+
+    build_ilt :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Ilt)
+    }
+
+    build_ile :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Ile)
+    }
+
+    build_igt :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Igt)
+    }
+
+    build_ige :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Ige)
+    }
+
+    build_branch :: (ref Self, address: int) -> int {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Branch)
+        function.instructions.add(cast address)
+        return function.instructions.count() - 1
+    }
+
+    build_branch_if :: (ref Self, address: int) -> int {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.BranchIf)
+        function.instructions.add(cast address)
+        return function.instructions.count() - 1
+    }
+
+    build_call :: (ref Self, name: string, arity: int = 0) {
+        add_debug_info_line()
+        name = strings.intern(name)
+        function.instructions.add(cast Instruction.Call)
+        function.instructions.add(cast name.bytes.data)
+        function.instructions.add(cast name.bytes.length)
+        function.instructions.add(cast arity)
+    }
+
+    build_return :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Return)
+    }
+
+    build_return_void :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.ReturnVoid)
+    }
+
+    build_print :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Print)
+    }
+
+    build_halt :: (ref Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Halt)
+    }
+}

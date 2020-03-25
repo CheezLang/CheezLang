@@ -4,6 +4,7 @@ use import std.string
 use import std.box
 use import std.rc
 use import std.thread
+use import std.ring_queue
 
 use import std.os.windows
 use import std.os.windows_functions
@@ -40,6 +41,10 @@ CommandHandler :: trait {
     variables       :: (ref Self, arguments: DapReqVariables) -> Result[Array[DapVariable], String];
 }
 
+DAEvent :: enum {
+    Initialized
+}
+
 DebugAdapter :: struct {
     Func :: fn(ref CommandHandler, JsonValue) -> Result[JsonValue, String]
 
@@ -48,7 +53,10 @@ DebugAdapter :: struct {
     command_table   : Table[string, Func]
     std_out_mutex   : Mutex
 
+    events          : RingQueue[DAEvent]
+
     _seq_counter    := 0
+    running         := false
 }
 
 impl DebugAdapter {
@@ -58,7 +66,12 @@ impl DebugAdapter {
         commands := Table[string, Func].create(strings_equal)
         commands["initialize"] = cast(Func) (handler, arguments) => {
             match handler.initialize() {
-                Ok(_) -> Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+                Ok(_) -> {
+                    json := Table[string, JsonValue].create(strings_equal)
+                    json["supportsDisassembleRequest"] = JsonValue.JsonBool(true)
+                    json["supportsConfigurationDoneRequest"] = JsonValue.JsonBool(true)
+                    Ok(JsonValue.JsonObject(json))
+                }
                 Err($msg) -> Err(msg)
             }
         }
@@ -153,19 +166,34 @@ impl DebugAdapter {
             }
         }
 
+        commands["configurationDone"] = cast(Func) (handler, arguments) => Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+        commands["setExceptionBreakpoints"] = cast(Func) (handler, arguments) => Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+        commands["disconnect"] = cast(Func) (handler, arguments) => {
+            handler.adapter.running = false
+            Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
+        }
+
         adapter := Box[DebugAdapter].new(DebugAdapter(
             logger              = logger
             command_handler     = handler
             std_out_mutex       = Mutex.new()
             command_table       = commands
+            events              = RingQueue[DAEvent].new()
         ))
 
         adapter.get().command_handler.get().adapter = &adapter.get()
         return adapter
     }
 
+    enqueue_event :: (ref Self, event: DAEvent) {
+        events.push(event)
+    }
+
     run :: (ref Self) {
+        running = true
         command_loop()
+        exit :: (i: i32);
+        exit(0)
     }
 
     handle_command :: (ref Self, handler: ref CommandHandler, command: String, arguments: JsonValue) -> Result[JsonValue, String] {
@@ -179,7 +207,7 @@ impl DebugAdapter {
     }
 
     command_loop :: (ref Self) {
-        loop {
+        while running {
             request_text := read_request_string()
             if request_text.get_length() == 0 then break
             logger.log_command("{}", [request_text.slice()])
@@ -226,6 +254,13 @@ impl DebugAdapter {
                     logger.log_response("{}", [response_string])
 
                     send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
+
+                    while events.count() > 0 {
+                        event := events.pop()
+                        match event {
+                            .Initialized -> self.emit_initialized_event()
+                        }
+                    }
                 }
             }
 
@@ -387,9 +422,17 @@ DapSetBreakpoints :: struct {
 impl Into[DapSetBreakpoints] for JsonValue {
     into :: (ref Self) -> DapSetBreakpoints {
         map := ref self.as_map()
+        breakpoints : Array[DapBreakpoint] = match map.get("breakpoints") {
+            Some($arr) -> arr.as_array().into()
+            None -> Array[DapBreakpoint].create()
+        }
+        source : DapSource = match map.get("source") {
+            Some($source) -> source.into()
+            None -> DapSource(String.empty(), String.empty())
+        }
         return DapSetBreakpoints(
-            source      = map.at("source").into()
-            breakpoints = map.at("breakpoints").as_array().into()
+            source      = source
+            breakpoints = breakpoints
         )
     }
 }

@@ -1,0 +1,52 @@
+fn swap a b {
+    local temp
+
+    # store <<a in temp
+    load_local a
+    load
+    store_local temp
+
+    # <<a = <<b
+    load_local b
+    load
+    load_local a
+    store
+
+    # <<b = temp
+    load_local temp
+    load_local b
+    store
+
+    return_void
+}
+
+#main
+fn main {
+    local t1
+    local t2
+
+    const 123
+    store_local t1
+
+    const 456
+    store_local t2
+
+    # print t1 and t2
+    load_local t1
+    print
+    load_local t2
+    print
+
+    # swap t1 and t2
+    address_of t1
+    address_of t2
+    call swap 2
+
+    # print t1 and t2
+    load_local t1
+    print
+    load_local t2
+    print
+    
+    halt
+}

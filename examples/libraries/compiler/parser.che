@@ -1,68 +1,247 @@
 use import ast
 use import lexer
 use import cheez_compiler
+use import error_handler
 
-use import std.mem.allocator
-io :: import std.io
+use import std.array
+
+mem :: import std.mem.allocator
+io  :: import std.io
 
 #export_scope
 
 Parser :: struct {
-    compiler    : ref CheezCompiler
-    lexer       : ref Lexer
+    lexer           : ref Lexer
+    error_handler   : &ErrorHandler
+    allocator       : &mem.Allocator
+
+    _next_id        := 0
 }
 
 impl Parser {
-    create :: (c: ref CheezCompiler, l: ref Lexer) -> Self {
+    new :: (lexer: ref Lexer, error_handler: &ErrorHandler, allocator: &mem.Allocator) -> Self {
         return Parser(
-            compiler = c
-            lexer = l
+            lexer           = lexer
+            error_handler   = error_handler
+            allocator       = allocator
         )
     }
 
-    parse_statement :: (ref Self) -> Option[&Stmt] {
-        skip_ws()
-        token := lexer.peek_token()
-        return match token.ttype {
-            TokenType.EOF -> None
+    next_id :: (ref Self) -> int {
+        return _next_id <- _next_id + 1
+    }
 
-            $_ -> {
-                io.printfln("{}: unexpeted token {}", (token.location, token.ttype))
-                None
+    allocate :: (ref Self, value: $T) -> &T {
+        result := mem.alloc(T, allocator)
+        <<result = value
+        return result
+    }
+
+    try :: (code: Code) #macro {
+        value := @insert(code)
+        if value == null {
+            return null
+        }
+        value
+    }
+
+    parse_constant_declaration :: (ref Self) -> &AstNode {
+        id := next_id()
+
+        lexer.skip_whitespace()
+        name := try(self.parse_identifier())
+
+        self.consume(TokenType.Colon)
+        self.consume(TokenType.Colon)
+
+        value := try(self.parse_expression())
+
+        location := name.location
+        location.end_line = value.location.end_line
+
+        return allocate(AstConstDecl(
+            id          = id
+            location    = location
+            name        = <<name
+            value       = <<value
+        ))
+    }
+
+    parse_expression :: (ref Self) -> &AstNode {
+        return parse_post_unary()
+    }
+
+    parse_post_unary :: (ref Self) -> &AstNode {
+        expr := try(parse_atomic_expression())
+
+        loop {
+            match lexer.peek_token().typ {
+                .OpenParen -> {
+                    id := next_id()
+                    args, beg, end := parse_argument_list()
+                    location := expr.location
+                    location.end_line = end.end_line
+                    expr = allocate(AstCall(
+                        id          = id
+                        location    = location
+                        function    = <<expr
+                        arguments   = args
+                    ))
+                }
+
+                _ -> {
+                    return expr
+                }
             }
         }
+
+        @assert(false)
+        return null
+    }
+
+    parse_block :: (ref Self) -> &AstNode {
+        id := next_id()
+
+        children := Array[&AstNode].create()
+
+        location := consume(.OpenBrace).location
+        lexer.skip_whitespace()
+
+        loop {
+            next := lexer.peek_token()
+            if next.typ == .ClosingBrace or next.typ == .EOF {
+                break
+            }
+
+            child := try(parse_expression())
+            children.add(child)
+
+            next = lexer.peek_token()
+            if next.typ == .ClosingBrace or next.typ == .EOF {
+                break
+            }
+            consume(.NewLine)
+        }
+
+        lexer.skip_whitespace()
+        end := consume(.ClosingBrace).location
+
+        location.end_line = end.end_line
+        
+        return allocate(AstBlock(
+            id          = id
+            location    = location
+            children    = children
+        ))
+    }
+
+    parse_function :: (ref Self) -> &AstNode {
+        id := next_id()
+
+        location := consume(.OpenParen).location
+        lexer.skip_whitespace()
+        consume(.ClosingParen)
+        lexer.skip_whitespace()
+
+        body := try(parse_block())
+
+        location.end_line = body.location.end_line
+
+        return allocate(AstFunction(
+            id          = id
+            location    = location
+            body        = body
+        ))
+    }
+
+    parse_atomic_expression :: (ref Self) -> &AstNode {
+        token := lexer.peek_token()
+        return match token.typ {
+            .Identifier    -> parse_identifier()
+            .NumberLiteral -> parse_number()
+            .OpenParen     -> parse_function()
+
+            _ -> {
+                error_handler.report_errorf(token.location, "Unexpected token {} in expression", [token])
+                null
+            }
+        }
+    }
+
+    parse_identifier :: (ref Self) -> &AstIdentifier {
+        id := next_id()
+        tok := lexer.next_token()
+        if tok.typ != .Identifier {
+            return null
+        }
+        name := tok.data.String
+        return allocate(AstIdentifier(
+            id          = id
+            location    = tok.location
+            value       = name
+        ))
+    }
+
+    parse_number :: (ref Self) -> &AstNode {
+        id := next_id()
+        tok := lexer.next_token()
+        if tok.typ != .NumberLiteral {
+            return null
+        }
+        value := tok.data.Integer
+        return allocate(AstNumberLiteral(
+            id          = id
+            location    = tok.location
+            value       = value
+        ))
+    }
+
+    parse_argument_list :: (ref Self) -> Array[&AstNode], Location, Location {
+        args := Array[&AstNode].create()
+
+        beg := consume(.OpenParen).location
+        lexer.skip_whitespace()
+
+        loop {
+            next := lexer.peek_token()
+            if next.typ == .ClosingParen or next.typ == .EOF {
+                break
+            }
+
+            arg := parse_expression()
+            if arg == null {
+                return args, beg, beg
+            }
+            args.add(arg)
+            lexer.skip_whitespace()
+
+            next = lexer.peek_token()
+            if next.typ == .ClosingParen or next.typ == .EOF {
+                break
+            }
+            
+            consume(.Comma)
+            lexer.skip_whitespace()
+        }
+
+        end := consume(.ClosingParen).location
+
+        return args, beg, end
     }
 
     // helpers
-    skip_ws :: (ref Self) {
-        while true {
-            tok := lexer.peek_token()
-
-            match tok.ttype {
-                TokenType.NewLine -> {
-                    lexer.next_token()
-                }
-
-                $_ -> {
-                    break
-                }
-            }
-        }
-    }
-
-    consume :: (ref Self, ttype: TokenType) -> Token {
+    consume :: (ref Self, typ: TokenType) -> Token {
         tok := lexer.peek_token()
-        while (cast(int)tok.ttype) != (cast(int)ttype) {
-            match tok.ttype {
+        while tok.typ != typ {
+            match tok.typ {
                 TokenType.EOF -> {
                     break
                 }
             }
 
-            // TODO: report error
-            io.printfln("{}: unexpeted token {}", (tok.location, tok.ttype))
-            lexer.next_token()
-            tok = lexer.peek_token()
+            error_handler.report_errorf(tok.location, "Unexpeted token {}, expected {}", [tok, typ])
+            lexer.skip_line()
+            return tok
         }
 
         return lexer.next_token()
