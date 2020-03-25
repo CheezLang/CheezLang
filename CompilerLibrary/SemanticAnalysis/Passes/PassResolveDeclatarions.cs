@@ -36,7 +36,9 @@ namespace Cheez
                     if (!(import.Value is PTFile importedFile))
                         continue;
 
-                    file.FileScope.AddUsedScope(importedFile.ExportScope);
+                    if (!file.FileScope.AddUsedScope(importedFile.ExportScope)) {
+                        ReportError(use, $"This import is already used in this scope");
+                    }
                 }
 
                 while (mUnresolvedGlobalImportConstants.Count > 0)
@@ -126,6 +128,12 @@ namespace Cheez
 
                 if (!changes)
                     break;
+            }
+
+            foreach (var impl in mAllImpls)
+            {
+                if (impl.TraitExpr != null)
+                    FinishTraitImpl(impl);
             }
         }
 

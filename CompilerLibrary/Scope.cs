@@ -191,11 +191,14 @@ namespace Cheez
             };
         }
 
-        public void AddUsedScope(Scope scope)
+        public bool AddUsedScope(Scope scope)
         {
             if (mUsedScopes == null)
                 mUsedScopes = new List<Scope>();
+            if (mUsedScopes.Contains(scope))
+                return false;
             mUsedScopes.Add(scope);
+            return true;
         }
 
         public void AddForExtension(AstFuncExpr func)

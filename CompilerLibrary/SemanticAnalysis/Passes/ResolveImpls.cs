@@ -199,47 +199,8 @@ namespace Cheez
                     ReportError(f.ParameterLocation, $"Function must have an implementation");
                 }
             }
-
-
+            
             ComputeTraitMembers(impl.Trait.Declaration);
-
-            // check if type has required members
-            if (impl.Trait.Declaration.Variables.Count > 0) do
-            {
-                if (!(impl.TargetType is StructType str))
-                {
-                    ReportError(impl.TargetTypeExpr, $"Can't implement trait '{impl.Trait}' for non struct type '{impl.TargetType}' because the trait requires members",
-                        ("Trait defined here:", impl.Trait.Declaration.Location));
-                    break;
-                }
-
-                var strDecl = str.Declaration;
-                ComputeStructMembers(strDecl);
-
-                foreach (var v in impl.Trait.Declaration.Variables)
-                {
-                    var member = strDecl.Members.FirstOrDefault(m => m.Name == v.Name);
-                    if (member == null)
-                    {
-                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because it misses member '{v.Name}: {v.Type}'",
-                            ("Trait member defined here:", v.Location));
-                        continue;
-                    }
-                    if (!member.IsPublic || member.IsReadOnly)
-                    {
-                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because member '{member.Name}: {member.Type}' is not public",
-                            ("Struct member defined here:", member.Location));
-                        continue;
-                    }
-                    if (member.Type != v.Type)
-                    {
-                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because '{member.Name}' has a different type ({member.Type}) than the trait member ({v.Type})",
-                            ("Struct member defined here:", member.Decl.TypeExpr.Location),
-                            ("Trait member defined here:", v.Decl.TypeExpr.Location));
-                        continue;
-                    }
-                }
-            } while (false);
 
             // match functions against trait functions
             foreach (var traitFunc in impl.Trait.Declaration.Functions)
@@ -320,6 +281,46 @@ namespace Cheez
                         ("Trait function defined here:", traitFunc));
                 }
             }
+        }
+
+        private void FinishTraitImpl(AstImplBlock impl) {
+            // check if type has required members
+            if (impl.Trait.Declaration.Variables.Count > 0) do
+            {
+                if (!(impl.TargetType is StructType str))
+                {
+                    ReportError(impl.TargetTypeExpr, $"Can't implement trait '{impl.Trait}' for non struct type '{impl.TargetType}' because the trait requires members",
+                        ("Trait defined here:", impl.Trait.Declaration.Location));
+                    break;
+                }
+
+                var strDecl = str.Declaration;
+                ComputeStructMembers(strDecl);
+
+                foreach (var v in impl.Trait.Declaration.Variables)
+                {
+                    var member = strDecl.Members.FirstOrDefault(m => m.Name == v.Name);
+                    if (member == null)
+                    {
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because it misses member '{v.Name}: {v.Type}'",
+                            ("Trait member defined here:", v.Location));
+                        continue;
+                    }
+                    if (!member.IsPublic || member.IsReadOnly)
+                    {
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because member '{member.Name}: {member.Type}' is not public",
+                            ("Struct member defined here:", member.Location));
+                        continue;
+                    }
+                    if (member.Type != v.Type)
+                    {
+                        ReportError(impl.TraitExpr, $"Can't implement trait '{impl.Trait}' for type '{impl.TargetType}' because '{member.Name}' has a different type ({member.Type}) than the trait member ({v.Type})",
+                            ("Struct member defined here:", member.Decl.TypeExpr.Location),
+                            ("Trait member defined here:", v.Decl.TypeExpr.Location));
+                        continue;
+                    }
+                }
+            } while (false);
         }
 
         private void Pass3Impl(AstImplBlock impl)
