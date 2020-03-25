@@ -101,12 +101,30 @@
             "program": "${workspaceFolder}/TODO"
           }
         ],
-        "args": [ "test123" ]
+        "args": [ "cbc" ]
+      },
+      {
+        "type": "cheez",
+        "label": "Cheez",
+        "program": "P:/dev/CheezLang/gen/test.exe",
+        "languages": ["cheez"],
+        "initialConfigurations": [
+          {
+            "type": "cheez",
+            "request": "launch",
+            "name": "TODO",
+            "program": "${workspaceFolder}/TODO"
+          }
+        ],
+        "args": [ "cheez" ]
       }
     ],
     "breakpoints": [
       {
         "language": "cheezbc"
+      },
+      {
+        "language": "cheezlang"
       }
     ]
   },
