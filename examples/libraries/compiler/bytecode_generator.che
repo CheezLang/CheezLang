@@ -3,7 +3,8 @@ use import std.string
 use import std.rc
 
 mem :: import std.mem.allocator
-io :: import std.io
+io  :: import std.io
+fmt :: import std.fmt
 
 use import compiler.ast
 use import compiler.error_handler
@@ -22,6 +23,8 @@ ByteCodeGenerator :: struct {
     error_handler   : ref ErrorHandler
     allocator       : &mem.Allocator
     builder         : InstructionBuilder
+
+    function        : &AstFunction = null
 }
 
 impl ByteCodeGenerator {
@@ -49,6 +52,17 @@ impl ByteCodeGenerator {
 
 impl CodeGenerator for ByteCodeGenerator {
     generate_code_for_function :: (ref Self, func: &AstFunction, name: string) {
+        if function != null {
+            error_handler.report_errorf(
+                func.location,
+                "Failed to generate code for this function because we're already generating code for another function at {}",
+                [function.location])
+            return
+        }
+
+        function = func
+        defer function <- null
+
         file_path := func.location.file
         params := Array[String].create()
 
@@ -69,6 +83,7 @@ impl CodeGenerator for ByteCodeGenerator {
             AstBlock($block)        -> generate_block(block)
             AstCall($call)          -> generate_call(call)
             AstNumberLiteral($num)  -> generate_number_literal(num)
+            AstIdentifier($id)      -> generate_identifier(id)
         }
     }
 
@@ -81,16 +96,21 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_call :: (ref Self, call: ref AstCall) {
         builder.set_current_line(call.location.line)
+        builder.build_noop()
         match call.function {
             AstIdentifier($id) -> {
-                for arg : call.arguments {
-                    generate_expression(<<arg)
-                }
 
-                builder.set_current_line(call.location.line)
                 if id.value == "print" {
-                    builder.build_print()
+                    for arg : call.arguments {
+                        generate_expression(<<arg)
+                        builder.set_current_line(call.location.line)
+                        builder.build_print()
+                    }
                 } else {
+                    for arg : call.arguments {
+                        generate_expression(<<arg)
+                    }
+                    builder.set_current_line(call.location.line)
                     builder.build_call(id.value, 0)
                 }
             }
@@ -104,6 +124,21 @@ impl CodeGenerator for ByteCodeGenerator {
     generate_number_literal :: (ref Self, num: ref AstNumberLiteral) {
         builder.set_current_line(num.location.line)
         builder.build_const(num.value)
+    }
+
+    generate_identifier :: (ref Self, id: ref AstIdentifier) {
+        builder.set_current_line(id.location.line)
+        match function.get_parameter(id.value) {
+            Some($param) -> {
+                builder.build_load_local(-1)
+            }
+
+            None -> {
+                msg := fmt.format("Unknown identifier '{}'", [id.value])
+                error_handler.report_error(id.location, msg.slice())
+                builder.build_panic(msg.slice())
+            }
+        }
     }
 }
 
@@ -298,5 +333,13 @@ impl InstructionBuilder {
     build_halt :: (ref Self) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Halt)
+    }
+
+    build_panic :: (ref Self, msg: string) {
+        add_debug_info_line()
+        msg = strings.intern(msg)
+        function.instructions.add(cast Instruction.Panic)
+        function.instructions.add(cast msg.bytes.data)
+        function.instructions.add(cast msg.bytes.length)
     }
 }

@@ -12,7 +12,7 @@ fs  :: import std.io.fs
 fmt :: import std.fmt
 mem :: import std.mem.allocator
 
-DEBUG_INTERPRETER :: false
+DEBUG_INTERPRETER :: true
 
 #export_scope
 
@@ -344,6 +344,10 @@ impl Interpreter {
         return interp
     }
 
+    function_registered :: (ref Self, name: string) -> bool {
+        return functions.contains(name)
+    }
+
     get_stackframes :: (ref Self) -> []StackFrame {
         return frames[..=fp]
     }
@@ -559,6 +563,14 @@ impl Interpreter {
                 }
             }
 
+            .Panic -> {
+                str := string(arg(&u8), arg(int))
+                file := frame.func.debug_info.path.slice()
+                line := frame.func.debug_info.get_line_for_ip(frame.ip_prev)
+                printer("[PANIC] {}:{}: {}", [file, line, str], "stderr")
+                return .Done
+            }
+
             .Print -> {
                 val := pop()
 
@@ -613,6 +625,7 @@ Instruction :: enum #repr("C") #tag_type(u64) {
     Call
     Return, ReturnVoid
 
+    Panic
     Print
     Halt
 }
@@ -658,6 +671,7 @@ impl Instruction {
 
             .Print          -> fmt.format("Print")
             .Halt           -> fmt.format("Halt")
+            .Panic          -> fmt.format("Panic `"{}`"", [string(arg(&u8, 0), arg(int, 1))])
             _               -> fmt.format("Unknown {}", [code[0]])
         }
     }

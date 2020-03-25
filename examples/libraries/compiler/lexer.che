@@ -747,6 +747,19 @@ Location :: struct #copy {
     end_line    : int    = default
 }
 
+impl Location {
+    to :: (Self, end: Location) -> Location {
+        return Location(
+            file        = file
+            byte_index  = byte_index
+            byte_length = byte_length
+            line        = line
+            column      = column
+            end_line    = end.end_line
+        )
+    }
+}
+
 Token :: struct #copy {
     typ   : TokenType
     location: Location

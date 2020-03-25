@@ -16,38 +16,58 @@ dump_ast :: (node: ref AstNode) -> String {
 #file_scope
 
 dump_ast_helper :: (result: ref String, node: ref AstNode, indent: int) {
-    for 0 .. indent {
-        result += "  "
+    print :: (msg: string, amount: int) #macro {
+        for 0 .. amount {
+            result += "  "
+        }
+        @link(result) += msg
     }
+
+    print("", indent)
+
     match node {
         AstConstDecl($decl) -> {
-            result.appendf("AstConstDecl ({})`n", decl.location)
+            result.appendf("AstConstDecl #{} ({})`n", (decl.id, decl.location))
             dump_ast_helper(result, decl.name, indent + 1)
             dump_ast_helper(result, decl.value, indent + 1)
         }
 
         AstFunction($func) -> {
-            result.appendf("AstFunction ({})`n", func.location)
-            dump_ast_helper(result, <<func.body, indent + 1)
+            result.appendf("AstFunction #{} ({})`n", (func.id, func.location))
+            print("params:`n", indent + 1)
+            for param : func.params {
+                dump_ast_helper(result, <<param, indent + 2)
+            }
+            print("body:`n", indent + 1)
+            dump_ast_helper(result, <<func.body, indent + 2)
         }
 
         AstBlock($block) -> {
-            result.appendf("AstBlock ({})`n", block.location)
+            result.appendf("AstBlock #{} ({})`n", (block.id, block.location))
             for child : block.children {
                 dump_ast_helper(result, <<child, indent + 1)
             }
         }
 
         AstIdentifier($id) -> {
-            result.appendf("AstIdentifier '{}' ({})`n", (id.value, id.location))
+            result.appendf("AstIdentifier #{} '{}' ({})`n", (id.id, id.value, id.location))
         }
 
         AstNumberLiteral($num) -> {
-            result.appendf("AstNumberLiteral {}` ({})`n", (num.value, num.location))
+            result.appendf("AstNumberLiteral #{} {} ({})`n", (num.id, num.value, num.location))
+        }
+
+        AstParameter($param) -> {
+            result.appendf("AstParameter #{} ({})`n", (param.id, param.location))
+            dump_ast_helper(result, param.name, indent + 1)
+            dump_ast_helper(result, <<param.type_expr, indent + 1)
+
+            if param.default_value != null then
+                dump_ast_helper(result, <<param.default_value, indent + 1)
         }
 
         AstCall($call) -> {
-            result.appendf("AstCall ({})`n", call.location)
+            result.appendf("AstCall #{} ({})`n", (call.id, call.location))
             dump_ast_helper(result, call.function, indent + 1)
             for arg : call.arguments {
                 dump_ast_helper(result, <<arg, indent + 1)

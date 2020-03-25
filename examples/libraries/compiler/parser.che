@@ -15,7 +15,7 @@ Parser :: struct {
     error_handler   : &ErrorHandler
     allocator       : &mem.Allocator
 
-    _next_id        := 0
+    _next_id        := 1
 }
 
 impl Parser {
@@ -138,10 +138,7 @@ impl Parser {
     parse_function :: (ref Self) -> &AstNode {
         id := next_id()
 
-        location := consume(.OpenParen).location
-        lexer.skip_whitespace()
-        consume(.ClosingParen)
-        lexer.skip_whitespace()
+        params, location, _ := parse_parameter_list()
 
         body := try(parse_block())
 
@@ -150,6 +147,7 @@ impl Parser {
         return allocate(AstFunction(
             id          = id
             location    = location
+            params      = params
             body        = body
         ))
     }
@@ -196,6 +194,82 @@ impl Parser {
         ))
     }
 
+    parse_parameter :: (ref Self) -> &AstParameter {
+        id := next_id()
+
+        name            : &AstIdentifier = null
+        type_expr       : &AstNode       = null
+        default_vaule   : &AstNode       = null
+
+        expr := try(parse_expression())
+        location := expr.location
+
+        if check_token(.Colon) {
+            match ref <<expr {
+                AstIdentifier($id) -> {
+                    name = &id
+                }
+                _ -> {
+                    error_handler.report_errorf(expr.location, "Name of parameter must be an identifier", [])
+                    return null
+                }
+            }
+
+            consume(.Colon)
+            lexer.skip_whitespace()
+            type_expr = parse_expression()
+        } else {
+            type_expr = expr
+        }
+
+        end := type_expr.location
+
+        if name == null {
+            error_handler.report_errorf(location, "Parameter has no name", [])
+            return null
+        }
+
+        return allocate(AstParameter(
+            id              = id
+            location        = location.to(end)
+            name            = <<name
+            type_expr       = type_expr
+            default_value   = default_vaule
+        ))
+    }
+
+    parse_parameter_list :: (ref Self) -> Array[&AstParameter], Location, Location {
+        params := Array[&AstParameter].create()
+
+        beg := consume(.OpenParen).location
+        lexer.skip_whitespace()
+
+        loop {
+            next := lexer.peek_token()
+            if next.typ == .ClosingParen or next.typ == .EOF {
+                break
+            }
+
+            param := parse_parameter()
+
+            if param != null{
+                params.add(param)
+            }
+
+            next = lexer.peek_token()
+            if next.typ == .ClosingParen or next.typ == .EOF {
+                break
+            }
+
+            consume(.Comma)
+            lexer.skip_whitespace()
+        }
+
+        end := consume(.ClosingParen).location
+
+        return params, beg, end
+    }
+
     parse_argument_list :: (ref Self) -> Array[&AstNode], Location, Location {
         args := Array[&AstNode].create()
 
@@ -230,6 +304,11 @@ impl Parser {
     }
 
     // helpers
+    check_token :: (ref Self, typ: TokenType) -> bool {
+        token := lexer.peek_token()
+        return token.typ == typ
+    }
+
     consume :: (ref Self, typ: TokenType) -> Token {
         tok := lexer.peek_token()
         while tok.typ != typ {

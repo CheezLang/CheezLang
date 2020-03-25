@@ -9,8 +9,8 @@
 // import examples.pathtracer2.main
 // import examples.command_line_parser
 // import compiler.cli
-// import compiler.compiler_test
-import examples.debugger
+import compiler.compiler_test
+// import compiler.debugger
 // import examples.ShmupEngine.src.main
 
 // examples which are not working currently

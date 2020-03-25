@@ -35,12 +35,31 @@ impl AstNode for AstConstDecl {}
 
 // expressions
 
+AstParameter :: struct AstNode {
+    name            : ref AstIdentifier
+    type_expr       : &AstNode
+    default_value   : &AstNode
+}
+impl AstNode for AstParameter {}
+
 AstFunction :: struct AstNode {
-    body : &AstNode
+    params  : Array[&AstParameter]
+    body    : &AstNode
 
     bytecode : &CBCFunction = null
 }
 impl AstNode for AstFunction {}
+
+impl AstFunction {
+    get_parameter :: (ref Self, name: string) -> Option[ref AstParameter] {
+        for p : params {
+            if p.name.value == name {
+                return Some(<<p)
+            }
+        }
+        return None
+    }
+}
 
 AstBlock :: struct AstNode {
     children : Array[&AstNode]

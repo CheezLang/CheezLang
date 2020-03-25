@@ -3,89 +3,108 @@ use import std.ring_queue
 use import std.fiber
 use import std.thread
 use import std.time
-use import std.profiling
-use import std.mem.allocator
 use import std.os.windows_functions
 use import std.os.windows_types
 use import std.os.windows_constants
-C :: import std.c
-io :: import std.io
+use import std.rc
+use import std.string
+use import std.mem.std_heap_allocator
+
+mem :: import std.mem.allocator
+C   :: import std.c
+io  :: import std.io
+
+use import compiler.interpreter
+use import compiler.bytecode_generator
+use import compiler.string_database
+use import compiler.error_handler
+use import compiler.ast
+use import compiler.lexer
+use import compiler.parser
+use import compiler.ast_dumper
+use import logging.logger
+
 
 enable_profiler :: false
 
 Main :: () {
-    Instrumentor.init(true)
-    Instrumentor.get().begin_session("compiler_test", "compiler_test_profile.json")
-    compiler_test()
-    Instrumentor.get().end_session()
-}
+    // Fiber.init()
 
-compiler_test :: () {
-    profile_function()
-    Fiber.init()
+    console_error_handler := ConsoleErrorHandler.new(null)
 
-    compiler := Compiler.new(1)
-    defer {
-        Memory.drop(compiler)
-        free(compiler)
-    }
-    compiler.exprs.reserve(1000000)
+    compiler := Compiler.new(1, &console_error_handler)
 
-    for id : 1 ..= 100000 {
-        compiler.exprs.add(Expr(id))
-    }
-
-    // no dependencies
-    //
-
-    // 5:4, 4:3, 3:2, 2:1
-    // for i : 0..compiler.exprs.get_length()/2 {
-    //     left  := i * 2 + 1
-    //     right := i * 2 + 2
-    //     if left >= compiler.exprs.get_length() then break
-    //     compiler.exprs[i].depend[0] = &compiler.exprs[left]
-    //     if right >= compiler.exprs.get_length() then break
-    //     compiler.exprs[i].depend[1] = &compiler.exprs[right]
-    // }
-
-    // 1:2, 2:3, 3:4, 4:5
-    // for i : 0..compiler.exprs.get_length()-1 {
-    //     compiler.exprs[i].depend[0] = &compiler.exprs[i+1]
-    //     compiler.exprs[i].depend[1] = null
-    // }
+    compiler.get().add_job(LoadFileJob(path = "P:/dev/CheezLang/data/basic_cheez.che".to_owned()))
 
     start := get_time_milliseconds()
-    compiler.compile_all()
+    compiler.get().start_compilation()
+    compiler.get().wait_until_done()
     end := get_time_milliseconds()
     dur := end - start
     io.printfln("Compilation took {} ms", dur)
 }
 
-Expr :: struct {
-    id      : int
-    depend  : [2]&Expr = [null, null]
-    done    := false
-    progressed := false
+CompilationJob :: trait {
+    progressed  : bool = false
+    done        : bool = false
 }
 
-CompileFiber :: struct {
-    compiler: &Compiler
+impl CompileGlobalNodeJob {
+    wait_for_bytecode :: (ref Self, wait_for: &AstFunction) {
+        // id := job.id
+
+        fiber_context := cast(&FiberContext) Fiber.current().user_data
+        self.progressed = true
+
+        while yield_count := 0, true, yield_count += 1 {
+            if wait_for != null and wait_for.bytecode == null {
+                if yield_count > 0 {
+                    self.progressed = false
+                }
+
+                io.formatln("[{}] [Job] suspending #{} waiting for #{}", [fiber_context.thread, node.id, wait_for.id])
+                Fiber.yield()
+                io.formatln("[{}] [Job] resuming #{} waiting for #{}", [fiber_context.thread, node.id, wait_for.id])
+            } else {
+                io.formatln("[{}] [Job] done #{} waiting for #{}", [fiber_context.thread, node.id, wait_for.id])
+                break
+            }
+        }
+        self.progressed = true
+    }
+}
+
+CompileGlobalNodeJob :: struct CompilationJob {
+    node : &AstNode
+}
+
+LoadFileJob :: struct CompilationJob {
+    path : String
+}
+
+FiberContext :: struct {
     fiber   : &Fiber
-    expr    : &Expr = null
-    thread  := -1
+    job     : &CompilationJob = null
+    thread  : int = -1
 }
 
 Compiler :: struct {
-    exprs   := Array[Expr].create()
-    expr_q  := RingQueue[&Expr].new()
+    jobs            := RingQueue[&CompilationJob].new()
 
-    fibers  := Array[&CompileFiber].create(1024)
-    fiber_q := RingQueue[&CompileFiber].new()
-    fiber_q2:= RingQueue[&CompileFiber].new()
+    fibers          := Array[&FiberContext].create(1024)
+    waiting_fibers  := RingQueue[&FiberContext].new()
+    paused_fibers   := RingQueue[&FiberContext].new()
 
-    mutex   : Mutex
-    threads : Array[Thread]
-    active_threads := 0
+    mutex           : Mutex
+    threads         : Array[Thread]
+    active_threads  := 0
+
+    error_handler   : &ErrorHandler
+    string_database : StringDatabase
+
+    interp          : &Interpreter
+
+    all_nodes       := Array[&AstNode].create()
 }
 
 impl Drop for Compiler {
@@ -96,76 +115,19 @@ impl Drop for Compiler {
     }
 }
 
-wait_for_expr :: (expr: &Expr, wait_for: &Expr) {
-    id := expr.id
-
-    current_fiber := Fiber.current()
-    compiler_fiber := cast(&CompileFiber) current_fiber.user_data
-    expr.progressed = true
-
-    while yield_count := 0, true, yield_count += 1 {
-        if wait_for != null and !wait_for.done {
-            if yield_count > 0 {
-                expr.progressed = false
-            }
-
-            Fiber.yield()
-        } else {
-            break
-        }
-    }
-    expr.progressed = true
-}
-
-compile_expr :: (expr: &Expr) {
-    id := expr.id
-
-    if const enable_profiler {
-        str := String.empty()
-        str.appendf("compile_expr({})", expr.id)
-        profile_async("compile_expr", id, "b")
-        defer profile_async("compile_expr", id, "e")
-    }
-
-    profile_async("compile_expr", id, "e")
-    wait_for_expr(expr, expr.depend[0])
-    profile_async("compile_expr", id, "b")
-
-    profile_async("compile_expr", id, "e")
-    wait_for_expr(expr, expr.depend[1])
-    profile_async("compile_expr", id, "b")
-
-    expr.done = true
-}
-
-compiler_fiber :: (fiber : &CompileFiber) {
-    profile_function()
-    while true {
-        while fiber.expr == null {
-            Fiber.yield()
-        }
-
-        fiber.expr.progressed = false
-        compile_expr(fiber.expr)
-        fiber.expr = null
-    }
-}
-
 impl Compiler {
-    new :: (thread_count: int) -> &Compiler {
-        profile_function()
-        comp := alloc(Compiler)
-
-        threads := Array[Thread].create()
+    new :: (thread_count: int, error_handler: &ErrorHandler) -> Rc[Compiler] {
+        comp := Rc[Compiler].new(Compiler(
+            mutex           = Mutex.new()
+            threads         = Array[Thread].create()
+            error_handler   = error_handler
+            string_database = StringDatabase.new()
+            interp          = Interpreter.new()
+        ))
+        comp.get().interp.printer = cast comp.get().print
         for 0..thread_count {
-            threads.add(Thread.new(cast comp.thread_func))
+            comp.get().threads.add(Thread.new(cast comp.get().thread_func))
         }
-
-        <<comp = Compiler(
-            mutex = Mutex.new()
-            threads = threads
-        )
-
         return comp
     }
 
@@ -177,12 +139,147 @@ impl Compiler {
         if threads.get_length() > 1 then mutex.release()
     }
 
+    add_job :: (ref Self, job: $T) {
+        ptr := mem.alloc(T)
+        <<ptr = job
+        jobs.push(ptr)
+    }
+
+    run_job :: (ref Self, context: &FiberContext) {
+        match ref <<context.job {
+            LoadFileJob($job) -> load_file(context, job)
+            CompileGlobalNodeJob($job) -> compile_global_node(context, job)
+        }
+    }
+
+    print :: (ref Self, format: string, args: []&any = [], category: string = "console") {
+        io.formatln(format, args)
+    }
+
+    get_function :: (ref Self, name: string) -> &AstFunction {
+        for node : all_nodes {
+            decl := cast(&AstConstDecl) node
+            func := cast(&AstFunction) &decl.value
+            if decl.name.value == name {
+                return func
+            }
+        }
+
+        return null
+    }
+
+    compile_global_node :: (ref Self, context: &FiberContext, job: ref CompileGlobalNodeJob) {
+        node := job.node
+        io.formatln("[{}] [Job] CompileGlobalNode #{}", [context.thread, node.id])
+
+        decl := cast(&AstConstDecl) node
+        name := decl.name.value
+        func := cast(&AstFunction) &decl.value
+
+        allocator := DEFAULT_STD_HEAP_ALLOCATOR
+        code_generator := ByteCodeGenerator.new(string_database, <<error_handler, &allocator)
+        code_generator.get().generate_code_for_function(func, name)
+        interp.register_function(name, func.bytecode)
+
+        if name == "Main" {
+            foo := get_function("foo")
+            bar := get_function("bar")
+
+            job.wait_for_bytecode(foo)
+            job.wait_for_bytecode(bar)
+
+            io.formatln("[{}] [Job] CompileGlobalNode #{}: calling main", [context.thread, node.id])
+            interp.call("Main")
+            interp.run()
+        }
+
+        io.formatln("[{}] [Job] CompileGlobalNode #{}: done", [context.thread, node.id])
+    }
+
+    load_file :: (ref Self, context: &FiberContext, job: ref LoadFileJob) {
+        io.formatln("[{}] [Job] LoadFile '{}'", [context.thread, job.path])
+
+        lexer := Lexer.from_file(job.path.slice(), self.string_database)
+        match lexer {
+            Ok($lexer) -> {
+                allocator := DEFAULT_STD_HEAP_ALLOCATOR
+                parser := Parser.new(lexer, error_handler, &allocator)
+
+                loop {
+                    decl := parser.parse_constant_declaration()
+                    if decl == null then break
+                    dump := dump_ast(<<decl)
+                    // io.println(dump)
+
+                    all_nodes.add(decl)
+                    add_job(CompileGlobalNodeJob(node = decl))
+                }
+            }
+
+            Err(_) -> {
+                
+            }
+        }
+    }
+}
+
+impl Compiler {
+    start_compilation :: (ref Self) {
+        // io.printfln("[compiler] compiling {} statements with {} threads", (exprs.get_length(), threads.get_length()))
+
+        for threads {
+            it.start()
+        }
+    }
+
+    wait_until_done :: (ref Self) {
+        handles := mem.alloc_raw(HANDLE, cast threads.get_length())
+
+        for threads {
+            handles[it_index] = it.data.handle
+        }
+        WaitForMultipleObjects(cast threads.get_length(), handles, 1, INFINITE)
+
+        // for expr : exprs {
+        //     if !expr.done {
+        //         io.printfln("err: expr [{}] is not done", expr.id)
+        //     }
+        // }
+
+        io.printfln("[compiler] finished compilation with {} fibers", fibers.get_length())
+    }
+
+    find_free_fiber :: (ref Self) -> &FiberContext {
+        for f : fibers {
+            if f.job == null and f.thread == -1 {
+                return f
+            }
+        }
+        {
+            new_fiber := mem.alloc(FiberContext)
+            <<new_fiber = FiberContext(Fiber.new(cast(Fn(&FiberContext)) self.fiber_func, new_fiber))
+            fibers.add(new_fiber)
+            return new_fiber
+        }
+    }
+
+    fiber_func :: (ref Self, fiber_context: &FiberContext) {
+        while true {
+            while fiber_context.job == null {
+                Fiber.yield()
+            }
+
+            fiber_context.job.progressed = false
+            self.run_job(fiber_context)
+            fiber_context.job = null
+        }
+    }
+
     thread_func :: (ref Self) {
-        profile_function()
         Fiber.init()
         thread_id := Thread.current().id
 
-        current_fiber : &CompileFiber = null
+        current_fiber : &FiberContext = null
         while true #label main_loop {
             {
                 self.lock()
@@ -193,31 +290,31 @@ impl Compiler {
                 // if fiber made progress or finished, move all stuff from q2 to q
                 if current_fiber != null {
                     current_fiber.thread = -1
-                    if current_fiber.expr == null or current_fiber.expr.progressed {
-                        while self.fiber_q2.count() > 0 {
-                            self.fiber_q.push(self.fiber_q2.pop())
+                    if current_fiber.job == null or current_fiber.job.progressed {
+                        while self.paused_fibers.count() > 0 {
+                            self.waiting_fibers.push(self.paused_fibers.pop())
                         }
                     }
 
                     // if still not done, push in q2
-                    if current_fiber.expr != null {
-                        self.fiber_q2.push(current_fiber)
+                    if current_fiber.job != null {
+                        self.paused_fibers.push(current_fiber)
                     }
 
                     current_fiber = null
                 }
 
-                if self.fiber_q.count() == 0 {
-                    if self.expr_q.count() > 0 {
-                        expr  := self.expr_q.pop()
+                if self.waiting_fibers.count() == 0 {
+                    if self.jobs.count() > 0 {
+                        job  := self.jobs.pop()
                         fiber := self.find_free_fiber()
-                        fiber.expr = expr
-                        self.fiber_q.push(fiber)
+                        fiber.job = job
+                        self.waiting_fibers.push(fiber)
 
                     //*
-                    } else if self.fiber_q2.count() > 0 {
+                    } else if self.paused_fibers.count() > 0 {
                         if self.active_threads > 0 then continue
-                        self.fiber_q.push(self.fiber_q2.pop())
+                        self.waiting_fibers.push(self.paused_fibers.pop())
                     // */
 
                     } else {
@@ -225,86 +322,12 @@ impl Compiler {
                     }
                 }
 
-                current_fiber = self.fiber_q.pop()
+                current_fiber = self.waiting_fibers.pop()
                 current_fiber.thread = thread_id
                 active_threads += 1
             }
 
-            expr_id := current_fiber.expr.id
             current_fiber.fiber.resume()
         }
-    }
-}
-
-impl Compiler {
-    compile_all :: (ref Self) {
-        profile_function()
-        io.printfln("[compiler] compiling {} statements with {} threads", (exprs.get_length(), threads.get_length()))
-
-        for exprs {
-            expr_q.push(&it)
-        }
-
-        for threads {
-            it.start()
-        }
-
-        handles := alloc_raw(HANDLE, cast threads.get_length())
-
-        for threads {
-            handles[it_index] = it.data.handle
-        }
-        WaitForMultipleObjects(cast threads.get_length(), handles, 1, INFINITE)
-
-
-
-
-        for expr : exprs {
-            if !expr.done {
-                io.printfln("err: expr [{}] is not done", expr.id)
-            }
-        }
-
-        io.printfln("[compiler] finished compilation with {} fibers", fibers.get_length())
-    }
-
-    find_free_fiber :: (ref Self) -> &CompileFiber {
-        profile_function()
-        for f : fibers {
-            if f.expr == null and f.thread == -1 {
-                return f
-            }
-        }
-        {
-            profile_scope("create new fiber")
-            new_fiber   := alloc(CompileFiber)
-            <<new_fiber = CompileFiber(&self, Fiber.new(compiler_fiber, new_fiber))
-            fibers.add(new_fiber)
-            return new_fiber
-        }
-    }
-}
-
-// profiling stuff
-profile_scope :: (name: string) #macro #transparent {
-    if const enable_profiler {
-        _ := Timer.start(name)
-    } else {
-        _ := 0
-    }
-}
-
-profile_function :: () #macro #transparent {
-    if const enable_profiler {
-        _ := Timer.start(@function_signature())
-    } else {
-        _ := 0
-    }
-}
-
-profile_async :: (name: string, id: int, ph: string) #macro {
-    if const enable_profiler {
-        Instrumentor.get().
-            write_profile_async(name, id, get_time_microseconds(), ph, Thread.current().id)
     }
 }

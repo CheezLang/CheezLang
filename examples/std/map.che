@@ -63,6 +63,13 @@ impl(K: type, V: type) Map[K, V] {
         return entries
     }
 
+    contains :: (ref Self, key: $K2) -> bool {
+        if _count == 0 or entries.data == null { return false }
+        entry := find_entry(entries, key)
+        if !entry.filled { return false }
+        return true
+    }
+
     find_entry :: (ref Self, the_entries: []Entry[K, V], key: ref $K2) -> &Entry[K, V] {
         if const !@type_has_trait(K, Equatable[K2]) {
             @static_assert(false, "Key of map must implment Equatable[" + @typename(K2) + "]")
