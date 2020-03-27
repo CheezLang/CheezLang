@@ -28,10 +28,12 @@ use import parser
 use import ast_dumper
 use import scope
 use import jobs
+use import config
 
 enable_profiler :: false
 
 #export_scope
+
 
 wait_until :: (cond: Code) #macro {
     fiber_context := Fiber.user_data(FiberContext)
@@ -39,16 +41,17 @@ wait_until :: (cond: Code) #macro {
 
     loop {
         if @insert(cond) then break
-        io.formatln("[{}] [{}] suspending on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+        if const DEBUG_WAIT then g_logger.log("[{}] [{}] suspending on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
         Fiber.yield()
-        io.formatln("[{}] [{}] resuming on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+        if const DEBUG_WAIT then g_logger.log("[{}] [{}] resuming on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
         fiber_context.job.progressed = false
     }
-    io.formatln("[{}] [{}] done on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+    if const DEBUG_WAIT then g_logger.log("[{}] [{}] done on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
     fiber_context.job.progressed = true
 }
 
 compile_files :: (files: []String) {
+    g_logger.log("compile files: {}", [files])
     // Fiber.init()
 
     console_error_handler := ConsoleErrorHandler.new(null)
@@ -64,11 +67,12 @@ compile_files :: (files: []String) {
     compiler.get().wait_until_done()
     end := get_time_milliseconds()
     dur := end - start
-    io.printfln("Compilation took {} ms", dur)
+    g_logger.log("Compilation took {} ms", [dur])
 }
 
 FiberContext :: struct {
     fiber   : &Fiber
+    interp  : &Interpreter
     job     : &CompilationJob = null
     thread  : int = -1
 }
@@ -88,10 +92,10 @@ Compiler :: struct {
     error_handler   : &ErrorHandler
     string_database : StringDatabase
 
-    interp          : &Interpreter = null
-
     global_scope    : &Scope = null
     all_nodes       := Array[&AstNode].create()
+
+    code_runner     : Rc[CodeRunner]
 
     // filename -> filecontent
     // contains all source files loaded during compilation
@@ -105,9 +109,9 @@ Compiler :: struct {
 
 impl Drop for Compiler {
     drop :: (ref Self) {
-        for f : fibers {
-            Memory.drop(f.fiber)
-        }
+        // for f : fibers {
+        //     Memory.drop(f.fiber)
+        // }
     }
 }
 
@@ -122,18 +126,21 @@ impl TextProvider for Compiler {
 
 impl Compiler {
     new :: (thread_count: int, error_handler: &ErrorHandler) -> Rc[Compiler] {
-        scope_allocator := mem.alloc(StdHeapAllocator)
-        <<scope_allocator = StdHeapAllocator()
-        ast_allocator := mem.alloc(StdHeapAllocator)
-        <<ast_allocator = StdHeapAllocator()
-        bc_allocator := mem.alloc(StdHeapAllocator)
-        <<bc_allocator = StdHeapAllocator()
+        scope_allocator     := mem.alloc(StdHeapAllocator)
+        ast_allocator       := mem.alloc(StdHeapAllocator)
+        bc_allocator        := mem.alloc(StdHeapAllocator)
+        <<scope_allocator   = StdHeapAllocator()
+        <<ast_allocator     = StdHeapAllocator()
+        <<bc_allocator      = StdHeapAllocator()
         comp := Rc[Compiler].new(Compiler(
             mutex           = Mutex.new()
             threads         = Array[Thread].create()
+
             error_handler   = error_handler
             string_database = StringDatabase.new()
-            interp          = Interpreter.new()
+
+            code_runner     = Rc[CodeRunner].new(NormalCodeRunner())
+
             ast_allocator   = ast_allocator
             bc_allocator    = bc_allocator
             scope_allocator = scope_allocator
@@ -190,17 +197,11 @@ impl Compiler {
         }
         WaitForMultipleObjects(cast threads.get_length(), handles, 1, INFINITE)
 
-        // for expr : exprs {
-        //     if !expr.done {
-        //         io.printfln("err: expr [{}] is not done", expr.id)
-        //     }
-        // }
-
         if paused_fibers.count() > 0 {
             error_handler.report_error("Failed to compile. {} fibers are still waiting", [paused_fibers.count()])
         }
 
-        io.printfln("[compiler] finished compilation with {} fibers", fibers.get_length())
+        g_logger.log("[compiler] finished compilation with {} fibers", [fibers.get_length()])
     }
 
     find_free_fiber :: (ref Self) -> &FiberContext {
@@ -211,7 +212,10 @@ impl Compiler {
         }
         {
             new_fiber := mem.alloc(FiberContext)
-            <<new_fiber = FiberContext(Fiber.new(cast(Fn(&FiberContext)) self.fiber_func, new_fiber))
+            <<new_fiber = FiberContext(
+                fiber   = Fiber.new(cast(Fn(&FiberContext)) self.fiber_func, new_fiber)
+                interp  = Interpreter.new()
+            )
             fibers.add(new_fiber)
             return new_fiber
         }

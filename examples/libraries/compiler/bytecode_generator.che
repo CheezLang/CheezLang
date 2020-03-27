@@ -15,7 +15,7 @@ use import compiler.string_database
 #export_scope
 
 CodeGenerator :: trait {
-    generate_code_for_function :: (ref Self, func: &AstFunction, name: string);
+    generate_code_for_function :: (ref Self, func: &AstFunction);
 }
 
 ByteCodeGenerator :: struct {
@@ -51,7 +51,7 @@ impl ByteCodeGenerator {
 }
 
 impl CodeGenerator for ByteCodeGenerator {
-    generate_code_for_function :: (ref Self, func: &AstFunction, name: string) {
+    generate_code_for_function :: (ref Self, func: &AstFunction) {
         if function != null {
             error_handler.report_error_at(
                 func.location,
@@ -66,8 +66,8 @@ impl CodeGenerator for ByteCodeGenerator {
         file_path := func.location.file
         params := Array[String].create()
 
-        func.bytecode = allocate_function(name, file_path, params)
-        builder.begin_function(func.bytecode)
+        cbc_func := allocate_function(func.name, file_path, params)
+        builder.begin_function(cbc_func)
 
         builder.set_current_line(func.body.location.line)
         generate_expression(<<func.body)
@@ -75,6 +75,8 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.build_return_void()
 
         builder.end_function()
+
+        func.bytecode = cbc_func
     }
 
     generate_expression :: (ref Self, node: ref AstNode) {
@@ -111,7 +113,7 @@ impl CodeGenerator for ByteCodeGenerator {
                         generate_expression(<<arg)
                     }
                     builder.set_current_line(call.location.line)
-                    builder.build_call(id.name, 0)
+                    builder.build_comp_call(call.ast_function)
                 }
             }
 
@@ -313,6 +315,14 @@ impl InstructionBuilder {
         function.instructions.add(cast name.bytes.data)
         function.instructions.add(cast name.bytes.length)
         function.instructions.add(cast arity)
+    }
+
+    build_comp_call :: (ref Self, ast_func: &AstFunction) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CompCall)
+        function.instructions.add(cast ast_func)
+        function.instructions.add(0)
+        function.instructions.add(0)
     }
 
     build_return :: (ref Self) {

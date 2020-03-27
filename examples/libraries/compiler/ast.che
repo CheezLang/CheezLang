@@ -48,6 +48,7 @@ impl AstNode for AstParameter {}
 
 AstFunction :: struct AstNode {
     param_scope : &Scope
+    name        := "#anonymous"
 
     params      : Array[&AstParameter]
     body        : &AstNode
@@ -74,8 +75,9 @@ AstBlock :: struct AstNode {
 impl AstNode for AstBlock {}
 
 AstCall :: struct AstNode {
-    function    : ref AstNode
-    arguments   : Array[&AstNode]
+    function        : ref AstNode
+    arguments       : Array[&AstNode]
+    ast_function    : &AstFunction = null
 }
 impl AstNode for AstCall {}
 

@@ -8,6 +8,8 @@ fs  :: import std.io.fs
 io  :: import std.io
 fmt :: import std.fmt
 
+use import logging.logger
+
 use import ast
 use import lexer
 use import parser
@@ -15,8 +17,9 @@ use import ast_dumper
 use import compiler
 use import bytecode_generator
 use import scope
+use import config
+use import value
 
-DEBUG_JOBS :: true
 
 #export_scope
 
@@ -65,7 +68,7 @@ impl CompilationJob for CompileGlobalNodeJob {
     debug_log :: (ref Self, msg: string, args: []&any = []) {
         if const DEBUG_JOBS {
             str := fmt.format(msg, args)
-            io.formatln("[{}] [CompileGlobalNode #{}] {}", [Fiber.user_data(FiberContext).thread, node.id, str])
+            g_logger.log("[{}] [CompileGlobalNode #{}] {}", [Fiber.user_data(FiberContext).thread, node.id, str])
         } 
     }
 
@@ -98,13 +101,18 @@ impl CompilationJob for CompileGlobalNodeJob {
         match sym {
             .Val(($typ, $value)) -> match value {
                 .Function($func) -> {
-                    id.typ = typ
+                    // id.typ = cast typ
                     id.value = value
                 }
                 
                 $val -> {
                     compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [val])
                 }
+            }
+
+            .ConstDecl($decl) -> {
+                wait_until(decl.value_expr.value != .None)
+                id.value = decl.value_expr.value
             }
 
             $sym -> {
@@ -119,12 +127,13 @@ impl CompilationJob for CompileGlobalNodeJob {
         
         match call.function.value {
             .Function($func) -> {
-                id.typ = typ
-                id.value = value
+                // call.typ = cast typ
+                // call.value = value
+                call.ast_function = func
             }
             
             $val -> {
-                compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [val])
+                compiler.error_handler.report_error_at(call.location, "[compile_call] not implemented: {}", [val])
             }
         }
     }
@@ -139,21 +148,43 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_function :: (ref Self, func: ref AstFunction) {
+        debug_log("compile_function '{}': Begin", [func.name])
         func.param_scope = compiler.new_scope(func.scope)
         func.body.scope = func.param_scope
+        func.value = Value.Function(&func)
 
+        debug_log("compile_function '{}': Compile Body", [func.name])
         compile_node(<<func.body)
 
-        func.value = .Function(&func)
+        debug_log("compile_function '{}': Generate Bytecode", [func.name])
+        code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
+        code_gen.get().generate_code_for_function(&func)
+
+        // @temp
+        if func.name == "Main" {
+            debug_log("compile_function '{}': Call Main", [func.name])
+            context := Fiber.user_data(FiberContext)
+            context.interp.comp_call(func)
+            compiler.code_runner.get().run(<<context.interp)
+        }
+        debug_log("compile_function '{}': End", [func.name])
     }
 
     compile_const_decl :: (ref Self, decl: ref AstConstDecl) {
         decl.value_expr.scope = decl.scope
-        compile_node(decl.value_expr)
 
-        match decl.scope.define_value(decl.name.name, null, decl.value_expr.value) {
+        match decl.value_expr {
+            AstFunction($func) -> {
+                func.name = decl.name.name
+            }
+        }
+
+        match decl.scope.define_const_decl(decl.name.name, decl) {
             Err() -> compiler.error_handler.report_error_at(decl.name.location, "A symbol with this name already exists in this scope")
         }
+
+        compile_node(decl.value_expr)
+        decl.value = decl.value_expr.value
     }
 }
 
@@ -165,7 +196,7 @@ impl CompilationJob for LoadFileJob {
     debug_log :: (ref Self, msg: string, args: []&any = []) {
         if const DEBUG_JOBS {
             str := fmt.format(msg, args)
-            io.formatln("[{}] [LoadFileJob '{}'] {}", [Fiber.user_data(FiberContext).thread, path, str])
+            g_logger.log("[{}] [LoadFileJob '{}'] {}", [Fiber.user_data(FiberContext).thread, path, str])
         } 
     }
 

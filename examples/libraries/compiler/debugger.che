@@ -6,7 +6,6 @@ use import std.box
 use import std.rc
 use import std.thread
 use import std.mem.std_heap_allocator
-
 use import std.os.windows
 use import std.os.windows_functions
 
@@ -15,19 +14,22 @@ mem :: import std.mem.allocator
 fmt :: import std.fmt
 fs  :: import std.io.fs
 
-use import compiler.interpreter
-use import compiler.bytecode_generator
-use import compiler.string_database
-use import compiler.error_handler
-use import compiler.ast
-use import compiler.lexer
-use import compiler.parser
-use import compiler.ast_dumper
 use import json.json
 use import dap.debug_adapter
 use import logging.logger
 
-LOG_PATH :: "P:/dev/CheezLang/data/log.txt"
+use import compiler
+use import interpreter
+use import jobs
+use import bytecode_generator
+use import string_database
+use import error_handler
+use import ast
+use import lexer
+use import parser
+use import ast_dumper
+
+LOG_PATH :: "P:/dev/CheezLang/data/logs/debugger_log.txt"
 CBC_FILE :: "p:/dev/debug_adapter_test/fac.cbc"
 
 Main :: () {
@@ -35,7 +37,7 @@ Main :: () {
     logger.get().clear()
 
     debugger := CheezDebugAdapter.new()
-    adapter := DebugAdapter.new(debugger, logger.get())
+    adapter := DebugAdapter.new(debugger)
 
     adapter.get().run()
 }
@@ -54,14 +56,11 @@ Main :: () {
 //     }
 // }
 
-CodeRunner :: trait {
-    run :: (ref Self);
-}
-
 DebuggerCallbacks :: trait {
     hit_breakpoint :: (ref Self);
     step_done :: (ref Self);
     terminated :: (ref Self);
+    output_generated :: (ref Self, format: string, args: []&any = [], category: string = "console");
 }
 
 Debugger :: struct {
@@ -80,7 +79,6 @@ Debugger :: struct {
     no_break    : bool = false
     break_cond  := BreakCondition.None
     old_frame   := StackFrame()
-    run_thread  : Thread
 }
 
 BreakCondition :: enum {
@@ -99,16 +97,20 @@ impl Debugger {
             running     = false
             no_break    = false
             callbacks   = null
-            run_thread  = Thread(null)
         ))
-    }
-
-    set_interpreter :: (ref Self, interp: &Interpreter) {
-        self.interp = interp
     }
 
     set_callbacks :: (ref Self, callbacks: &DebuggerCallbacks) {
         self.callbacks = callbacks
+    }
+
+    store_old_state :: (ref Self) {
+        if interp == null {
+            return
+        }
+        self.old_frame = <<&interp.frames[interp.fp]
+        self.fp_old = interp.fp
+        self.line_break = get_current_line()
     }
 
     get_current_line :: (ref Self) -> int {
@@ -117,18 +119,7 @@ impl Debugger {
     }
 
     launch :: (ref Self) {
-        if run_thread.data != null {
-            return
-        }
-
-        run_thread = Thread.new(cast self.execute_code)
-        run_thread.start()
-
-        if self.is_on_breakpoint() {
-            if callbacks != null then callbacks.hit_breakpoint()
-        } else {
-            resume()
-        }
+        resume()
     }
 
     pause :: (ref Self) {
@@ -139,45 +130,36 @@ impl Debugger {
 
     resume :: (ref Self) {
         running = true
-        self.old_frame = <<&interp.frames[interp.fp]
-        self.fp_old = interp.fp
-        self.line_break = get_current_line()
+        store_old_state()
         self.break_cond = BreakCondition.None
         cond_run.get().notify()
     }
 
     step :: (ref Self) {
         running = true
-        self.old_frame = <<&interp.frames[interp.fp]
-        self.fp_old = interp.fp
-        self.line_break = get_current_line()
+        store_old_state()
         self.break_cond = BreakCondition.Step
         cond_run.get().notify()
     }
 
     step_in :: (ref Self) {
         running = true
-        self.old_frame = <<&interp.frames[interp.fp]
-        self.fp_old = interp.fp
-        self.line_break = get_current_line()
+        store_old_state()
         self.break_cond = BreakCondition.StepIn
         cond_run.get().notify()
     }
 
     step_out :: (ref Self) {
         running = true
-        self.old_frame = <<&interp.frames[interp.fp]
-        self.fp_old = interp.fp
-        self.line_break = get_current_line()
+        store_old_state()
         self.break_cond = BreakCondition.StepOut
         cond_run.get().notify()
     }
 
-    execute_code :: (ref Self) {
-        self.run()
-    }
-
     is_on_breakpoint :: (ref Self) -> bool {
+        if interp == null {
+            return false
+        }
         if breakpoints.count() == 0 {
             return false
         }
@@ -199,10 +181,24 @@ impl Debugger {
 
         return false
     }
+
+    generate_output :: (ref Self, format: string, args: []&any = [], category: string = "console") {
+        if callbacks != null then callbacks.output_generated(format, args, category)
+    }
 }
 
 impl CodeRunner for Debugger {
-    run :: (ref Self) {
+    run :: (ref Self, interp: ref Interpreter) {
+        self.interp = &interp
+        interp.printer = cast self.generate_output
+
+        self.store_old_state()
+
+        if self.is_on_breakpoint() {
+            if callbacks != null then callbacks.hit_breakpoint()
+            running = false
+        }
+
         loop {
             while !running {
                 cond_run.get().wait(lock_run.get())
@@ -247,6 +243,7 @@ impl CodeRunner for Debugger {
                     if callbacks != null then callbacks.step_done()
                     break
                 }
+                    
 
                 match interp.step() {
                     .Done -> {
@@ -265,10 +262,13 @@ impl CodeRunner for Debugger {
 
 CheezDebugAdapter :: struct CommandHandler {
     debugger        : Rc[Debugger]
-    interp          : &Interpreter
     variable_refs   : Array[Rc[VariableRef]]
 
     string_db       := StringDatabase.new()
+
+    text_provider   : &TextProvider = null
+
+    compiler        := Rc[Compiler].empty()
 }
 
 impl CheezDebugAdapter {
@@ -277,15 +277,10 @@ impl CheezDebugAdapter {
         <<command_handler = CheezDebugAdapter(
             adapter = null
             debugger = Debugger.new()
-            interp  = null
             variable_refs   = Array[Rc[VariableRef]].create()
         )
 
         return Rc[CommandHandler].from_pointer(command_handler, owned = true)
-    }
-
-    print :: (ref Self, format: string, args: []&any = [], category: string = "console") {
-        adapter.emit_output_event(fmt.format(format, args), category)
     }
 
     clear_variable_refs :: (ref Self) {
@@ -308,83 +303,41 @@ impl CheezDebugAdapter {
         result := Array[Rc[VariableRef]].create()
 
 
-        locals := LocalsScope.new(interp, frame)
+        locals := LocalsScope.new(debugger.get().interp, frame)
         result.add(locals.clone().change_type(VariableRef))
 
-        args := ArgumentsScope.new(interp, frame)
+        args := ArgumentsScope.new(debugger.get().interp, frame)
         result.add(args.clone().change_type(VariableRef))
 
-        registers := RegistersScope.new(interp, frame)
+        registers := RegistersScope.new(debugger.get().interp, frame)
         result.add(registers.clone().change_type(VariableRef))
 
         return result
     }
 
     compile_cheez_program :: (ref Self, path: string) {
-        lexer := Lexer.from_file(path, string_db)
-        match lexer {
-            Ok($lexer) -> {
-                allocator := DEFAULT_STD_HEAP_ALLOCATOR
-                parser := Parser.new(lexer, &self, &allocator)
-
-                funcs := Array[&AstNode].create()
-
-                loop {
-                    decl := parser.parse_constant_declaration()
-                    if decl == null then break
-                    dump := dump_ast(<<decl)
-                    adapter.logger.log("ast:`n{}", [dump])
-
-                    funcs.add(decl)
-                }
-
-                compile_and_run(string_db, &allocator, funcs)
-            }
-
-            Err(_) -> {
-                adapter.logger.log("Failed to load file")
-            }
-        }
-    }
-
-    compile_and_run :: (ref Self, string_db: ref StringDatabase, allocator: &mem.Allocator, nodes: Array[&AstNode]) {
-        adapter.logger.log("compile and run {} functions", [nodes.count()])
-
-        code_generator := ByteCodeGenerator.new(string_db, self, allocator)
-
-        interp = Interpreter.new()
-        interp.printer = cast self.print
-        
-        for node : nodes {
-            decl := cast(&AstConstDecl) node
-            name := decl.name.value
-            func := cast(&AstFunction) &decl.value
-
-            code_generator.get().generate_code_for_function(func, name)
-
-            interp.register_function(name, func.bytecode)
-        }
-
-        interp.call("Main")
+        compiler = Compiler.new(1, &self)
+        compiler.get().code_runner = debugger.clone().change_type(CodeRunner)
+        compiler.get().add_job(LoadFileJob.new(path.to_owned()))
+        compiler.get().start_compilation()
     }
 
     compile_cbc_program :: (ref Self, path: string) {
-        code : String = match fs.read_file(path) {
-            Ok($content) -> content
-            Err($err) -> {
-                adapter.logger.log_error("{}", [err]) 
-                String.empty()
-            }
-        }
+        // code : String = match fs.read_file(path) {
+        //     Ok($content) -> content
+        //     Err($err) -> {
+        //         g_logger.log_error("{}", [err]) 
+        //         String.empty()
+        //     }
+        // }
 
-        interp = compile_program(code.slice(), path)
-        if interp == null {
-            adapter.logger.log_error("failed to compile program")
-            @assert(false)
-        }
+        // interp = compile_program(code.slice(), path)
+        // if interp == null {
+        //     g_logger.log_error("failed to compile program")
+        //     @assert(false)
+        // }
 
-        interp.printer = cast self.print
-        interp.call("main")
+        // interp.call("main")
     }
 }
 
@@ -395,11 +348,12 @@ impl ErrorHandler for CheezDebugAdapter {
 
     report_error_at :: (ref Self, location: ref Location, message: string, args: []&any) {
         msg := fmt.format(message, args)
-        self.print("[Code Gen] {}: {}", [location, msg])
+        g_logger.log("[Code Gen] {}: {}", [location, msg])
     }
 
-    report_error :: (ref Self, location: ref Location, message: string) {
-        self.print("[Code Gen] {}: {}", [location, message])
+    report_error :: (ref Self, message: string, args: []&any) {
+        msg := fmt.format(message, args)
+        g_logger.log("[Code Gen] {}", [msg])
     }
 }
 
@@ -416,6 +370,11 @@ impl DebuggerCallbacks for CheezDebugAdapter {
     terminated :: (ref Self) {
         self.adapter.emit_terminated_event()
     }
+
+    output_generated :: (ref Self, format: string, args: []&any = [], category: string = "console") {
+        g_logger.log("output_generated")
+        self.adapter.emit_output_event(fmt.format(format, args), category)
+    }
 }
 
 impl CommandHandler for CheezDebugAdapter {
@@ -426,9 +385,8 @@ impl CommandHandler for CheezDebugAdapter {
     }
 
     launch :: (ref Self, arguments: DapReqLaunch) -> Result[(), String] {
-        debugger.get().pause()
+        debugger.get().set_callbacks(&self)
 
-        // create interpreter
         if arguments.program.slice().ends_with(".che") {
             self.compile_cheez_program(arguments.program.slice())
         } else if arguments.program.slice().ends_with(".cbc") {
@@ -437,18 +395,18 @@ impl CommandHandler for CheezDebugAdapter {
             return Err(fmt.format("Can't debug the file '{}'", [arguments.program]))
         }
 
-        debugger.get().set_interpreter(interp)
-        debugger.get().set_callbacks(&self)
         debugger.get().launch()
+        // compiler.get().wait_until_done()
+        // adapter.emit_terminated_event()
 
         return Ok()
     }
 
     threads :: (ref Self) -> Result[Array[DapThread], String] {
-        adapter.logger.log("request threads")
+        g_logger.log("request threads")
         result := Array[DapThread].create()
         result.add(DapThread(0, "Main Thread".to_owned()))
-        adapter.logger.log("{}", [result.slice()])
+        g_logger.log("{}", [result.slice()])
         return Ok(result)
     }
 
@@ -465,7 +423,7 @@ impl CommandHandler for CheezDebugAdapter {
     stacktrace :: (ref Self) -> Result[Array[DapStackFrame], String] {
         debugger.get().pause()
 
-        frames := interp.get_stackframes()
+        frames := debugger.get().interp.get_stackframes()
 
         stack_frames := Array[DapStackFrame].create()
 
@@ -473,9 +431,9 @@ impl CommandHandler for CheezDebugAdapter {
         for(by_ref=true, reverse=true) frame : frames {
             defer { use_prev_ip = true }
             ip := if use_prev_ip then frame.ip_prev else frame.ip
-            line := frame.func.debug_info.get_line_for_ip2(ip, interp.printer)
+            line := frame.func.debug_info.get_line_for_ip2(ip, debugger.get().interp.printer)
 
-            adapter.logger.log("stackframe: line: {}, func: '{}', path: '{}'", [line, frame.func.name, frame.func.debug_info.path])
+            g_logger.log("stackframe: line: {}, func: '{}', path: '{}'", [line, frame.func.name, frame.func.debug_info.path])
 
             stack_frames.add(DapStackFrame(
                 id     = frames.length - it_index - 1
@@ -497,7 +455,7 @@ impl CommandHandler for CheezDebugAdapter {
 
         frame_id := arguments.frame_id
 
-        frame := ref interp.get_stackframes()[frame_id]
+        frame := ref debugger.get().interp.get_stackframes()[frame_id]
         scopes_json := Array[DapScope].create()
 
         scopes := self.collect_scopes(frame_id)

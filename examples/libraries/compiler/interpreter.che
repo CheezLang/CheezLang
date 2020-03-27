@@ -4,36 +4,34 @@ use import std.map
 use import std.string
 use import std.math
 
-use import compiler.string_database
-use import compiler.bytecode_generator
-
 io  :: import std.io
 fs  :: import std.io.fs
 fmt :: import std.fmt
 mem :: import std.mem.allocator
 
-DEBUG_INTERPRETER :: false
+use import logging.logger
+
+use import string_database
+use import bytecode_generator
+use import ast
+use import compiler
+use import config
 
 #export_scope
 
-Main2 :: () {
-    io.println("interpreter")
 
-    code := match fs.read_file("../data/interp_test.bc") {
-        Ok($content) -> content
-        Err($err) -> {
-            io.formatln(err)
-            return
-        }
-    }
+CodeRunner :: trait {
+    run :: (ref Self, interp: ref Interpreter);
+}
 
-    prog := compile_program(code.slice(), "")
-    if prog == null {
-        io.println("[ERROR] failed to compile program")
-        return
+NormalCodeRunner :: struct CodeRunner {
+
+}
+
+impl CodeRunner for NormalCodeRunner {
+    run :: (ref Self, interp: ref Interpreter) {
+        interp.run()
     }
-    prog.call("main")
-    prog.run()
 }
 
 allocate_function :: (name: string, path: string, params: Array[String]) -> &CBCFunction {
@@ -84,7 +82,7 @@ compile_program :: (code: string, path: string) -> &Interpreter {
                         }
                     }
                     None -> {
-                        io.formatln("[ERROR] label '{}' is never used", [label[0]])
+                        g_logger.log("[ERROR] label '{}' is never used", [label[0]])
                         has_errors = true
                     }
                 }
@@ -92,9 +90,9 @@ compile_program :: (code: string, path: string) -> &Interpreter {
             }
 
             if branches.get_count() > 0 {
-                io.formatln("[ERROR] {} unresolved labels", [branches.get_count()])
+                g_logger.log("[ERROR] {} unresolved labels", [branches.get_count()])
                 for label : branches {
-                    io.formatln("[ERROR] unknown label '{}'", [label[0]])
+                    g_logger.log("[ERROR] unknown label '{}'", [label[0]])
                 }
                 has_errors = true
             }
@@ -141,10 +139,10 @@ compile_program :: (code: string, path: string) -> &Interpreter {
             if strings_equal(inst, "local") {
                 name := parts[1]
                 if parameters.contains(name) {
-                    io.formatln("[ERROR] there is already a parameter or local named '{}'", [name])
+                    g_logger.log("[ERROR] there is already a parameter or local named '{}'", [name])
                     has_errors = true
                 // } else if func.function.instructions.count() > 0 {
-                //     io.formatln("[ERROR] local variables can only be created at the beginning of a function", [])
+                //     g_logger.log("[ERROR] local variables can only be created at the beginning of a function", [])
                 //     has_errors = true
                 } else {
                     parameters[name] = local_index
@@ -225,7 +223,7 @@ compile_program :: (code: string, path: string) -> &Interpreter {
             } else if strings_equal(inst, "return_void") {
                 func.build_return_void()
             } else {
-                io.formatln("[ERROR] unknown instruction '{}'", [inst])
+                g_logger.log("[ERROR] unknown instruction '{}'", [inst])
                 has_errors = true
             }
         }
@@ -254,7 +252,7 @@ CBCDebugInfo :: struct {
 
 impl CBCDebugInfo {
     get_line_for_ip :: (ref Self, ip: int) -> int {
-        // io.formatln("get_line_for_ip({}, lines: {})", [ip, lines.slice()])
+        // g_logger.log("get_line_for_ip({}, lines: {})", [ip, lines.slice()])
         i := 0
         for lines {
             if it.count == 0 then continue
@@ -322,8 +320,8 @@ impl StackFrame {
 Interpreter :: struct {
     sp          : int
     fp          : int
-    frames      : [1024]StackFrame
-    stack       : [1024]int
+    frames      : [1024 * 8]StackFrame
+    stack       : [1024 * 1024]int
     functions   : Map[String, &CBCFunction]
     strings     : StringDatabase
     printer     : Fn(string, []&any, string)
@@ -345,7 +343,7 @@ impl Interpreter {
     }
 
     print :: (format: string, args: []&any = [], category: string = "console") {
-        io.formatln(format, args)
+        g_logger.log(format, args)
     }
 
     function_registered :: (ref Self, name: string) -> bool {
@@ -360,20 +358,39 @@ impl Interpreter {
         functions[name] = code
     }
 
+    comp_call :: (ref Self, function: ref AstFunction) {
+        push_frame(function.bytecode, function.params.count())
+    }
+
     call :: (ref Self, name: string, arg_count: int = 0) {
         match functions.get(name) {
             Some($func) -> {
                 push_frame(func, arg_count)
             }
             None -> {
-                io.formatln("[ERROR] 'Call {}' failed. Unknown function '{}'", [name, name])
+                g_logger.log("[ERROR] 'Call {}' failed. Unknown function '{}'", [name, name])
             }
         }
     }
 
     push_frame :: (ref Self, func: &CBCFunction, arg_count: int = 0) {
+        if fp + 1 >= frames.length {
+            frame := ref frames[fp]
+            printer("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
+                frame.func.debug_info.path.slice()
+                frame.func.debug_info.get_line_for_ip(frame.ip_prev)
+                5 // @todo: this is the column, read from debug info
+                fp
+                frame.sp
+                frame.ip_prev
+                Instruction.pretty_print(frame.code[frame.ip_prev..])
+                frame.dump_stack()
+            ], "stdout")
+            return
+        }
+
         _fp, _sp := fp, sp
-        defer { if const DEBUG_INTERPRETER then io.formatln("push_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp]) }
+        defer { if const DEBUG_INTERPRETER then g_logger.log("push_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp]) }
 
         if fp >= 0 {
             sp += frames[fp].sp - frames[fp].bp
@@ -391,7 +408,7 @@ impl Interpreter {
 
     pop_frame :: (ref Self) {
         _fp, _sp := fp, sp
-        defer { if const DEBUG_INTERPRETER then io.formatln("pop_frame (fp = {} -> {}, sp = {} -> {})", [_fp, fp, _sp, sp]) }
+        defer { if const DEBUG_INTERPRETER then g_logger.log("pop_frame (fp = {} -> {}, sp = {} -> {})", [_fp, fp, _sp, sp]) }
 
         fp -= 1
         if fp >= 0 {
@@ -434,7 +451,6 @@ impl Interpreter {
                 fmt.align(45), frame.dump_stack()
             ], "stdout")
 
-            // io.formatln("{}{}{}{}{}{}{}{}{}{}{}", [
             //     frame.func.debug_info.get_line_for_ip(frame.ip)
             //     fmt.align(6), fp
             //     fmt.align(11), frame.sp
@@ -544,11 +560,19 @@ impl Interpreter {
                         push_frame(func, count)
                     }
                     None -> {
-                        io.formatln("[ERROR] 'Call {}' failed. Unknown function '{}'", [str, str])
+                        g_logger.log("[ERROR] 'Call {}' failed. Unknown function '{}'", [str, str])
                         return .Done
                     }
                 }
             }
+            .CompCall -> {
+                func := arg(&AstFunction)
+                _ := arg(int)
+                _ := arg(int)
+                wait_until(func.bytecode != null)
+                push_frame(func.bytecode, func.params.count())
+            }
+
             .Return -> {
                 @assert(frame.sp > 0)
                 frame.stack[0] = frame.stack[frame.sp - 1]
@@ -571,7 +595,7 @@ impl Interpreter {
                 str := string(arg(&u8), arg(int))
                 file := frame.func.debug_info.path.slice()
                 line := frame.func.debug_info.get_line_for_ip(frame.ip_prev)
-                printer("[PANIC] {}:{}: {}", [file, line, str], "stderr")
+                g_logger.log("[PANIC] {}:{}: {}", [file, line, str], "stderr")
                 return .Done
             }
 
@@ -585,11 +609,18 @@ impl Interpreter {
             .Halt -> {
                 return .Done
             }
+
+            $unknown -> {
+                g_logger.log("{}: Unknown Instruction '{}'", [
+                    frame.func.debug_info.get_line_for_ip(frame.ip_prev)
+                    Instruction.pretty_print(frame.code[frame.ip_prev..])
+                ], "stdout")
+            }
         }
 
         // frame = &frames[fp]
         // line := frame.func.debug_info.get_line_for_ip(frame.ip)
-        // printer("{}{}{}{}{}{}{}{}{}{}{}", [
+        // g_logger.log("{}{}{}{}{}{}{}{}{}{}{}", [
         //     line
         //     fmt.align(6), fp
         //     fmt.align(11), frame.sp
@@ -626,7 +657,7 @@ Instruction :: enum #repr("C") #tag_type(u64) {
 
     Branch, BranchIf
 
-    Call
+    Call, CompCall
     Return, ReturnVoid
 
     Panic
@@ -670,6 +701,7 @@ impl Instruction {
             .BranchIf       -> fmt.format("BranchIf {}", [arg(int, 0)])
 
             .Call           -> fmt.format("Call {} {}", [string(arg(&u8, 0), arg(int, 1)), arg(int, 2)])
+            .CompCall       -> fmt.format("CompCall #{}", [arg(&AstFunction, 0).id])
             .Return         -> fmt.format("Return")
             .ReturnVoid     -> fmt.format("ReturnVoid")
 

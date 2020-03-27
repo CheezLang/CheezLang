@@ -115,7 +115,7 @@ serialize_json_value_helper_pretty :: (result: ref String, val: ref JsonValue) {
         .JsonNull -> result.append_string("null")
         .JsonBool($val) -> result.appendf("{}", val)
         .JsonNumber($val) -> result.appendf("{}", val)
-        .JsonString($val) -> result.appendf("`"{}`"", val.slice())
+        .JsonString($val) -> result.appendf("`"{}`"", escape_json_string(val.slice()))
         .JsonArray($arr) -> {
             result += "[`n"
 
@@ -163,7 +163,7 @@ serialize_json_value_helper :: (result: ref String, val: ref JsonValue) {
         .JsonNull -> result.append_string("null")
         .JsonBool($val) -> result.appendf("{}", val)
         .JsonNumber($val) -> result.appendf("{}", val)
-        .JsonString($val) -> result.appendf("`"{}`"", val.slice())
+        .JsonString($val) -> result.appendf("`"{}`"", escape_json_string(val.slice()))
         .JsonArray($arr) -> {
             result += "["
             for(by_ref=true) v : arr.slice() {
@@ -322,8 +322,46 @@ consume :: (json: string, typ: JsonTokenType) -> bool, string {
     return true, rem
 }
 
+escape_json_string :: (str: string) -> String {
+    result := String.with_capacity(str.bytes.length)
+
+    for c : str {
+        match c {
+            '`n' -> result.append_string("\n")
+            '`t' -> result.append_string("\t")
+            '`r' -> result.append_string("\r")
+            '\'  -> result.append_string("\\")
+            '"'  -> result.append_string("\`"")
+
+            _ -> result.append_char(c)
+        }
+    }
+    return result
+}
+
 unescape_json_string :: (str: string) -> String {
-    return String.from_string(str)
+    result := String.with_capacity(str.bytes.length)
+
+    was_backslash := false
+    for c : str {
+        if was_backslash {
+            result.append_char(match c {
+                'n' -> '`n'
+                't' -> '`t'
+                'r' -> '`r'
+                '\' -> '\'
+                '"' -> '"'
+
+                _ -> @assert(false)
+            })
+            was_backslash = false
+        } else if c == '\' {
+            was_backslash = true
+        } else {
+            result += c
+        }
+    }
+    return result
 }
 
 JsonTokenType :: enum #copy {

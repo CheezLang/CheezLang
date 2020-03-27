@@ -48,10 +48,8 @@ DAEvent :: enum {
 DebugAdapter :: struct {
     Func :: fn(ref CommandHandler, JsonValue) -> Result[JsonValue, String]
 
-    logger          : ref Logger
     command_handler : Rc[CommandHandler]
     command_table   : Table[string, Func]
-    std_out_mutex   : Mutex
 
     events          : RingQueue[DAEvent]
 
@@ -60,7 +58,7 @@ DebugAdapter :: struct {
 }
 
 impl DebugAdapter {
-    new :: (handler: Rc[CommandHandler], logger: ref Logger) -> Box[DebugAdapter] {
+    new :: (handler: Rc[CommandHandler]) -> Box[DebugAdapter] {
         Func :: Self.Func
 
         commands := Table[string, Func].create(strings_equal)
@@ -174,9 +172,7 @@ impl DebugAdapter {
         }
 
         adapter := Box[DebugAdapter].new(DebugAdapter(
-            logger              = logger
             command_handler     = handler
-            std_out_mutex       = Mutex.new()
             command_table       = commands
             events              = RingQueue[DAEvent].new()
         ))
@@ -210,7 +206,7 @@ impl DebugAdapter {
         while running {
             request_text := read_request_string()
             if request_text.get_length() == 0 then break
-            logger.log_command("{}", [request_text.slice()])
+            g_logger.log_command("{}", [request_text.slice()])
 
             json := parse_json(JsonValue, request_text.slice())
 
@@ -218,7 +214,7 @@ impl DebugAdapter {
                 Some($val) -> {
                     {
                         request_pretty := serialize_json_value(val, pretty = true)
-                        logger.log_command("{}", [request_pretty])
+                        g_logger.log_command("{}", [request_pretty])
                     }
                     request := val.to_map()
 
@@ -251,7 +247,7 @@ impl DebugAdapter {
 
                     response_obj := JsonValue.JsonObject(response)
                     response_string := serialize_json_value(response_obj, pretty = true)
-                    logger.log_response("{}", [response_string])
+                    g_logger.log_response("{}", [response_string])
 
                     send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
 
@@ -265,7 +261,7 @@ impl DebugAdapter {
             }
 
 
-            logger.log("===================================================")
+            g_logger.log("===================================================")
         }
     }
 
@@ -310,9 +306,7 @@ impl DebugAdapter {
     }
 
     send_message :: (ref Self, format: string, args: []&any = []) {
-        std_out_mutex.lock()
         io.formatln(format, args)
-        std_out_mutex.release()
     }
     
     emit_event :: (ref Self, name: string, body: JsonValue) {
@@ -325,7 +319,7 @@ impl DebugAdapter {
 
         response_obj := JsonValue.JsonObject(response)
         response_string := serialize_json_value(response_obj, pretty = true)
-        logger.log_event("{}", [response_string])
+        g_logger.log_event("{}", [response_string])
 
         send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
     }
@@ -348,7 +342,7 @@ impl DebugAdapter {
     }
 
     emit_output_event :: (ref Self, output: String, category: string = "console") {
-        output += "\n"
+        output += "`n"
         body := Table[string, JsonValue].create(strings_equal)
         body["output"] = JsonValue.JsonString(output)
         body["category"] = JsonValue.JsonString(category.to_owned())

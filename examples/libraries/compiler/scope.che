@@ -4,6 +4,7 @@ fmt :: import std.fmt
 io  :: import std.io
 
 use import ast
+use import type
 use import value
 use import compiler
 
@@ -22,7 +23,7 @@ impl Scope {
         // } 
     }
 
-    define_value :: (ref Self, name: string, typ: &void, val: Value) -> Result[(), ()] {
+    define_value :: (ref Self, name: string, typ: &Type, val: Value) -> Result[(), ()] {
         if symbols.contains(name) {
             return Err()
         }
@@ -32,12 +33,22 @@ impl Scope {
         return Ok()
     }
 
-    define_const_decl :: (ref Self, name: string, decl: &AstConstDecl) -> Result[(), ()] {
+    define_function :: (ref Self, name: string, func: ref AstFunction) -> Result[(), ()] {
         if symbols.contains(name) {
             return Err()
         }
 
-        symbols[name] = Symbol.ConstDecl(decl)
+        symbols[name] = Symbol.Func(&func)
+
+        return Ok()
+    }
+
+    define_const_decl :: (ref Self, name: string, decl: ref AstConstDecl) -> Result[(), ()] {
+        if symbols.contains(name) {
+            return Err()
+        }
+
+        symbols[name] = Symbol.ConstDecl(&decl)
 
         return Ok()
     }
@@ -57,7 +68,8 @@ impl Scope {
 
 Symbol :: enum #copy {
     ConstDecl   : &AstConstDecl
-    Val         : (typ: &void, value: Value)
+    Val         : (typ: &Type, value: Value)
+    Func        : &AstFunction
 }
 
 #file_scope
