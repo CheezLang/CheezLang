@@ -206,7 +206,7 @@ impl DebugAdapter {
         while running {
             request_text := read_request_string()
             if request_text.get_length() == 0 then break
-            g_logger.log_command("{}", [request_text.slice()])
+            g_logger.log("{}", [request_text.slice()], "-> (C) ")
 
             json := parse_json(JsonValue, request_text.slice())
 
@@ -214,7 +214,7 @@ impl DebugAdapter {
                 Some($val) -> {
                     {
                         request_pretty := serialize_json_value(val, pretty = true)
-                        g_logger.log_command("{}", [request_pretty])
+                        g_logger.log("{}", [request_pretty], "-> (C) ")
                     }
                     request := val.to_map()
 
@@ -247,7 +247,7 @@ impl DebugAdapter {
 
                     response_obj := JsonValue.JsonObject(response)
                     response_string := serialize_json_value(response_obj, pretty = true)
-                    g_logger.log_response("{}", [response_string])
+                    g_logger.log("{}", [response_string], "<- (R) ")
 
                     send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
 
@@ -319,7 +319,7 @@ impl DebugAdapter {
 
         response_obj := JsonValue.JsonObject(response)
         response_string := serialize_json_value(response_obj, pretty = true)
-        g_logger.log_event("{}", [response_string])
+        g_logger.log("{}", [response_string], "<- (E) ")
 
         send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
     }

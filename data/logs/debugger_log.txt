@@ -1,5 +1,5 @@
-[17324] -> (C)  {"command":"initialize","arguments":{"clientID":"vscode","clientName":"Visual Studio Code","adapterID":"cheez","pathFormat":"path","linesStartAt1":true,"columnsStartAt1":true,"supportsVariableType":true,"supportsVariablePaging":true,"supportsRunInTerminalRequest":true,"locale":"en-us"},"type":"request","seq":1}
-[17324] -> (C)  {
+[16684] -> (C)  {"command":"initialize","arguments":{"clientID":"vscode","clientName":"Visual Studio Code","adapterID":"cheez","pathFormat":"path","linesStartAt1":true,"columnsStartAt1":true,"supportsVariableType":true,"supportsVariablePaging":true,"supportsRunInTerminalRequest":true,"locale":"en-us"},"type":"request","seq":1}
+[16684] -> (C)  {
     "type": "request",
     "seq": 1,
     "arguments": {
@@ -17,7 +17,7 @@
     "command": "initialize"
 
 }
-[17324] <- (E)  {
+[16684] <- (E)  {
     "type": "event",
     "seq": 0,
     "event": "initialized",
@@ -25,7 +25,7 @@
     }
 
 }
-[17324] <- (R)  {
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -37,9 +37,9 @@
     "command": "initialize"
 
 }
-[17324]  ===================================================
-[17324] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"basic_cheez.che","path":"p:\\dev\\CheezLang\\data\\basic_cheez.che"},"lines":[4],"breakpoints":[{"line":4}],"sourceModified":false},"type":"request","seq":2}
-[17324] -> (C)  {
+[16684]  ===================================================
+[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"basic_cheez.che","path":"p:\\dev\\CheezLang\\data\\basic_cheez.che"},"lines":[4],"breakpoints":[{"line":4}],"sourceModified":false},"type":"request","seq":2}
+[16684] -> (C)  {
     "type": "request",
     "seq": 2,
     "arguments": {
@@ -60,7 +60,7 @@
     "command": "setBreakpoints"
 
 }
-[17324] <- (R)  {
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -70,9 +70,9 @@
     "command": "setBreakpoints"
 
 }
-[17324]  ===================================================
-[17324] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"fac.cbc","path":"p:\\dev\\CheezLang\\data\\fac.cbc"},"lines":[23],"breakpoints":[{"line":23}],"sourceModified":false},"type":"request","seq":3}
-[17324] -> (C)  {
+[16684]  ===================================================
+[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"fac.cbc","path":"p:\\dev\\CheezLang\\data\\fac.cbc"},"lines":[23],"breakpoints":[{"line":23}],"sourceModified":false},"type":"request","seq":3}
+[16684] -> (C)  {
     "type": "request",
     "seq": 3,
     "arguments": {
@@ -93,7 +93,7 @@
     "command": "setBreakpoints"
 
 }
-[17324] <- (R)  {
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -103,9 +103,9 @@
     "command": "setBreakpoints"
 
 }
-[17324]  ===================================================
-[17324] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"Scope.cs","path":"p:\\dev\\CheezLang\\CompilerLibrary\\Scope.cs"},"lines":[69,788],"breakpoints":[{"line":69},{"line":788}],"sourceModified":false},"type":"request","seq":4}
-[17324] -> (C)  {
+[16684]  ===================================================
+[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"Scope.cs","path":"p:\\dev\\CheezLang\\CompilerLibrary\\Scope.cs"},"lines":[69,788],"breakpoints":[{"line":69},{"line":788}],"sourceModified":false},"type":"request","seq":4}
+[16684] -> (C)  {
     "type": "request",
     "seq": 4,
     "arguments": {
@@ -130,7 +130,7 @@
     "command": "setBreakpoints"
 
 }
-[17324] <- (R)  {
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -140,9 +140,9 @@
     "command": "setBreakpoints"
 
 }
-[17324]  ===================================================
-[17324] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"TypeInference.cs","path":"p:\\dev\\CheezLang\\CompilerLibrary\\SemanticAnalysis\\TypeInference.cs"},"lines":[5890],"breakpoints":[{"line":5890}],"sourceModified":false},"type":"request","seq":5}
-[17324] -> (C)  {
+[16684]  ===================================================
+[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"TypeInference.cs","path":"p:\\dev\\CheezLang\\CompilerLibrary\\SemanticAnalysis\\TypeInference.cs"},"lines":[5890],"breakpoints":[{"line":5890}],"sourceModified":false},"type":"request","seq":5}
+[16684] -> (C)  {
     "type": "request",
     "seq": 5,
     "arguments": {
@@ -163,7 +163,7 @@
     "command": "setBreakpoints"
 
 }
-[17324] <- (R)  {
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -173,9 +173,9 @@
     "command": "setBreakpoints"
 
 }
-[17324]  ===================================================
-[17324] -> (C)  {"command":"launch","arguments":{"name":"Cheez Debugger","type":"cheez","request":"launch","program":"p:\\dev\\CheezLang\\data\\basic_cheez.che","args":[],"internalConsoleOptions":"openOnSessionStart","__sessionId":"11c69d57-b2dd-4a83-bc05-27a82ed01af9"},"type":"request","seq":6}
-[17324] -> (C)  {
+[16684]  ===================================================
+[16684] -> (C)  {"command":"launch","arguments":{"name":"Cheez Debugger","type":"cheez","request":"launch","program":"p:\\dev\\CheezLang\\data\\basic_cheez.che","args":[],"internalConsoleOptions":"openOnSessionStart","__sessionId":"3d942bf9-1ba1-4c81-b95f-05a56a3f1178"},"type":"request","seq":6}
+[16684] -> (C)  {
     "type": "request",
     "seq": 6,
     "arguments": {
@@ -186,12 +186,12 @@
         "request": "launch",
         "args": [
         ],
-        "__sessionId": "11c69d57-b2dd-4a83-bc05-27a82ed01af9"
+        "__sessionId": "3d942bf9-1ba1-4c81-b95f-05a56a3f1178"
     },
     "command": "launch"
 
 }
-[17324] <- (R)  {
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -201,10 +201,8 @@
     "command": "launch"
 
 }
-[17324]  ===================================================
-[17276]  run
-[17276]  Debugger.run
-[17276] <- (E)  {
+[16684]  ===================================================
+[504] <- (E)  {
     "type": "event",
     "seq": 10,
     "event": "stopped",
@@ -214,8 +212,8 @@
     }
 
 }
-[17324] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":7}
-[17324] -> (C)  {
+[16684] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":7}
+[16684] -> (C)  {
     "type": "request",
     "seq": 7,
     "arguments": {
@@ -226,8 +224,8 @@
     "command": "stackTrace"
 
 }
-[17324]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
-[17324] <- (R)  {
+[16684]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -249,17 +247,17 @@
     "command": "stackTrace"
 
 }
-[17324]  ===================================================
-[17324] -> (C)  {"command":"threads","type":"request","seq":8}
-[17324] -> (C)  {
+[16684]  ===================================================
+[16684] -> (C)  {"command":"threads","type":"request","seq":8}
+[16684] -> (C)  {
     "type": "request",
     "seq": 8,
     "command": "threads"
 
 }
-[17324]  request threads
-[17324]  [DapThread(id = 0, name = Main Thread)]
-[17324] <- (R)  {
+[16684]  request threads
+[16684]  [DapThread(id = 0, name = Main Thread)]
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -275,9 +273,9 @@
     "command": "threads"
 
 }
-[17324]  ===================================================
-[17324] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":9}
-[17324] -> (C)  {
+[16684]  ===================================================
+[16684] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":9}
+[16684] -> (C)  {
     "type": "request",
     "seq": 9,
     "arguments": {
@@ -288,8 +286,8 @@
     "command": "stackTrace"
 
 }
-[17324]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
-[17324] <- (R)  {
+[16684]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -311,30 +309,30 @@
     "command": "stackTrace"
 
 }
-[17324]  ===================================================
-[17324] -> (C)  {"command":"continue","arguments":{"threadId":0},"type":"request","seq":10}
-[17324] -> (C)  {
+[16684]  ===================================================
+[16684] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":10}
+[16684] -> (C)  {
     "type": "request",
     "seq": 10,
     "arguments": {
         "threadId": 0
     },
-    "command": "continue"
+    "command": "next"
 
 }
-[17324] <- (R)  {
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
     },
     "seq": 10,
     "request_seq": 10,
-    "command": "continue"
+    "command": "next"
 
 }
-[17276]  output_generated
-[17324]  ===================================================
-[17276] <- (E)  {
+[504]  output_generated
+[16684]  ===================================================
+[504] <- (E)  {
     "type": "event",
     "seq": 11,
     "event": "output",
@@ -344,8 +342,8 @@
     }
 
 }
-[17276]  output_generated
-[17276] <- (E)  {
+[504]  output_generated
+[504] <- (E)  {
     "type": "event",
     "seq": 12,
     "event": "output",
@@ -355,33 +353,190 @@
     }
 
 }
-[17276] <- (E)  {
+[504] <- (E)  {
     "type": "event",
     "seq": 13,
+    "event": "stopped",
+    "body": {
+        "threadId": 0,
+        "reason": "step"
+    }
+
+}
+[16684] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":11}
+[16684] -> (C)  {
+    "type": "request",
+    "seq": 11,
+    "arguments": {
+        "startFrame": 0,
+        "threadId": 0,
+        "levels": 1
+    },
+    "command": "stackTrace"
+
+}
+[16684]  stackframe: line: 5, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[16684] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "stackFrames": [
+            {
+                "column": 5,
+                "id": 0,
+                "name": "Main",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 5
+            }
+        ]
+    },
+    "seq": 11,
+    "request_seq": 11,
+    "command": "stackTrace"
+
+}
+[16684]  ===================================================
+[16684] -> (C)  {"command":"threads","type":"request","seq":12}
+[16684] -> (C)  {
+    "type": "request",
+    "seq": 12,
+    "command": "threads"
+
+}
+[16684]  request threads
+[16684]  [DapThread(id = 0, name = Main Thread)]
+[16684] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "threads": [
+            {
+                "id": 0,
+                "name": "Main Thread"
+            }
+        ]
+    },
+    "seq": 12,
+    "request_seq": 12,
+    "command": "threads"
+
+}
+[16684]  ===================================================
+[16684] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":13}
+[16684] -> (C)  {
+    "type": "request",
+    "seq": 13,
+    "arguments": {
+        "startFrame": 0,
+        "threadId": 0,
+        "levels": 20
+    },
+    "command": "stackTrace"
+
+}
+[16684]  stackframe: line: 5, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[16684] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "stackFrames": [
+            {
+                "column": 5,
+                "id": 0,
+                "name": "Main",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 5
+            }
+        ]
+    },
+    "seq": 13,
+    "request_seq": 13,
+    "command": "stackTrace"
+
+}
+[16684]  ===================================================
+[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"fac.cbc","path":"p:\\dev\\CheezLang\\data\\basic_cheez.che"},"lines":[],"breakpoints":[],"sourceModified":false},"type":"request","seq":14}
+[16684] -> (C)  {
+    "type": "request",
+    "seq": 14,
+    "arguments": {
+        "lines": [
+        ],
+        "source": {
+            "name": "fac.cbc",
+            "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+        },
+        "breakpoints": [
+        ],
+        "sourceModified": false
+    },
+    "command": "setBreakpoints"
+
+}
+[16684] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+    },
+    "seq": 14,
+    "request_seq": 14,
+    "command": "setBreakpoints"
+
+}
+[16684]  ===================================================
+[16684] -> (C)  {"command":"continue","arguments":{"threadId":0},"type":"request","seq":15}
+[16684] -> (C)  {
+    "type": "request",
+    "seq": 15,
+    "arguments": {
+        "threadId": 0
+    },
+    "command": "continue"
+
+}
+[16684] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+    },
+    "seq": 15,
+    "request_seq": 15,
+    "command": "continue"
+
+}
+[504] <- (E)  {
+    "type": "event",
+    "seq": 14,
     "event": "terminated",
     "body": {
     }
 
 }
-[17276]  run done
-[17324] -> (C)  {"command":"disconnect","arguments":{"restart":false},"type":"request","seq":11}
-[17324] -> (C)  {
+[16684]  ===================================================
+[16684] -> (C)  {"command":"disconnect","arguments":{"restart":false},"type":"request","seq":16}
+[16684] -> (C)  {
     "type": "request",
-    "seq": 11,
+    "seq": 16,
     "arguments": {
         "restart": false
     },
     "command": "disconnect"
 
 }
-[17324] <- (R)  {
+[16684] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
     },
-    "seq": 11,
-    "request_seq": 11,
+    "seq": 16,
+    "request_seq": 16,
     "command": "disconnect"
 
 }
-[17324]  ===================================================
+[16684]  ===================================================

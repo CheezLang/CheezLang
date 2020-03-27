@@ -3,25 +3,47 @@ use import std.thread
 use import std.rc
 
 fmt :: import std.fmt
+io  :: import std.io
 fs  :: import std.io.fs
+
+CONSOLE_LOGGER : ConsoleLogger = ConsoleLogger()
 
 #export_scope
 
-g_logger : &Logger = null
+g_logger : &Logger = &CONSOLE_LOGGER
 
-Logger :: struct {
+Logger :: trait {
+    log :: (ref Self, format: string, args: []&any = [], prefix: string = "");
+}
+
+impl Logger {
+    set_global_logger :: (logger: &Logger) {
+        g_logger = logger
+    }
+}
+
+ConsoleLogger :: struct {}
+
+impl Logger for ConsoleLogger {
+    log :: (ref Self, format: string, args: []&any = [], prefix: string = "") {
+        msg := fmt.format(format, args)
+        io.formatln("{}{}", [msg, prefix])
+    }
+}
+
+FileLogger :: struct {
     log_file : String
     mutex    : Mutex
 }
 
-impl Logger {
+impl FileLogger {
     new :: (log_file: string) -> Rc[Logger] {
-        logger := Rc[Logger].new(Logger(
+        logger := Rc[FileLogger].new(FileLogger(
             log_file = log_file.to_owned()
             mutex    = Mutex.new()
         ))
-        g_logger = &logger.get()
-        return logger
+        logger.get().clear()
+        return logger.change_type(Logger)
     }
 
     clear :: (ref Self) {
@@ -30,6 +52,12 @@ impl Logger {
         mutex.release()
     }
 
+    log_error :: (ref Self, format: string, args: []&any = []) {
+        self.log(format, args, "[ERROR]")
+    }
+}
+
+impl Logger for FileLogger {
     log :: (ref Self, format: string, args: []&any = [], prefix: string = "") {
         msg := fmt.format(format, args)
         str := fmt.format("[{}] {} {}`n", [Thread.current().id, prefix, msg])
@@ -37,23 +65,5 @@ impl Logger {
         mutex.lock()
         fs.append_file(log_file.slice(), str.slice())
         mutex.release()
-    }
-
-    log_error :: (ref Self, format: string, args: []&any = []) {
-        self.log(format, args, "[ERROR]")
-    }
-}
-
-impl Logger {
-    log_command :: (ref Self, format: string, args: []&any = []) {
-        self.log(format, args, "-> (C) ")
-    }
-
-    log_response :: (ref Self, format: string, args: []&any = []) {
-        self.log(format, args, "<- (R) ")
-    }
-
-    log_event :: (ref Self, format: string, args: []&any = []) {
-        self.log(format, args, "<- (E) ")
     }
 }

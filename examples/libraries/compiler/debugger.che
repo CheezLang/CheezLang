@@ -33,8 +33,12 @@ LOG_PATH :: "P:/dev/CheezLang/data/logs/debugger_log.txt"
 CBC_FILE :: "p:/dev/debug_adapter_test/fac.cbc"
 
 Main :: () {
-    logger := Logger.new(LOG_PATH)
-    logger.get().clear()
+    logger := FileLogger.new(LOG_PATH)
+    // g_logger = cast &logger.get()
+    {
+        l : &Logger = &logger.get()
+        Logger.set_global_logger(l)
+    }
 
     debugger := CheezDebugAdapter.new()
     adapter := DebugAdapter.new(debugger)

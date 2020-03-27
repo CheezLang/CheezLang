@@ -21,8 +21,8 @@ use import error_handler
 LOG_PATH :: "../data/logs/compiler_log.txt"
 
 Main :: () {
-    logger := Logger.new(LOG_PATH)
-    logger.get().clear()
+    // logger := Logger.new(LOG_PATH)
+    // logger.get().clear()
 
     args_array := get_cmd_args()
     compiler_args := parse_arguments(MainCommand, args_array.sliceF(1))
