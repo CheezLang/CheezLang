@@ -114,7 +114,7 @@ impl(K: type, V: type) Map[K, V] {
 
         entry := find_entry(entries, key)
         is_new_key := !entry.filled
-        entry.key = Some(key.into())
+        entry.key = Some(convert(K, key))
         entry.value = Some(value)
         entry.filled = true
         entry.is_tombstone = false
@@ -225,10 +225,10 @@ impl(K: type, V: type) Map[K, V] {
 
 impl(K: type, V: type) Clone for Map[K, V] if K : Clone, V : Clone {
     clone :: (ref Self) -> Self {
-        result := Map[K, V].create()
+        result := Map[K, V].new()
         result.adjust_capacity(cast self.entries.length)
         for kv : <<&self {
-            result[kv.name.clone()] = kv.value.clone()
+            result.set(kv.name.clone(), kv.value.clone())
         }
         return result
     }
@@ -238,7 +238,7 @@ for_extension_table :: (r: ref Map[$K, $V], code: Code) #for {
     it_index := 0
     for(by_ref=true) e, _ : r.get_entries() {
         if !e.filled then continue
-        it : (name: K, value: ref V) = e.key, ref e.value.Some
+        it : (name: ref K, value: ref V) = ref e.key.Some, ref e.value.Some
         @insert(code, _break=@link(break), _continue=@link(continue))
         it_index += 1
     }

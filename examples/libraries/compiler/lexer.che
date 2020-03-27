@@ -5,13 +5,14 @@ use import std.string
 use import std.unicode
 use import std.printable
 use import std.io.fs
+use import std.rc
+
 C  :: import std.c
 io :: import std.io
 
 #export_scope
 
 Lexer :: struct {
-    text_string : String
     text        : string
     location    : Location
     peek        : Option[Token]
@@ -59,18 +60,12 @@ impl TextProvider for Lexer {
 }
 
 impl Lexer {
-    from_raw_string :: (content: string, string_db: ref StringDatabase) -> Lexer {
-        return from_string(String.from_string(content), string_db)
-    }
-
     // i dont know why, but for some reason when I enable trace-stack this function crashes
     // but with #nostacktrace it works...
     // - NO, 09.12.19
-    from_string :: (content: String, string_db: ref StringDatabase) -> Lexer #nostacktrace {
-        txt := content.slice()
-        return Lexer(
-            text_string = content
-            text = txt
+    from_string :: (content: string, string_db: ref StringDatabase) -> Rc[Lexer] #nostacktrace {
+        return Rc[Lexer].new(Lexer(
+            text = content
             location = Location(
                 file = "string"
                 byte_index  = 0
@@ -113,13 +108,16 @@ impl Lexer {
             KwDo       = string_db.intern("do")
             KwMut      = string_db.intern("mut")
             KwImport   = string_db.intern("import")
-        )
+        ))
     }
 
-    from_file :: (filename: string, string_db: ref StringDatabase) -> Result[Lexer, ()] {
-        content := try_with(read_file(filename), {return Err(())})
-        l := Lexer.from_string(content, string_db)
-        l.location.file = filename
+    from_file :: (filename: string, string_db: ref StringDatabase) -> Result[Rc[Lexer], ()] {
+        content := {
+            content := try_with(read_file(filename), {return Err(())})
+            string_db.intern(content.slice())
+        }
+        l := Lexer.from_string(content.slice(), string_db)
+        l.get().location.file = filename
         return Ok(l)
     }
 

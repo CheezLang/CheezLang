@@ -53,7 +53,7 @@ impl ByteCodeGenerator {
 impl CodeGenerator for ByteCodeGenerator {
     generate_code_for_function :: (ref Self, func: &AstFunction, name: string) {
         if function != null {
-            error_handler.report_errorf(
+            error_handler.report_error_at(
                 func.location,
                 "Failed to generate code for this function because we're already generating code for another function at {}",
                 [function.location])
@@ -100,7 +100,7 @@ impl CodeGenerator for ByteCodeGenerator {
         match call.function {
             AstIdentifier($id) -> {
 
-                if id.value == "print" {
+                if id.name == "print" {
                     for arg : call.arguments {
                         generate_expression(<<arg)
                         builder.set_current_line(call.location.line)
@@ -111,31 +111,31 @@ impl CodeGenerator for ByteCodeGenerator {
                         generate_expression(<<arg)
                     }
                     builder.set_current_line(call.location.line)
-                    builder.build_call(id.value, 0)
+                    builder.build_call(id.name, 0)
                 }
             }
 
             _ -> {
-                error_handler.report_error(call.function.location, "Can't call non-identifier")
+                error_handler.report_error_at(call.function.location, "Can't call non-identifier")
             }
         }
     }
 
     generate_number_literal :: (ref Self, num: ref AstNumberLiteral) {
         builder.set_current_line(num.location.line)
-        builder.build_const(num.value)
+        builder.build_const(num.int_value)
     }
 
     generate_identifier :: (ref Self, id: ref AstIdentifier) {
         builder.set_current_line(id.location.line)
-        match function.get_parameter(id.value) {
+        match function.get_parameter(id.name) {
             Some($param) -> {
                 builder.build_load_local(-1)
             }
 
             None -> {
-                msg := fmt.format("Unknown identifier '{}'", [id.value])
-                error_handler.report_error(id.location, msg.slice())
+                msg := fmt.format("Unknown identifier '{}'", [id.name])
+                error_handler.report_error_at(id.location, msg.slice())
                 builder.build_panic(msg.slice())
             }
         }

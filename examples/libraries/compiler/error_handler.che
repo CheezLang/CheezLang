@@ -8,17 +8,17 @@ fmt :: import std.fmt
 #export_scope
 
 ErrorHandler :: trait {
+    text_provider : &TextProvider
     has_errors :: (ref Self) -> bool;
-    report_error :: (ref Self, location: ref Location, message: string);
-    report_errorf :: (ref Self, location: ref Location, message: string, args: []&any);
+    report_error_at :: (ref Self, location: ref Location, message: string, args: []&any = []);
+    report_error :: (ref Self, message: string, args: []&any = []);
 }
 
 TextProvider :: trait {
     get_text :: (ref Self, filename: string) -> string;
 }
 
-ConsoleErrorHandler :: struct {
-    text_provider     : &TextProvider
+ConsoleErrorHandler :: struct ErrorHandler {
     error_count       := 0
     do_print_location := true
     code_color_error  := io.ConsoleColor.Red
@@ -36,20 +36,23 @@ impl ErrorHandler for ConsoleErrorHandler {
         return error_count > 0
     }
 
-    report_errorf :: (ref Self, location: ref Location, message: string, args: []&any) {
-        msg := fmt.format(message, args)
-        self.report_error(location, msg.slice())
-    }
-
-    report_error :: (ref Self, location: ref Location, message: string) {
+    report_error_at :: (ref Self, location: ref Location, message: string, args: []&any = []) {
         error_count += 1
 
-        io.printf("{}:{}:{}:", (location.file, location.line, location.column))
+        io.printf("{}:{}:{}: ", (location.file, location.line, location.column))
         io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
-        io.printfln(" {}", message)
+        io.formatln(message, args)
         io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
 
         if do_print_location then print_location(location)
+    }
+
+    report_error :: (ref Self, message: string, args: []&any = []) {
+        error_count += 1
+
+        io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+        io.formatln(message, args)
+        io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
     }
 
     print_location :: (ref Self, location: ref Location) {

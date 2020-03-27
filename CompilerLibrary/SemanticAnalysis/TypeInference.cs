@@ -3632,6 +3632,23 @@ namespace Cheez
                         return expr;
                     }
 
+                case "expr_to_string":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr, $"@expr_to_string takes one argument");
+                            return expr;
+                        }
+
+                        var typeArg = InferArg(0, null);
+                        if (typeArg.Type.IsErrorType)
+                            return expr;
+
+                        expr.Type = CheezType.StringLiteral;
+                        expr.Value = typeArg.ToString();
+                        return expr;
+                    }
+
                 case "alloca":
                     {
                         if (expr.Arguments.Count != 2)

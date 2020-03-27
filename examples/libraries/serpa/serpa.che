@@ -37,7 +37,7 @@ impl Parser {
             if (ok, t) := @link(lexer).expect_token(typ), ok {
                 t
             } else {
-                @link(error_handler).report_errorf(t.location, "Expected '{}', got {}", [typ, t.ttype])
+                @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.ttype])
                 return false
             }
         }
@@ -50,14 +50,14 @@ impl Parser {
             match name_token.ttype {
                 TokenType.Identifier -> {
                     if !streq(name_token.data.String, @typename(T)) {
-                        error_handler.report_errorf(name_token.location, "Expected identifier '{}', got '{}'", [@typename(T), name_token.data.String])
+                        error_handler.report_error_at(name_token.location, "Expected identifier '{}', got '{}'", [@typename(T), name_token.data.String])
                         return false
                     }
                 }
 
                 _ -> {
                     msg := "Expected identifier, got {}"
-                    error_handler.report_errorf(name_token.location, "Expected identifier, got {}", [name_token.ttype])
+                    error_handler.report_error_at(name_token.location, "Expected identifier, got {}", [name_token.ttype])
                     return false
                 }
             }
@@ -104,13 +104,13 @@ impl Parser {
                     TokenType.ClosingBrace -> break
                     TokenType.EOF -> break
                     _ -> {
-                        error_handler.report_errorf(token.location, "Expected ',' | '\n' | '}' | EOF. Got '{}'", [token.ttype])
+                        error_handler.report_error_at(token.location, "Expected ',' | '\n' | '}' | EOF. Got '{}'", [token.ttype])
                         lexer.next_token()
                         return false
                     }
                 }
             } else {
-                error_handler.report_errorf(name_token.location, "Unexpected name. '{}' is not a member of struct {}", [name_token.data.String, @typename(T)])
+                error_handler.report_error_at(name_token.location, "Unexpected name. '{}' is not a member of struct {}", [name_token.data.String, @typename(T)])
                 lexer.next_token()
                 return false
             }
@@ -222,7 +222,7 @@ impl IParser[bool] for bool {
             TokenType.KwTrue -> Some(true)
             TokenType.KwFalse -> Some(false)
             _ -> {
-                error_handler.report_errorf(token.location, "Unexpected token {}, expected true/false", [token.ttype])
+                error_handler.report_error_at(token.location, "Unexpected token {}, expected true/false", [token.ttype])
                 None
             }
         }
@@ -418,7 +418,7 @@ eat_token :: (typ: TokenType) #macro {
     if (ok, t) := @link(lexer).expect_token(typ), ok {
         t
     } else {
-        @link(error_handler).report_errorf(t.location, "Expected '{}', got {}", [typ, t.ttype])
+        @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.ttype])
         return None
     }
 }

@@ -1,0 +1,212 @@
+
+use import std.fiber
+use import std.string
+use import std.array
+use import std.mem.std_heap_allocator
+
+fs  :: import std.io.fs
+io  :: import std.io
+fmt :: import std.fmt
+
+use import ast
+use import lexer
+use import parser
+use import ast_dumper
+use import compiler
+use import bytecode_generator
+use import scope
+
+DEBUG_JOBS :: true
+
+#export_scope
+
+CompilationJob :: trait {
+    progressed  : bool = false
+    done        : bool = false
+    compiler    : &Compiler = null
+
+    get_name :: (ref Self) -> string;
+    execute :: (ref Self, compiler: ref Compiler);
+}
+
+LoadFileJob :: struct CompilationJob {
+    name : String
+    path : String
+}
+
+impl LoadFileJob {
+    new :: (path: String) -> LoadFileJob {
+        return LoadFileJob(
+            name = fmt.format("LoadFileJob '{}'", [path])
+            path = path
+        )
+    }
+}
+
+CompileGlobalNodeJob :: struct CompilationJob {
+    name : String
+    node : &AstNode
+}
+
+impl CompileGlobalNodeJob {
+    new :: (node: &AstNode) -> CompileGlobalNodeJob {
+        return CompileGlobalNodeJob(
+            name = fmt.format("CompileGlobalNodeJob #{}", [node.id])
+            node = node
+        )
+    }
+}
+
+impl CompilationJob for CompileGlobalNodeJob {
+    get_name :: (ref Self) -> string {
+        return name.slice()
+    }
+
+    debug_log :: (ref Self, msg: string, args: []&any = []) {
+        if const DEBUG_JOBS {
+            str := fmt.format(msg, args)
+            io.formatln("[{}] [CompileGlobalNode #{}] {}", [Fiber.user_data(FiberContext).thread, node.id, str])
+        } 
+    }
+
+    execute :: (ref Self, compiler: ref Compiler) {
+        debug_log("Begin compilation")
+
+        node.scope = compiler.global_scope
+        compile_node(<<node)
+
+        debug_log("Done")
+    }
+
+    compile_node :: (ref Self, node: ref AstNode) {
+        match node {
+            AstConstDecl($decl) -> compile_const_decl(decl)
+            AstFunction($func)  -> compile_function(func)
+            AstBlock($block)    -> compile_block(block)
+            AstCall($call)      -> compile_call(call)
+            AstIdentifier($id)  -> compile_identifier(id)
+
+            _ -> {
+                dump := dump_ast(node, recurse = false)
+                compiler.error_handler.report_error_at(node.location, "compile_node: not implemented: {}", [dump])
+            }
+        }
+    }
+
+    compile_identifier :: (ref Self, id: ref AstIdentifier) {
+        sym := id.scope.get_symbol(id.name)
+        match sym {
+            .Val(($typ, $value)) -> match value {
+                .Function($func) -> {
+                    id.typ = typ
+                    id.value = value
+                }
+                
+                $val -> {
+                    compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [val])
+                }
+            }
+
+            $sym -> {
+                compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [sym])
+            }
+        }
+    }
+
+    compile_call :: (ref Self, call: ref AstCall) {
+        call.function.scope = call.scope
+        compile_node(call.function)
+        
+        match call.function.value {
+            .Function($func) -> {
+                id.typ = typ
+                id.value = value
+            }
+            
+            $val -> {
+                compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [val])
+            }
+        }
+    }
+
+    compile_block :: (ref Self, block: ref AstBlock) {
+        block.sub_scope = compiler.new_scope(block.scope)
+
+        for child : block.children {
+            child.scope = block.sub_scope
+            compile_node(<<child)
+        }
+    }
+
+    compile_function :: (ref Self, func: ref AstFunction) {
+        func.param_scope = compiler.new_scope(func.scope)
+        func.body.scope = func.param_scope
+
+        compile_node(<<func.body)
+
+        func.value = .Function(&func)
+    }
+
+    compile_const_decl :: (ref Self, decl: ref AstConstDecl) {
+        decl.value_expr.scope = decl.scope
+        compile_node(decl.value_expr)
+
+        match decl.scope.define_value(decl.name.name, null, decl.value_expr.value) {
+            Err() -> compiler.error_handler.report_error_at(decl.name.location, "A symbol with this name already exists in this scope")
+        }
+    }
+}
+
+impl CompilationJob for LoadFileJob {
+    get_name :: (ref Self) -> string {
+        return name.slice()
+    }
+
+    debug_log :: (ref Self, msg: string, args: []&any = []) {
+        if const DEBUG_JOBS {
+            str := fmt.format(msg, args)
+            io.formatln("[{}] [LoadFileJob '{}'] {}", [Fiber.user_data(FiberContext).thread, path, str])
+        } 
+    }
+
+    execute :: (ref Self, compiler: ref Compiler) {
+        debug_log("Begin loading")
+
+        full_path := match fs.get_full_path(path.slice()) {
+            Ok($p) -> compiler.string_database.intern(p.slice())
+            Err(_) -> compiler.string_database.intern(path.slice())
+        }
+
+        if !compiler.sources.contains(full_path) {
+            content := fs.read_file(full_path)
+
+            match content {
+                Ok($content) -> {
+                    lexer := Lexer.from_string(content.slice(), compiler.string_database)
+                    lexer.get().location.file = full_path
+                    parser := Parser.new(lexer.get(), compiler.error_handler, compiler.ast_allocator)
+
+                    loop {
+                        decl := parser.parse_constant_declaration()
+                        if decl == null then break
+                        dump := dump_ast(<<decl)
+                        // io.println(dump)
+
+                        compiler.add_job(CompileGlobalNodeJob.new(decl))
+                    }
+
+                    compiler.sources.set(full_path, content)
+                }
+
+                Err(_) -> {
+                    compiler.error_handler.report_error("Failed to load source file '{}'", [full_path])
+                }
+            }
+        }
+        
+        debug_log("Done")
+    }
+}
+
+
+#file_scope

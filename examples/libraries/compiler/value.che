@@ -1,0 +1,9 @@
+
+use import ast
+
+#export_scope
+
+Value :: enum #copy {
+    None
+    Function : &AstFunction
+}

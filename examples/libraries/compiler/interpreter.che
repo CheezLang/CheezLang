@@ -12,7 +12,7 @@ fs  :: import std.io.fs
 fmt :: import std.fmt
 mem :: import std.mem.allocator
 
-DEBUG_INTERPRETER :: true
+DEBUG_INTERPRETER :: false
 
 #export_scope
 
@@ -339,9 +339,13 @@ impl Interpreter {
             stack       = default
             functions   = Map[String, &CBCFunction].new()
             strings     = StringDatabase.new()
-            printer     = null
+            printer     = cast print
         )
         return interp
+    }
+
+    print :: (format: string, args: []&any = [], category: string = "console") {
+        io.formatln(format, args)
     }
 
     function_registered :: (ref Self, name: string) -> bool {

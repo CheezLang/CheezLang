@@ -117,11 +117,13 @@ get_full_path :: (path: string) -> Result[String, ()] {
     required_length := GetFullPathNameW(path_utf16.get_raw(), 0, null, null)
     buffer := alloc_n(u16, required_length)
     defer free_n(buffer)
-    if GetFullPathNameW(path_utf16.get_raw(), required_length, cast buffer.data, null) == 0 {
+
+    len := GetFullPathNameW(path_utf16.get_raw(), required_length, cast buffer.data, null)
+    if len == 0 {
         return Err(())
     }
 
-    return String.from_utf16(buffer)
+    return String.from_utf16(buffer[..int(len)])
 }
 
 #file_scope

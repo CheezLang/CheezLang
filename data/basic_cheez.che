@@ -1,18 +1,10 @@
 Main :: () {
-
-    print(123)
-
-    foo()
-
-    bar()
-
+    print(1)
+    f1()
 }
 
-foo :: (a: int) {
-    print(456)
-    print(a)
+f1 :: () {
+    print(2)
 }
 
-bar :: () {
-    print(789, 654)
-}
+print :: () {}

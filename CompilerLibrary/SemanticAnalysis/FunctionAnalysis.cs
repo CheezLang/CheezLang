@@ -501,7 +501,7 @@ namespace Cheez
 
             ass.Value.SetFlag(ExprFlags.ValueRequired, true);
             ass.Value.AttachTo(ass);
-            ass.Value = InferType(ass.Value, ass.Pattern.Type);
+            ass.Value = InferType(ass.Value, ass.Pattern.Type, typeOfExprContext: ass.Pattern.Type);
             ConvertLiteralTypeToDefaultType(ass.Value, ass.Pattern.Type);
 
             if (!ass.Pattern.Type.IsErrorType && !ass.Value.Type.IsErrorType)

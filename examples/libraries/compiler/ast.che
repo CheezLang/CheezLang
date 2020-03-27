@@ -5,21 +5,25 @@ use import std.array
 use import lexer
 use import type
 use import interpreter
+use import scope
+use import value
 
 #export_scope
 
 AstNode :: trait {
     id       : int
     location : Location
-    typ      : &Type    = null
+    scope    : &Scope = null
+    typ      : &Type  = null
+    value    : Value = Value.None
 }
 
 // statements
 
 AstConstDecl :: struct AstNode {
-    name  : ref AstIdentifier
-    // typ   : &AstNode
-    value : ref AstNode
+    name        : ref AstIdentifier
+    type_expr   : &AstNode
+    value_expr  : ref AstNode
 }
 impl AstNode for AstConstDecl {}
 
@@ -43,17 +47,19 @@ AstParameter :: struct AstNode {
 impl AstNode for AstParameter {}
 
 AstFunction :: struct AstNode {
-    params  : Array[&AstParameter]
-    body    : &AstNode
+    param_scope : &Scope
 
-    bytecode : &CBCFunction = null
+    params      : Array[&AstParameter]
+    body        : &AstNode
+
+    bytecode    : &CBCFunction = null
 }
 impl AstNode for AstFunction {}
 
 impl AstFunction {
     get_parameter :: (ref Self, name: string) -> Option[ref AstParameter] {
         for p : params {
-            if p.name.value == name {
+            if p.name.name == name {
                 return Some(<<p)
             }
         }
@@ -62,7 +68,8 @@ impl AstFunction {
 }
 
 AstBlock :: struct AstNode {
-    children : Array[&AstNode]
+    sub_scope   : &Scope
+    children    : Array[&AstNode]
 }
 impl AstNode for AstBlock {}
 
@@ -73,12 +80,12 @@ AstCall :: struct AstNode {
 impl AstNode for AstCall {}
 
 AstIdentifier :: struct AstNode {
-    value : string
+    name : string
 }
 impl AstNode for AstIdentifier {}
 
 AstNumberLiteral :: struct AstNode {
-    value : int
+    int_value : int
 }
 impl AstNode for AstNumberLiteral {}
 

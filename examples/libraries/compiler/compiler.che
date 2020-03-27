@@ -1,40 +1,63 @@
 use import std.array
-use import std.ring_queue
 use import std.fiber
-use import std.thread
-use import std.time
+use import std.map
+use import std.mem.std_heap_allocator
+use import std.os.windows_constants
 use import std.os.windows_functions
 use import std.os.windows_types
-use import std.os.windows_constants
 use import std.rc
+use import std.ring_queue
 use import std.string
-use import std.mem.std_heap_allocator
+use import std.thread
+use import std.time
 
 mem :: import std.mem.allocator
 C   :: import std.c
 io  :: import std.io
+fmt :: import std.fmt
 
-use import compiler.interpreter
-use import compiler.bytecode_generator
-use import compiler.string_database
-use import compiler.error_handler
-use import compiler.ast
-use import compiler.lexer
-use import compiler.parser
-use import compiler.ast_dumper
 use import logging.logger
 
+use import interpreter
+use import bytecode_generator
+use import string_database
+use import error_handler
+use import ast
+use import lexer
+use import parser
+use import ast_dumper
+use import scope
+use import jobs
 
 enable_profiler :: false
 
-Main :: () {
+#export_scope
+
+wait_until :: (cond: Code) #macro {
+    fiber_context := Fiber.user_data(FiberContext)
+    fiber_context.job.progressed = true
+
+    loop {
+        if @insert(cond) then break
+        io.formatln("[{}] [{}] suspending on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+        Fiber.yield()
+        io.formatln("[{}] [{}] resuming on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+        fiber_context.job.progressed = false
+    }
+    io.formatln("[{}] [{}] done on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+    fiber_context.job.progressed = true
+}
+
+compile_files :: (files: []String) {
     // Fiber.init()
 
     console_error_handler := ConsoleErrorHandler.new(null)
 
     compiler := Compiler.new(1, &console_error_handler)
 
-    compiler.get().add_job(LoadFileJob(path = "P:/dev/CheezLang/data/basic_cheez.che".to_owned()))
+    for(by_ref=true) file : files {
+        compiler.get().add_job(LoadFileJob.new(file.clone()))
+    }
 
     start := get_time_milliseconds()
     compiler.get().start_compilation()
@@ -42,44 +65,6 @@ Main :: () {
     end := get_time_milliseconds()
     dur := end - start
     io.printfln("Compilation took {} ms", dur)
-}
-
-CompilationJob :: trait {
-    progressed  : bool = false
-    done        : bool = false
-}
-
-impl CompileGlobalNodeJob {
-    wait_for_bytecode :: (ref Self, wait_for: &AstFunction) {
-        // id := job.id
-
-        fiber_context := cast(&FiberContext) Fiber.current().user_data
-        self.progressed = true
-
-        while yield_count := 0, true, yield_count += 1 {
-            if wait_for != null and wait_for.bytecode == null {
-                if yield_count > 0 {
-                    self.progressed = false
-                }
-
-                io.formatln("[{}] [Job] suspending #{} waiting for #{}", [fiber_context.thread, node.id, wait_for.id])
-                Fiber.yield()
-                io.formatln("[{}] [Job] resuming #{} waiting for #{}", [fiber_context.thread, node.id, wait_for.id])
-            } else {
-                io.formatln("[{}] [Job] done #{} waiting for #{}", [fiber_context.thread, node.id, wait_for.id])
-                break
-            }
-        }
-        self.progressed = true
-    }
-}
-
-CompileGlobalNodeJob :: struct CompilationJob {
-    node : &AstNode
-}
-
-LoadFileJob :: struct CompilationJob {
-    path : String
 }
 
 FiberContext :: struct {
@@ -94,6 +79,7 @@ Compiler :: struct {
     fibers          := Array[&FiberContext].create(1024)
     waiting_fibers  := RingQueue[&FiberContext].new()
     paused_fibers   := RingQueue[&FiberContext].new()
+    any_progress    := false
 
     mutex           : Mutex
     threads         : Array[Thread]
@@ -102,9 +88,19 @@ Compiler :: struct {
     error_handler   : &ErrorHandler
     string_database : StringDatabase
 
-    interp          : &Interpreter
+    interp          : &Interpreter = null
 
+    global_scope    : &Scope = null
     all_nodes       := Array[&AstNode].create()
+
+    // filename -> filecontent
+    // contains all source files loaded during compilation
+    sources         := Map[string, String].new()
+
+    // allocators
+    scope_allocator : &mem.Allocator
+    ast_allocator   : &mem.Allocator
+    bc_allocator    : &mem.Allocator
 }
 
 impl Drop for Compiler {
@@ -115,16 +111,34 @@ impl Drop for Compiler {
     }
 }
 
+impl TextProvider for Compiler {
+    get_text :: (ref Self, filename: string) -> string {
+        return match self.sources.get(filename) {
+            Some($content) -> content.slice()
+            None -> @assert(false)
+        }
+    }
+}
+
 impl Compiler {
     new :: (thread_count: int, error_handler: &ErrorHandler) -> Rc[Compiler] {
+        scope_allocator := mem.alloc(StdHeapAllocator)
+        <<scope_allocator = StdHeapAllocator()
+        ast_allocator := mem.alloc(StdHeapAllocator)
+        <<ast_allocator = StdHeapAllocator()
+        bc_allocator := mem.alloc(StdHeapAllocator)
+        <<bc_allocator = StdHeapAllocator()
         comp := Rc[Compiler].new(Compiler(
             mutex           = Mutex.new()
             threads         = Array[Thread].create()
             error_handler   = error_handler
             string_database = StringDatabase.new()
             interp          = Interpreter.new()
+            ast_allocator   = ast_allocator
+            bc_allocator    = bc_allocator
+            scope_allocator = scope_allocator
         ))
-        comp.get().interp.printer = cast comp.get().print
+        comp.get().error_handler.text_provider = &comp.get()
         for 0..thread_count {
             comp.get().threads.add(Thread.new(cast comp.get().thread_func))
         }
@@ -142,90 +156,26 @@ impl Compiler {
     add_job :: (ref Self, job: $T) {
         ptr := mem.alloc(T)
         <<ptr = job
+        ptr.compiler = &self
         jobs.push(ptr)
     }
 
     run_job :: (ref Self, context: &FiberContext) {
-        match ref <<context.job {
-            LoadFileJob($job) -> load_file(context, job)
-            CompileGlobalNodeJob($job) -> compile_global_node(context, job)
-        }
+        context.job.execute(self)
     }
 
-    print :: (ref Self, format: string, args: []&any = [], category: string = "console") {
-        io.formatln(format, args)
-    }
-
-    get_function :: (ref Self, name: string) -> &AstFunction {
-        for node : all_nodes {
-            decl := cast(&AstConstDecl) node
-            func := cast(&AstFunction) &decl.value
-            if decl.name.value == name {
-                return func
-            }
-        }
-
-        return null
-    }
-
-    compile_global_node :: (ref Self, context: &FiberContext, job: ref CompileGlobalNodeJob) {
-        node := job.node
-        io.formatln("[{}] [Job] CompileGlobalNode #{}", [context.thread, node.id])
-
-        decl := cast(&AstConstDecl) node
-        name := decl.name.value
-        func := cast(&AstFunction) &decl.value
-
-        allocator := DEFAULT_STD_HEAP_ALLOCATOR
-        code_generator := ByteCodeGenerator.new(string_database, <<error_handler, &allocator)
-        code_generator.get().generate_code_for_function(func, name)
-        interp.register_function(name, func.bytecode)
-
-        if name == "Main" {
-            foo := get_function("foo")
-            bar := get_function("bar")
-
-            job.wait_for_bytecode(foo)
-            job.wait_for_bytecode(bar)
-
-            io.formatln("[{}] [Job] CompileGlobalNode #{}: calling main", [context.thread, node.id])
-            interp.call("Main")
-            interp.run()
-        }
-
-        io.formatln("[{}] [Job] CompileGlobalNode #{}: done", [context.thread, node.id])
-    }
-
-    load_file :: (ref Self, context: &FiberContext, job: ref LoadFileJob) {
-        io.formatln("[{}] [Job] LoadFile '{}'", [context.thread, job.path])
-
-        lexer := Lexer.from_file(job.path.slice(), self.string_database)
-        match lexer {
-            Ok($lexer) -> {
-                allocator := DEFAULT_STD_HEAP_ALLOCATOR
-                parser := Parser.new(lexer, error_handler, &allocator)
-
-                loop {
-                    decl := parser.parse_constant_declaration()
-                    if decl == null then break
-                    dump := dump_ast(<<decl)
-                    // io.println(dump)
-
-                    all_nodes.add(decl)
-                    add_job(CompileGlobalNodeJob(node = decl))
-                }
-            }
-
-            Err(_) -> {
-                
-            }
-        }
+    new_scope :: (ref Self, parent: &Scope = null) -> &Scope {
+        scope := mem.alloc(Scope, scope_allocator)
+        <<scope = Scope(
+            parent = parent
+        )
+        return scope
     }
 }
 
 impl Compiler {
     start_compilation :: (ref Self) {
-        // io.printfln("[compiler] compiling {} statements with {} threads", (exprs.get_length(), threads.get_length()))
+        global_scope = self.new_scope()
 
         for threads {
             it.start()
@@ -245,6 +195,10 @@ impl Compiler {
         //         io.printfln("err: expr [{}] is not done", expr.id)
         //     }
         // }
+
+        if paused_fibers.count() > 0 {
+            error_handler.report_error("Failed to compile. {} fibers are still waiting", [paused_fibers.count()])
+        }
 
         io.printfln("[compiler] finished compilation with {} fibers", fibers.get_length())
     }
@@ -271,6 +225,7 @@ impl Compiler {
 
             fiber_context.job.progressed = false
             self.run_job(fiber_context)
+            fiber_context.job.done = true
             fiber_context.job = null
         }
     }
@@ -290,13 +245,16 @@ impl Compiler {
                 // if fiber made progress or finished, move all stuff from q2 to q
                 if current_fiber != null {
                     current_fiber.thread = -1
+
+                    // done or progressed
                     if current_fiber.job == null or current_fiber.job.progressed {
+                        any_progress = true
                         while self.paused_fibers.count() > 0 {
                             self.waiting_fibers.push(self.paused_fibers.pop())
                         }
+                        any_progress = false
                     }
 
-                    // if still not done, push in q2
                     if current_fiber.job != null {
                         self.paused_fibers.push(current_fiber)
                     }
@@ -304,20 +262,26 @@ impl Compiler {
                     current_fiber = null
                 }
 
+                // no waiting fibers
                 if self.waiting_fibers.count() == 0 {
                     if self.jobs.count() > 0 {
-                        job  := self.jobs.pop()
+                        job := self.jobs.pop()
                         fiber := self.find_free_fiber()
                         fiber.job = job
                         self.waiting_fibers.push(fiber)
 
-                    //*
+                    /*
                     } else if self.paused_fibers.count() > 0 {
                         if self.active_threads > 0 then continue
+
+                        // if all fibers are paused and we didn't make any progress
+                        // then we're done
+                        if !any_progress then break main_loop
                         self.waiting_fibers.push(self.paused_fibers.pop())
                     // */
 
                     } else {
+                        if self.active_threads > 0 then continue
                         break main_loop
                     }
                 }

@@ -1,6 +1,5 @@
 use import ast
 use import lexer
-use import cheez_compiler
 use import error_handler
 
 use import std.array
@@ -63,7 +62,8 @@ impl Parser {
             id          = id
             location    = location
             name        = <<name
-            value       = <<value
+            type_expr   = null
+            value_expr  = <<value
         ))
     }
 
@@ -131,6 +131,7 @@ impl Parser {
         return allocate(AstBlock(
             id          = id
             location    = location
+            sub_scope   = null
             children    = children
         ))
     }
@@ -147,6 +148,7 @@ impl Parser {
         return allocate(AstFunction(
             id          = id
             location    = location
+            param_scope = null
             params      = params
             body        = body
         ))
@@ -160,7 +162,7 @@ impl Parser {
             .OpenParen     -> parse_function()
 
             _ -> {
-                error_handler.report_errorf(token.location, "Unexpected token {} in expression", [token])
+                error_handler.report_error_at(token.location, "Unexpected token {} in expression", [token])
                 null
             }
         }
@@ -176,7 +178,7 @@ impl Parser {
         return allocate(AstIdentifier(
             id          = id
             location    = tok.location
-            value       = name
+            name        = name
         ))
     }
 
@@ -190,7 +192,7 @@ impl Parser {
         return allocate(AstNumberLiteral(
             id          = id
             location    = tok.location
-            value       = value
+            int_value   = value
         ))
     }
 
@@ -210,7 +212,7 @@ impl Parser {
                     name = &id
                 }
                 _ -> {
-                    error_handler.report_errorf(expr.location, "Name of parameter must be an identifier", [])
+                    error_handler.report_error_at(expr.location, "Name of parameter must be an identifier", [])
                     return null
                 }
             }
@@ -225,7 +227,7 @@ impl Parser {
         end := type_expr.location
 
         if name == null {
-            error_handler.report_errorf(location, "Parameter has no name", [])
+            error_handler.report_error_at(location, "Parameter has no name", [])
             return null
         }
 
@@ -318,7 +320,7 @@ impl Parser {
                 }
             }
 
-            error_handler.report_errorf(tok.location, "Unexpeted token {}, expected {}", [tok, typ])
+            error_handler.report_error_at(tok.location, "Unexpeted token {}, expected {}", [tok, typ])
             lexer.skip_line()
             return tok
         }

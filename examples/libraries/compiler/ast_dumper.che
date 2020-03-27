@@ -7,15 +7,15 @@ fmt :: import std.fmt
 
 #export_scope
 
-dump_ast :: (node: ref AstNode) -> String {
+dump_ast :: (node: ref AstNode, recurse: bool = true) -> String {
     result := String.empty()
-    dump_ast_helper(result, node, 0)
+    dump_ast_helper(result, node, recurse, 0)
     return result
 }
 
 #file_scope
 
-dump_ast_helper :: (result: ref String, node: ref AstNode, indent: int) {
+dump_ast_helper :: (result: ref String, node: ref AstNode, recurse: bool, indent: int) {
     print :: (msg: string, amount: int) #macro {
         for 0 .. amount {
             result += "  "
@@ -28,49 +28,61 @@ dump_ast_helper :: (result: ref String, node: ref AstNode, indent: int) {
     match node {
         AstConstDecl($decl) -> {
             result.appendf("AstConstDecl #{} ({})`n", (decl.id, decl.location))
-            dump_ast_helper(result, decl.name, indent + 1)
-            dump_ast_helper(result, decl.value, indent + 1)
+            if recurse {
+                dump_ast_helper(result, decl.name, recurse, indent + 1)
+                if decl.type_expr != null then
+                    dump_ast_helper(result, <<decl.type_expr, recurse, indent + 1)
+                dump_ast_helper(result, decl.value_expr, recurse, indent + 1)
+            }
         }
 
         AstFunction($func) -> {
             result.appendf("AstFunction #{} ({})`n", (func.id, func.location))
-            print("params:`n", indent + 1)
-            for param : func.params {
-                dump_ast_helper(result, <<param, indent + 2)
+            if recurse {
+                print("params:`n", indent + 1)
+                for param : func.params {
+                    dump_ast_helper(result, <<param, recurse, indent + 2)
+                }
+                print("body:`n", indent + 1)
+                dump_ast_helper(result, <<func.body, recurse, indent + 2)
             }
-            print("body:`n", indent + 1)
-            dump_ast_helper(result, <<func.body, indent + 2)
         }
 
         AstBlock($block) -> {
             result.appendf("AstBlock #{} ({})`n", (block.id, block.location))
-            for child : block.children {
-                dump_ast_helper(result, <<child, indent + 1)
+            if recurse {
+                for child : block.children {
+                    dump_ast_helper(result, <<child, recurse, indent + 1)
+                }
             }
         }
 
         AstIdentifier($id) -> {
-            result.appendf("AstIdentifier #{} '{}' ({})`n", (id.id, id.value, id.location))
+            result.appendf("AstIdentifier #{} '{}' ({})`n", (id.id, id.name, id.location))
         }
 
         AstNumberLiteral($num) -> {
-            result.appendf("AstNumberLiteral #{} {} ({})`n", (num.id, num.value, num.location))
+            result.appendf("AstNumberLiteral #{} {} ({})`n", (num.id, num.int_value, num.location))
         }
 
         AstParameter($param) -> {
             result.appendf("AstParameter #{} ({})`n", (param.id, param.location))
-            dump_ast_helper(result, param.name, indent + 1)
-            dump_ast_helper(result, <<param.type_expr, indent + 1)
+            if recurse {
+                dump_ast_helper(result, param.name, recurse, indent + 1)
+                dump_ast_helper(result, <<param.type_expr, recurse, indent + 1)
 
-            if param.default_value != null then
-                dump_ast_helper(result, <<param.default_value, indent + 1)
+                if param.default_value != null then
+                    dump_ast_helper(result, <<param.default_value, recurse, indent + 1)
+            }
         }
 
         AstCall($call) -> {
             result.appendf("AstCall #{} ({})`n", (call.id, call.location))
-            dump_ast_helper(result, call.function, indent + 1)
-            for arg : call.arguments {
-                dump_ast_helper(result, <<arg, indent + 1)
+            if recurse {
+                dump_ast_helper(result, call.function, recurse, indent + 1)
+                for arg : call.arguments {
+                    dump_ast_helper(result, <<arg, recurse, indent + 1)
+                }
             }
         }
 

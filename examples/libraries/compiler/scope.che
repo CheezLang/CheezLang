@@ -1,0 +1,63 @@
+use import std.map
+
+fmt :: import std.fmt
+io  :: import std.io
+
+use import ast
+use import value
+use import compiler
+
+#export_scope
+
+Scope :: struct {
+    parent  : &Scope
+    symbols := Map[string, Symbol].new()
+}
+
+impl Scope {
+    debug_log :: (ref Self, msg: string, args: []&any = []) {
+        // if const DEBUG_JOBS {
+        //     str := fmt.format(msg, args)
+        //     io.formatln("[{}] [Scope] {}", [Fiber.user_data(FiberContext).thread, str])
+        // } 
+    }
+
+    define_value :: (ref Self, name: string, typ: &void, val: Value) -> Result[(), ()] {
+        if symbols.contains(name) {
+            return Err()
+        }
+
+        symbols[name] = Symbol.Val(typ, val)
+
+        return Ok()
+    }
+
+    define_const_decl :: (ref Self, name: string, decl: &AstConstDecl) -> Result[(), ()] {
+        if symbols.contains(name) {
+            return Err()
+        }
+
+        symbols[name] = Symbol.ConstDecl(decl)
+
+        return Ok()
+    }
+
+    get_symbol :: (ref Self, name: string) -> Symbol {
+        if parent == null {
+            wait_until(symbols.contains(name))
+            return symbols.at(name)
+        }
+
+        return match symbols.get(name) {
+            Some($sym)  -> sym
+            None        -> parent.get_symbol(name)
+        }
+    }
+}
+
+Symbol :: enum #copy {
+    ConstDecl   : &AstConstDecl
+    Val         : (typ: &void, value: Value)
+}
+
+#file_scope

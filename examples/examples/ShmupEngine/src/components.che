@@ -395,7 +395,7 @@ impl serpa.IParser[Rc[Component]] for Rc[Component] {
             if (ok, t) := @link(lexer).expect_token(typ), ok {
                 t
             } else {
-                @link(error_handler).report_errorf(t.location, "Expected '{}', got {}", [typ, t.ttype])
+                @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.ttype])
                 return None
             }
         }
@@ -418,7 +418,7 @@ impl serpa.IParser[Rc[Component]] for Rc[Component] {
             }
         })
 
-        error_handler.report_errorf(name_token.location, "'{}' is not a valid component", [struct_name])
+        error_handler.report_error_at(name_token.location, "'{}' is not a valid component", [struct_name])
         return None
     }
 }

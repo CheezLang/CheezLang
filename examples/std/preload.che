@@ -123,6 +123,10 @@ impl From[()] for () {
     }
 }
 
+convert :: (T: type, c: ref $S) #macro {
+    if const T == S then c else c.into()
+}
+
 Clone :: trait {
     clone :: (ref Self) -> Self;
 }
