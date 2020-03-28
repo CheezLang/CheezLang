@@ -26,18 +26,26 @@ dump_ast_helper :: (result: ref String, node: ref AstNode, recurse: bool, indent
     print("", indent)
 
     match node {
-        AstConstDecl($decl) -> {
-            result.appendf("AstConstDecl #{} ({})`n", (decl.id, decl.location))
+        AstStruct($str) -> {
+            fmt.format_into(result, "AstStruct #{} ({})`n", [str.id, str.location])
             if recurse {
-                dump_ast_helper(result, decl.name, recurse, indent + 1)
-                if decl.type_expr != null then
-                    dump_ast_helper(result, <<decl.type_expr, recurse, indent + 1)
-                dump_ast_helper(result, decl.value_expr, recurse, indent + 1)
+            }
+        }
+        
+        AstTrait($str) -> {
+            fmt.format_into(result, "AstTrait #{} ({})`n", [str.id, str.location])
+            if recurse {
+            }
+        }
+        
+        AstEnum($str) -> {
+            fmt.format_into(result, "AstEnum #{} ({})`n", [str.id, str.location])
+            if recurse {
             }
         }
 
         AstFunction($func) -> {
-            result.appendf("AstFunction #{} ({})`n", (func.id, func.location))
+            fmt.format_into(result, "AstFunction #{} ({})`n", [func.id, func.location])
             if recurse {
                 print("params:`n", indent + 1)
                 for param : func.params {
@@ -48,8 +56,53 @@ dump_ast_helper :: (result: ref String, node: ref AstNode, recurse: bool, indent
             }
         }
 
+        AstConstDecl($decl) -> {
+            fmt.format_into(result, "AstConstDecl #{} ({})`n", [decl.id, decl.location])
+            if recurse {
+                dump_ast_helper(result, decl.name, recurse, indent + 1)
+                if decl.type_expr != null then
+                    dump_ast_helper(result, <<decl.type_expr, recurse, indent + 1)
+                dump_ast_helper(result, decl.value_expr, recurse, indent + 1)
+            }
+        }
+
+        AstDecl($decl) -> {
+            fmt.format_into(result, "AstDecl #{} ({})`n", [decl.id, decl.location])
+            if recurse {
+                dump_ast_helper(result, decl.pattern, recurse, indent + 1)
+                if decl.type_expr != null then
+                    dump_ast_helper(result, <<decl.type_expr, recurse, indent + 1)
+                if decl.value_expr != null then
+                    dump_ast_helper(result, <<decl.value_expr, recurse, indent + 1)
+            }
+        }
+
+        AstAssignment($ass) -> {
+            fmt.format_into(result, "AstAssignment #{} ({})`n", [ass.id, ass.location])
+            if recurse {
+                dump_ast_helper(result, ass.pattern, recurse, indent + 1)
+                dump_ast_helper(result, ass.value_expr, recurse, indent + 1)
+            }
+        }
+
+        AstMove($move) -> {
+            fmt.format_into(result, "AstMove #{} ({})`n", [move.id, move.location])
+            if recurse {
+                dump_ast_helper(result, move.target, recurse, indent + 1)
+                dump_ast_helper(result, move.source, recurse, indent + 1)
+            }
+        }
+
+        AstPipe($pipe) -> {
+            fmt.format_into(result, "AstPipe #{} ({})`n", [pipe.id, pipe.location])
+            if recurse {
+                dump_ast_helper(result, pipe.left, recurse, indent + 1)
+                dump_ast_helper(result, pipe.right, recurse, indent + 1)
+            }
+        }
+
         AstBlock($block) -> {
-            result.appendf("AstBlock #{} ({})`n", (block.id, block.location))
+            fmt.format_into(result, "AstBlock #{} ({})`n", [block.id, block.location])
             if recurse {
                 for child : block.children {
                     dump_ast_helper(result, <<child, recurse, indent + 1)
@@ -58,15 +111,51 @@ dump_ast_helper :: (result: ref String, node: ref AstNode, recurse: bool, indent
         }
 
         AstIdentifier($id) -> {
-            result.appendf("AstIdentifier #{} '{}' ({})`n", (id.id, id.name, id.location))
+            fmt.format_into(result, "AstIdentifier #{} '{}' ({})`n", [id.id, id.name, id.location])
         }
 
         AstNumberLiteral($num) -> {
-            result.appendf("AstNumberLiteral #{} {} ({})`n", (num.id, num.int_value, num.location))
+            fmt.format_into(result, "AstNumberLiteral #{} {} ({})`n", [num.id, num.int_value, num.location])
+        }
+
+        AstString($num) -> {
+            fmt.format_into(result, "AstString #{} '{}' ({})`n", [num.id, num.string_value, num.location])
+        }
+
+        AstBool($num) -> {
+            fmt.format_into(result, "AstBool #{} {} ({})`n", [num.id, num.bool_value, num.location])
+        }
+
+        AstNull($num) -> {
+            fmt.format_into(result, "AstNull #{} ({})`n", [num.id, num.location])
+        }
+
+        AstBinary($bin) -> {
+            fmt.format_into(result, "AstBinary #{} {} ({})`n", [bin.id, bin.operator, bin.location])
+            if recurse {
+                dump_ast_helper(result, bin.left, recurse, indent + 1)
+                dump_ast_helper(result, bin.right, recurse, indent + 1)
+            }
+        }
+
+        AstUnary($un) -> {
+            fmt.format_into(result, "AstUnary #{} {} ({})`n", [un.id, un.operator, un.location])
+            if recurse {
+                dump_ast_helper(result, un.sub, recurse, indent + 1)
+            }
+        }
+
+        AstArgument($arg) -> {
+            fmt.format_into(result, "AstArgument #{} ({})`n", [arg.id, arg.location])
+            if recurse {
+                if arg.name != null then
+                    dump_ast_helper(result, <<arg.name, recurse, indent + 1)
+                dump_ast_helper(result, arg.value_expr, recurse, indent + 1)
+            }
         }
 
         AstParameter($param) -> {
-            result.appendf("AstParameter #{} ({})`n", (param.id, param.location))
+            fmt.format_into(result, "AstParameter #{} ({})`n", [param.id, param.location])
             if recurse {
                 dump_ast_helper(result, param.name, recurse, indent + 1)
                 dump_ast_helper(result, <<param.type_expr, recurse, indent + 1)
@@ -77,7 +166,7 @@ dump_ast_helper :: (result: ref String, node: ref AstNode, recurse: bool, indent
         }
 
         AstCall($call) -> {
-            result.appendf("AstCall #{} ({})`n", (call.id, call.location))
+            fmt.format_into(result, "AstCall #{} ({})`n", [call.id, call.location])
             if recurse {
                 dump_ast_helper(result, call.function, recurse, indent + 1)
                 for arg : call.arguments {

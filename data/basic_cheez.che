@@ -10,7 +10,9 @@ f2 :: () {
 }
 
 f1 :: () {
-    print(1)
+    // true
+    print(true)
+    print("lol")
     f2()
 }
 

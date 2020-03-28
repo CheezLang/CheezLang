@@ -503,6 +503,12 @@ namespace Cheez
             ass.Value.AttachTo(ass);
             ass.Value = InferType(ass.Value, ass.Pattern.Type, typeOfExprContext: ass.Pattern.Type);
             ConvertLiteralTypeToDefaultType(ass.Value, ass.Pattern.Type);
+            ass.Value = HandleReference(ass.Value, ass.Pattern.Type, null);
+            if (ass.Value.Type is TraitType)
+            {
+                ReportError(ass.Value, $"Type {ass.Value.Type} can't be moved or copied");
+            }
+
 
             if (!ass.Pattern.Type.IsErrorType && !ass.Value.Type.IsErrorType)
             {

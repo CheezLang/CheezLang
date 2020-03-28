@@ -81,7 +81,7 @@ format_any :: (arg: &any) -> String {
     return format("{}", [arg])
 }
 
-format :: (text: string, args: []&any = []) -> String {
+format_into :: (result: ref String, text: string, args: []&any = []) {
     State :: enum #copy { Text, Format, Escape }
     use State
 
@@ -94,9 +94,6 @@ format :: (text: string, args: []&any = []) -> String {
     len      := text.bytes.length
     argIndex := 0
     state    := Text
-
-    result   := String.empty()
-
 
     for c : text {
         match state {
@@ -155,7 +152,11 @@ format :: (text: string, args: []&any = []) -> String {
             }
         }
     }
+}
 
+format :: (text: string, args: []&any = []) -> String {
+    result := String.empty()
+    format_into(result, text, args)
     return result
 }
 

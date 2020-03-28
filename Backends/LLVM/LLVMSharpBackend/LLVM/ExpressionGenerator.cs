@@ -1643,9 +1643,28 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateDerefExpr(AstDereferenceExpr de, bool deref)
         {
+            if (de.Beginning?.line == 149)
+            {
+
+            }
             var ptr = GenerateExpression(de.SubExpression, true);
 
             if (!deref) return ptr;
+
+            //if (de.Reference)
+            //{
+
+            //}
+
+            //if (de.Type is ReferenceType rr && rr.IsFatReference)
+            //{
+
+            //}
+
+            //if (de.SubExpression.Type is ReferenceType r && r.IsFatReference)
+            //{
+
+            //}
 
             var sub = builder.CreateLoad(ptr, "");
 

@@ -5,5 +5,9 @@ use import ast
 
 Value :: enum #copy {
     None
-    Function : &AstFunction
+    Function    : &AstFunction
+    Bool        : bool
+    Int         : int
+    Float       : f64
+    String      : string
 }

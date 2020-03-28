@@ -1,5 +1,5 @@
-[16684] -> (C)  {"command":"initialize","arguments":{"clientID":"vscode","clientName":"Visual Studio Code","adapterID":"cheez","pathFormat":"path","linesStartAt1":true,"columnsStartAt1":true,"supportsVariableType":true,"supportsVariablePaging":true,"supportsRunInTerminalRequest":true,"locale":"en-us"},"type":"request","seq":1}
-[16684] -> (C)  {
+[9960] -> (C)  {"command":"initialize","arguments":{"clientID":"vscode","clientName":"Visual Studio Code","adapterID":"cheez","pathFormat":"path","linesStartAt1":true,"columnsStartAt1":true,"supportsVariableType":true,"supportsVariablePaging":true,"supportsRunInTerminalRequest":true,"locale":"en-us"},"type":"request","seq":1}
+[9960] -> (C)  {
     "type": "request",
     "seq": 1,
     "arguments": {
@@ -17,7 +17,7 @@
     "command": "initialize"
 
 }
-[16684] <- (E)  {
+[9960] <- (E)  {
     "type": "event",
     "seq": 0,
     "event": "initialized",
@@ -25,7 +25,7 @@
     }
 
 }
-[16684] <- (R)  {
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -37,9 +37,9 @@
     "command": "initialize"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"basic_cheez.che","path":"p:\\dev\\CheezLang\\data\\basic_cheez.che"},"lines":[4],"breakpoints":[{"line":4}],"sourceModified":false},"type":"request","seq":2}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"basic_cheez.che","path":"p:\\dev\\CheezLang\\data\\basic_cheez.che"},"lines":[4],"breakpoints":[{"line":4}],"sourceModified":false},"type":"request","seq":2}
+[9960] -> (C)  {
     "type": "request",
     "seq": 2,
     "arguments": {
@@ -60,7 +60,7 @@
     "command": "setBreakpoints"
 
 }
-[16684] <- (R)  {
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -70,44 +70,11 @@
     "command": "setBreakpoints"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"fac.cbc","path":"p:\\dev\\CheezLang\\data\\fac.cbc"},"lines":[23],"breakpoints":[{"line":23}],"sourceModified":false},"type":"request","seq":3}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"Scope.cs","path":"p:\\dev\\CheezLang\\CompilerLibrary\\Scope.cs"},"lines":[69,788],"breakpoints":[{"line":69},{"line":788}],"sourceModified":false},"type":"request","seq":3}
+[9960] -> (C)  {
     "type": "request",
     "seq": 3,
-    "arguments": {
-        "lines": [
-            23
-        ],
-        "source": {
-            "name": "fac.cbc",
-            "path": "p:\\dev\\CheezLang\\data\\fac.cbc"
-        },
-        "breakpoints": [
-            {
-                "line": 23
-            }
-        ],
-        "sourceModified": false
-    },
-    "command": "setBreakpoints"
-
-}
-[16684] <- (R)  {
-    "type": "response",
-    "success": true,
-    "body": {
-    },
-    "seq": 3,
-    "request_seq": 3,
-    "command": "setBreakpoints"
-
-}
-[16684]  ===================================================
-[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"Scope.cs","path":"p:\\dev\\CheezLang\\CompilerLibrary\\Scope.cs"},"lines":[69,788],"breakpoints":[{"line":69},{"line":788}],"sourceModified":false},"type":"request","seq":4}
-[16684] -> (C)  {
-    "type": "request",
-    "seq": 4,
     "arguments": {
         "lines": [
             69,
@@ -130,21 +97,21 @@
     "command": "setBreakpoints"
 
 }
-[16684] <- (R)  {
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
     },
-    "seq": 4,
-    "request_seq": 4,
+    "seq": 3,
+    "request_seq": 3,
     "command": "setBreakpoints"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"TypeInference.cs","path":"p:\\dev\\CheezLang\\CompilerLibrary\\SemanticAnalysis\\TypeInference.cs"},"lines":[5890],"breakpoints":[{"line":5890}],"sourceModified":false},"type":"request","seq":5}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"TypeInference.cs","path":"p:\\dev\\CheezLang\\CompilerLibrary\\SemanticAnalysis\\TypeInference.cs"},"lines":[5890],"breakpoints":[{"line":5890}],"sourceModified":false},"type":"request","seq":4}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 5,
+    "seq": 4,
     "arguments": {
         "lines": [
             5890
@@ -163,21 +130,21 @@
     "command": "setBreakpoints"
 
 }
-[16684] <- (R)  {
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
     },
-    "seq": 5,
-    "request_seq": 5,
+    "seq": 4,
+    "request_seq": 4,
     "command": "setBreakpoints"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"launch","arguments":{"name":"Cheez Debugger","type":"cheez","request":"launch","program":"p:\\dev\\CheezLang\\data\\basic_cheez.che","args":[],"internalConsoleOptions":"openOnSessionStart","__sessionId":"3d942bf9-1ba1-4c81-b95f-05a56a3f1178"},"type":"request","seq":6}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"launch","arguments":{"name":"Cheez Debugger","type":"cheez","request":"launch","program":"p:\\dev\\CheezLang\\data\\basic_cheez.che","args":[],"internalConsoleOptions":"openOnSessionStart","__sessionId":"6cc62886-65c7-4f6e-9256-fa649c4fbb27"},"type":"request","seq":5}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 6,
+    "seq": 5,
     "arguments": {
         "type": "cheez",
         "internalConsoleOptions": "openOnSessionStart",
@@ -186,23 +153,23 @@
         "request": "launch",
         "args": [
         ],
-        "__sessionId": "3d942bf9-1ba1-4c81-b95f-05a56a3f1178"
+        "__sessionId": "6cc62886-65c7-4f6e-9256-fa649c4fbb27"
     },
     "command": "launch"
 
 }
-[16684] <- (R)  {
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
     },
-    "seq": 6,
-    "request_seq": 6,
+    "seq": 5,
+    "request_seq": 5,
     "command": "launch"
 
 }
-[16684]  ===================================================
-[504] <- (E)  {
+[9960]  ===================================================
+[3180] <- (E)  {
     "type": "event",
     "seq": 10,
     "event": "stopped",
@@ -212,10 +179,10 @@
     }
 
 }
-[16684] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":7}
-[16684] -> (C)  {
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":6}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 7,
+    "seq": 6,
     "arguments": {
         "startFrame": 0,
         "threadId": 0,
@@ -224,8 +191,8 @@
     "command": "stackTrace"
 
 }
-[16684]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
-[16684] <- (R)  {
+[9960]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -242,22 +209,22 @@
             }
         ]
     },
-    "seq": 7,
-    "request_seq": 7,
+    "seq": 6,
+    "request_seq": 6,
     "command": "stackTrace"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"threads","type":"request","seq":8}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"threads","type":"request","seq":7}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 8,
+    "seq": 7,
     "command": "threads"
 
 }
-[16684]  request threads
-[16684]  [DapThread(id = 0, name = Main Thread)]
-[16684] <- (R)  {
+[9960]  request threads
+[9960]  [DapThread(id = 0, name = Main Thread)]
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -268,16 +235,16 @@
             }
         ]
     },
-    "seq": 8,
-    "request_seq": 8,
+    "seq": 7,
+    "request_seq": 7,
     "command": "threads"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":9}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":8}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 9,
+    "seq": 8,
     "arguments": {
         "startFrame": 0,
         "threadId": 0,
@@ -286,8 +253,8 @@
     "command": "stackTrace"
 
 }
-[16684]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
-[16684] <- (R)  {
+[9960]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -304,37 +271,188 @@
             }
         ]
     },
-    "seq": 9,
-    "request_seq": 9,
+    "seq": 8,
+    "request_seq": 8,
     "command": "stackTrace"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":10}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"stepIn","arguments":{"threadId":0},"type":"request","seq":9}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 9,
+    "arguments": {
+        "threadId": 0
+    },
+    "command": "stepIn"
+
+}
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+    },
+    "seq": 9,
+    "request_seq": 9,
+    "command": "stepIn"
+
+}
+[9960]  ===================================================
+[3180] <- (E)  {
+    "type": "event",
+    "seq": 11,
+    "event": "stopped",
+    "body": {
+        "threadId": 0,
+        "reason": "step"
+    }
+
+}
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":10}
+[9960] -> (C)  {
     "type": "request",
     "seq": 10,
+    "arguments": {
+        "startFrame": 0,
+        "threadId": 0,
+        "levels": 1
+    },
+    "command": "stackTrace"
+
+}
+[9960]  stackframe: line: 13, func: 'f1', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "stackFrames": [
+            {
+                "column": 5,
+                "id": 1,
+                "name": "f1",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 13
+            },
+            {
+                "column": 5,
+                "id": 0,
+                "name": "Main",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 4
+            }
+        ]
+    },
+    "seq": 10,
+    "request_seq": 10,
+    "command": "stackTrace"
+
+}
+[9960]  ===================================================
+[9960] -> (C)  {"command":"threads","type":"request","seq":11}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 11,
+    "command": "threads"
+
+}
+[9960]  request threads
+[9960]  [DapThread(id = 0, name = Main Thread)]
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "threads": [
+            {
+                "id": 0,
+                "name": "Main Thread"
+            }
+        ]
+    },
+    "seq": 11,
+    "request_seq": 11,
+    "command": "threads"
+
+}
+[9960]  ===================================================
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":12}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 12,
+    "arguments": {
+        "startFrame": 0,
+        "threadId": 0,
+        "levels": 20
+    },
+    "command": "stackTrace"
+
+}
+[9960]  stackframe: line: 13, func: 'f1', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "stackFrames": [
+            {
+                "column": 5,
+                "id": 1,
+                "name": "f1",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 13
+            },
+            {
+                "column": 5,
+                "id": 0,
+                "name": "Main",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 4
+            }
+        ]
+    },
+    "seq": 12,
+    "request_seq": 12,
+    "command": "stackTrace"
+
+}
+[9960]  ===================================================
+[9960] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":13}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 13,
     "arguments": {
         "threadId": 0
     },
     "command": "next"
 
 }
-[16684] <- (R)  {
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
     },
-    "seq": 10,
-    "request_seq": 10,
+    "seq": 13,
+    "request_seq": 13,
     "command": "next"
 
 }
-[504]  output_generated
-[16684]  ===================================================
-[504] <- (E)  {
+[3180]  output_generated
+[9960]  ===================================================
+[3180] <- (E)  {
     "type": "event",
-    "seq": 11,
+    "seq": 12,
     "event": "output",
     "body": {
         "output": "1\n",
@@ -342,18 +460,7 @@
     }
 
 }
-[504]  output_generated
-[504] <- (E)  {
-    "type": "event",
-    "seq": 12,
-    "event": "output",
-    "body": {
-        "output": "2\n",
-        "category": "console"
-    }
-
-}
-[504] <- (E)  {
+[3180] <- (E)  {
     "type": "event",
     "seq": 13,
     "event": "stopped",
@@ -363,10 +470,10 @@
     }
 
 }
-[16684] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":11}
-[16684] -> (C)  {
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":14}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 11,
+    "seq": 14,
     "arguments": {
         "startFrame": 0,
         "threadId": 0,
@@ -375,12 +482,23 @@
     "command": "stackTrace"
 
 }
-[16684]  stackframe: line: 5, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
-[16684] <- (R)  {
+[9960]  stackframe: line: 14, func: 'f1', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
         "stackFrames": [
+            {
+                "column": 5,
+                "id": 1,
+                "name": "f1",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 14
+            },
             {
                 "column": 5,
                 "id": 0,
@@ -389,26 +507,26 @@
                     "name": "fac.cbc",
                     "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
                 },
-                "line": 5
+                "line": 4
             }
         ]
     },
-    "seq": 11,
-    "request_seq": 11,
+    "seq": 14,
+    "request_seq": 14,
     "command": "stackTrace"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"threads","type":"request","seq":12}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"threads","type":"request","seq":15}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 12,
+    "seq": 15,
     "command": "threads"
 
 }
-[16684]  request threads
-[16684]  [DapThread(id = 0, name = Main Thread)]
-[16684] <- (R)  {
+[9960]  request threads
+[9960]  [DapThread(id = 0, name = Main Thread)]
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -419,16 +537,16 @@
             }
         ]
     },
-    "seq": 12,
-    "request_seq": 12,
+    "seq": 15,
+    "request_seq": 15,
     "command": "threads"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":13}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":16}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 13,
+    "seq": 16,
     "arguments": {
         "startFrame": 0,
         "threadId": 0,
@@ -437,8 +555,248 @@
     "command": "stackTrace"
 
 }
-[16684]  stackframe: line: 5, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
-[16684] <- (R)  {
+[9960]  stackframe: line: 14, func: 'f1', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "stackFrames": [
+            {
+                "column": 5,
+                "id": 1,
+                "name": "f1",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 14
+            },
+            {
+                "column": 5,
+                "id": 0,
+                "name": "Main",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 4
+            }
+        ]
+    },
+    "seq": 16,
+    "request_seq": 16,
+    "command": "stackTrace"
+
+}
+[9960]  ===================================================
+[9960] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":17}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 17,
+    "arguments": {
+        "threadId": 0
+    },
+    "command": "next"
+
+}
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+    },
+    "seq": 17,
+    "request_seq": 17,
+    "command": "next"
+
+}
+[9960]  ===================================================
+[3180]  output_generated
+[3180] <- (E)  {
+    "type": "event",
+    "seq": 14,
+    "event": "output",
+    "body": {
+        "output": "2\n",
+        "category": "console"
+    }
+
+}
+[3180] <- (E)  {
+    "type": "event",
+    "seq": 15,
+    "event": "stopped",
+    "body": {
+        "threadId": 0,
+        "reason": "step"
+    }
+
+}
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":18}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 18,
+    "arguments": {
+        "startFrame": 0,
+        "threadId": 0,
+        "levels": 1
+    },
+    "command": "stackTrace"
+
+}
+[9960]  stackframe: line: 15, func: 'f1', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "stackFrames": [
+            {
+                "column": 5,
+                "id": 1,
+                "name": "f1",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 15
+            },
+            {
+                "column": 5,
+                "id": 0,
+                "name": "Main",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 4
+            }
+        ]
+    },
+    "seq": 18,
+    "request_seq": 18,
+    "command": "stackTrace"
+
+}
+[9960]  ===================================================
+[9960] -> (C)  {"command":"threads","type":"request","seq":19}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 19,
+    "command": "threads"
+
+}
+[9960]  request threads
+[9960]  [DapThread(id = 0, name = Main Thread)]
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "threads": [
+            {
+                "id": 0,
+                "name": "Main Thread"
+            }
+        ]
+    },
+    "seq": 19,
+    "request_seq": 19,
+    "command": "threads"
+
+}
+[9960]  ===================================================
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":20}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 20,
+    "arguments": {
+        "startFrame": 0,
+        "threadId": 0,
+        "levels": 20
+    },
+    "command": "stackTrace"
+
+}
+[9960]  stackframe: line: 15, func: 'f1', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960]  stackframe: line: 4, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "stackFrames": [
+            {
+                "column": 5,
+                "id": 1,
+                "name": "f1",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 15
+            },
+            {
+                "column": 5,
+                "id": 0,
+                "name": "Main",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 4
+            }
+        ]
+    },
+    "seq": 20,
+    "request_seq": 20,
+    "command": "stackTrace"
+
+}
+[9960]  ===================================================
+[9960] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":21}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 21,
+    "arguments": {
+        "threadId": 0
+    },
+    "command": "next"
+
+}
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+    },
+    "seq": 21,
+    "request_seq": 21,
+    "command": "next"
+
+}
+[9960]  ===================================================
+[3180] <- (E)  {
+    "type": "event",
+    "seq": 16,
+    "event": "stopped",
+    "body": {
+        "threadId": 0,
+        "reason": "step"
+    }
+
+}
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"levels":1,"startFrame":0},"type":"request","seq":22}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 22,
+    "arguments": {
+        "startFrame": 0,
+        "threadId": 0,
+        "levels": 1
+    },
+    "command": "stackTrace"
+
+}
+[9960]  stackframe: line: 5, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
@@ -455,88 +813,121 @@
             }
         ]
     },
-    "seq": 13,
-    "request_seq": 13,
+    "seq": 22,
+    "request_seq": 22,
     "command": "stackTrace"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"setBreakpoints","arguments":{"source":{"name":"fac.cbc","path":"p:\\dev\\CheezLang\\data\\basic_cheez.che"},"lines":[],"breakpoints":[],"sourceModified":false},"type":"request","seq":14}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"threads","type":"request","seq":23}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 14,
-    "arguments": {
-        "lines": [
-        ],
-        "source": {
-            "name": "fac.cbc",
-            "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
-        },
-        "breakpoints": [
-        ],
-        "sourceModified": false
-    },
-    "command": "setBreakpoints"
+    "seq": 23,
+    "command": "threads"
 
 }
-[16684] <- (R)  {
+[9960]  request threads
+[9960]  [DapThread(id = 0, name = Main Thread)]
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
+        "threads": [
+            {
+                "id": 0,
+                "name": "Main Thread"
+            }
+        ]
     },
-    "seq": 14,
-    "request_seq": 14,
-    "command": "setBreakpoints"
+    "seq": 23,
+    "request_seq": 23,
+    "command": "threads"
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"continue","arguments":{"threadId":0},"type":"request","seq":15}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"stackTrace","arguments":{"threadId":0,"startFrame":0,"levels":20},"type":"request","seq":24}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 15,
+    "seq": 24,
+    "arguments": {
+        "startFrame": 0,
+        "threadId": 0,
+        "levels": 20
+    },
+    "command": "stackTrace"
+
+}
+[9960]  stackframe: line: 5, func: 'Main', path: 'p:\dev\CheezLang\data\basic_cheez.che'
+[9960] <- (R)  {
+    "type": "response",
+    "success": true,
+    "body": {
+        "stackFrames": [
+            {
+                "column": 5,
+                "id": 0,
+                "name": "Main",
+                "source": {
+                    "name": "fac.cbc",
+                    "path": "p:\\dev\\CheezLang\\data\\basic_cheez.che"
+                },
+                "line": 5
+            }
+        ]
+    },
+    "seq": 24,
+    "request_seq": 24,
+    "command": "stackTrace"
+
+}
+[9960]  ===================================================
+[9960] -> (C)  {"command":"next","arguments":{"threadId":0},"type":"request","seq":25}
+[9960] -> (C)  {
+    "type": "request",
+    "seq": 25,
     "arguments": {
         "threadId": 0
     },
-    "command": "continue"
+    "command": "next"
 
 }
-[16684] <- (R)  {
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
     },
-    "seq": 15,
-    "request_seq": 15,
-    "command": "continue"
+    "seq": 25,
+    "request_seq": 25,
+    "command": "next"
 
 }
-[504] <- (E)  {
+[3180] <- (E)  {
     "type": "event",
-    "seq": 14,
+    "seq": 17,
     "event": "terminated",
     "body": {
     }
 
 }
-[16684]  ===================================================
-[16684] -> (C)  {"command":"disconnect","arguments":{"restart":false},"type":"request","seq":16}
-[16684] -> (C)  {
+[9960]  ===================================================
+[9960] -> (C)  {"command":"disconnect","arguments":{"restart":false},"type":"request","seq":26}
+[9960] -> (C)  {
     "type": "request",
-    "seq": 16,
+    "seq": 26,
     "arguments": {
         "restart": false
     },
     "command": "disconnect"
 
 }
-[16684] <- (R)  {
+[9960] <- (R)  {
     "type": "response",
     "success": true,
     "body": {
     },
-    "seq": 16,
-    "request_seq": 16,
+    "seq": 26,
+    "request_seq": 26,
     "command": "disconnect"
 
 }
-[16684]  ===================================================
+[9960]  ===================================================

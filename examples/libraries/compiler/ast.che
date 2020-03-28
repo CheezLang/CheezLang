@@ -19,7 +19,6 @@ AstNode :: trait {
 }
 
 // statements
-
 AstConstDecl :: struct AstNode {
     name        : ref AstIdentifier
     type_expr   : &AstNode
@@ -27,24 +26,34 @@ AstConstDecl :: struct AstNode {
 }
 impl AstNode for AstConstDecl {}
 
-// DeclStmt :: struct AstNode {
-//     pattern  : ref AstNode
-//     typ      : &AstNode
-//     init     : &AstNode
-// }
+AstDecl :: struct AstNode {
+    pattern     : ref AstNode
+    type_expr   : &AstNode
+    value_expr  : &AstNode
+}
+impl AstNode for AstDecl {}
 
-// UseStmt :: struct AstNode {
-//     expr : ref AstNode
-// }
+AstImport :: struct AstNode {
+    path : ref AstNode
+}
+impl AstNode for AstImport {}
 
 // expressions
 
-AstParameter :: struct AstNode {
-    name            : ref AstIdentifier
-    type_expr       : &AstNode
-    default_value   : &AstNode
+AstStruct :: struct AstNode {
+    name        := "#anonymous"
 }
-impl AstNode for AstParameter {}
+impl AstNode for AstStruct {}
+
+AstTrait :: struct AstNode {
+    name        := "#anonymous"
+}
+impl AstNode for AstTrait {}
+
+AstEnum :: struct AstNode {
+    name        := "#anonymous"
+}
+impl AstNode for AstEnum {}
 
 AstFunction :: struct AstNode {
     param_scope : &Scope
@@ -57,16 +66,18 @@ AstFunction :: struct AstNode {
 }
 impl AstNode for AstFunction {}
 
-impl AstFunction {
-    get_parameter :: (ref Self, name: string) -> Option[ref AstParameter] {
-        for p : params {
-            if p.name.name == name {
-                return Some(<<p)
-            }
-        }
-        return None
-    }
+AstArgument :: struct AstNode {
+    name        : &AstIdentifier
+    value_expr  : ref AstNode
 }
+impl AstNode for AstArgument {}
+
+AstParameter :: struct AstNode {
+    name            : ref AstIdentifier
+    type_expr       : &AstNode
+    default_value   : &AstNode
+}
+impl AstNode for AstParameter {}
 
 AstBlock :: struct AstNode {
     sub_scope   : &Scope
@@ -76,7 +87,7 @@ impl AstNode for AstBlock {}
 
 AstCall :: struct AstNode {
     function        : ref AstNode
-    arguments       : Array[&AstNode]
+    arguments       : Array[&AstArgument]
     ast_function    : &AstFunction = null
 }
 impl AstNode for AstCall {}
@@ -91,30 +102,135 @@ AstNumberLiteral :: struct AstNode {
 }
 impl AstNode for AstNumberLiteral {}
 
-// BinaryExpr :: struct AstNode {
-//     op    : Operator
-//     left  : ref AstNode
-//     right : ref AstNode
+AstString :: struct AstNode {
+    string_value : string
+}
+impl AstNode for AstString {}
 
-//     Operator :: enum #copy { Add, Sub, Mul, Div, Mod, And, Or, Less, LessEq, Greater, GreaterEq, Equal, NotEqual }
-// }
+AstBool :: struct AstNode {
+    bool_value : bool
+}
+impl AstNode for AstBool {}
 
-// UnaryExpr :: struct AstNode {
-//     op  : Operator
-//     sub : ref AstNode
+AstNull :: struct AstNode {
+    
+}
+impl AstNode for AstNull {}
 
-//     Operator :: enum #copy { Neg, Not }
-// }
+AstBinary :: struct AstNode {
+    operator    : Operator
+    left        : ref AstNode
+    right       : ref AstNode
 
-// MoveExpr :: struct AstNode {
-//     target : ref AstNode
-//     source : ref AstNode
-// }
+    Operator :: enum #copy { Add, Sub, Mul, Div, Mod, And, Or, Less, LessEq, Greater, GreaterEq, Equal, NotEqual }
+}
+impl AstNode for AstBinary {}
 
-// PipeExpr :: struct AstNode {
-//     left  : ref AstNode
-//     right : ref AstNode
-// }
+AstUnary :: struct AstNode {
+    operator    : Operator
+    sub         : ref AstNode
+
+    Operator :: enum #copy { Neg, Not }
+}
+impl AstNode for AstUnary {}
+
+AstAssignment :: struct AstNode {
+    pattern     : ref AstNode
+    value_expr  : ref AstNode
+}
+impl AstNode for AstAssignment {}
+
+AstMove :: struct AstNode {
+    target : ref AstNode
+    source : ref AstNode
+}
+impl AstNode for AstMove {}
+
+AstPipe :: struct AstNode {
+    left  : ref AstNode
+    right : ref AstNode
+}
+impl AstNode for AstPipe {}
+
+AstIf :: struct AstNode {
+    true_case   : ref AstNode
+    false_case  : &AstNode
+}
+impl AstNode for AstIf {}
+
+AstFor :: struct AstNode {
+    it_name     : &AstIdentifier
+    index_name  : &AstIdentifier
+    collection  : ref AstNode
+    body        : ref AstNode
+}
+impl AstNode for AstFor {}
+
+AstLoop :: struct AstNode {
+    body : ref AstNode
+}
+impl AstNode for AstLoop {}
+
+AstMatch :: struct AstNode {
+    value_expr  : ref AstNode
+    // @todo: cases
+}
+impl AstNode for AstMatch {}
+
+AstBreak :: struct AstNode {
+    label       : &AstIdentifier
+    value_expr  : &AstNode
+}
+impl AstNode for AstBreak {}
+
+AstContinue :: struct AstNode {
+    label : &AstIdentifier
+}
+impl AstNode for AstContinue {}
+
+AstReturn :: struct AstNode {
+    value_expr : &AstNode
+}
+impl AstNode for AstReturn {}
+
+AstTuple :: struct AstNode {
+    values : Array[&AstNode]
+}
+impl AstNode for AstTuple {}
+
+AstArray :: struct AstNode {
+    values : Array[&AstNode]
+}
+impl AstNode for AstArray {}
+
+AstDot :: struct AstNode {
+    sub     : &AstNode
+    name    : ref AstIdentifier
+}
+impl AstNode for AstDot {}
+
+AstIndex :: struct AstNode {
+    sub     : ref AstNode
+    name    : ref AstNode
+}
+impl AstNode for AstIndex {}
+
+AstRange :: struct AstNode {
+    from    : &AstNode
+    to      : &AstNode
+}
+impl AstNode for AstRange {}
+
+impl AstFunction {
+    get_parameter :: (ref Self, name: string) -> Option[ref AstParameter] {
+        for p : params {
+            if p.name.name == name {
+                return Some(<<p)
+            }
+        }
+        return None
+    }
+}
 
 // impl Printable for BinaryExpr.Operator {
 //     print :: (ref Self, str: ref String, format: string) {

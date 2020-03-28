@@ -81,22 +81,44 @@ impl CompilationJob for CompileGlobalNodeJob {
         debug_log("Done")
     }
 
-    compile_node :: (ref Self, node: ref AstNode) {
-        match node {
-            AstConstDecl($decl) -> compile_const_decl(decl)
-            AstFunction($func)  -> compile_function(func)
-            AstBlock($block)    -> compile_block(block)
-            AstCall($call)      -> compile_call(call)
-            AstIdentifier($id)  -> compile_identifier(id)
+    compile_node :: (ref Self, node: ref AstNode) -> ref AstNode {
+        return match node {
+            AstConstDecl($decl)     -> compile_const_decl(decl)
+            AstFunction($func)      -> compile_function(func)
+            AstBlock($block)        -> compile_block(block)
+            AstArgument($arg)       -> compile_argument(arg)
+            AstCall($call)          -> compile_call(call)
+            AstIdentifier($id)      -> compile_identifier(id)
+            AstString($str)         -> compile_string(str)
+            AstBool($bol)           -> compile_bool(bol)
+            AstNumberLiteral($num)  -> compile_number(num)
 
             _ -> {
                 dump := dump_ast(node, recurse = false)
                 compiler.error_handler.report_error_at(node.location, "compile_node: not implemented: {}", [dump])
+                node
             }
         }
+
+        return node
     }
 
-    compile_identifier :: (ref Self, id: ref AstIdentifier) {
+    compile_string :: (ref Self, str: ref AstString) -> ref AstNode {
+        str.value = .String(str.string_value)
+        return str
+    }
+
+    compile_bool :: (ref Self, bol: ref AstBool) -> ref AstNode {
+        bol.value = .Bool(bol.bool_value)
+        return bol
+    }
+
+    compile_number :: (ref Self, num: ref AstNumberLiteral) -> ref AstNode {
+        num.value = .Int(num.int_value)
+        return num
+    }
+
+    compile_identifier :: (ref Self, id: ref AstIdentifier) -> ref AstNode {
         sym := id.scope.get_symbol(id.name)
         match sym {
             .Val(($typ, $value)) -> match value {
@@ -119,42 +141,57 @@ impl CompilationJob for CompileGlobalNodeJob {
                 compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [sym])
             }
         }
+
+        return id
     }
 
-    compile_call :: (ref Self, call: ref AstCall) {
+    compile_argument :: (ref Self, arg: ref AstArgument) -> ref AstNode {
+        arg.value_expr <- compile_node(arg.value_expr)
+        return arg
+    }
+
+    compile_call :: (ref Self, call: ref AstCall) -> ref AstNode {
         call.function.scope = call.scope
-        compile_node(call.function)
+        call.function <- compile_node(call.function)
         
         match call.function.value {
             .Function($func) -> {
                 // call.typ = cast typ
                 // call.value = value
                 call.ast_function = func
+
+                for arg : call.arguments {
+                    arg = cast &compile_node(<<arg)
+                }
             }
             
             $val -> {
                 compiler.error_handler.report_error_at(call.location, "[compile_call] not implemented: {}", [val])
             }
         }
+
+        return call
     }
 
-    compile_block :: (ref Self, block: ref AstBlock) {
+    compile_block :: (ref Self, block: ref AstBlock) -> ref AstNode {
         block.sub_scope = compiler.new_scope(block.scope)
 
         for child : block.children {
             child.scope = block.sub_scope
-            compile_node(<<child)
+            child = &compile_node(<<child)
         }
+
+        return block
     }
 
-    compile_function :: (ref Self, func: ref AstFunction) {
+    compile_function :: (ref Self, func: ref AstFunction) -> ref AstNode {
         debug_log("compile_function '{}': Begin", [func.name])
         func.param_scope = compiler.new_scope(func.scope)
         func.body.scope = func.param_scope
         func.value = Value.Function(&func)
 
         debug_log("compile_function '{}': Compile Body", [func.name])
-        compile_node(<<func.body)
+        func.body = &compile_node(<<func.body)
 
         debug_log("compile_function '{}': Generate Bytecode", [func.name])
         code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
@@ -162,15 +199,20 @@ impl CompilationJob for CompileGlobalNodeJob {
 
         // @temp
         if func.name == "Main" {
+            if compiler.error_handler.has_errors() {
+                return func
+            }
             debug_log("compile_function '{}': Call Main", [func.name])
             context := Fiber.user_data(FiberContext)
             context.interp.comp_call(func)
             compiler.code_runner.get().run(<<context.interp)
         }
         debug_log("compile_function '{}': End", [func.name])
+
+        return func
     }
 
-    compile_const_decl :: (ref Self, decl: ref AstConstDecl) {
+    compile_const_decl :: (ref Self, decl: ref AstConstDecl) -> ref AstNode {
         decl.value_expr.scope = decl.scope
 
         match decl.value_expr {
@@ -183,8 +225,10 @@ impl CompilationJob for CompileGlobalNodeJob {
             Err() -> compiler.error_handler.report_error_at(decl.name.location, "A symbol with this name already exists in this scope")
         }
 
-        compile_node(decl.value_expr)
+        decl.value_expr <- compile_node(decl.value_expr)
         decl.value = decl.value_expr.value
+
+        return decl
     }
 }
 

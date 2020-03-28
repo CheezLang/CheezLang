@@ -34,210 +34,6 @@ impl CodeRunner for NormalCodeRunner {
     }
 }
 
-allocate_function :: (name: string, path: string, params: Array[String]) -> &CBCFunction {
-    func := mem.alloc(CBCFunction)
-    <<func = CBCFunction(
-        name        = name.to_owned()
-        debug_info  = CBCDebugInfo(
-            path       = path.to_owned()
-            parameters = params
-        )
-    )
-    return func
-}
-
-compile_program :: (code: string, path: string) -> &Interpreter {
-    interp := Interpreter.new()
-
-    path = interp.strings.intern(path)
-
-    labels := Array[(string, int)].create()
-    branches := Table[string, Array[int]].create(strings_equal)
-    parameters := Table[string, int].create(strings_equal)
-    func := InstructionBuilder.new(interp.strings)
-
-    current_function := ""
-    local_index := 0
-    bytecode : &CBCFunction = null
-
-    has_errors := false
-
-    for line : code.lines() {
-        trimmed := line.trim()
-        if trimmed.bytes.length == 0 or char(trimmed[0]) == '#' {
-            continue
-        }
-
-        if trimmed.starts_with("}") {
-            // end function
-
-            code := func.code_view()
-
-            // fix up branches
-            for label : labels {
-                match branches.get(label[0]) {
-                    Some($arr) -> {
-                        for index : arr.slice() {
-                            code[index] = u64(label[1])
-                        }
-                    }
-                    None -> {
-                        g_logger.log("[ERROR] label '{}' is never used", [label[0]])
-                        has_errors = true
-                    }
-                }
-                branches.delete(label[0])
-            }
-
-            if branches.get_count() > 0 {
-                g_logger.log("[ERROR] {} unresolved labels", [branches.get_count()])
-                for label : branches {
-                    g_logger.log("[ERROR] unknown label '{}'", [label[0]])
-                }
-                has_errors = true
-            }
-
-            labels.clear()
-            branches.clear()
-            parameters.clear()
-
-            func.end_function()
-
-            interp.register_function(current_function, bytecode)
-            bytecode = null
-            current_function = ""
-        } else if trimmed.starts_with("fn ") {
-            brace := trimmed.index_of('{')
-            if brace < 0 {
-                brace = trimmed.bytes.length
-            }
-            parts := trimmed[3..brace].split_at_char(' ', true).to_array()
-            @assert(parts.count() > 0)
-
-            params := Array[String].create()
-            for i : 1..parts.count() {
-                parameters[parts[i]] = i - parts.count()
-                params.add(parts[i].to_owned())
-            }
-
-            current_function = parts[0]
-
-            bytecode = allocate_function(current_function, path, params)
-            func.begin_function(bytecode)
-            local_index = 0
-        } else if brace := trimmed.index_of(':'), brace >= 0 {
-            name := trimmed[..brace]
-            labels.add((name, func.next()))
-        } else {
-            parts := trimmed.split_at_char(' ', true).to_array()
-            @assert(parts.count() > 0)
-
-            func.set_current_line(it_index + 1)
-
-            inst := parts[0].trim()
-
-            if strings_equal(inst, "local") {
-                name := parts[1]
-                if parameters.contains(name) {
-                    g_logger.log("[ERROR] there is already a parameter or local named '{}'", [name])
-                    has_errors = true
-                // } else if func.function.instructions.count() > 0 {
-                //     g_logger.log("[ERROR] local variables can only be created at the beginning of a function", [])
-                //     has_errors = true
-                } else {
-                    parameters[name] = local_index
-                    func.function.debug_info.locals.add(name.to_owned())
-                    local_index += 1
-                    func.build_const(0)
-                }
-            } else if strings_equal(inst, "noop") {
-                func.build_noop()
-            } else if strings_equal(inst, "halt") {
-                func.build_halt()
-            } else if strings_equal(inst, "print") {
-                func.build_print()
-            } else if strings_equal(inst, "const") {
-                arg := fmt.parse_int(parts[1])
-                func.build_const(arg)
-            } else if strings_equal(inst, "address_of") {
-                arg : int = if char(parts[1][0]).is_alpha() {
-                    <<&parameters[parts[1]]
-                } else {
-                    fmt.parse_int(parts[1])
-                }
-                func.build_address_of(arg)
-            } else if strings_equal(inst, "load") {
-                func.build_load()
-            } else if strings_equal(inst, "store") {
-                func.build_store()
-            } else if strings_equal(inst, "load_local") {
-                arg : int = if char(parts[1][0]).is_alpha() {
-                    <<&parameters[parts[1]]
-                } else {
-                    fmt.parse_int(parts[1])
-                }
-                func.build_load_local(arg)
-            } else if strings_equal(inst, "store_local") {
-                arg : int = if char(parts[1][0]).is_alpha() {
-                    <<&parameters[parts[1]]
-                } else {
-                    fmt.parse_int(parts[1])
-                }
-                func.build_store_local(arg)
-            } else if strings_equal(inst, "add") {
-                func.build_add()
-            } else if strings_equal(inst, "sub") {
-                func.build_sub()
-            } else if strings_equal(inst, "mul") {
-                func.build_mul()
-            } else if strings_equal(inst, "div") {
-                func.build_div()
-            } else if strings_equal(inst, "mod") {
-                func.build_mod()
-            } else if strings_equal(inst, "and") {
-                func.build_and()
-            } else if strings_equal(inst, "or") {
-                func.build_or()
-            } else if strings_equal(inst, "ieq") {
-                func.build_ieq()
-            } else if strings_equal(inst, "ilt") {
-                func.build_ilt()
-            } else if strings_equal(inst, "ile") {
-                func.build_ile()
-            } else if strings_equal(inst, "igt") {
-                func.build_igt()
-            } else if strings_equal(inst, "ige") {
-                func.build_ige()
-            } else if strings_equal(inst, "branch") {
-                label := parts[1]
-                branches.get_or_insert(label, () => Array[int].create()).add(func.build_branch(-1))
-            } else if strings_equal(inst, "branch_if") {
-                label := parts[1]
-                branches.get_or_insert(label, () => Array[int].create()).add(func.build_branch_if(-1))
-            } else if strings_equal(inst, "call") {
-                name  := parts[1]
-                arity := fmt.parse_int(parts[2])
-                func.build_call(name, arity)
-            } else if strings_equal(inst, "return") {
-                func.build_return()
-            } else if strings_equal(inst, "return_void") {
-                func.build_return_void()
-            } else {
-                g_logger.log("[ERROR] unknown instruction '{}'", [inst])
-                has_errors = true
-            }
-        }
-    }
-
-    if has_errors {
-        // @fixme: for some reason this crashes
-        // Memory.drop(<<interp)
-        return null
-    }
-
-    return interp
-}
-
 LineInfo :: struct #copy {
     line  : int
     count : int
@@ -272,7 +68,7 @@ impl CBCDebugInfo {
 }
 
 CBCFunction :: struct {
-    name            := String.empty()
+    ast_function    : &AstFunction = null
     instructions    := Array[u64].create()
     debug_info      := CBCDebugInfo()
 }
@@ -362,16 +158,16 @@ impl Interpreter {
         push_frame(function.bytecode, function.params.count())
     }
 
-    call :: (ref Self, name: string, arg_count: int = 0) {
-        match functions.get(name) {
-            Some($func) -> {
-                push_frame(func, arg_count)
-            }
-            None -> {
-                g_logger.log("[ERROR] 'Call {}' failed. Unknown function '{}'", [name, name])
-            }
-        }
-    }
+    // call :: (ref Self, name: string, arg_count: int = 0) {
+    //     match functions.get(name) {
+    //         Some($func) -> {
+    //             push_frame(func, arg_count)
+    //         }
+    //         None -> {
+    //             g_logger.log("[ERROR] 'Call {}' failed. Unknown function '{}'", [name, name])
+    //         }
+    //     }
+    // }
 
     push_frame :: (ref Self, func: &CBCFunction, arg_count: int = 0) {
         if fp + 1 >= frames.length {

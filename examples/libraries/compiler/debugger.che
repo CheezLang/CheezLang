@@ -46,20 +46,6 @@ Main :: () {
     adapter.get().run()
 }
 
-// AtomicBool :: struct {
-//     value: int
-// }
-
-// impl AtomicBool {
-//     set :: (ref Self, val: bool) {
-//         _InterlockedExchange64(&value, int(val))
-//     }
-
-//     get :: (ref Self) -> bool {
-//         return _InterlockedCompareExchange64(&value, 1, 1) != 0
-//     }
-// }
-
 DebuggerCallbacks :: trait {
     hit_breakpoint :: (ref Self);
     step_done :: (ref Self);
@@ -325,24 +311,6 @@ impl CheezDebugAdapter {
         compiler.get().add_job(LoadFileJob.new(path.to_owned()))
         compiler.get().start_compilation()
     }
-
-    compile_cbc_program :: (ref Self, path: string) {
-        // code : String = match fs.read_file(path) {
-        //     Ok($content) -> content
-        //     Err($err) -> {
-        //         g_logger.log_error("{}", [err]) 
-        //         String.empty()
-        //     }
-        // }
-
-        // interp = compile_program(code.slice(), path)
-        // if interp == null {
-        //     g_logger.log_error("failed to compile program")
-        //     @assert(false)
-        // }
-
-        // interp.call("main")
-    }
 }
 
 impl ErrorHandler for CheezDebugAdapter {
@@ -393,15 +361,11 @@ impl CommandHandler for CheezDebugAdapter {
 
         if arguments.program.slice().ends_with(".che") {
             self.compile_cheez_program(arguments.program.slice())
-        } else if arguments.program.slice().ends_with(".cbc") {
-            self.compile_cbc_program(arguments.program.slice())
         } else {
             return Err(fmt.format("Can't debug the file '{}'", [arguments.program]))
         }
 
         debugger.get().launch()
-        // compiler.get().wait_until_done()
-        // adapter.emit_terminated_event()
 
         return Ok()
     }
@@ -437,11 +401,11 @@ impl CommandHandler for CheezDebugAdapter {
             ip := if use_prev_ip then frame.ip_prev else frame.ip
             line := frame.func.debug_info.get_line_for_ip2(ip, debugger.get().interp.printer)
 
-            g_logger.log("stackframe: line: {}, func: '{}', path: '{}'", [line, frame.func.name, frame.func.debug_info.path])
+            g_logger.log("stackframe: line: {}, func: '{}', path: '{}'", [line, frame.func.ast_function.name, frame.func.debug_info.path])
 
             stack_frames.add(DapStackFrame(
                 id     = frames.length - it_index - 1
-                name   = frame.func.name.clone()
+                name   = frame.func.ast_function.name.to_owned()
                 source = DapSource(
                     name = "fac.cbc".to_owned()
                     path = frame.func.debug_info.path.clone()
