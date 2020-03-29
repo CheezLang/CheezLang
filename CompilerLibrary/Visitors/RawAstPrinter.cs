@@ -88,7 +88,7 @@ namespace Cheez.Visitors
             var sb = new StringBuilder();
             sb.AppendLine("trait {");
 
-            foreach (var f in trait.Variables)
+            foreach (var f in trait.Members)
                 sb.AppendLine(f.Decl.Accept(this).Indent(4));
 
             foreach (var f in trait.Functions)

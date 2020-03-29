@@ -404,59 +404,48 @@ Traits :: struct {
 
 // type info stuff
 __ti_type_info := @type_info(TypeInfo)
-TypeInfo :: struct #copy {
+TypeInfo :: trait {
     size        : int
     alignment   : int
-    kind        : TypeInfoKind
 }
 
-impl TypeInfo {
-    get_trait_function :: (ref Self, $Trait: type, name: string, $F: type) -> F {
-        return match kind {
-            TypeInfoKind.Struct($s) ->  s.get_trait_function(Trait, name, F)
+TypeInfoVoid :: struct TypeInfo {}
+TypeInfoFloat :: struct TypeInfo {}
+TypeInfoBool :: struct TypeInfo {}
+TypeInfoChar :: struct TypeInfo {}
+TypeInfoString :: struct TypeInfo {}
 
-            $_ -> {
-                // @panic("Not implemented!")
-                null
-            }
-        }
-    }
+// @todo
+TypeInfoTuple :: struct TypeInfo {}
+TypeInfoFunction :: struct TypeInfo {}
+
+TypeInfoPointer :: struct TypeInfo {
+    target : &TypeInfo
 }
 
-TypeInfoKind :: enum #copy {
-    Int         : TypeInfoInt    = 0
-    Float                        = 1
-    Bool                         = 2
-    Char                         = 3
-    Struct      : TypeInfoStruct = 4
-    Pointer     : &TypeInfo      = 5
-    Reference   : &TypeInfo      = 6
-    Slice       : &TypeInfo      = 7
-    Enum        : TypeInfoEnum   = 8
-    Trait       : TypeInfoTrait  = 9
-    Void                         = 10
-    String                       = 11
-    Any                          = 12
-    Array                        = 13 // @todo
-    Function                     = 14 // @todo
-    Tuple                        = 15 // @todo
+TypeInfoReference :: struct TypeInfo {
+    target : &TypeInfo
 }
 
-TypeInfoTrait :: struct #copy {
+TypeInfoSlice :: struct TypeInfo {
+    target : &TypeInfo
+}
+
+TypeInfoArray :: struct TypeInfo {
+    length  : int
+    target  : &TypeInfo
+}
+
+TypeInfoInt :: struct TypeInfo {
+    signed : bool
+}
+
+TypeInfoTrait :: struct TypeInfo {
     name      : string
     functions : []TypeInfoTraitFunction
 }
 
-TypeInfoTraitFunction :: struct #copy {
-    name  : string
-    index : int
-}
-
-TypeInfoInt :: struct #copy {
-    signed : bool
-}
-
-TypeInfoStruct :: struct #copy {
+TypeInfoStruct :: struct TypeInfo {
     name    : string
     members : []TypeInfoStructMember
     traits  : []TypeInfoTraitImpl
@@ -464,9 +453,17 @@ TypeInfoStruct :: struct #copy {
     // const_members : []TypeInfoStructMember
 }
 
-TypeInfoTraitImpl :: struct #copy {
-    trait_type : &TypeInfo
-    vtable     : &void
+TypeInfoEnum :: struct TypeInfo {
+    name     : string
+    members  : []TypeInfoEnumMember
+    tag_type : &TypeInfo
+}
+
+// 
+
+TypeInfoTraitFunction :: struct #copy {
+    name  : string
+    index : int
 }
 
 TypeInfoStructMember :: struct #copy {
@@ -479,22 +476,36 @@ TypeInfoStructMember :: struct #copy {
     attributes  : []TypeInfoAttribute
 }
 
-TypeInfoAttribute :: struct {
-    name : string
-    args : []&any
-}
-
-TypeInfoEnum :: struct #copy {
-    name     : string
-    members  : []TypeInfoEnumMember
-    tag_type : &TypeInfo
-}
-
 TypeInfoEnumMember :: struct #copy {
     name       : string
     typ        : &TypeInfo
     tag        : int
     attributes : []TypeInfoAttribute
+}
+
+TypeInfoTraitImpl :: struct #copy {
+    trait_type : &TypeInfo
+    vtable     : &void
+}
+
+TypeInfoAttribute :: struct #copy {
+    name : string
+    args : []&any
+}
+
+// 
+
+impl TypeInfo {
+    get_trait_function :: (ref Self, $Trait: type, name: string, $F: type) -> F {
+        return match self {
+            TypeInfoStruct($s) -> s.get_trait_function(Trait, name, F)
+
+            $_ -> {
+                // @panic("Not implemented!")
+                null
+            }
+        }
+    }
 }
 
 impl TypeInfoStruct {
@@ -518,13 +529,9 @@ impl TypeInfoStruct {
 
     get_trait_impl :: (ref Self, $T: type) -> &TypeInfoTraitImpl {
         ti := @type_info(T)
-        match ti.kind {
-            TypeInfoKind.Trait -> {
-                for(by_ref=true) traits {
-                    if it.trait_type == ti {
-                        return &it
-                    }
-                }
+        for(by_ref=true) traits {
+            if &it.trait_type == ti {
+                return &it
             }
         }
         return null
@@ -535,9 +542,10 @@ impl TypeInfoStruct {
         if ti_impl == null {
             return null
         }
-        ti_trait := ti_impl.trait_type
+
+        ti_trait := cast(&TypeInfoTrait) &ti_impl.trait_type
         vtable := ti_impl.vtable
-        func_info := ti_trait.kind.Trait.get_function(func_name)
+        func_info := ti_trait.get_function(func_name)
         @assert(func_info != null)
         function := cast(F) @cast(&fn(), vtable)[func_info.index]
         return function
@@ -546,7 +554,8 @@ impl TypeInfoStruct {
 
 impl TypeInfoTraitImpl {
     get_function :: (ref Self, func_name: string, $F: type) -> F {
-        func_info := trait_type.kind.Trait.get_function(func_name)
+        ti_trait := cast(&TypeInfoTrait) &self.trait_type
+        func_info := ti_trait.get_function(func_name)
         @assert(func_info != null)
         function := cast(F) @cast(&fn(), vtable)[func_info.index]
         return function

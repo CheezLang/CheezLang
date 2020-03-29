@@ -203,7 +203,12 @@ namespace Cheez.Types.Primitive
         private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
         public static PointerType NullLiteralType { get; } = new PointerType(null);
 
-        private PointerType(CheezType target) : base((target is TraitType || target is AnyType) ? PointerSize * 2 : PointerSize, PointerAlignment, true)
+        private PointerType(CheezType target) : base(
+            target switch {
+                AnyType t   => PointerSize * 3,
+                TraitType t => PointerSize * 2,
+                _           => PointerSize * 1,
+            }, PointerAlignment, true)
         {
             TargetType = target;
             IsFatPointer = target is TraitType || target is AnyType;

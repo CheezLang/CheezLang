@@ -55,9 +55,9 @@ namespace Cheez
                             //computetr(s.Declaration);
                             var alignment = 1;
                             var size = 0;
-                            for (int i = 0; i < s.Declaration.Variables.Count; i++)
+                            for (int i = 0; i < s.Declaration.Members.Count; i++)
                             {
-                                var m = s.Declaration.Variables[i];
+                                var m = s.Declaration.Members[i];
 
                                 var (ms, ma) = ComputeSizeAndAlignmentOfType(m.Type, path);
 

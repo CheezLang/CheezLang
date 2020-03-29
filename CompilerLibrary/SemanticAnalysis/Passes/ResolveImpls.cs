@@ -285,7 +285,7 @@ namespace Cheez
 
         private void FinishTraitImpl(AstImplBlock impl) {
             // check if type has required members
-            if (impl.Trait.Declaration.Variables.Count > 0) do
+            if (impl.Trait.Declaration.Members.Count > 0) do
             {
                 if (!(impl.TargetType is StructType str))
                 {
@@ -297,7 +297,7 @@ namespace Cheez
                 var strDecl = str.Declaration;
                 ComputeStructMembers(strDecl);
 
-                foreach (var v in impl.Trait.Declaration.Variables)
+                foreach (var v in impl.Trait.Declaration.Members)
                 {
                     var member = strDecl.Members.FirstOrDefault(m => m.Name == v.Name);
                     if (member == null)

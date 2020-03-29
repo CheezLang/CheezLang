@@ -92,7 +92,7 @@ namespace Cheez
             {
                 // add all members of the trait
                 ComputeTypeMembers(expr.BaseTrait);
-                foreach (var m in expr.BaseTrait.Declaration.Variables)
+                foreach (var m in expr.BaseTrait.Declaration.Members)
                 {
                     var clone = m.Decl.Clone() as AstVariableDecl;
                     expr.Members.Add(new AstStructMemberNew(clone, true, false, expr.Members.Count));

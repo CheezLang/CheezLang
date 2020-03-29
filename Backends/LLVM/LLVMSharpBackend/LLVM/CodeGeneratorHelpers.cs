@@ -399,7 +399,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             var str = LLVM.StructCreateNamed(context, $"&{p.TargetType.ToString()}");
                             LLVM.StructSetBody(str, new LLVMTypeRef[] {
                                 LLVM.Int8Type().GetPointerTo(),
-                                rttiTypeInfo.GetPointerTo()
+                                rttiTypeInfoPtr
                             }, false);
                             return str;
                         }
@@ -427,7 +427,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             var str = LLVM.StructCreateNamed(context, $"ref {r.TargetType.ToString()}");
                             LLVM.StructSetBody(str, new LLVMTypeRef[] {
                                 LLVM.Int8Type().GetPointerTo(),
-                                rttiTypeInfo.GetPointerTo()
+                                rttiTypeInfoPtr
                             }, false);
                             return str;
                         }
@@ -600,8 +600,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     return LLVM.ConstArray(CheezTypeToLLVMType(ct), s.ToCharArray().Select(c => CheezValueToLLVMValue(ct, c)).ToArray());
 
                 case TraitType _ when v == null: return LLVM.ConstNamedStruct(CheezTypeToLLVMType(type), new LLVMValueRef[]{
-                    LLVM.ConstPointerNull(pointerType),
-                    LLVM.ConstPointerNull(pointerType)
+                    LLVM.ConstPointerNull(voidPointerType),
+                    LLVM.ConstPointerNull(voidPointerType)
                 });
 
                 case EnumType e: return new LLVMValueRef();
@@ -642,8 +642,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                                     if (v != null) throw new Exception();
                                     return LLVM.ConstNamedStruct(t, new LLVMValueRef[]
                                     {
-                                        LLVM.ConstPointerNull(pointerType),
-                                        LLVM.ConstPointerNull(rttiTypeInfo.GetPointerTo()),
+                                        GetZeroInitializer(voidPointerType),
+                                        GetZeroInitializer(rttiTypeInfoPtr),
                                     });
                                 }
                             case TraitType _:
@@ -651,8 +651,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                                     if (v != null) throw new Exception();
                                     return LLVM.ConstNamedStruct(t, new LLVMValueRef[]
                                     {
-                                        LLVM.ConstPointerNull(pointerType),
-                                        LLVM.ConstPointerNull(pointerType),
+                                        GetZeroInitializer(voidPointerType),
+                                        GetZeroInitializer(voidPointerType),
                                     });
                                 }
 
@@ -725,7 +725,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var entryTypes = new List<LLVMTypeRef>();
 
                 // entry for type info
-                entryTypes.Add(rttiTypeInfo.GetPointerTo());
+                entryTypes.Add(rttiTypeInfoPtr);
 
                 // entries for functions
                 foreach (var func in trait.Functions)
@@ -785,9 +785,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     }
 
                     // set type info if available
-                    if (typeInfoTable.TryGetValue(impl.TargetType, out var ptr))
+                    if (typeInfoTable.TryGetValue(impl.TargetType, out var ptr_vtable))
                     {
-                        entries[0] = ptr;
+                        entries[0] = ptr_vtable.type_info;
                     }
 
                     // set function pointers
@@ -962,46 +962,51 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void InitTypeInfoLLVMTypes()
         {
-            sTypeInfo = workspace.GlobalScope.GetStruct("TypeInfo").StructType;
-            sTypeInfoKind = workspace.GlobalScope.GetEnum("TypeInfoKind").EnumType;
-            sTypeInfoInt = workspace.GlobalScope.GetStruct("TypeInfoInt").StructType;
-            sTypeInfoStruct = workspace.GlobalScope.GetStruct("TypeInfoStruct").StructType;
-            sTypeInfoStructMember = workspace.GlobalScope.GetStruct("TypeInfoStructMember").StructType;
-            sTypeInfoEnum = workspace.GlobalScope.GetStruct("TypeInfoEnum").StructType;
-            sTypeInfoEnumMember = workspace.GlobalScope.GetStruct("TypeInfoEnumMember").StructType;
-            sTypeInfoTrait = workspace.GlobalScope.GetStruct("TypeInfoTrait").StructType;
-            sTypeInfoTraitFunction = workspace.GlobalScope.GetStruct("TypeInfoTraitFunction").StructType;
-            sTypeInfoTraitImpl = workspace.GlobalScope.GetStruct("TypeInfoTraitImpl").StructType;
-            sTypeInfoAttribute = workspace.GlobalScope.GetStruct("TypeInfoAttribute").StructType;
+            sTypeInfoAttribute          = workspace.GlobalScope.GetStruct("TypeInfoAttribute").StructType;
+            sTypeInfo                   = workspace.GlobalScope.GetTrait("TypeInfo").TraitType;
+            sTypeInfoInt                = workspace.GlobalScope.GetStruct("TypeInfoInt").StructType;
+            sTypeInfoVoid               = workspace.GlobalScope.GetStruct("TypeInfoVoid").StructType;
+            sTypeInfoFloat              = workspace.GlobalScope.GetStruct("TypeInfoFloat").StructType;
+            sTypeInfoBool               = workspace.GlobalScope.GetStruct("TypeInfoBool").StructType;
+            sTypeInfoChar               = workspace.GlobalScope.GetStruct("TypeInfoChar").StructType;
+            sTypeInfoString             = workspace.GlobalScope.GetStruct("TypeInfoString").StructType;
+            sTypeInfoPointer            = workspace.GlobalScope.GetStruct("TypeInfoPointer").StructType;
+            sTypeInfoReference          = workspace.GlobalScope.GetStruct("TypeInfoReference").StructType;
+            sTypeInfoSlice              = workspace.GlobalScope.GetStruct("TypeInfoSlice").StructType;
+            sTypeInfoArray              = workspace.GlobalScope.GetStruct("TypeInfoArray").StructType;
+            sTypeInfoTuple              = workspace.GlobalScope.GetStruct("TypeInfoTuple").StructType;
+            sTypeInfoFunction           = workspace.GlobalScope.GetStruct("TypeInfoFunction").StructType;
+            sTypeInfoStruct             = workspace.GlobalScope.GetStruct("TypeInfoStruct").StructType;
+            sTypeInfoStructMember       = workspace.GlobalScope.GetStruct("TypeInfoStructMember").StructType;
+            sTypeInfoEnum               = workspace.GlobalScope.GetStruct("TypeInfoEnum").StructType;
+            sTypeInfoEnumMember         = workspace.GlobalScope.GetStruct("TypeInfoEnumMember").StructType;
+            sTypeInfoTrait              = workspace.GlobalScope.GetStruct("TypeInfoTrait").StructType;
+            sTypeInfoTraitFunction      = workspace.GlobalScope.GetStruct("TypeInfoTraitFunction").StructType;
+            sTypeInfoTraitImpl          = workspace.GlobalScope.GetStruct("TypeInfoTraitImpl").StructType;
 
-            rttiTypeInfo = CheezTypeToLLVMType(sTypeInfo);
-            rttiTypeInfoKind = CheezTypeToLLVMType(sTypeInfoKind);
-            rttiTypeInfoInt = CheezTypeToLLVMType(sTypeInfoInt);
-            rttiTypeInfoStruct = CheezTypeToLLVMType(sTypeInfoStruct);
-            rttiTypeInfoStructMember = CheezTypeToLLVMType(sTypeInfoStructMember);
-            rttiTypeInfoEnum = CheezTypeToLLVMType(sTypeInfoEnum);
-            rttiTypeInfoEnumMember = CheezTypeToLLVMType(sTypeInfoEnumMember);
-            rttiTypeInfoTrait = CheezTypeToLLVMType(sTypeInfoTrait);
-            rttiTypeInfoTraitFunction = CheezTypeToLLVMType(sTypeInfoTraitFunction);
-            rttiTypeInfoTraitImpl = CheezTypeToLLVMType(sTypeInfoTraitImpl);
-            rttiTypeInfoAttribute = CheezTypeToLLVMType(sTypeInfoAttribute);
-            rttiStructMemberInitializer = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { pointerType }, false);
-        }
+            rttiTypeInfoPtr             = CheezTypeToLLVMType(PointerType.GetPointerType(sTypeInfo));
+            rttiTypeInfoRef             = CheezTypeToLLVMType(ReferenceType.GetRefType(sTypeInfo));
+            rttiTypeInfoInt             = CheezTypeToLLVMType(sTypeInfoInt);
+            rttiTypeInfoVoid            = CheezTypeToLLVMType(sTypeInfoVoid);
+            rttiTypeInfoFloat           = CheezTypeToLLVMType(sTypeInfoFloat);
+            rttiTypeInfoBool            = CheezTypeToLLVMType(sTypeInfoBool);
+            rttiTypeInfoChar            = CheezTypeToLLVMType(sTypeInfoChar);
+            rttiTypeInfoString          = CheezTypeToLLVMType(sTypeInfoString);
+            rttiTypeInfoPointer         = CheezTypeToLLVMType(sTypeInfoPointer);
+            rttiTypeInfoReference       = CheezTypeToLLVMType(sTypeInfoReference);
+            rttiTypeInfoSlice           = CheezTypeToLLVMType(sTypeInfoSlice);
+            rttiTypeInfoArray           = CheezTypeToLLVMType(sTypeInfoArray);
+            rttiTypeInfoTuple           = CheezTypeToLLVMType(sTypeInfoTuple);
+            rttiTypeInfoFunction        = CheezTypeToLLVMType(sTypeInfoFunction);
+            rttiTypeInfoStruct          = CheezTypeToLLVMType(sTypeInfoStruct);
+            rttiTypeInfoStructMember    = CheezTypeToLLVMType(sTypeInfoStructMember);
+            rttiTypeInfoEnum            = CheezTypeToLLVMType(sTypeInfoEnum);
+            rttiTypeInfoEnumMember      = CheezTypeToLLVMType(sTypeInfoEnumMember);
+            rttiTypeInfoTrait           = CheezTypeToLLVMType(sTypeInfoTrait);
+            rttiTypeInfoTraitFunction   = CheezTypeToLLVMType(sTypeInfoTraitFunction);
+            rttiTypeInfoTraitImpl       = CheezTypeToLLVMType(sTypeInfoTraitImpl);
 
-        private void GenerateTypeInfos()
-        {
-            // create globals
-            foreach (var type in workspace.TypesRequiredAtRuntime)
-            {
-                var global = module.AddGlobal(rttiTypeInfo, $"ti.{type}");
-                global.SetInitializer(LLVM.GetUndef(rttiTypeInfo));
-
-                typeInfoTable[type] = global;
-
-                // if its a struct, create functions for default values of members
-                if (type is StructType str)
-                    CreateStructMemberInitializerFunctions(str);
-            }
+            rttiTypeInfoStructMemberInitializer = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { voidPointerType }, false);
         }
 
         private void CreateStructMemberInitializerFunctions(StructType type)
@@ -1052,43 +1057,68 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
+        private void GenerateTypeInfos()
+        {
+            // create globals
+            foreach (var type in workspace.TypesRequiredAtRuntime)
+            {
+                var (sType, rttiType) = type switch
+                {
+                    VoidType t      => (sTypeInfoVoid,      rttiTypeInfoVoid),
+                    StructType t    => (sTypeInfoStruct,    rttiTypeInfoStruct),
+                    EnumType t      => (sTypeInfoEnum,      rttiTypeInfoEnum),
+                    TraitType t     => (sTypeInfoTrait,     rttiTypeInfoTrait),
+                    IntType t       => (sTypeInfoInt,       rttiTypeInfoInt),
+                    FloatType t     => (sTypeInfoFloat,     rttiTypeInfoFloat),
+                    BoolType t      => (sTypeInfoBool,      rttiTypeInfoBool),
+                    CharType t      => (sTypeInfoChar,      rttiTypeInfoChar),
+                    StringType t    => (sTypeInfoString,    rttiTypeInfoString),
+                    PointerType t   => (sTypeInfoPointer,   rttiTypeInfoPointer),
+                    ReferenceType t => (sTypeInfoReference, rttiTypeInfoReference),
+                    SliceType t     => (sTypeInfoSlice,     rttiTypeInfoSlice),
+                    ArrayType t     => (sTypeInfoArray,     rttiTypeInfoArray),
+                    TupleType t     => (sTypeInfoTuple,     rttiTypeInfoTuple),
+                    FunctionType t  => (sTypeInfoFunction,  rttiTypeInfoFunction),
+                    _ => throw new NotImplementedException(),
+                };
+                var global = module.AddGlobal(rttiType, $"ti.{type}");
+                global.SetInitializer(GetZeroInitializer(rttiType));
+
+                typeInfoTable[type] = (global, vtableMap[GetTraitImpl(sTypeInfo, sType)]);
+
+                // if its a struct, create functions for default values of members
+                if (type is StructType str)
+                    CreateStructMemberInitializerFunctions(str);
+            }
+        }
+
+        private LLVMValueRef GetZeroInitializer(LLVMTypeRef rttiType)
+        {
+            return rttiType.TypeKind switch {
+                LLVMTypeKind.LLVMStructTypeKind => 
+                    LLVM.ConstNamedStruct(rttiType, rttiType.GetStructElementTypes().Select(t => GetZeroInitializer(t)).ToArray()),
+
+                LLVMTypeKind.LLVMPointerTypeKind => LLVM.ConstPointerNull(rttiType),
+                LLVMTypeKind.LLVMIntegerTypeKind => LLVM.ConstInt(rttiType, 0, false),
+                LLVMTypeKind.LLVMFloatTypeKind => LLVM.ConstReal(rttiType, 0),
+
+                _ => throw new NotImplementedException(),
+            };
+        }
+
         private void SetTypeInfos()
         {
+            // size of 
+            uint offset = (uint)sTypeInfo.Declaration.Members.Count;
+
             // set values
             foreach (var type in workspace.TypesRequiredAtRuntime)
             {
-                var global = typeInfoTable[type];
-
-                var kind = LLVM.GetUndef(rttiTypeInfoKind);
+                var (global, _) = typeInfoTable[type];
 
                 builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)type.GetSize(), true), builder.CreateStructGEP(global, 0, "ti.size.ptr"));
                 builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)type.GetAlignment(), true), builder.CreateStructGEP(global, 1, "ti.align.ptr"));
-
-                var tag = type switch
-                {
-                    IntType _       => 0,
-                    FloatType _     => 1,
-                    BoolType _      => 2,
-                    CharType _      => 3,
-                    StructType _    => 4,
-                    PointerType _   => 5,
-                    ReferenceType _ => 6,
-                    SliceType _     => 7,
-                    EnumType _      => 8,
-                    TraitType _     => 9,
-                    VoidType _      => 10,
-                    StringType _    => 11,
-                    AnyType _       => 12,
-                    ArrayType _     => 13,
-                    FunctionType _  => 14,
-                    TupleType _     => 15,
-                    _               => throw new NotImplementedException()
-                };
-                var kindPtr = builder.CreateStructGEP(global, 2, "ti.kind.ptr");
-                var tagPtr = builder.CreateStructGEP(kindPtr, 0, "ti.kind.tag.ptr");
-                var assPtr = builder.CreateStructGEP(kindPtr, 1, "ti.kind.ass.ptr");
-                builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)tag, true), tagPtr);
-
+                
                 switch (type)
                 {
                     case VoidType _:
@@ -1097,52 +1127,66 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     case StringType _:
                     case CharType _:
                     case AnyType _:
-                    case ArrayType _:
+                        break;
+                    
+                    // @todo
                     case FunctionType _:
                     case TupleType _:
                         break;
 
                     case IntType i:
                         {
-                            var ptr = builder.CreatePointerCast(assPtr, rttiTypeInfoInt.GetPointerTo(), "ti.kind.type_info_int.ptr");
-                            builder.CreateStore(LLVM.ConstNamedStruct(rttiTypeInfoInt, new LLVMValueRef[]
-                            {
-                                LLVM.ConstInt(LLVM.Int1Type(), (ulong)(i.Signed ? 1 : 0), false)
-                            }), ptr);
+                            builder.CreateStore(
+                                LLVM.ConstInt(LLVM.Int1Type(), i.Signed ? 1ul : 0ul, false),
+                                builder.CreateStructGEP(global, offset + 0, "ti.kind.type_info_int.ptr"));
                             break;
                         }
 
                     case PointerType p:
                         {
-                            var ptr = builder.CreatePointerCast(assPtr, rttiTypeInfo.GetPointerTo().GetPointerTo(), "ti.kind.type_info_pointer.ptr");
-                            builder.CreateStore(typeInfoTable[p.TargetType], ptr);
+                            builder.CreateStore(
+                                RTTITypeInfoAsPtr(p.TargetType),
+                                builder.CreateStructGEP(global, offset + 0, ""));
                             break;
                         }
 
                     case ReferenceType p:
                         {
-                            var ptr = builder.CreatePointerCast(assPtr, rttiTypeInfo.GetPointerTo().GetPointerTo(), "ti.kind.type_info_ref.ptr");
-                            builder.CreateStore(typeInfoTable[p.TargetType], ptr);
+                            builder.CreateStore(
+                                RTTITypeInfoAsPtr(p.TargetType),
+                                builder.CreateStructGEP(global, offset + 0, ""));
                             break;
                         }
 
                     case SliceType p:
                         {
-                            var ptr = builder.CreatePointerCast(assPtr, rttiTypeInfo.GetPointerTo().GetPointerTo(), "ti.kind.type_info_slice.ptr");
-                            builder.CreateStore(typeInfoTable[p.TargetType], ptr);
+                            builder.CreateStore(
+                                RTTITypeInfoAsPtr(p.TargetType),
+                                builder.CreateStructGEP(global, offset + 0, ""));
+                            break;
+                        }
+
+                    case ArrayType p:
+                        {
+                            builder.CreateStore(
+                                LLVM.ConstInt(LLVM.Int64Type(), ((NumberData)p.Length).ToUlong(), true),
+                                builder.CreateStructGEP(global, offset + 0, ""));
+                            builder.CreateStore(
+                                RTTITypeInfoAsPtr(p.TargetType),
+                                builder.CreateStructGEP(global, offset + 1, ""));
                             break;
                         }
 
                     case StructType s:
-                        GenerateRTTIForStruct(s, assPtr);
+                        GenerateRTTIForStruct(offset, s, global);
                         break;
 
                     case EnumType e:
-                        GenerateRTTIForEnum(e, assPtr);
+                        GenerateRTTIForEnum(offset, e, global);
                         break;
 
                     case TraitType t:
-                        GenerateRTTIForTrait(t, assPtr);
+                        GenerateRTTIForTrait(offset, t, global);
                         break;
 
 
@@ -1151,7 +1195,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             }
         }
 
-        private void GenerateRTTIForEnum(EnumType enumType, LLVMValueRef assPtr)
+        private void GenerateRTTIForEnum(uint offset, EnumType enumType, LLVMValueRef assPtr)
         {
             var ptr = builder.CreatePointerCast(assPtr, rttiTypeInfoEnum.GetPointerTo(), "ti.kind.type_info_enum.ptr");
 
@@ -1163,13 +1207,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             );
 
             // create type info
-            var val = LLVM.ConstNamedStruct(rttiTypeInfoEnum, new LLVMValueRef[]
-            {
-                CheezValueToLLVMValue(CheezType.String, enumType.Declaration.Name),
-                memberSlice,
-                typeInfoTable[enumType.Declaration.TagType]
-            });
-            builder.CreateStore(val, ptr);
+            // name
+            builder.CreateStore(
+               CheezValueToLLVMValue(CheezType.String, enumType.Declaration.Name),
+               builder.CreateStructGEP(ptr, offset + 0, ""));
+            // [] members
+            builder.CreateStore(
+               memberSlice,
+               builder.CreateStructGEP(ptr, offset + 1, ""));
+            // tag_type
+            builder.CreateStore(
+               RTTITypeInfoAsPtr(enumType.Declaration.TagType),
+               builder.CreateStructGEP(ptr, offset + 2, ""));
         }
 
         private LLVMValueRef GenerateRTTIForEnumMember(EnumType enumType, AstEnumMemberNew mem)
@@ -1183,13 +1232,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             return LLVM.ConstNamedStruct(rttiTypeInfoEnumMember, new LLVMValueRef[]
             {
                 CheezValueToLLVMValue(CheezType.String, mem.Name),
-                mem.AssociatedType != null ? typeInfoTable[mem.AssociatedType] : LLVM.ConstPointerNull(rttiTypeInfo.GetPointerTo()),
+                mem.AssociatedType != null ? RTTITypeInfoAsPtr(mem.AssociatedType) : CreateNullFatPtr(PointerType.GetPointerType(mem.AssociatedType)),
                 LLVM.ConstInt(LLVM.Int64Type(), mem.Value.ToUlong(), false),
                 attributes
             });
         }
 
-        private void GenerateRTTIForTrait(TraitType traitType, LLVMValueRef assPtr)
+        private void GenerateRTTIForTrait(uint offset, TraitType traitType, LLVMValueRef assPtr)
         {
             var ptr = builder.CreatePointerCast(assPtr, rttiTypeInfoTrait.GetPointerTo(), "ti.kind.type_info_trait.ptr");
 
@@ -1205,18 +1254,19 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             );
 
             // create type info
-            var val = LLVM.ConstNamedStruct(rttiTypeInfoTrait, new LLVMValueRef[]
-            {
-                CheezValueToLLVMValue(CheezType.String, traitType.Declaration.Name),
-                memberSlice
-            });
-            builder.CreateStore(val, ptr);
+            // name
+            builder.CreateStore(
+               CheezValueToLLVMValue(CheezType.String, traitType.Declaration.Name),
+               builder.CreateStructGEP(ptr, offset + 0, ""));
+               
+            // functions
+            builder.CreateStore(
+               memberSlice,
+               builder.CreateStructGEP(ptr, offset + 1, ""));
         }
 
-        private void GenerateRTTIForStruct(StructType s, LLVMValueRef assPtr)
+        private void GenerateRTTIForStruct(uint offset, StructType s, LLVMValueRef ptr)
         {
-            var ptr = builder.CreatePointerCast(assPtr, rttiTypeInfoStruct.GetPointerTo(), "ti.kind.type_info_struct.ptr");
-
             var memberSlice = CreateSlice(
                 sTypeInfoStructMember,
                 $"ti.{s.Name}.members",
@@ -1225,18 +1275,24 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             // create trait impl array
             var traitImplSlice = CreateSlice(
-                sTypeInfoTraitImpl,
-                $"ti.{s.Name}.trait_impls",
-                s.Declaration.Traits.Select(t => GenerateRTTIForTraitImpl(s, t))
+               sTypeInfoTraitImpl,
+               $"ti.{s.Name}.trait_impls",
+               s.Declaration.Traits.Select(t => GenerateRTTIForTraitImpl(s, t))
             );
 
             // create type info
-            builder.CreateStore(LLVM.ConstNamedStruct(rttiTypeInfoStruct, new LLVMValueRef[]
-            {
-                CheezValueToLLVMValue(CheezType.String, s.Name),
-                memberSlice,
-                traitImplSlice
-            }), ptr);
+            // name
+            builder.CreateStore(
+               CheezValueToLLVMValue(CheezType.String, s.Name),
+               builder.CreateStructGEP(ptr, offset + 0, ""));
+            // [] members
+            builder.CreateStore(
+               memberSlice,
+               builder.CreateStructGEP(ptr, offset + 1, ""));
+            // [] impls
+            builder.CreateStore(
+               traitImplSlice,
+               builder.CreateStructGEP(ptr, offset + 2, ""));
         }
 
         private LLVMValueRef GenerateRTTIForStructMember(StructType s, AstStructMemberNew m)
@@ -1256,16 +1312,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             //
             var off = LLVM.OffsetOfElement(targetData, CheezTypeToLLVMType(s), (uint)m.Index);
             off = (ulong)m.Offset;
-            var initializer = valueMap.GetValueOrDefault(m, LLVM.ConstNull(rttiStructMemberInitializer.GetPointerTo()));
+            var initializer = valueMap.GetValueOrDefault(m, LLVM.ConstNull(rttiTypeInfoStructMemberInitializer.GetPointerTo()));
+
+            //return LLVM.GetUndef(rttiTypeInfoStructMember);
             return LLVM.ConstNamedStruct(rttiTypeInfoStructMember, new LLVMValueRef[]
             {
-                LLVM.ConstInt(LLVM.Int64Type(), (ulong)m.Index, true),
-                LLVM.ConstInt(LLVM.Int64Type(), off, true),
-                CheezValueToLLVMValue(CheezType.String, m.Name),
-                typeInfoTable[m.Type],
-                default_value,
-                LLVM.ConstPointerCast(initializer, rttiStructMemberInitializer.GetPointerTo()),
-                attributes
+                LLVM.ConstInt(LLVM.Int64Type(), (ulong)m.Index, true),  // index
+                LLVM.ConstInt(LLVM.Int64Type(), off, true),             // offset
+                CheezValueToLLVMValue(CheezType.String, m.Name),        // name
+                RTTITypeInfoAsPtr(m.Type),                              // typ
+                default_value,                                          // default value
+                LLVM.ConstPointerCast(initializer, rttiTypeInfoStructMemberInitializer.GetPointerTo()), // initializer
+                attributes                                              // attributes
             });
         }
 
@@ -1276,7 +1334,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             return LLVM.ConstNamedStruct(rttiTypeInfoTraitImpl, new LLVMValueRef[]
             {
-                typeInfoTable[t],
+                RTTITypeInfoAsPtr(t),
                 LLVM.ConstPointerCast(vtablePtr, LLVM.Int8Type().GetPointerTo()),
             });
         }
@@ -1298,8 +1356,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             return LLVM.ConstNamedStruct(CheezTypeToLLVMType(PointerType.GetPointerType(CheezType.Any)), new LLVMValueRef[]
             {
-                LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo()),
-                LLVM.ConstPointerNull(rttiTypeInfo.GetPointerTo())
+                GetZeroInitializer(LLVM.Int8Type().GetPointerTo()),
+                GetZeroInitializer(rttiTypeInfoPtr)
             });
         }
 
@@ -1325,9 +1383,19 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             valueGlobal.SetInitializer(init);
             return LLVM.ConstNamedStruct(CheezTypeToLLVMType(PointerType.GetPointerType(CheezType.Any)), new LLVMValueRef[]
             {
-                LLVM.ConstPointerCast(valueGlobal, pointerType),
-                typeInfoTable[expr.Type]
+                LLVM.ConstPointerCast(valueGlobal, voidPointerType),
+                RTTITypeInfoAsPtr(expr.Type),
             });
+        }
+
+        private LLVMValueRef RTTITypeInfoAsPtr(CheezType type) {
+            var (typeInfo, vtable) = typeInfoTable[type];
+            return CreateFatPtr(PointerType.GetPointerType(sTypeInfo), typeInfo, vtable);
+        }
+
+        private LLVMValueRef RTTITypeInfoAsRef(CheezType type) {
+            var (typeInfo, vtable) = typeInfoTable[type];
+            return CreateFatRef(ReferenceType.GetRefType(sTypeInfo), typeInfo, vtable);
         }
 
         LLVMValueRef CreateSlice(CheezType targetType, string name, IEnumerable<LLVMValueRef> data)
@@ -1354,6 +1422,30 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             });
         }
 
+        private LLVMValueRef CreateFatRef(ReferenceType refType, LLVMValueRef value, LLVMValueRef vtable)
+        {
+            var result = LLVM.GetUndef(CheezTypeToLLVMType(refType));
+            result = builder.CreateInsertValue(result, builder.CreatePointerCast(value, voidPointerType, ""), 0, "");
+            result = builder.CreateInsertValue(result, builder.CreatePointerCast(vtable, voidPointerType, ""), 1, "");
+            return result;
+        }
+
+        private LLVMValueRef CreateNullFatPtr(PointerType ptrType)
+        {
+            return LLVM.ConstNamedStruct(CheezTypeToLLVMType(ptrType), new LLVMValueRef[] {
+                LLVM.ConstPointerNull(LLVM.Int8Type()),
+                LLVM.ConstPointerNull(LLVM.Int8Type())
+            });
+        }
+
+        private LLVMValueRef CreateFatPtr(PointerType ptrType, LLVMValueRef value, LLVMValueRef vtable)
+        {
+            var result = LLVM.GetUndef(CheezTypeToLLVMType(ptrType));
+            result = builder.CreateInsertValue(result, builder.CreatePointerCast(value, voidPointerType, ""), 0, "");
+            result = builder.CreateInsertValue(result, builder.CreatePointerCast(vtable, voidPointerType, ""), 1, "");
+            return result;
+        }
+
         private LLVMValueRef CreateLLVMSlice(CheezType sliceType, LLVMValueRef value, LLVMValueRef length)   
         {
             var result = LLVM.GetUndef(CheezTypeToLLVMType(sliceType));
@@ -1370,6 +1462,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef GetTraitVtable(LLVMValueRef value)
         {
             return builder.CreateExtractValue(value, 1, "vtable");
+        }
+
+        private LLVMValueRef GetAnyPtr(LLVMValueRef value)
+        {
+            return builder.CreateExtractValue(value, 0, "ptr");
+        }
+
+        private LLVMValueRef GetAnyTypeInfo(LLVMValueRef value)
+        {
+            return builder.CreateExtractValue(value, 1, "type_info");
         }
     }
 }

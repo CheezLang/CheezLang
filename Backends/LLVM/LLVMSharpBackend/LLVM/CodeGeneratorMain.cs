@@ -1,5 +1,6 @@
 ﻿using Cheez.Ast.Statements;
 using Cheez.Types;
+using Cheez.Types.Complex;
 using LLVMSharp;
 using System;
 using System.Collections.Generic;
@@ -47,7 +48,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         // vtable stuff
         private bool checkForNullTraitObjects = true;
         private Dictionary<CheezType, LLVMTypeRef> vtableTypes = new Dictionary<CheezType, LLVMTypeRef>();
-        private Dictionary<CheezType, LLVMValueRef> typeInfoTable = new Dictionary<CheezType, LLVMValueRef>();
+        private Dictionary<CheezType, (LLVMValueRef type_info, LLVMValueRef vtable)> typeInfoTable = new Dictionary<CheezType, (LLVMValueRef type_info, LLVMValueRef vtable)>();
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
         private Dictionary<AstImplBlock, LLVMValueRef> vtableMap = new Dictionary<AstImplBlock, LLVMValueRef>();
 
@@ -59,13 +60,24 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef exitThread;
 
         //
-        private LLVMTypeRef pointerType;
+        private LLVMTypeRef voidPointerType;
         private int pointerSize = 4;
 
         // rtti stuff
-        private CheezType sTypeInfo;
-        private CheezType sTypeInfoKind;
+        private CheezType sTypeInfoAttribute;
+        private TraitType sTypeInfo;
         private CheezType sTypeInfoInt;
+        private CheezType sTypeInfoVoid;
+        private CheezType sTypeInfoFloat;
+        private CheezType sTypeInfoBool;
+        private CheezType sTypeInfoChar;
+        private CheezType sTypeInfoString;
+        private CheezType sTypeInfoPointer;
+        private CheezType sTypeInfoReference;
+        private CheezType sTypeInfoSlice;
+        private CheezType sTypeInfoArray;
+        private CheezType sTypeInfoTuple;
+        private CheezType sTypeInfoFunction;
         private CheezType sTypeInfoStruct;
         private CheezType sTypeInfoStructMember;
         private CheezType sTypeInfoEnum;
@@ -73,20 +85,31 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private CheezType sTypeInfoTrait;
         private CheezType sTypeInfoTraitFunction;
         private CheezType sTypeInfoTraitImpl;
-        private CheezType sTypeInfoAttribute;
 
-        private LLVMTypeRef rttiStructMemberInitializer;
-        private LLVMTypeRef rttiTypeInfo;
-        private LLVMTypeRef rttiTypeInfoKind;
+        private LLVMTypeRef rttiTypeInfoAttribute;
+        private LLVMTypeRef rttiTypeInfoPtr;
+        private LLVMTypeRef rttiTypeInfoRef;
         private LLVMTypeRef rttiTypeInfoInt;
+        private LLVMTypeRef rttiTypeInfoVoid;
+        private LLVMTypeRef rttiTypeInfoFloat;
+        private LLVMTypeRef rttiTypeInfoBool;
+        private LLVMTypeRef rttiTypeInfoChar;
+        private LLVMTypeRef rttiTypeInfoString;
+        private LLVMTypeRef rttiTypeInfoPointer;
+        private LLVMTypeRef rttiTypeInfoReference;
+        private LLVMTypeRef rttiTypeInfoSlice;
+        private LLVMTypeRef rttiTypeInfoArray;
+        private LLVMTypeRef rttiTypeInfoTuple;
+        private LLVMTypeRef rttiTypeInfoFunction;
         private LLVMTypeRef rttiTypeInfoStruct;
         private LLVMTypeRef rttiTypeInfoStructMember;
+        private LLVMTypeRef rttiTypeInfoStructMemberInitializer;
         private LLVMTypeRef rttiTypeInfoEnum;
         private LLVMTypeRef rttiTypeInfoEnumMember;
         private LLVMTypeRef rttiTypeInfoTrait;
         private LLVMTypeRef rttiTypeInfoTraitFunction;
         private LLVMTypeRef rttiTypeInfoTraitImpl;
-        private LLVMTypeRef rttiTypeInfoAttribute;
+
 
         // context
         private AstFuncExpr currentFunction;
@@ -152,7 +175,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             rawBuilder = LLVM.CreateBuilder();
 
-            pointerType = LLVM.Int8Type().GetPointerTo();
+            voidPointerType = LLVM.Int8Type().GetPointerTo();
 
             //{ // check attributes
             //    for (int i = 1; i < 100; i++)

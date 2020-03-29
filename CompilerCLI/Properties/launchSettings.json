@@ -2,7 +2,7 @@
   "profiles": {
     "CompilerCLI": {
       "commandName": "Project",
-      "commandLineArgs": "examples/test.che --out gen  --stdlib examples --time --run  --print-ast-analysed ./gen/int/ast_analyzed.che",
+      "commandLineArgs": "examples/test.che --out gen  --stdlib examples --time --run  --print-ast-analysed ./gen/int/ast_analyzed.che --emit-llvm-ir",
       "workingDirectory": ".."
     }
   }

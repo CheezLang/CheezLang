@@ -391,7 +391,7 @@ namespace Cheez.Ast.Statements
 
         public List<AstDecl> Declarations { get; }
         public List<AstFuncExpr> Functions { get; } = new List<AstFuncExpr>();
-        public List<AstTraitMember> Variables { get; } = new List<AstTraitMember>();
+        public List<AstTraitMember> Members { get; } = new List<AstTraitMember>();
 
         public Dictionary<CheezType, AstImplBlock> Implementations { get; } = new Dictionary<CheezType, AstImplBlock>();
 

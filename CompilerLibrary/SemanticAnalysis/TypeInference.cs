@@ -2450,20 +2450,6 @@ namespace Cheez
                         return id;
                     }
 
-                case "any_from_pointers":
-                    {
-                        if (expr.Arguments.Count != 2)
-                        {
-                            ReportError(expr.Location, "@any_from_pointers takes 2 arguments");
-                            return expr;
-                        }
-
-                        var ptr = InferArg(0, PointerType.GetPointerType(CheezType.Void));
-                        var len = InferArg(1, PointerType.GetPointerType(CheezType.Void));
-
-                        expr.Type = CheezType.Any;
-                        return expr;
-                    }
 
                 case "string_from_ptr_and_length":
                     {
@@ -2607,8 +2593,7 @@ namespace Cheez
                                 return expr;
                         }
 
-                        var typeInfo = GlobalScope.GetSymbol("TypeInfo") as AstConstantDeclaration;
-                        var type = typeInfo.Value as CheezType;
+                        var type = GlobalScope.GetTrait("TypeInfo").TraitType;
                         expr.Type = PointerType.GetPointerType(type);
                         break;
                     }
@@ -2676,9 +2661,9 @@ namespace Cheez
                         {
                             MarkTypeAsRequiredAtRuntime(t);
                             var sym = GlobalScope.GetSymbol("TypeInfo");
-                            if (sym is AstConstantDeclaration c && c.Initializer is AstStructTypeExpr s)
+                            if (sym is AstConstantDeclaration c && c.Initializer is AstTraitTypeExpr s)
                             {
-                                expr.Type = PointerType.GetPointerType(s.StructType);
+                                expr.Type = PointerType.GetPointerType(s.TraitType);
                             }
                             else
                             {
@@ -4343,12 +4328,13 @@ namespace Cheez
 
                         if (func == null)
                         {
-                            var mem = t.Declaration.Variables.FirstOrDefault(v => v.Name == name);
+                            var mem = t.Declaration.Members.FirstOrDefault(v => v.Name == name);
 
                             if (mem == null)
                             {
-                                ReportError(expr.Right, $"Trait '{t.Declaration.Name}' has no function or member '{name}'");
-                                break;
+                                return GetImplFunctions(expr, t, name, context);
+                                // ReportError(expr.Right, $"Trait '{t.Declaration.Name}' has no function or member '{name}'");
+                                // break;
                             }
 
                             expr.Type = mem.Type;

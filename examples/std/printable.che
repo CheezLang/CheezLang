@@ -182,17 +182,6 @@ impl Printable for Complex {
     }
 }
 
-impl Printable for TypeInfo {
-    print :: (ref Self, str: ref String, format: string) {
-        use TypeInfoKind
-        match kind {
-            Int($ti) -> str.appendf("{}{}", (if ti.signed then "i" else "u", size * 8))
-            Float    -> str.appendf("f{}", size * 8)
-            $_       -> {}
-        }
-    }
-}
-
 #file_scope
 printf_int_to_string :: (str: ref String, i: $T, format: string) {
     base := if streq("b", format) then 2

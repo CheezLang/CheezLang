@@ -42,7 +42,7 @@ namespace Cheez
                         break;
 
                     case AstVariableDecl mem:
-                        expr.Variables.Add(new AstTraitMember(mem, false, expr.Variables.Count));
+                        expr.Members.Add(new AstTraitMember(mem, false, expr.Members.Count));
                         break;
                 }
             }
@@ -83,7 +83,7 @@ namespace Cheez
 
             trait.SubScope.DefineTypeSymbol("Self", new SelfType(trait.Value as CheezType));
 
-            foreach (var v in trait.Variables)
+            foreach (var v in trait.Members)
             {
                 var decl = v.Decl;
                 decl.TypeExpr.Scope = trait.SubScope;

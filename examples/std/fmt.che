@@ -171,13 +171,13 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
         }
     }
 
-    match typ.kind {
-        TypeInfoKind.String -> {
+    match ref <<typ {
+        TypeInfoString(_) -> {
             ptr := cast(&string) data
             result.append_string(<<ptr)
         }
 
-        TypeInfoKind.Int($tint) -> {
+        TypeInfoInt($tint) -> {
             if tint.signed {
                 ptr := cast(&int) data
                 format_int(result, <<ptr)
@@ -187,7 +187,7 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
             }
         }
 
-        TypeInfoKind.Float -> {
+        TypeInfoFloat(_) -> {
             if typ.size == 4 {
                 ptr := cast(&float) data
                 result.appendf("{}", <<ptr)
@@ -200,22 +200,22 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
             }
         }
 
-        TypeInfoKind.Bool -> {
+        TypeInfoBool(_) -> {
             ptr := cast(&bool) data
             if <<ptr then result.append_string("true") else result.append_string("false")
         }
 
-        TypeInfoKind.Char -> {
+        TypeInfoChar(_) -> {
             ptr := cast(&char) data
             result.appendf("'{}'", <<ptr)
         }
 
-        TypeInfoKind.Pointer($target) -> {
+        TypeInfoPointer($ti) -> {
             ptr := cast(&&void) data
             result.appendf("0x{:x}", int(<<ptr))
         }
 
-        TypeInfoKind.Slice($target) -> {
+        TypeInfoSlice($ti) -> {
             ptr := <<cast(&[]void) data
             result += "["
             for i : 0..ptr.length {
@@ -223,13 +223,27 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
                     result += ", "
                 }
 
-                elem := pointer_add(ptr.data, i * target.size)
-                format_any_into_string(result, elem, target, format, recursive)
+                elem := pointer_add(ptr.data, i * ti.target.size)
+                format_any_into_string(result, elem, ti.target, format, recursive)
             }
             result += "]"
         }
 
-        TypeInfoKind.Struct($tstruct) -> {
+        TypeInfoArray($ti) -> {
+            ptr := cast(&void) data
+            result += "["
+            for i : 0..ti.length {
+                if i > 0 {
+                    result += ", "
+                }
+
+                elem := pointer_add(ptr, i * ti.target.size)
+                format_any_into_string(result, elem, ti.target, format, recursive)
+            }
+            result += "]"
+        }
+
+        TypeInfoStruct($tstruct) -> {
             ptr := cast(&void) data
             result += tstruct.name
 
@@ -246,16 +260,15 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
                     comma = true
 
                     member_ptr  := pointer_add(ptr, member_info.offset)
-                    member_type := member_info.typ
                     result += member_info.name
                     result += " = "
-                    format_any_into_string(result, member_ptr, member_type, format, recursive)
+                    format_any_into_string(result, member_ptr, member_info.typ, format, recursive)
                 }
             }
             result += ")"
         }
 
-        TypeInfoKind.Enum($tenum) -> {
+        TypeInfoEnum($tenum) -> {
             ptr := cast(&void) data
             result += tenum.name
             result += '.'
