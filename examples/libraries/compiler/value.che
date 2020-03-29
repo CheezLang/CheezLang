@@ -1,5 +1,6 @@
 
 use import ast
+use import interpreter
 
 #export_scope
 
@@ -10,4 +11,7 @@ Value :: enum #copy {
     Int         : int
     Float       : f64
     String      : string
+    NativeFunc  : NativeFunction
 }
+
+NativeFunction :: Fn(&Interpreter, int)

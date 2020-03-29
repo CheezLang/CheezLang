@@ -27,7 +27,7 @@ ConsoleLogger :: struct {}
 impl Logger for ConsoleLogger {
     log :: (ref Self, format: string, args: []&any = [], prefix: string = "") {
         msg := fmt.format(format, args)
-        io.formatln("{}{}", [msg, prefix])
+        io.formatln("[{}] {}", [prefix, msg])
     }
 }
 

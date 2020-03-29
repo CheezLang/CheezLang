@@ -37,7 +37,7 @@ impl Parser {
             if (ok, t) := @link(lexer).expect_token(typ), ok {
                 t
             } else {
-                @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.ttype])
+                @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.typ])
                 return false
             }
         }
@@ -47,7 +47,7 @@ impl Parser {
         if expect_struct_name {
             name_token := lexer.next_token()
 
-            match name_token.ttype {
+            match name_token.typ {
                 TokenType.Identifier -> {
                     if !streq(name_token.data.String, @typename(T)) {
                         error_handler.report_error_at(name_token.location, "Expected identifier '{}', got '{}'", [@typename(T), name_token.data.String])
@@ -57,7 +57,7 @@ impl Parser {
 
                 _ -> {
                     msg := "Expected identifier, got {}"
-                    error_handler.report_error_at(name_token.location, "Expected identifier, got {}", [name_token.ttype])
+                    error_handler.report_error_at(name_token.location, "Expected identifier, got {}", [name_token.typ])
                     return false
                 }
             }
@@ -70,7 +70,7 @@ impl Parser {
             lexer.skip_newlines_and_comments()
 
             token := lexer.peek_token()
-            match token.ttype {
+            match token.typ {
                 TokenType.ClosingBrace -> break
                 TokenType.EOF -> break
             }
@@ -98,13 +98,13 @@ impl Parser {
 
             if found_member {
                 token := lexer.peek_token()
-                match token.ttype {
+                match token.typ {
                     TokenType.Comma -> lexer.next_token()
                     TokenType.NewLine -> lexer.next_token()
                     TokenType.ClosingBrace -> break
                     TokenType.EOF -> break
                     _ -> {
-                        error_handler.report_error_at(token.location, "Expected ',' | '\n' | '}' | EOF. Got '{}'", [token.ttype])
+                        error_handler.report_error_at(token.location, "Expected ',' | '\n' | '}' | EOF. Got '{}'", [token.typ])
                         lexer.next_token()
                         return false
                     }
@@ -218,11 +218,11 @@ impl IParser[bool] for bool {
     parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
         lexer.skip_newlines_and_comments()
         token := lexer.next_token()
-        return match token.ttype {
+        return match token.typ {
             TokenType.KwTrue -> Some(true)
             TokenType.KwFalse -> Some(false)
             _ -> {
-                error_handler.report_error_at(token.location, "Unexpected token {}, expected true/false", [token.ttype])
+                error_handler.report_error_at(token.location, "Unexpected token {}, expected true/false", [token.typ])
                 None
             }
         }
@@ -261,8 +261,8 @@ impl(T: type) IParser[Array[T]] for Array[T] {
 
         // [
         open_bracket := lexer.next_token()
-        if int(open_bracket.ttype) != int(TokenType.OpenBracket) {
-            error_handler.report_error(open_bracket.location, "Expected opening bracket")
+        if int(open_bracket.typ) != int(TokenType.OpenBracket) {
+            error_handler.report_error_at(open_bracket.location, "Expected opening bracket")
             return None
         }
         
@@ -270,7 +270,7 @@ impl(T: type) IParser[Array[T]] for Array[T] {
             lexer.skip_newlines_and_comments()
             token := lexer.peek_token()
 
-            match token.ttype {
+            match token.typ {
                 TokenType.EOF -> break
                 TokenType.ClosingBracket -> break
             }
@@ -282,7 +282,7 @@ impl(T: type) IParser[Array[T]] for Array[T] {
 
             // expect comma, new_line, ] or EOF
             token = lexer.peek_token()
-            match token.ttype {
+            match token.typ {
                 TokenType.Comma          -> lexer.next_token()
                 TokenType.NewLine        -> lexer.next_token()
                 TokenType.EOF            -> break
@@ -292,8 +292,8 @@ impl(T: type) IParser[Array[T]] for Array[T] {
 
         // ]
         closing_bracket := lexer.next_token()
-        if int(closing_bracket.ttype) != int(TokenType.ClosingBracket) {
-            error_handler.report_error(closing_bracket.location, "Expected closing bracket")
+        if int(closing_bracket.typ) != int(TokenType.ClosingBracket) {
+            error_handler.report_error_at(closing_bracket.location, "Expected closing bracket")
             return None
         }
 
@@ -307,26 +307,26 @@ parse_data_float :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -
     token := lexer.next_token()
 
     sign : T = 1
-    if token.ttype == TokenType.Minus {
+    if token.typ == TokenType.Minus {
         sign = -1
         token = lexer.next_token()
     }
 
-    return match token.ttype {
+    return match token.typ {
         TokenType.NumberLiteral -> {
             match token.data {
                 TokenData.Integer($v) -> Some(T(v) * sign)
                 TokenData.Double($v)  -> Some(T(v) * sign)
                 _ -> {
                     msg := fmt.format("Can't parse non-number literal into an {}", [@typename(T)])
-                    error_handler.report_error(token.location, msg.slice())
+                    error_handler.report_error_at(token.location, msg.slice())
                     None
                 }
             }
         }
         _ -> {
-            msg := fmt.format("Unexpected token {}, expected number literal", [token.ttype])
-            error_handler.report_error(token.location, msg.slice())
+            msg := fmt.format("Unexpected token {}, expected number literal", [token.typ])
+            error_handler.report_error_at(token.location, msg.slice())
             None
         }
     }
@@ -335,7 +335,7 @@ parse_data_float :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -
 parse_data_char :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[T] {
     lexer.skip_newlines_and_comments()
     token := lexer.next_token()
-    return match token.ttype {
+    return match token.typ {
         TokenType.CharLiteral -> {
             match token.data {
                 TokenData.String($v) -> {
@@ -344,14 +344,14 @@ parse_data_char :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) ->
                 }
                 _ -> {
                     msg := fmt.format("Can't parse non-char literal into {}", [@typename(T)])
-                    error_handler.report_error(token.location, msg.slice())
+                    error_handler.report_error_at(token.location, msg.slice())
                     None
                 }
             }
         }
         _ -> {
-            msg := fmt.format("Unexpected token {}, expected integer char", [token.ttype])
-            error_handler.report_error(token.location, msg.slice())
+            msg := fmt.format("Unexpected token {}, expected integer char", [token.typ])
+            error_handler.report_error_at(token.location, msg.slice())
             None
         }
     }
@@ -362,25 +362,25 @@ parse_data_int :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> 
     token := lexer.next_token()
 
     sign : T = 1
-    if token.ttype == TokenType.Minus {
+    if token.typ == TokenType.Minus {
         sign = -1
         token = lexer.next_token()
     }
 
-    return match token.ttype {
+    return match token.typ {
         TokenType.NumberLiteral -> {
             match token.data {
                 TokenData.Integer($v) -> Some(T(v) * sign)
                 _ -> {
                     msg := fmt.format("Can't parse non-integer literal into an {}", [@typename(T)])
-                    error_handler.report_error(token.location, msg.slice())
+                    error_handler.report_error_at(token.location, msg.slice())
                     None
                 }
             }
         }
         _ -> {
-            msg := fmt.format("Unexpected token {}, expected integer literal", [token.ttype])
-            error_handler.report_error(token.location, msg.slice())
+            msg := fmt.format("Unexpected token {}, expected integer literal", [token.typ])
+            error_handler.report_error_at(token.location, msg.slice())
             None
         }
     }
@@ -389,7 +389,7 @@ parse_data_int :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> 
 parse_data_string :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[T] {
     lexer.skip_newlines_and_comments()
     token := lexer.next_token()
-    return match token.ttype {
+    return match token.typ {
         TokenType.StringLiteral -> {
             match token.data {
                 TokenData.String($v) -> {
@@ -401,14 +401,14 @@ parse_data_string :: ($T: type, lexer: ref Lexer, error_handler: &ErrorHandler) 
                 }
                 _ -> {
                     msg := fmt.format("Can't parse non-string literal into {}", [@typename(T)])
-                    error_handler.report_error(token.location, msg.slice())
+                    error_handler.report_error_at(token.location, msg.slice())
                     None
                 }
             }
         }
         _ -> {
-            msg := fmt.format("Unexpected token {}, expected string literal", [token.ttype])
-            error_handler.report_error(token.location, msg.slice())
+            msg := fmt.format("Unexpected token {}, expected string literal", [token.typ])
+            error_handler.report_error_at(token.location, msg.slice())
             None
         }
     }
@@ -418,7 +418,7 @@ eat_token :: (typ: TokenType) #macro {
     if (ok, t) := @link(lexer).expect_token(typ), ok {
         t
     } else {
-        @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.ttype])
+        @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.typ])
         return None
     }
 }

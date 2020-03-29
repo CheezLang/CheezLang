@@ -6,11 +6,13 @@ mem :: import std.mem.allocator
 io  :: import std.io
 fmt :: import std.fmt
 
-use import compiler.ast
-use import compiler.error_handler
-use import compiler.type
-use import compiler.interpreter
-use import compiler.string_database
+use import ast
+use import ast_dumper
+use import error_handler
+use import type
+use import interpreter
+use import string_database
+use import value
 
 #export_scope
 
@@ -84,9 +86,34 @@ impl CodeGenerator for ByteCodeGenerator {
         match node {
             AstBlock($block)        -> generate_block(block)
             AstCall($call)          -> generate_call(call)
-            AstNumberLiteral($num)  -> generate_number_literal(num)
+            AstArgument($arg)       -> generate_argument(arg)
             AstIdentifier($id)      -> generate_identifier(id)
+            AstNumberLiteral($num)  -> generate_number_literal(num)
+            AstBool($bol)           -> generate_bool(bol)
+            AstString($str)         -> generate_string(str)
+
+            _ -> {
+                dump := dump_ast(node, recurse = false)
+                error_handler.report_error(
+                    "generate_expression: not implemented: {}",
+                    [dump])
+            }
         }
+    }
+
+    generate_bool :: (ref Self, bol: ref AstBool) {
+        builder.set_current_line(bol.location.line)
+        builder.build_const(if bol.bool_value then 1 else 0)
+    }
+
+    generate_string :: (ref Self, str: ref AstString) {
+        // @todo
+        builder.set_current_line(str.location.line)
+        builder.build_const(-str.string_value.bytes.length)
+    }
+
+    generate_argument :: (ref Self, arg: ref AstArgument) {
+        generate_expression(arg.value_expr)
     }
 
     generate_block :: (ref Self, block: ref AstBlock) {
@@ -99,28 +126,51 @@ impl CodeGenerator for ByteCodeGenerator {
     generate_call :: (ref Self, call: ref AstCall) {
         builder.set_current_line(call.location.line)
         builder.build_noop()
-        match call.function {
-            AstIdentifier($id) -> {
 
-                if id.name == "print" {
-                    for arg : call.arguments {
-                        generate_expression(<<arg)
-                        builder.set_current_line(call.location.line)
-                        builder.build_print()
-                    }
-                } else {
-                    for arg : call.arguments {
-                        generate_expression(<<arg)
-                    }
-                    builder.set_current_line(call.location.line)
-                    builder.build_comp_call(call.ast_function)
+        match call.function.value {
+            .Function($func) -> {
+                for arg : call.arguments {
+                    generate_expression(<<arg)
                 }
+                builder.set_current_line(call.location.line)
+                builder.build_comp_call(call.ast_function)
+            }
+
+            .NativeFunc($func) -> {
+                for arg : call.arguments {
+                    generate_expression(<<arg)
+                }
+                builder.set_current_line(call.location.line)
+                builder.build_native_call(func, call.arguments.count())
             }
 
             _ -> {
-                error_handler.report_error_at(call.function.location, "Can't call non-identifier")
+                error_handler.report_error_at(call.function.location, "Can't call {}", [call.function.value])
             }
         }
+        // match call.function {
+        //     AstIdentifier($id) -> {
+
+
+        //         if id.name == "print" {
+        //             for arg : call.arguments {
+        //                 generate_expression(<<arg)
+        //                 builder.set_current_line(call.location.line)
+        //                 builder.build_print()
+        //             }
+        //         } else {
+        //             for arg : call.arguments {
+        //                 generate_expression(<<arg)
+        //             }
+        //             builder.set_current_line(call.location.line)
+        //             builder.build_comp_call(call.ast_function)
+        //         }
+        //     }
+
+        //     _ -> {
+        //         error_handler.report_error_at(call.function.location, "Can't call non-identifier")
+        //     }
+        // }
     }
 
     generate_number_literal :: (ref Self, num: ref AstNumberLiteral) {
@@ -317,6 +367,15 @@ impl InstructionBuilder {
         function.instructions.add(cast arity)
     }
 
+    build_native_call :: (ref Self, func: NativeFunction, arity: int) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.NativeCall)
+        func, data := FatFunctions.destructure(func, u64, u64)
+        function.instructions.add(func)
+        function.instructions.add(data)
+        function.instructions.add(cast arity)
+    }
+
     build_comp_call :: (ref Self, ast_func: &AstFunction) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.CompCall)
@@ -333,11 +392,6 @@ impl InstructionBuilder {
     build_return_void :: (ref Self) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.ReturnVoid)
-    }
-
-    build_print :: (ref Self) {
-        add_debug_info_line()
-        function.instructions.add(cast Instruction.Print)
     }
 
     build_halt :: (ref Self) {

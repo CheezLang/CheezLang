@@ -137,6 +137,10 @@ impl CompilationJob for CompileGlobalNodeJob {
                 id.value = decl.value_expr.value
             }
 
+            .NativeFunc($func) -> {
+                id.value = .NativeFunc(func)
+            }
+
             $sym -> {
                 compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [sym])
             }
@@ -164,7 +168,15 @@ impl CompilationJob for CompileGlobalNodeJob {
                     arg = cast &compile_node(<<arg)
                 }
             }
-            
+
+            .NativeFunc($func) -> {
+                // call.typ = cast typ
+                // call.value = value
+                for arg : call.arguments {
+                    arg = cast &compile_node(<<arg)
+                }
+            }
+
             $val -> {
                 compiler.error_handler.report_error_at(call.location, "[compile_call] not implemented: {}", [val])
             }

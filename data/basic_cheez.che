@@ -1,18 +1,22 @@
-print :: () {}
-
 Main :: () {
     f1()
+
+    print(5)
 }
 
 f2 :: () {
     print(2)
-    // f1()
+    print(true, false, 5, 6, 7, "hi", "wassup?")
 }
 
 f1 :: () {
-    // true
     print(true)
+    print(false)
     print("lol")
+    print("0")
+    print("-1")
+    print("-22")
+    print("weird?!")
     f2()
 }
 

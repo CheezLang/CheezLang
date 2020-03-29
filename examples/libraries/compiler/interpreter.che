@@ -84,6 +84,22 @@ StackFrame :: struct {
 }
 
 impl StackFrame {
+    push_int :: (ref Self, val: int) {
+        stack[sp] = val
+        sp += 1
+    }
+
+    pop_int :: (ref Self) -> int {
+        @assert(sp > 0)
+        sp -= 1
+        return stack[sp]
+    }
+
+    get_arg :: (ref Self, index: int) -> int {
+        @assert(index >= 0 and index < bp)
+        return stack[index]
+    }
+
     dump_stack :: (ref Self) -> String {
         str := String.with_capacity(128)
 
@@ -100,10 +116,12 @@ impl StackFrame {
         // locals
         str += " | "
 
-        for i : max(bp, sp - 5) .. sp {
-            str.appendf("{}", stack[i])
-            if i < sp - 1 {
-                str += ", "
+        if sp >= bp {
+            for i : max(bp, sp - 5) .. sp {
+                str.appendf("{}", stack[i])
+                if i < sp - 1 {
+                    str += ", "
+                }
             }
         }
 
@@ -118,9 +136,7 @@ Interpreter :: struct {
     fp          : int
     frames      : [1024 * 8]StackFrame
     stack       : [1024 * 1024]int
-    functions   : Map[String, &CBCFunction]
     strings     : StringDatabase
-    printer     : Fn(string, []&any, string)
 }
 
 impl Interpreter {
@@ -131,9 +147,7 @@ impl Interpreter {
             fp          = -1
             frames      = default
             stack       = default
-            functions   = Map[String, &CBCFunction].new()
             strings     = StringDatabase.new()
-            printer     = cast print
         )
         return interp
     }
@@ -142,37 +156,23 @@ impl Interpreter {
         g_logger.log(format, args)
     }
 
-    function_registered :: (ref Self, name: string) -> bool {
-        return functions.contains(name)
+    top_frame :: (ref Self) -> &StackFrame {
+        @assert(fp >= 0)
+        return &frames[fp]
     }
 
     get_stackframes :: (ref Self) -> []StackFrame {
         return frames[..=fp]
     }
 
-    register_function :: (ref Self, name: string, code: &CBCFunction) {
-        functions[name] = code
-    }
-
     comp_call :: (ref Self, function: ref AstFunction) {
         push_frame(function.bytecode, function.params.count())
     }
 
-    // call :: (ref Self, name: string, arg_count: int = 0) {
-    //     match functions.get(name) {
-    //         Some($func) -> {
-    //             push_frame(func, arg_count)
-    //         }
-    //         None -> {
-    //             g_logger.log("[ERROR] 'Call {}' failed. Unknown function '{}'", [name, name])
-    //         }
-    //     }
-    // }
-
     push_frame :: (ref Self, func: &CBCFunction, arg_count: int = 0) {
         if fp + 1 >= frames.length {
             frame := ref frames[fp]
-            printer("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
+            g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
                 frame.func.debug_info.path.slice()
                 frame.func.debug_info.get_line_for_ip(frame.ip_prev)
                 5 // @todo: this is the column, read from debug info
@@ -199,6 +199,39 @@ impl Interpreter {
             code = func.instructions.slice()
             stack = stack[sp-arg_count .. ]
             func = func
+        )
+    }
+
+    push_native_frame :: (ref Self, arg_count: int) {
+        if fp + 1 >= frames.length {
+            frame := ref frames[fp]
+            g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
+                frame.func.debug_info.path.slice()
+                frame.func.debug_info.get_line_for_ip(frame.ip_prev)
+                5 // @todo: this is the column, read from debug info
+                fp
+                frame.sp
+                frame.ip_prev
+                Instruction.pretty_print(frame.code[frame.ip_prev..])
+                frame.dump_stack()
+            ], "stdout")
+            return
+        }
+
+        _fp, _sp := fp, sp
+        defer { if const DEBUG_INTERPRETER then g_logger.log("push_native_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp]) }
+
+        if fp >= 0 {
+            sp += frames[fp].sp - frames[fp].bp
+        }
+        fp += 1
+        frames[fp] = StackFrame(
+            ip = 0
+            sp = arg_count
+            bp = arg_count
+            code = null
+            stack = stack[sp-arg_count .. ]
+            func = null
         )
     }
 
@@ -238,7 +271,7 @@ impl Interpreter {
         opcode := frame.code[frame.ip]
 
         if const DEBUG_INTERPRETER {
-            printer("{}{}{}{}{}{}{}{}{}{}{}", [
+            g_logger.log("{}{}{}{}{}{}{}{}{}{}{}", [
                 frame.func.debug_info.get_line_for_ip(frame.ip)
                 fmt.align(6), fp
                 fmt.align(11), frame.sp
@@ -348,18 +381,32 @@ impl Interpreter {
                 }
             }
 
-            .Call -> {
-                str := string(arg(&u8), arg(int))
-                count := arg(int)
-                match functions.get(str) {
-                    Some($func) -> {
-                        push_frame(func, count)
-                    }
-                    None -> {
-                        g_logger.log("[ERROR] 'Call {}' failed. Unknown function '{}'", [str, str])
-                        return .Done
-                    }
-                }
+            .NativeCall -> {
+                func := FatFunctions.from_pointers(Fn(&Interpreter, int), arg(&void), arg(&void))
+                arity := arg(int)
+
+                push_native_frame(arity)
+                
+                if const DEBUG_INTERPRETER {{
+                    frame := top_frame()
+                    g_logger.log("{}{}{}{}{}{}{}{}", [
+                        fmt.align(0), fp
+                        fmt.align(5), frame.sp
+                        fmt.align(10), "EnterNativeFunction"
+                        fmt.align(35), frame.dump_stack()
+                    ], "stdout")
+                }}
+                func(&self, arity)
+                if const DEBUG_INTERPRETER {{
+                    frame := top_frame()
+                    g_logger.log("{}{}{}{}{}{}{}{}", [
+                        fmt.align(0), fp
+                        fmt.align(5), frame.sp
+                        fmt.align(10), "ExitNativeFunction"
+                        fmt.align(35), frame.dump_stack()
+                    ], "stdout")
+                }}
+                pop_frame()
             }
             .CompCall -> {
                 func := arg(&AstFunction)
@@ -395,13 +442,6 @@ impl Interpreter {
                 return .Done
             }
 
-            .Print -> {
-                val := pop()
-
-                // if printer != null {
-                    printer("{}", [val], "console")
-                // }
-            }
             .Halt -> {
                 return .Done
             }
@@ -453,11 +493,10 @@ Instruction :: enum #repr("C") #tag_type(u64) {
 
     Branch, BranchIf
 
-    Call, CompCall
+    Call, NativeCall, CompCall
     Return, ReturnVoid
 
     Panic
-    Print
     Halt
 }
 
@@ -497,11 +536,11 @@ impl Instruction {
             .BranchIf       -> fmt.format("BranchIf {}", [arg(int, 0)])
 
             .Call           -> fmt.format("Call {} {}", [string(arg(&u8, 0), arg(int, 1)), arg(int, 2)])
+            .NativeCall     -> fmt.format("NativeCall {2}", [arg(&void, 0), arg(&void, 1), arg(int, 2)])
             .CompCall       -> fmt.format("CompCall #{}", [arg(&AstFunction, 0).id])
             .Return         -> fmt.format("Return")
             .ReturnVoid     -> fmt.format("ReturnVoid")
 
-            .Print          -> fmt.format("Print")
             .Halt           -> fmt.format("Halt")
             .Panic          -> fmt.format("Panic `"{}`"", [string(arg(&u8, 0), arg(int, 1))])
             _               -> fmt.format("Unknown {}", [code[0]])

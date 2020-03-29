@@ -18,17 +18,18 @@ fmt :: import std.fmt
 
 use import logging.logger
 
-use import interpreter
-use import bytecode_generator
-use import string_database
-use import error_handler
 use import ast
+use import ast_dumper
+use import bytecode_generator
+use import config
+use import error_handler
+use import interpreter
+use import jobs
 use import lexer
 use import parser
-use import ast_dumper
 use import scope
-use import jobs
-use import config
+use import string_database
+use import value
 
 enable_profiler :: false
 
@@ -57,6 +58,13 @@ compile_files :: (files: []String) {
     console_error_handler := ConsoleErrorHandler.new(null)
 
     compiler := Compiler.new(1, &console_error_handler)
+    compiler.get().global_scope.define_native_function("print", cast(NativeFunction) (interp, arg_count) => {
+        frame := interp.top_frame()
+        for 0..arg_count {
+            val := frame.get_arg(it_index)
+            g_logger.log("native print: {}", [val])
+        }
+    })
 
     for(by_ref=true) file : files {
         compiler.get().add_job(LoadFileJob.new(file.clone()))
@@ -146,6 +154,7 @@ impl Compiler {
             scope_allocator = scope_allocator
         ))
         comp.get().error_handler.text_provider = &comp.get()
+        comp.get().global_scope = comp.get().new_scope()
         for 0..thread_count {
             comp.get().threads.add(Thread.new(cast comp.get().thread_func))
         }
@@ -182,8 +191,6 @@ impl Compiler {
 
 impl Compiler {
     start_compilation :: (ref Self) {
-        global_scope = self.new_scope()
-
         for threads {
             it.start()
         }

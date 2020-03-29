@@ -172,18 +172,29 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
     }
 
     match ref <<typ {
+        TypeInfoStruct($str) if str.get_trait_function(Printable, "print", fn(&void, ref String, string)) != null -> {
+            trait_func := str.get_trait_function(Printable, "print", fn(&void, ref String, string))
+            if trait_func != null {
+                trait_func(data, result, "")
+                return
+            }
+        }
+
         TypeInfoString(_) -> {
             ptr := cast(&string) data
             result.append_string(<<ptr)
         }
 
-        TypeInfoInt($tint) -> {
-            if tint.signed {
-                ptr := cast(&int) data
-                format_int(result, <<ptr)
-            } else {
-                ptr := cast(&uint) data
-                format_int(result, <<ptr)
+        TypeInfoInt($ti) -> {
+            match (ti.size, ti.signed) {
+                (1, true)  -> format_int(result, <<cast(&i8) data)
+                (2, true)  -> format_int(result, <<cast(&i16) data)
+                (4, true)  -> format_int(result, <<cast(&i32) data)
+                (8, true)  -> format_int(result, <<cast(&i64) data)
+                (1, false) -> format_int(result, <<cast(&u8) data)
+                (2, false) -> format_int(result, <<cast(&u16) data)
+                (4, false) -> format_int(result, <<cast(&u32) data)
+                (8, false) -> format_int(result, <<cast(&u64) data)
             }
         }
 

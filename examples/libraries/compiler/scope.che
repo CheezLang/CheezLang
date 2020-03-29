@@ -53,6 +53,16 @@ impl Scope {
         return Ok()
     }
 
+    define_native_function :: (ref Self, name: string, func: NativeFunction) -> Result[(), ()] {
+        if symbols.contains(name) {
+            return Err()
+        }
+
+        symbols[name] = Symbol.NativeFunc(func)
+
+        return Ok()
+    }
+
     get_symbol :: (ref Self, name: string) -> Symbol {
         if parent == null {
             wait_until(symbols.contains(name))
@@ -70,6 +80,7 @@ Symbol :: enum #copy {
     ConstDecl   : &AstConstDecl
     Val         : (typ: &Type, value: Value)
     Func        : &AstFunction
+    NativeFunc  : NativeFunction
 }
 
 #file_scope

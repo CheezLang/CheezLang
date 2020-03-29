@@ -66,7 +66,7 @@ CompileOptions :: struct {
 
     opt    : bool   = false
     number : int    = 0
-    out    : String
+    // out    : String = String.empty()
 }
 
 // impl(T: type) Printable for Array[T] if T : Printable, #notyet {

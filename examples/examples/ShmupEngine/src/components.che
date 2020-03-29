@@ -395,7 +395,7 @@ impl serpa.IParser[Rc[Component]] for Rc[Component] {
             if (ok, t) := @link(lexer).expect_token(typ), ok {
                 t
             } else {
-                @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.ttype])
+                @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.typ])
                 return None
             }
         }

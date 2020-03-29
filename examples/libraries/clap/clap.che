@@ -217,7 +217,7 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
         return true
     }
 
-    return match type_info.kind {
+    return match ref <<type_info {
         // String
         _ if type_info == @type_info(String) -> {
             if !require_arg(args) { return false }
@@ -237,16 +237,16 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
             true
         }
 
-        TypeInfoKind.Enum($info)   -> parse_arguments_enum(&info, args, result)
-        TypeInfoKind.Struct($info) -> parse_arguments_struct(&info, args, result)
-        TypeInfoKind.Int($_)    -> {
+        TypeInfoEnum($info)   -> parse_arguments_enum(&info, args, result)
+        TypeInfoStruct($info) -> parse_arguments_struct(&info, args, result)
+        TypeInfoInt(_)    -> {
             if !require_arg(args) { return false }
             <<cast(&int) result = fmt.parse_int(args[0].slice())
             args = args[1..]
             true
         }
 
-        TypeInfoKind.Bool -> {
+        TypeInfoBool(_) -> {
             <<cast(&bool) result = true
             true
         }
@@ -404,17 +404,17 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
 }
 
 get_help_message_helper :: (type_info: &TypeInfo, result: ref String, indent: int) {
-    match type_info.kind {
-        $_ if type_info == @type_info(String) -> {
+    match ref <<type_info {
+        _ if &type_info == @type_info(String) -> {
             indent_string(result, indent)
             result += "String"
         }
-        $_ if type_info == @type_info(Array[String]) -> {
+        _ if &type_info == @type_info(Array[String]) -> {
             result += "Array[String]"
         }
 
-        TypeInfoKind.Struct($ti) -> get_help_message_struct(&ti, result, indent)
-        TypeInfoKind.Enum($ti) -> get_help_message_enum(&ti, result, indent)
+        TypeInfoStruct($ti) -> get_help_message_struct(&ti, result, indent)
+        TypeInfoEnum($ti) -> get_help_message_enum(&ti, result, indent)
     }
 }
 
@@ -535,7 +535,7 @@ get_help_message_enum :: (type_info: &TypeInfoEnum, result: ref String, indent: 
 }
 
 get_help_message_member :: (result: ref String, type_info: &TypeInfo, name: string, format: string, indent: int, indent2: int) {
-    match type_info.kind {
+    match ref <<type_info {
         $_ if type_info == @type_info(String) -> {
             indent_string(result, indent)
             result.appendf(format, name)
@@ -548,7 +548,7 @@ get_help_message_member :: (result: ref String, type_info: &TypeInfo, name: stri
             indent_string(result, indent2)
             result += "Array[String]"
         }
-        TypeInfoKind.Struct($ti) -> {
+        TypeInfoStruct($ti) -> {
             if ti.members.length > 0 {
                 indent_string(result, indent)
                 result.appendf(format, name)
@@ -556,7 +556,7 @@ get_help_message_member :: (result: ref String, type_info: &TypeInfo, name: stri
                 get_help_message_helper(type_info, result, indent + indent_size)
             }
         }
-        TypeInfoKind.Enum($ti) -> {
+        TypeInfoEnum($ti) -> {
             if ti.members.length > 0 {
                 indent_string(result, indent)
                 result.appendf(format, name)
@@ -568,7 +568,7 @@ get_help_message_member :: (result: ref String, type_info: &TypeInfo, name: stri
             indent_string(result, indent)
             result.appendf(format, name)
             indent_string(result, indent2)
-            type_info.print(result, "")
+            // type_info.print(result, "")
         }
     }
 }

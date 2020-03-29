@@ -463,10 +463,10 @@ impl Layer for EntityLayer {
                 io.println("Failed to read layer from file")
                 return
             })
-        console_error_handler.text_provider = &lexer
+        console_error_handler.text_provider = &lexer.get()
 
         parser := serpa.Parser(expect_struct_name=false)
-        result := parser.parse(Array[Rc[Entity]], lexer, &console_error_handler)
+        result := parser.parse(Array[Rc[Entity]], lexer.get(), &console_error_handler)
 
         match result {
             Some($entities) -> {
@@ -504,7 +504,7 @@ impl Layer for EntityLayer {
             file.appendf("        components  = [`n", ())
 
             for cd : e.components {
-                file.appendf("            {} ``{`n", cd.get().get_type_info().kind.Struct.name)
+                file.appendf("            {} ``{`n", @cast(&TypeInfoStruct, cd.get().get_type_info()).name)
                 cd.get().serialize(file)
                 file.append_string("            }`n")
             }

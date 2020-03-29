@@ -139,7 +139,8 @@ impl EntityInspector {
                         ImGui.BeginChildStr("component list", list_size, true)
                         for bi : component_infos {
                             ImGui.PushIDInt(i32(it_index))
-                            name := String.from_string(bi.type_info.kind.Struct.name)
+                            type_info := cast(&TypeInfoStruct) bi.type_info
+                            name := String.from_string(type_info.name)
 
                             if ImGui.Selectable(name.as_cstring(), i32(it_index) == current_selected_component, 0, list_entry_size) {
                                 current_selected_component = i32(it_index)
@@ -158,11 +159,11 @@ impl EntityInspector {
 
                         if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
                             bi := ref component_infos.access(current_selected_component)
-                            name := String.from_string(bi.type_info.kind.Struct.name)
+                            name := String.from_string(@cast(&TypeInfoStruct, bi.type_info).name)
                             ImGui.Text(name.as_cstring())
                             ImGui.Separator()
 
-                            for(by_ref=true) m : bi.type_info.kind.Struct.members {
+                            for(by_ref=true) m : @cast(&TypeInfoStruct, bi.type_info).members {
                                 name := String.with_capacity(m.name.bytes.length + 1)
                                 name.append_string(m.name)
                                 imgui_input_property(name, util.pointer_add(@ptr_of_trait(bi.value), m.offset), m.typ, &m)
@@ -202,8 +203,8 @@ impl EntityInspector {
         ti := component.get().get_type_info()
 
         // name of component
-        name := String.with_capacity(ti.kind.Struct.name.bytes.length + 1)
-        name.append_string(ti.kind.Struct.name)
+        name := String.with_capacity(@cast(&TypeInfoStruct, ti).name.bytes.length + 1)
+        name.append_string(@cast(&TypeInfoStruct, ti).name)
 
         open := true
         ImGui.SetNextItemOpen(true, ImGui.ImGuiCond_.Once)
@@ -214,7 +215,7 @@ impl EntityInspector {
             }
 
             // io.println("==")
-            for(by_ref=true) m : ti.kind.Struct.members {
+            for(by_ref=true) m : @cast(&TypeInfoStruct, ti).members {
                 name := String.with_capacity(m.name.bytes.length + 1)
                 name.append_string(m.name)
                 ptr := util.pointer_add(@ptr_of_trait(component.get()), m.offset)
@@ -226,8 +227,8 @@ impl EntityInspector {
     }
 
     imgui_input_property :: (ref Self, name: ref String, ptr: &void, typ: &TypeInfo, m: &TypeInfoStructMember) {
-        match typ.kind {
-            TypeInfoKind.Float -> {
+        match ref <<typ {
+            TypeInfoFloat(_) -> {
                 match typ.size {
                     4 -> {
                         ptr := cast(&f32) ptr
@@ -262,7 +263,7 @@ impl EntityInspector {
                     8 -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.Double, cast ptr)
                 }
             }
-            TypeInfoKind.Int($ti) -> {
+            TypeInfoInt($ti) -> {
                 match (typ.size, ti.signed) {
                     (1, true) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.S8, ptr)
                     (2, true) -> ImGui.InputScalar(name.as_cstring(), ImGui.ImGuiDataType_.S16, ptr)
@@ -275,7 +276,7 @@ impl EntityInspector {
                 }
             }
 
-            TypeInfoKind.Bool -> {
+            TypeInfoBool(_) -> {
                 ptr := cast(&bool) ptr
                 ImGui.Checkbox(name.as_cstring(), ptr)
             }

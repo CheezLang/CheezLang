@@ -401,6 +401,31 @@ Traits :: struct {
         return <<cast(&&T)&t
     }
 }
+__FatFunction :: struct {
+    func : &void
+    data : &void
+}
+
+FatFunctions :: struct {
+}
+impl FatFunctions {
+    from_pointers :: ($T: type, func: &void, data: &void) -> T {
+        t := __FatFunction(func, data)
+        return <<cast(&T)&t
+    }
+    destructure :: (func: $T, $FuncType: type = &void, $DataType: type = &void) -> (FuncType, DataType) {
+        fat := cast(&__FatFunction) &func
+        return cast fat.func, cast fat.data
+    }
+}
+
+// VTable :: struct {
+
+// }
+
+// impl VTable {
+
+// }
 
 // type info stuff
 __ti_type_info := @type_info(TypeInfo)
@@ -414,17 +439,29 @@ TypeInfoFloat :: struct TypeInfo {}
 TypeInfoBool :: struct TypeInfo {}
 TypeInfoChar :: struct TypeInfo {}
 TypeInfoString :: struct TypeInfo {}
+TypeInfoAny :: struct TypeInfo {}
 
-// @todo
-TypeInfoTuple :: struct TypeInfo {}
-TypeInfoFunction :: struct TypeInfo {}
+TypeInfoFunction :: struct TypeInfo {
+    return_type : &TypeInfo
+    param_types : []&TypeInfo
+}
+
+TypeInfoTuple :: struct TypeInfo {
+    members : []TypeInfoTupleMember
+}
+
+TypeInfoInt :: struct TypeInfo {
+    signed : bool
+}
 
 TypeInfoPointer :: struct TypeInfo {
     target : &TypeInfo
+    is_fat : bool
 }
 
 TypeInfoReference :: struct TypeInfo {
     target : &TypeInfo
+    is_fat : bool
 }
 
 TypeInfoSlice :: struct TypeInfo {
@@ -434,10 +471,6 @@ TypeInfoSlice :: struct TypeInfo {
 TypeInfoArray :: struct TypeInfo {
     length  : int
     target  : &TypeInfo
-}
-
-TypeInfoInt :: struct TypeInfo {
-    signed : bool
 }
 
 TypeInfoTrait :: struct TypeInfo {
@@ -462,8 +495,8 @@ TypeInfoEnum :: struct TypeInfo {
 // 
 
 TypeInfoTraitFunction :: struct #copy {
-    name  : string
-    index : int
+    name    : string
+    offset  : int
 }
 
 TypeInfoStructMember :: struct #copy {
@@ -474,6 +507,12 @@ TypeInfoStructMember :: struct #copy {
     value       : &any
     initializer : fn(&void)
     attributes  : []TypeInfoAttribute
+}
+
+TypeInfoTupleMember :: struct #copy {
+    index       : int
+    offset      : int
+    typ         : &TypeInfo
 }
 
 TypeInfoEnumMember :: struct #copy {
@@ -530,7 +569,7 @@ impl TypeInfoStruct {
     get_trait_impl :: (ref Self, $T: type) -> &TypeInfoTraitImpl {
         ti := @type_info(T)
         for(by_ref=true) traits {
-            if &it.trait_type == ti {
+            if it.trait_type == ti {
                 return &it
             }
         }
@@ -543,21 +582,21 @@ impl TypeInfoStruct {
             return null
         }
 
-        ti_trait := cast(&TypeInfoTrait) &ti_impl.trait_type
+        ti_trait := cast(&TypeInfoTrait) ti_impl.trait_type
         vtable := ti_impl.vtable
         func_info := ti_trait.get_function(func_name)
         @assert(func_info != null)
-        function := cast(F) @cast(&fn(), vtable)[func_info.index]
+        function := cast(F) <<cast(&fn()) int(vtable) + func_info.offset
         return function
     }
 }
 
 impl TypeInfoTraitImpl {
     get_function :: (ref Self, func_name: string, $F: type) -> F {
-        ti_trait := cast(&TypeInfoTrait) &self.trait_type
+        ti_trait := cast(&TypeInfoTrait) self.trait_type
         func_info := ti_trait.get_function(func_name)
         @assert(func_info != null)
-        function := cast(F) @cast(&fn(), vtable)[func_info.index]
+        function := cast(F) cast(&void) int(vtable) + func_info.offset
         return function
     }
 }

@@ -8,7 +8,7 @@
 // import examples.pathtracer
 // import examples.pathtracer2.main
 // import examples.command_line_parser
-// import compiler.cli
+import compiler.cli
 // import compiler.debugger
 // import examples.ShmupEngine.src.main
 
@@ -30,36 +30,16 @@
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
-fmt :: import std.fmt
-io :: import std.io
-use import std.c
+// use import std.string
+// io :: import std.io
+// C :: import std.c
 
-Bar :: trait {
-    bar :: (ref Self);
-}
-
-Foo :: struct {
-    a : int     = default
-    b : bool    = default
-    c : string  = default
-    d : char    = default
-    e : []Foo   = default
-    f : [3]float = default
-}
-
-Baz :: enum {
-    uiae : &Bar
-    xvlc : ref Bar
-    p : Foo
-}
-
-Main :: () {
-    _ := @type_info(Bar)
-    _ := @type_info(Foo)
-    _ := @type_info(Baz)
-
-    io.formatln("test {}, {}, {}, {}, {}", [123, true, "lol", 'x', Foo()])
-}
+// Main :: () {
+//     str := "uiae".to_owned()
+//     C.printf("%lld`n", 1)
+//     io.formatln("{}", [str])
+//     C.printf("%lld`n", 2)
+// }
 
 // use import std.mem.allocator
 // use import std.mem.std_heap_allocator
