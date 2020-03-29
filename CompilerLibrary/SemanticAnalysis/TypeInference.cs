@@ -2205,7 +2205,7 @@ namespace Cheez
             }
 
             // handle type expression
-            if (expr.SubExpression.Type == CheezType.Type)
+            if (expr.SubExpression.Type == CheezType.Type || expr.SubExpression.Type is PolyValueType)
             {
                 var subType = expr.SubExpression.Value as CheezType;
                 expr.Type = CheezType.Type;
@@ -2343,6 +2343,14 @@ namespace Cheez
                             break;
                         }
 
+                    case FunctionType f:
+                        {
+                            MarkTypeAsRequiredAtRuntime(f.ReturnType);
+                            foreach (var param in f.Parameters)
+                                MarkTypeAsRequiredAtRuntime(param.type);
+                            break;
+                        }
+
                     case StringType _:
                     case CharType _:
                     case IntType _:
@@ -2350,7 +2358,6 @@ namespace Cheez
                     case FloatType _:
                     case AnyType _:
                     case VoidType _:
-                    case FunctionType _:
                         break;
 
 
@@ -4482,6 +4489,7 @@ namespace Cheez
             }
 
             TupleType tupleType = expected as TupleType;
+            CheezType expectedTypeOverride = expected == CheezType.Type ? expected : null;
             if (tupleType?.Members?.Length != expr.Values.Count) tupleType = null;
 
             int typeMembers = 0;
@@ -4493,7 +4501,7 @@ namespace Cheez
                 v.SetFlag(ExprFlags.ValueRequired, true);
                 v.AttachTo(expr);
 
-                var e = tupleType?.Members[i].type;
+                var e = expectedTypeOverride ?? tupleType?.Members[i].type;
                 v = expr.Values[i] = InferTypeHelper(v, e, context);
                 ConvertLiteralTypeToDefaultType(v, e);
 

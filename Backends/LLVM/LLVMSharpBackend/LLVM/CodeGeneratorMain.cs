@@ -50,6 +50,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<CheezType, LLVMTypeRef> vtableTypes = new Dictionary<CheezType, LLVMTypeRef>();
         private Dictionary<CheezType, (LLVMValueRef type_info, LLVMValueRef vtable)> typeInfoTable = new Dictionary<CheezType, (LLVMValueRef type_info, LLVMValueRef vtable)>();
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
+        private Dictionary<object, ulong> vtableOffsets = new Dictionary<object, ulong>();
         private Dictionary<AstImplBlock, LLVMValueRef> vtableMap = new Dictionary<AstImplBlock, LLVMValueRef>();
 
         // c lib
@@ -78,8 +79,10 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private CheezType sTypeInfoArray;
         private CheezType sTypeInfoTuple;
         private CheezType sTypeInfoFunction;
+        private CheezType sTypeInfoAny;
         private CheezType sTypeInfoStruct;
         private CheezType sTypeInfoStructMember;
+        private CheezType sTypeInfoTupleMember;
         private CheezType sTypeInfoEnum;
         private CheezType sTypeInfoEnumMember;
         private CheezType sTypeInfoTrait;
@@ -101,9 +104,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMTypeRef rttiTypeInfoArray;
         private LLVMTypeRef rttiTypeInfoTuple;
         private LLVMTypeRef rttiTypeInfoFunction;
+        private LLVMTypeRef rttiTypeInfoAny;
         private LLVMTypeRef rttiTypeInfoStruct;
         private LLVMTypeRef rttiTypeInfoStructMember;
         private LLVMTypeRef rttiTypeInfoStructMemberInitializer;
+        private LLVMTypeRef rttiTypeInfoTupleMember;
         private LLVMTypeRef rttiTypeInfoEnum;
         private LLVMTypeRef rttiTypeInfoEnumMember;
         private LLVMTypeRef rttiTypeInfoTrait;

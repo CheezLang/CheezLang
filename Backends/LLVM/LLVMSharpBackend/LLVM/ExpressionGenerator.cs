@@ -1130,10 +1130,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     case (true, false):
                         {
+                            var llvmType = CheezTypeToLLVMType(to);
+                            var funcType = llvmType.StructGetTypeAtIndex(0);
                             var func = GenerateExpression(cast.SubExpression, true);
                             func = builder.CreatePointerCast(func, LLVM.Int8Type().GetPointerTo(), "");
 
                             var helpFunc = CreateFatFuncHelper(ff);
+                            helpFunc = builder.CreatePointerCast(helpFunc, funcType, "");
 
                             var result = LLVM.GetUndef(CheezTypeToLLVMType(to));
                             result = builder.CreateInsertValue(result, helpFunc, 0, "");
@@ -1667,6 +1670,24 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateAddressOf(AstAddressOfExpr ao)
         {
+            int sourceSize = ao.SubExpression.Type.GetSize() / 8;
+            int targetSize = ao.Type.GetSize() / 8;
+
+            {
+                if (targetSize != 0
+                        && ao.SubExpression is AstDereferenceExpr dd
+                        && dd.SubExpression.Type.GetSize() / 8 > 1)
+                {
+                    var v = GenerateExpression(ao.SubExpression, false);
+                    var result = LLVM.GetUndef(CheezTypeToLLVMType(ao.Type));
+                    var data = builder.CreateExtractValue(v, 0, "");
+                    var vtableOrTypeInfo = builder.CreateExtractValue(v, 1, "");
+                    result = builder.CreateInsertValue(result, data, 0, "");
+                    result = builder.CreateInsertValue(result, vtableOrTypeInfo, 1, "");
+                    return result;
+                }
+            }
+
             if (ao.Type is ReferenceType r
                 && r.IsFatReference
                 && ao.SubExpression is AstDereferenceExpr d

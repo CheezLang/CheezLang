@@ -118,6 +118,7 @@ namespace Cheez
             // global variables
             ResolveGlobalVariables();
 
+            MarkTypeAsRequiredAtRuntime(CheezType.Void);
             while (true)
             {
                 bool changes = false;
