@@ -1,11 +1,11 @@
-﻿File Name,Lines
+File Name,Lines
 builtin_operators.che,114
 hash_table1.che,108
 match2.che,102
 traits.che,98
 test1.che,79
-if_else.che,76
 references.che,76
+if_else.che,76
 block_break.che,75
 allocator2.che,75
 string1.che,74
@@ -39,7 +39,7 @@ stack_allocator.che,23
 const_and_poly.che,17
 block_expr.che,17
 global_variables.che,14
-printf.che,10
 string2.che,10
+printf.che,10
 bitwise_operators.che,9
 Total,2214
