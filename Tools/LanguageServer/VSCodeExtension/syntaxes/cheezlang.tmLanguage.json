@@ -33,7 +33,7 @@
         },
         "type_modifiers": {
             "name": "storage.type.cheezlang",
-            "match": "\\b(ref|const)\\b"
+            "match": "\\b(mut|const)\\b"
         },
         "modifiers": {
             "name": "keyword.modifier.cheezlang",
@@ -101,7 +101,7 @@
         },
         "operators": {
             "name": "keyword.operator.cheezlang",
-            "match": "(\\+=?|-=?|\\*=?|\\/=?|%=?|\\band\\b|\\bor\\b|\\bis\\b|<<|>=|>|<=|<|==|!=|!|&)"
+            "match": "(\\+=?|-=?|\\*=?|\\/=?|%=?|\\band\\b|\\bor\\b|\\bis\\b|<<|>=|>|<=|<|==|!=|!|&|\\^)"
         },
         "control_keywords": {
             "name": "keyword.control.cheezlang",
