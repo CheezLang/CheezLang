@@ -667,6 +667,9 @@ impl TypeInfoTrait {
     }
 }
 
+strings_not_equal :: (a: string, b: string) -> bool #operator("!=") {
+    return !strings_equal(a, b)
+}
 
 strings_equal :: (a: string, b: string) -> bool #operator("==") {
     a_bytes := a.bytes

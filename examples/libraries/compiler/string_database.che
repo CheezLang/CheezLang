@@ -21,7 +21,7 @@ StringDatabase :: struct {
 impl StringDatabase {
     new :: () -> Self {
         sdb := Self(
-            pool    = ArenaAllocator.create(1024),
+            pool    = ArenaAllocator.new(1024),
             db      = Table[string, string].create(strings_equal)
         )
 

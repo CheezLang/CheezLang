@@ -39,8 +39,9 @@ impl ErrorHandler for ConsoleErrorHandler {
     report_error_at :: (&Self, location: &Location, message: string, args: []^any = []) {
         error_count += 1
 
-        io.printf("{}:{}:{}: ", (location.file, location.line, location.column))
-        io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+        io.set_console_color(@bin_or(io.ConsoleColor.White, io.ConsoleColor.Bright), io.ConsoleColor.Black)
+        io.format("{}:{}:{}: ", [location.file, location.line, location.column])
+        io.set_console_color(@bin_or(io.ConsoleColor.Red, io.ConsoleColor.Bright), io.ConsoleColor.Black)
         io.formatln(message, args)
         io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
 
@@ -50,7 +51,7 @@ impl ErrorHandler for ConsoleErrorHandler {
     report_error :: (&Self, message: string, args: []^any = []) {
         error_count += 1
 
-        io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
+        io.set_console_color(@bin_or(io.ConsoleColor.Red, io.ConsoleColor.Bright), io.ConsoleColor.Black)
         io.formatln(message, args)
         io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
     }
@@ -134,7 +135,7 @@ impl ErrorHandler for ConsoleErrorHandler {
                 print_line_number(line, max_line_digits)
                 io.set_console_color(code_color_normal, io.ConsoleColor.Black)
                 io.print(sub1)
-                io.set_console_color(code_color_error, io.ConsoleColor.Black)
+                io.set_console_color(@bin_or(code_color_error, io.ConsoleColor.Bright), io.ConsoleColor.Black)
                 io.print(sub2)
                 io.set_console_color(code_color_normal, io.ConsoleColor.Black)
                 io.print(sub3)

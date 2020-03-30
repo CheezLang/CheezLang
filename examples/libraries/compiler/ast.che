@@ -14,13 +14,13 @@ AstNode :: trait {
     id       : int
     location : Location
     scope    : ^Scope = null
-    typ      : ^Type  = null
+    typ      : ^TypeInfo = null
     value    : Value = Value.None
 }
 
 // statements
 AstConstDecl :: struct AstNode {
-    name        : &AstIdentifier
+    pattern     : &AstNode
     type_expr   : ^AstNode
     value_expr  : &AstNode
 }
@@ -118,19 +118,19 @@ AstNull :: struct AstNode {
 impl AstNode for AstNull {}
 
 AstBinary :: struct AstNode {
-    operator    : Operator
+    operator    : BinOp
     left        : &AstNode
     right       : &AstNode
 
-    Operator :: enum #copy { Add, Sub, Mul, Div, Mod, And, Or, Less, LessEq, Greater, GreaterEq, Equal, NotEqual }
+    BinOp :: enum #copy { Add, Sub, Mul, Div, Mod, And, Or, Less, LessEq, Greater, GreaterEq, Equal, NotEqual, Assign, Move, Pipe, Range, RangeIncl }
 }
 impl AstNode for AstBinary {}
 
 AstUnary :: struct AstNode {
-    operator    : Operator
+    operator    : UnOp
     sub         : &AstNode
 
-    Operator :: enum #copy { Neg, Not }
+    UnOp :: enum #copy { Neg, Not }
 }
 impl AstNode for AstUnary {}
 
@@ -153,6 +153,7 @@ AstPipe :: struct AstNode {
 impl AstNode for AstPipe {}
 
 AstIf :: struct AstNode {
+    condition   : &AstNode
     true_case   : &AstNode
     false_case  : ^AstNode
 }
@@ -193,6 +194,11 @@ AstReturn :: struct AstNode {
 }
 impl AstNode for AstReturn {}
 
+AstDefer :: struct AstNode {
+    sub : &AstNode
+}
+impl AstNode for AstDefer {}
+
 AstTuple :: struct AstNode {
     values : Array[^AstNode]
 }
@@ -204,8 +210,8 @@ AstArray :: struct AstNode {
 impl AstNode for AstArray {}
 
 AstDot :: struct AstNode {
-    sub     : ^AstNode
     name    : &AstIdentifier
+    sub     : ^AstNode
 }
 impl AstNode for AstDot {}
 
@@ -232,34 +238,42 @@ impl AstFunction {
     }
 }
 
-// impl Printable for BinaryExpr.Operator {
-//     print :: (&Self, str: &String, format: string) {
-//         match self {
-//             BinaryExpr.Operator.Add       -> str.append_string("+")
-//             BinaryExpr.Operator.Sub       -> str.append_string("-")
-//             BinaryExpr.Operator.Mul       -> str.append_string("*")
-//             BinaryExpr.Operator.Div       -> str.append_string("/")
-//             BinaryExpr.Operator.Mod       -> str.append_string("%")
-//             BinaryExpr.Operator.And       -> str.append_string("and")
-//             BinaryExpr.Operator.Or        -> str.append_string("or")
-//             BinaryExpr.Operator.Less      -> str.append_string("<")
-//             BinaryExpr.Operator.LessEq    -> str.append_string("<=")
-//             BinaryExpr.Operator.Greater   -> str.append_string(">")
-//             BinaryExpr.Operator.GreaterEq -> str.append_string(">=")
-//             BinaryExpr.Operator.Equal     -> str.append_string("==")
-//             BinaryExpr.Operator.NotEqual  -> str.append_string("!=")
-//         }
-//     }
-// }
+impl AstBinary.BinOp {
+    lexeme :: (Self) -> string {
+        return match self {
+            .Add        -> "+"
+            .Sub        -> "-"
+            .Mul        -> "*"
+            .Div        -> "/"
+            .Mod        -> "%"
+            .And        -> "and"
+            .Or         -> "or"
+            .Less       -> "<"
+            .LessEq     -> "<="
+            .Greater    -> ">"
+            .GreaterEq  -> ">="
+            .Equal      -> "=="
+            .NotEqual   -> "!="
+            .Assign     -> "="
+            .Move       -> "<-"
+            .Pipe       -> "|"
+            .Range      -> ".."
+            .RangeIncl  -> "..="
 
-// impl Printable for UnaryExpr.Operator {
-//     print :: (&Self, str: &String, format: string) {
-//         match self {
-//             UnaryExpr.Operator.Neg -> str.append_char('-')
-//             UnaryExpr.Operator.Not -> str.append_char('!')
-//         }
-//     }
-// }
+            _ -> @assert(false)
+        }
+    }
+}
+
+impl AstUnary.UnOp {
+    lexeme :: (Self) -> string {
+        return match self {
+            .Neg -> "-"
+            .Not -> "!"
+            _ -> @assert(false)
+        }
+    }
+}
 
 // impl Printable for AstNode {
 //     print :: (&Self, str: &String, format: string) {

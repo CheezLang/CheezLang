@@ -35,7 +35,7 @@ impl Fiber {
         // printfln("[{}] Fiber.init: ({:x}:{:x})", (Thread.current().id, int(f), int(f.ptr)))
     }
 
-    new :: (func: Fn(^$T), ud: ^T = null) -> ^Fiber {
+    new :: (func: Fn(^$T), user_data: ^T = null) -> ^Fiber {
         fiber_func :: (param: ^void) #stdcall #nostacktrace {
             f := cast(^Fiber)param
             f.func(f.user_data)
@@ -48,7 +48,7 @@ impl Fiber {
         f.ptr = CreateFiber(0, fiber_func, cast f)
         f.func = cast func
         f.parent = current()
-        f.user_data = ud
+        f.user_data = user_data
         // printfln("[{}] Fiber.new: ({:x}:{:x})", (Thread.current().id, int(f), int(f.ptr)))
         return f
     }

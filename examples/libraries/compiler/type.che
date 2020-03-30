@@ -1,45 +1,44 @@
-use import std.printable
-use import std.string
+// use import std.printable
+// use import std.string
 
 #export_scope
 
-Type :: trait {
-    id    : int
-    size  : int
-    align : int
-}
+// Type :: trait {
+//     id    : int
+//     size  : int
+//     align : int
+// }
 
-ErrorType :: struct Type {}
+TypeInfoError :: struct TypeInfo {}
+TypeInfoType :: struct TypeInfo {}
 
-VoidType :: struct Type {}
-TypeType :: struct Type {}
+// VoidType :: struct Type {}
+// IntType :: struct Type {
+//     sign : bool
+// }
 
-IntType :: struct Type {
-    sign : bool
-}
+// CharType  :: struct Type {}
+// FloatType :: struct Type {}
+// BoolType  :: struct Type {}
 
-CharType  :: struct Type {}
-FloatType :: struct Type {}
-BoolType  :: struct Type {}
+// StringType :: struct Type {}
 
-StringType :: struct Type {}
+// PointerType :: struct Type {
+//     target : &Type
+// }
 
-PointerType :: struct Type {
-    target : &Type
-}
+// ReferenceType :: struct Type {
+//     target : &Type
+// }
 
-ReferenceType :: struct Type {
-    target : &Type
-}
+// SliceType :: struct Type {
+//     target : &Type
+// }
 
-SliceType :: struct Type {
-    target : &Type
-}
-
-ArrayType :: struct Type {
-    target : &Type
-    length : int
-}
+// ArrayType :: struct Type {
+//     target : &Type
+//     length : int
+// }
 
 // impl Printable for Type {
 //     print :: (&Self, str: &String, format: string) {
@@ -59,28 +58,28 @@ ArrayType :: struct Type {
 //     }
 // }
 
-t_i8  := IntType(1, 1, 1, true)
-t_i16 := IntType(1, 2, 2, true)
-t_i32 := IntType(1, 4, 4, true)
-t_i64 := IntType(1, 8, 8, true)
-t_u8  := IntType(1, 1, 1, false)
-t_u16 := IntType(1, 2, 2, false)
-t_u32 := IntType(1, 4, 4, false)
-t_u64 := IntType(1, 8, 8, false)
+// t_i8  := IntType(1, 1, 1, true)
+// t_i16 := IntType(1, 2, 2, true)
+// t_i32 := IntType(1, 4, 4, true)
+// t_i64 := IntType(1, 8, 8, true)
+// t_u8  := IntType(1, 1, 1, false)
+// t_u16 := IntType(1, 2, 2, false)
+// t_u32 := IntType(1, 4, 4, false)
+// t_u64 := IntType(1, 8, 8, false)
 
-t_f32 := FloatType(1, 4, 4)
-t_f64 := FloatType(1, 8, 8)
+// t_f32 := FloatType(1, 4, 4)
+// t_f64 := FloatType(1, 8, 8)
 
-t_char8  := CharType(1, 1, 1)
-t_char16 := CharType(1, 2, 2)
-t_char32 := CharType(1, 4, 4)
+// t_char8  := CharType(1, 1, 1)
+// t_char16 := CharType(1, 2, 2)
+// t_char32 := CharType(1, 4, 4)
 
-t_void   := VoidType(1, 0, 0)
-t_string := StringType(1, 16, 8)
-t_type   := TypeType(1, 0, 0)
-t_bool   := BoolType(1, 1, 1)
+// t_void   := VoidType(1, 0, 0)
+// t_string := StringType(1, 16, 8)
+// t_type   := TypeType(1, 0, 0)
+// t_bool   := BoolType(1, 1, 1)
 
-t_a := PointerType(1, 8, 8, t_u8)
-t_b := ReferenceType(1, 8, 8, t_string)
-t_c := SliceType(1, 8, 8, t_f32)
-t_d := ArrayType(1, 8, 8, t_string, 69)
+// t_a := PointerType(1, 8, 8, t_u8)
+// t_b := ReferenceType(1, 8, 8, t_string)
+// t_c := SliceType(1, 8, 8, t_f32)
+// t_d := ArrayType(1, 8, 8, t_string, 69)

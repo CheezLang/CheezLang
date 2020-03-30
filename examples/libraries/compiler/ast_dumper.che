@@ -59,7 +59,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         AstConstDecl($decl) -> {
             fmt.format_into(result, "AstConstDecl #{} ({})`n", [decl.id, decl.location])
             if recurse {
-                dump_ast_helper(result, decl.name, recurse, indent + 1)
+                dump_ast_helper(result, decl.pattern, recurse, indent + 1)
                 if decl.type_expr != null then
                     dump_ast_helper(result, <<decl.type_expr, recurse, indent + 1)
                 dump_ast_helper(result, decl.value_expr, recurse, indent + 1)
@@ -172,6 +172,68 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
                 for arg : call.arguments {
                     dump_ast_helper(result, <<arg, recurse, indent + 1)
                 }
+            }
+        }
+
+        AstIf($iff) -> {
+            fmt.format_into(result, "AstIf #{} ({})`n", [iff.id, iff.location])
+            if recurse {
+                dump_ast_helper(result, iff.condition, recurse, indent + 1)
+                dump_ast_helper(result, iff.true_case, recurse, indent + 1)
+                if iff.false_case != null then
+                    dump_ast_helper(result, <<iff.false_case, recurse, indent + 1)
+            }
+        }
+
+        AstLoop($lop) -> {
+            fmt.format_into(result, "AstLoop #{} ({})`n", [lop.id, lop.location])
+            if recurse {
+                dump_ast_helper(result, lop.body, recurse, indent + 1)
+            }
+        }
+
+        AstFor($forr) -> {
+            fmt.format_into(result, "AstFor #{} ({})`n", [forr.id, forr.location])
+            if recurse {
+                if forr.it_name != null then
+                    dump_ast_helper(result, <<forr.it_name, recurse, indent + 1)
+                if forr.index_name != null then
+                    dump_ast_helper(result, <<forr.index_name, recurse, indent + 1)
+                dump_ast_helper(result, forr.collection, recurse, indent + 1)
+                dump_ast_helper(result, forr.body, recurse, indent + 1)
+            }
+        }
+
+        AstBreak($brake) -> {
+            fmt.format_into(result, "AstBreak #{} ({})`n", [brake.id, brake.location])
+            if recurse {
+                if brake.label != null then
+                    dump_ast_helper(result, <<brake.label, recurse, indent + 1)
+                if brake.value_expr != null then
+                    dump_ast_helper(result, <<brake.value_expr, recurse, indent + 1)
+            }
+        }
+
+        AstContinue($cont) -> {
+            fmt.format_into(result, "AstContinue #{} ({})`n", [cont.id, cont.location])
+            if recurse {
+                if cont.label != null then
+                    dump_ast_helper(result, <<cont.label, recurse, indent + 1)
+            }
+        }
+
+        AstReturn($ret) -> {
+            fmt.format_into(result, "AstReturn #{} ({})`n", [ret.id, ret.location])
+            if recurse {
+                if ret.value_expr != null then
+                    dump_ast_helper(result, <<ret.value_expr, recurse, indent + 1)
+            }
+        }
+
+        AstDefer($def) -> {
+            fmt.format_into(result, "AstDefer #{} ({})`n", [def.id, def.location])
+            if recurse {
+                dump_ast_helper(result, def.sub, recurse, indent + 1)
             }
         }
 

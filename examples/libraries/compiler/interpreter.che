@@ -13,6 +13,7 @@ use import logging.logger
 
 use import string_database
 use import bytecode_generator
+use import error_handler
 use import ast
 use import compiler
 use import config
@@ -133,11 +134,12 @@ impl StackFrame {
 }
 
 Interpreter :: struct {
-    sp          : int
-    fp          : int
-    frames      : [1024 * 8]StackFrame
-    stack       : [1024 * 1024]int
-    strings     : StringDatabase
+    sp              : int
+    fp              : int
+    frames          : [1024 * 8]StackFrame
+    stack           : [1024 * 1024]int
+    strings         : StringDatabase
+    error_handler   : ^ErrorHandler = null
 }
 
 impl Interpreter {
@@ -296,6 +298,10 @@ impl Interpreter {
         match Instruction(opcode) {
             .Noop -> {}
             
+            .Pop -> {
+                pop()
+            }
+
             .Const -> {
                 val := arg(int)
                 push(val)
@@ -413,7 +419,18 @@ impl Interpreter {
                 func := arg(^AstFunction)
                 _ := arg(int)
                 _ := arg(int)
-                wait_until(func.bytecode != null)
+                wait_until(func.bytecode != null, {
+                    error_handler.report_error("Failed to execute bytecode")
+                    error_handler.report_error("Failed to execute bytecode: {}{}{}{}{}{}{}{}{}{}{}{}", [
+                        fmt.align(30), frame.func.debug_info.get_line_for_ip(frame.ip)
+                        fmt.align(35), fp
+                        fmt.align(40), frame.sp
+                        fmt.align(46), frame.ip
+                        fmt.align(54), Instruction.pretty_print(frame.code[frame.ip..])
+                        fmt.align(74), frame.dump_stack()
+                    ])
+                    return .Done
+                })
                 push_frame(func.bytecode, func.params.count())
             }
 
@@ -485,6 +502,7 @@ impl Interpreter {
 Instruction :: enum #repr("C") #tag_type(u64) {
     Noop
 
+    Pop
     Const
     AddressOf
     Load, Store
@@ -514,6 +532,7 @@ impl Instruction {
         return match Instruction(code[0]) {
             .Noop           -> fmt.format("Noop")
 
+            .Pop            -> fmt.format("Pop")
             .Const          -> fmt.format("Const {}", [arg(int, 0)])
             .AddressOf      -> fmt.format("AddressOf {}", [arg(int, 0)])
             .Load           -> fmt.format("Load")

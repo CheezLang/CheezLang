@@ -9,14 +9,14 @@ C    :: import std.c
 
 #export_scope
 
-ArenaAllocator :: struct {
+BumpAllocator :: struct {
     parent      : ^Allocator
 
     bucket_size : uint
-    buckets     : Array[BumpBucket]
+    buckets     : Array[Bucket]
 }
 
-impl Drop for ArenaAllocator {
+impl Drop for BumpAllocator {
     drop :: (&Self) {
         for buckets {
             parent.free(it.memory.data)
@@ -24,28 +24,22 @@ impl Drop for ArenaAllocator {
     }
 }
 
-impl ArenaAllocator {
+impl BumpAllocator {
     new :: (size: uint, alloc: ^Allocator = ^DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
-        a := ArenaAllocator(
+        a := BumpAllocator(
             parent      = alloc,
             bucket_size = size,
-            buckets     = Array[BumpBucket].create()
+            buckets     = Array[Bucket].create(allocator = alloc)
         )
         return a
     }
 
-    clear :: (&Self) {
-        for i : 0..buckets.length {
-            buckets[i].filled = 0
-        }
-    }
-
     dump :: (&Self, dump_buckets: bool = false) {
-        io.printfln("ArenaAllocator ({} buckets)", buckets.length)
+        io.printfln("BumpAllocator ({} buckets)", buckets.length)
         for i : 0..buckets.length {
-            bucket : &BumpBucket = buckets[i]
+            bucket : &Bucket = buckets[i]
 
-            io.printfln("  BumpBucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
+            io.printfln("  Bucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
             if dump_buckets {
                 current : uint = 0
 
@@ -67,7 +61,7 @@ impl ArenaAllocator {
     }
 }
 
-impl Allocator for ArenaAllocator {
+impl Allocator for BumpAllocator {
     allocate :: (&Self, count: u64, elementSize: u64, alignment: u64) -> ^void {
         required_size := count * elementSize + 8
         if alignment < 8 {
@@ -75,13 +69,10 @@ impl Allocator for ArenaAllocator {
         }
 
         // find bucket with enough room for required size
-        free_bucket : ^BumpBucket = null
-        for i : 0..buckets.length {
-            bucket : &BumpBucket = buckets[i]
-            if bucket.can_store(required_size, alignment) {
-                free_bucket = ^bucket
-                break
-            }
+        free_bucket : ^Bucket = if buckets.count() > 0 and buckets.peek_last().can_store(required_size, alignment) {
+            ^buckets.peek_last()
+        } else {
+            null
         }
 
         // no bucket with enough space
@@ -93,7 +84,7 @@ impl Allocator for ArenaAllocator {
 
             new_mem : []u8 = cast(^u8) parent.allocate(new_bucket_size, @sizeof(u8), alignment)
             new_mem.length = cast new_bucket_size
-            buckets.add(BumpBucket(memory = new_mem, filled = 0))
+            buckets.add(Bucket(memory = new_mem, filled = 0))
 
             free_bucket = ^buckets[buckets.length - 1]
         }
@@ -135,12 +126,12 @@ align :: (add: uint, align: uint) -> uint {
 }
 
 
-BumpBucket :: struct {
+Bucket :: struct {
     memory  : []u8
     filled  : uint
 }
 
-impl BumpBucket {
+impl Bucket {
     can_store :: (&Self, size: uint, align: uint) -> bool {
         next_address := util.next_aligned(util.pointer_add(memory.data, cast(int)filled), align)
         next_offset := (cast(uint)next_address) - (cast(uint)memory.data)

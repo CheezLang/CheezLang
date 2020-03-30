@@ -23,7 +23,7 @@ impl Scope {
         // } 
     }
 
-    define_value :: (&Self, name: string, typ: ^Type, val: Value) -> Result[(), ()] {
+    define_value :: (&Self, name: string, typ: ^TypeInfo, val: Value) -> Result[(), ()] {
         if symbols.contains(name) {
             return Err()
         }
@@ -65,7 +65,9 @@ impl Scope {
 
     get_symbol :: (&Self, name: string) -> Symbol {
         if parent == null {
-            wait_until(symbols.contains(name))
+            wait_until(symbols.contains(name), {
+                return Symbol.NotFound
+            })
             return symbols.at(name)
         }
 
@@ -77,8 +79,9 @@ impl Scope {
 }
 
 Symbol :: enum #copy {
+    NotFound
     ConstDecl   : ^AstConstDecl
-    Val         : (typ: ^Type, value: Value)
+    Val         : (typ: ^TypeInfo, value: Value)
     Func        : ^AstFunction
     NativeFunc  : NativeFunction
 }

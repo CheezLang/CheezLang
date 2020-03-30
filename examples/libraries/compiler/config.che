@@ -2,5 +2,5 @@
 #export_scope
 
 DEBUG_JOBS          :: true
-DEBUG_WAIT          :: true
-DEBUG_INTERPRETER   :: true
+DEBUG_WAIT          :: false
+DEBUG_INTERPRETER   :: false

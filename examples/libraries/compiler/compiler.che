@@ -2,6 +2,8 @@ use import std.array
 use import std.fiber
 use import std.map
 use import std.mem.std_heap_allocator
+use import std.mem.arena_allocator
+use import std.mem.bump_allocator
 use import std.os.windows_constants
 use import std.os.windows_functions
 use import std.os.windows_types
@@ -36,7 +38,7 @@ enable_profiler :: false
 #export_scope
 
 
-wait_until :: (cond: Code) #macro {
+wait_until :: (cond: Code, on_error: Code) #macro {
     fiber_context := Fiber.user_data(FiberContext)
     fiber_context.job.progressed = true
 
@@ -46,6 +48,11 @@ wait_until :: (cond: Code) #macro {
         Fiber.yield()
         if const DEBUG_WAIT then g_logger.log("[{}] [{}] resuming on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
         fiber_context.job.progressed = false
+
+        if fiber_context.job.cancelled {
+            @insert(on_error)
+            loop Fiber.yield()
+        }
     }
     if const DEBUG_WAIT then g_logger.log("[{}] [{}] done on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
     fiber_context.job.progressed = true
@@ -53,15 +60,14 @@ wait_until :: (cond: Code) #macro {
 
 compile_files :: (files: []String) {
     g_logger.log("compile files: {}", [files])
-    // Fiber.init()
 
     console_error_handler := ConsoleErrorHandler.new(null)
 
     compiler := Compiler.new(1, ^console_error_handler)
     compiler.get().global_scope.define_native_function("print", cast(NativeFunction) (interp, arg_count) => {
         frame := interp.top_frame()
-        for 0..arg_count {
-            val := frame.get_arg(it_index)
+        for i : 0..arg_count {
+            val := frame.get_arg(i)
             g_logger.log("native print: {}", [val])
         }
     })
@@ -76,7 +82,7 @@ compile_files :: (files: []String) {
     compiler.get().wait_until_done()
     end := get_time_milliseconds()
     dur := end - start
-    g_logger.log("Compilation took {} ms", [dur])
+    g_logger.log("[Compiler] Compilation took {} ms", [dur])
 }
 
 FiberContext :: struct {
@@ -114,6 +120,7 @@ Compiler :: struct {
     scope_allocator : ^mem.Allocator
     ast_allocator   : ^mem.Allocator
     bc_allocator    : ^mem.Allocator
+    job_allocator   : ^mem.Allocator
 }
 
 impl Drop for Compiler {
@@ -126,6 +133,9 @@ impl Drop for Compiler {
 
 impl TextProvider for Compiler {
     get_text :: (&Self, filename: string) -> string {
+        // for s : self.sources {
+        //     g_logger.log("{}", [s.name])
+        // }
         return match self.sources.get(filename) {
             Some($content) -> content.slice()
             None -> @assert(false)
@@ -135,12 +145,15 @@ impl TextProvider for Compiler {
 
 impl Compiler {
     new :: (thread_count: int, error_handler: ^ErrorHandler) -> Rc[Compiler] {
-        scope_allocator     := mem.alloc(StdHeapAllocator)
-        ast_allocator       := mem.alloc(StdHeapAllocator)
-        bc_allocator        := mem.alloc(StdHeapAllocator)
-        <<scope_allocator   = StdHeapAllocator()
-        <<ast_allocator     = StdHeapAllocator()
-        <<bc_allocator      = StdHeapAllocator()
+        AllocatorType :: BumpAllocator
+        scope_allocator     := mem.alloc(AllocatorType)
+        ast_allocator       := mem.alloc(AllocatorType)
+        bc_allocator        := mem.alloc(AllocatorType)
+        job_allocator       := mem.alloc(AllocatorType)
+        <<scope_allocator   = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
+        <<ast_allocator     = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
+        <<bc_allocator      = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
+        <<job_allocator     = AllocatorType.new(1024 * 1024 * 1)    // 1 Mb
         comp := Rc[Compiler].new(Compiler(
             mutex           = Mutex.new()
             threads         = Array[Thread].create()
@@ -153,6 +166,7 @@ impl Compiler {
             ast_allocator   = ast_allocator
             bc_allocator    = bc_allocator
             scope_allocator = scope_allocator
+            job_allocator   = job_allocator
         ))
         comp.get().error_handler.text_provider = ^comp.get()
         comp.get().global_scope = comp.get().new_scope()
@@ -171,7 +185,7 @@ impl Compiler {
     }
 
     add_job :: (&Self, job: $T) {
-        ptr := mem.alloc(T)
+        ptr := mem.alloc(T, job_allocator)
         <<ptr = job
         ptr.compiler = ^self
         jobs.push(ptr)
@@ -206,10 +220,10 @@ impl Compiler {
         WaitForMultipleObjects(cast threads.get_length(), handles, 1, INFINITE)
 
         if paused_fibers.count() > 0 {
-            error_handler.report_error("Failed to compile. {} fibers are still waiting", [paused_fibers.count()])
+            error_handler.report_error("[Compile] {} fibers were still waiting", [paused_fibers.count()])
         }
 
-        g_logger.log("[compiler] finished compilation with {} fibers", [fibers.get_length()])
+        g_logger.log("[Compiler] finished compilation with {} fibers", [fibers.get_length()])
     }
 
     find_free_fiber :: (&Self) -> ^FiberContext {
@@ -304,6 +318,14 @@ impl Compiler {
             }
 
             current_fiber.fiber.resume()
+        }
+
+        // cancel all fibers
+        self.lock()
+        defer self.release()
+        for fib : paused_fibers {
+            fib.job.cancelled = true
+            fib.fiber.resume()
         }
     }
 }

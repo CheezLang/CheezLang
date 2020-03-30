@@ -71,7 +71,6 @@ impl CodeGenerator for ByteCodeGenerator {
         cbc_func := self.allocate_function(func.name, file_path, params)
         builder.begin_function(cbc_func)
 
-        builder.set_current_line(func.body.location.line)
         generate_expression(<<func.body)
         builder.set_current_line(func.body.location.end_line)
         builder.build_return_void()
@@ -91,6 +90,14 @@ impl CodeGenerator for ByteCodeGenerator {
             AstNumberLiteral($num)  -> generate_number_literal(num)
             AstBool($bol)           -> generate_bool(bol)
             AstString($str)         -> generate_string(str)
+            AstIf($iff)             -> generate_if(iff)
+            AstLoop($lop)           -> generate_loop(lop)
+            AstFor($forr)           -> generate_for(forr)
+            AstBreak($brake)        -> generate_break(brake)
+            AstContinue($cont)      -> generate_continue(cont)
+            AstReturn($ret)         -> generate_return(ret)
+            AstDefer($def)          -> generate_defer(def)
+            AstBinary($bin)         -> generate_binary(bin)
 
             _ -> {
                 dump := dump_ast(node, recurse = false)
@@ -99,6 +106,82 @@ impl CodeGenerator for ByteCodeGenerator {
                     [dump])
             }
         }
+    }
+
+    generate_binary :: (&Self, bin: &AstBinary) {
+        builder.set_current_line(bin.location.line)
+        builder.build_const(0)
+        // @todo
+    }
+
+    generate_if :: (&Self, iff: &AstIf) {
+        builder.set_current_line(iff.location.line)
+        
+        // condition
+        generate_expression(iff.condition)
+        br_true := builder.build_branch_if(0)
+
+        // else case
+        if iff.false_case != null {
+            generate_expression(<<iff.false_case)
+        } else {
+            builder.set_current_line(iff.location.end_line)
+            builder.build_const(0)
+        }
+
+        // builder.set_current_line(iff.location.end_line)
+        br_end := builder.build_branch(0)
+
+        // if case
+        l_true := builder.next()
+        generate_expression(iff.true_case)
+
+        // end
+        l_end := builder.next()
+
+        // fix branches
+        builder.fix_branch(br_true, l_true)
+        builder.fix_branch(br_end, l_end)
+    }
+
+    generate_loop :: (&Self, lop: &AstLoop) {
+        builder.set_current_line(lop.location.line)
+        loop_start := builder.next()
+        generate_expression(lop.body)
+        builder.build_pop()
+        builder.build_branch(loop_start)
+    }
+
+    generate_for :: (&Self, forr: &AstFor) {
+        builder.set_current_line(forr.location.line)
+        builder.build_const(0)
+    }
+
+    generate_break :: (&Self, brake: &AstBreak) {
+        builder.set_current_line(brake.location.line)
+        builder.build_const(0)
+    }
+
+    generate_continue :: (&Self, cont: &AstContinue) {
+        builder.set_current_line(cont.location.line)
+        builder.build_const(0)
+    }
+
+    generate_return :: (&Self, ret: &AstReturn) {
+        builder.set_current_line(ret.location.line)
+
+        if ret.value_expr != null {
+            generate_expression(<<ret.value_expr)
+            builder.set_current_line(ret.location.line)
+            builder.build_return()
+        } else {
+            builder.build_return_void()
+        }
+    }
+
+    generate_defer :: (&Self, def: &AstDefer) {
+        builder.set_current_line(def.location.line)
+        builder.build_const(0)
     }
 
     generate_bool :: (&Self, bol: &AstBool) {
@@ -120,6 +203,10 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.set_current_line(block.location.line)
         for child : block.children {
             generate_expression(<<child)
+
+            if it_index < block.children.count() - 1 {
+                builder.build_pop()
+            }
         }
     }
 
@@ -134,6 +221,7 @@ impl CodeGenerator for ByteCodeGenerator {
                 }
                 builder.set_current_line(call.location.line)
                 builder.build_comp_call(call.ast_function)
+                builder.build_const(0) // @temp
             }
 
             .NativeFunc($func) -> {
@@ -142,7 +230,7 @@ impl CodeGenerator for ByteCodeGenerator {
                 }
                 builder.set_current_line(call.location.line)
                 builder.build_native_call(func, call.arguments.count())
-                builder.build_noop()
+                builder.build_const(0) // @temp
             }
 
             _ -> {
@@ -223,6 +311,10 @@ impl InstructionBuilder {
         return function.instructions.slice()
     }
 
+    fix_branch :: (&Self, branch: int, address: int) {
+        function.instructions[branch] = u64(address)
+    }
+
     set_current_line :: (&Self, line: int) {
         lines := &function.debug_info.lines
         if lines.count() > 0 and lines.peek_last().count == 0 {
@@ -249,6 +341,11 @@ impl InstructionBuilder {
     build_noop :: (&Self) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Noop)
+    }
+
+    build_pop :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Pop)
     }
 
     build_const :: (&Self, value: int) {

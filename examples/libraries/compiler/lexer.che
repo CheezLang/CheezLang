@@ -215,6 +215,10 @@ impl Lexer {
             x := peek_char(1)
             x[0], int(x[1])
         }
+        next2, next_len2 := {
+            x := peek_char(2)
+            x[0], int(x[1])
+        }
 
         match curr, next {
             '<', '-' -> simple_token(token, TokenType.ReverseArrow,   curr_len + next_len, 2)
@@ -230,6 +234,7 @@ impl Lexer {
             '*', '=' -> simple_token(token, TokenType.MulEq,          curr_len + next_len, 2)
             '/', '=' -> simple_token(token, TokenType.DivEq,          curr_len + next_len, 2)
             '%', '=' -> simple_token(token, TokenType.ModEq,          curr_len + next_len, 2)
+            '.', '.' if next2 == '=' -> simple_token(token, TokenType.PeriodPeriodEq, curr_len + next_len + next_len2, 3)
             '.', '.' -> simple_token(token, TokenType.PeriodPeriod,   curr_len + next_len, 2)
             ':', _   -> simple_token(token, TokenType.Colon,          curr_len, 1)
             ';', _   -> simple_token(token, TokenType.Semicolon,      curr_len, 1)
@@ -292,7 +297,7 @@ impl Lexer {
 
             _, _ -> {
                 token.typ = TokenType.Unknown
-                location.byte_index += 1
+                location.byte_index += curr_len
             }
         }
 
@@ -756,10 +761,10 @@ impl Location {
 }
 
 Token :: struct #copy {
-    typ   : TokenType
-    location: Location
-    suffix  : Option[string]
-    data    : TokenData
+    typ         : TokenType
+    location    : Location
+    suffix      : Option[string]
+    data        : TokenData
 }
 
 TokenData :: enum #copy {
@@ -812,6 +817,7 @@ impl Printable for TokenType {
             Comma             -> "Comma"
             Period            -> "Period"
             PeriodPeriod      -> "PeriodPeriod"
+            PeriodPeriodEq    -> "PeriodPeriodEq"
             Equal             -> "Equal"
             Ampersand         -> "Ampersand"
             Hat               -> "Hat"
@@ -896,6 +902,7 @@ TokenType :: enum #copy {
     Comma
     Period
     PeriodPeriod
+    PeriodPeriodEq
     Equal
     Ampersand
     Hat

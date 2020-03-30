@@ -14,6 +14,7 @@ use import ast
 use import lexer
 use import parser
 use import ast_dumper
+use import ast_pretty_printer
 use import compiler
 use import bytecode_generator
 use import scope
@@ -24,6 +25,7 @@ use import value
 #export_scope
 
 CompilationJob :: trait {
+    cancelled   : bool = false
     progressed  : bool = false
     done        : bool = false
     compiler    : ^Compiler = null
@@ -92,6 +94,14 @@ impl CompilationJob for CompileGlobalNodeJob {
             AstString($str)         -> compile_string(str)
             AstBool($bol)           -> compile_bool(bol)
             AstNumberLiteral($num)  -> compile_number(num)
+            AstIf($iff)             -> compile_if(iff)
+            AstLoop($lop)           -> compile_loop(lop)
+            AstFor($forr)           -> compile_for(forr)
+            AstBreak($brake)        -> compile_break(brake)
+            AstContinue($cont)      -> compile_continue(cont)
+            AstReturn($ret)         -> compile_return(ret)
+            AstDefer($def)          -> compile_defer(def)
+            AstBinary($bin)         -> compile_binary(bin)
 
             _ -> {
                 dump := dump_ast(node, recurse = false)
@@ -102,6 +112,68 @@ impl CompilationJob for CompileGlobalNodeJob {
 
         return node
     }
+
+    compile_binary :: (&Self, bin: &AstBinary) -> &AstNode {
+        // @todo
+        return bin
+    }
+
+    compile_if :: (&Self, iff: &AstIf) -> &AstNode {
+        iff.condition.scope = iff.scope
+        compile_node(iff.condition)
+
+        iff.true_case.scope = iff.scope
+        compile_node(iff.true_case)
+
+        if iff.false_case != null {
+            iff.false_case.scope = iff.scope
+            compile_node(<<iff.false_case)
+        }
+        return iff
+    }
+
+    compile_loop :: (&Self, lop: &AstLoop) -> &AstNode {
+        lop.body.scope = lop.scope
+        compile_node(lop.body)
+        return lop
+    }
+
+    compile_for :: (&Self, forr: &AstFor) -> &AstNode {
+        forr.collection.scope = forr.scope
+        compile_node(forr.collection)
+        forr.body.scope = forr.scope
+        compile_node(forr.body)
+        return forr
+    }
+
+    compile_break :: (&Self, brake: &AstBreak) -> &AstNode {
+        if brake.value_expr != null {
+            brake.value_expr.scope = brake.scope
+            compile_node(<<brake.value_expr)
+        }
+        return brake
+    }
+
+    compile_continue :: (&Self, cont: &AstContinue) -> &AstNode {
+
+        return cont
+    }
+
+    compile_return :: (&Self, ret: &AstReturn) -> &AstNode {
+        if ret.value_expr != null {
+            ret.value_expr.scope = ret.scope
+            compile_node(<<ret.value_expr)
+        }
+
+        return ret
+    }
+
+    compile_defer :: (&Self, def: &AstDefer) -> &AstNode {
+        def.sub.scope = def.scope
+        compile_node(def.sub)
+        return def
+    }
+
 
     compile_string :: (&Self, str: &AstString) -> &AstNode {
         str.value = .String(str.string_value)
@@ -133,12 +205,19 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
 
             .ConstDecl($decl) -> {
-                wait_until(decl.value_expr.value != .None)
+                wait_until(decl.value_expr.value != .None, {
+                    compiler.error_handler.report_error_at(id.location, "Failed to get value of constant declaration")
+                })
                 id.value = decl.value_expr.value
             }
 
             .NativeFunc($func) -> {
                 id.value = .NativeFunc(func)
+            }
+
+            .NotFound -> {
+                compiler.error_handler.report_error_at(id.location, "Unknown symbol '{}'", [id.name])
+                Fiber.yield()
             }
 
             $sym -> {
@@ -227,14 +306,27 @@ impl CompilationJob for CompileGlobalNodeJob {
     compile_const_decl :: (&Self, decl: &AstConstDecl) -> &AstNode {
         decl.value_expr.scope = decl.scope
 
-        match decl.value_expr {
-            AstFunction($func) -> {
-                func.name = decl.name.name
+        name := match &decl.pattern {
+            AstIdentifier($id) -> id.name
+            _ -> {
+                compiler.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
+                return decl
             }
         }
 
-        match decl.scope.define_const_decl(decl.name.name, decl) {
-            Err() -> compiler.error_handler.report_error_at(decl.name.location, "A symbol with this name already exists in this scope")
+        match decl.value_expr {
+            AstFunction($func) -> {
+                func.name = name
+            }
+        }
+
+        // define symbol but only if not _
+        if name != "_" {
+            match decl.scope.define_const_decl(name, decl) {
+                Err() -> {
+                    compiler.error_handler.report_error_at(decl.pattern.location, "A symbol with this name already exists in this scope")
+                }
+            }
         }
 
         decl.value_expr <- compile_node(decl.value_expr)
@@ -269,20 +361,23 @@ impl CompilationJob for LoadFileJob {
 
             match content {
                 Ok($content) -> {
-                    lexer := Lexer.from_string(content.slice(), compiler.string_database)
+                    compiler.sources.set(full_path, content)
+                    lexer := Lexer.from_string(compiler.sources.at(full_path).slice(), compiler.string_database)
                     lexer.get().location.file = full_path
                     parser := Parser.new(lexer.get(), compiler.error_handler, compiler.ast_allocator)
 
                     loop {
-                        decl := parser.parse_constant_declaration()
+                        decl := parser.parse_node()
                         if decl == null then break
-                        dump := dump_ast(<<decl)
-                        // io.println(dump)
+
+                        if const DEBUG_JOBS {
+                            dump := pretty_print_ast(<<decl)
+                            // dump := dump_ast(<<decl)
+                            io.println(dump)
+                        }
 
                         compiler.add_job(CompileGlobalNodeJob.new(decl))
                     }
-
-                    compiler.sources.set(full_path, content)
                 }
 
                 Err(_) -> {

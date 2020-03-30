@@ -42,7 +42,7 @@ printfln :: (format: string, args: $T) {
     print_string(s)
 }
 
-ConsoleColor :: enum #copy {
+ConsoleColor :: enum #copy #flags {
     Black  = 0
     Red    = 0x1
     Green  = 0x2
