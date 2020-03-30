@@ -142,6 +142,7 @@ impl CodeGenerator for ByteCodeGenerator {
                 }
                 builder.set_current_line(call.location.line)
                 builder.build_native_call(func, call.arguments.count())
+                builder.build_noop()
             }
 
             _ -> {

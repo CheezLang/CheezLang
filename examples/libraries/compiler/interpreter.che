@@ -16,6 +16,7 @@ use import bytecode_generator
 use import ast
 use import compiler
 use import config
+use import value
 
 #export_scope
 
@@ -24,11 +25,11 @@ CodeRunner :: trait {
     run :: (&Self, interp: &Interpreter);
 }
 
-NormalCodeRunner :: struct CodeRunner {
+DefaultCodeRunner :: struct CodeRunner {
 
 }
 
-impl CodeRunner for NormalCodeRunner {
+impl CodeRunner for DefaultCodeRunner {
     run :: (&Self, interp: &Interpreter) {
         interp.run()
     }
@@ -382,7 +383,7 @@ impl Interpreter {
             }
 
             .NativeCall -> {
-                func := FatFunctions.from_pointers(Fn(^Interpreter, int), arg(^void), arg(^void))
+                func := FatFunctions.from_pointers(NativeFunction, arg(^void), arg(^void))
                 arity := arg(int)
 
                 push_native_frame(arity)
@@ -421,6 +422,8 @@ impl Interpreter {
                 frame.stack[0] = frame.stack[frame.sp - 1]
                 pop_frame()
                 if fp >= 0 {
+                    // increment sp by one for return value
+                    // @todo: needs to work with return values bigger than 8 bytes (1 stack slot)
                     // @fixme frames[fp].sp += 1 // fails to compile
                     (^frames[fp]).sp += 1
                 } else {
