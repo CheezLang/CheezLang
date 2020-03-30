@@ -43,7 +43,7 @@ Light :: struct {
 }
 
 Test :: struct {
-    layer       : &EntityLayer = null
+    layer       : ^EntityLayer = null
     proj        := mat4()
 
     sub         := vec4(0, 0, 1, 1)
@@ -67,12 +67,12 @@ Test :: struct {
     area_light_color    := vec3(1, 1, 0)
     area_light_smooth   := 0.0f
 
-    exposure : &f32 = null
+    exposure : ^f32 = null
 }
 
 impl EntityLayerCallbacks for Test {
-    init :: (ref Self, layer: ref EntityLayer) -> bool {
-        self.layer = &layer
+    init :: (&Self, layer: &EntityLayer) -> bool {
+        self.layer = ^layer
         layer.engine.inspector.register_component_info(CameraController(null))
         layer.engine.inspector.register_component_info(TestComponent(null))
 
@@ -99,15 +99,15 @@ impl EntityLayerCallbacks for Test {
         return true
     }
 
-    update :: (ref Self, dt: float) {
+    update :: (&Self, dt: float) {
         time += dt
     }
 
-    render :: (ref Self, renderer: ref Renderer) {
-        layer.engine.edit_property(PropertyEdit.EditInt(&total, "Quad Count"))
-        layer.engine.edit_property(PropertyEdit.EditInt(&x_count, "X Count"))
-        layer.engine.edit_property(PropertyEdit.EditFloat(&size, "Quad Size", 0.1f))
-        layer.engine.edit_property(PropertyEdit.EditFloat(&thickness, "Line thickness", 0.01f))
+    render :: (&Self, renderer: &Renderer) {
+        layer.engine.edit_property(PropertyEdit.EditInt(^total, "Quad Count"))
+        layer.engine.edit_property(PropertyEdit.EditInt(^x_count, "X Count"))
+        layer.engine.edit_property(PropertyEdit.EditFloat(^size, "Quad Size", 0.1f))
+        layer.engine.edit_property(PropertyEdit.EditFloat(^thickness, "Line thickness", 0.01f))
         
         for 0..total {
             x := f32(it % x_count) * size
@@ -129,7 +129,7 @@ impl EntityLayerCallbacks for Test {
         // renderer.add_area_light(area_light_pos, area_light_size, area_light_angle, area_light_color, area_light_smooth)
     }
 
-    imgui_render :: (ref Self) {
+    imgui_render :: (&Self) {
         // defer ImGui.End()
         // if !ImGui.Begin("Lights") {
         //     return
@@ -137,23 +137,23 @@ impl EntityLayerCallbacks for Test {
         // ImGui.SliderFloat("Exposure", cast exposure, 0, 15)
 
         // for l : lights {
-        //     ImGui.PushIDPtr(&l)
-        //     ImGui.SliderFloat2("Position", cast &l.pos, -10, 10)
-        //     ImGui.ColorEdit3("Color", cast &l.col, ImGui.ImGuiColorEditFlags_.HDR)
-        //     ImGui.SliderFloat("Radius", cast &l.radius, 0, 20)
-        //     ImGui.SliderAngle("Angle", cast &l.angle, 0, 360)
-        //     ImGui.SliderAngle("Direction", cast &l.direction, 0, 360)
-        //     ImGui.SliderFloat("Smoothness", cast &l.smoothness, 0, 1)
+        //     ImGui.PushIDPtr(^l)
+        //     ImGui.SliderFloat2("Position", cast ^l.pos, -10, 10)
+        //     ImGui.ColorEdit3("Color", cast ^l.col, ImGui.ImGuiColorEditFlags_.HDR)
+        //     ImGui.SliderFloat("Radius", cast ^l.radius, 0, 20)
+        //     ImGui.SliderAngle("Angle", cast ^l.angle, 0, 360)
+        //     ImGui.SliderAngle("Direction", cast ^l.direction, 0, 360)
+        //     ImGui.SliderFloat("Smoothness", cast ^l.smoothness, 0, 1)
         //     ImGui.Separator()
         //     ImGui.PopID()
         // }
 
-        // ImGui.PushIDPtr(&area_light_pos)
-        // ImGui.SliderFloat2("Position", cast &area_light_pos, -10, 10)
-        // ImGui.SliderFloat2("Size", cast &area_light_size, 0.1, 5)
-        // ImGui.SliderAngle("Angle", cast &area_light_angle)
-        // ImGui.ColorEdit3("Color", cast &area_light_color, ImGui.ImGuiColorEditFlags_.HDR)
-        // ImGui.SliderFloat("Smooth", cast &area_light_smooth, 0.0, 2)
+        // ImGui.PushIDPtr(^area_light_pos)
+        // ImGui.SliderFloat2("Position", cast ^area_light_pos, -10, 10)
+        // ImGui.SliderFloat2("Size", cast ^area_light_size, 0.1, 5)
+        // ImGui.SliderAngle("Angle", cast ^area_light_angle)
+        // ImGui.ColorEdit3("Color", cast ^area_light_color, ImGui.ImGuiColorEditFlags_.HDR)
+        // ImGui.SliderFloat("Smooth", cast ^area_light_smooth, 0.0, 2)
         // ImGui.Separator()
         // ImGui.PopID()
     }
@@ -165,7 +165,7 @@ TestComponent :: struct ComponentBase {
 }
 
 impl Component for TestComponent {
-    init :: (ref Self) {
+    init :: (&Self) {
         // _ :: Option[Rc[PointLightComponent]]
         // _ :: Option[Rc[CameraController]]
         // self.light = entity.get_component(PointLightComponent).unwrap()
@@ -179,13 +179,13 @@ impl Component for TestComponent {
         // io.println("c")
     }
 
-    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
-        match ref cam {
+    update :: (&Self, entity: &Entity, layer: &EntityLayer, dt: float) {
+        match &cam {
             Some($cam) -> {
                 vel := cam.get().velocity
                 if vel.magsq() > 0.01 {
                     angle := f32(atan2(vel.y, vel.x))
-                    match ref light {
+                    match &light {
                         Some($light) -> {
                             light.get().direction = ((angle * 180.0f / 3.1415f) % 360.0f)// + 360.0f) % 360.0f
                         }
@@ -196,16 +196,16 @@ impl Component for TestComponent {
         
 
     }
-    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
+    render :: (&Self, entity: &Entity, engine: &ShmupEngine, renderer: &Renderer) {
     }
-    render_gizmos :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
-    get_type_info :: (ref Self) -> &TypeInfo {
+    render_gizmos :: (&Self, entity: &Entity, engine: &ShmupEngine, renderer: &Renderer) {}
+    get_type_info :: (&Self) -> ^TypeInfo {
         return @type_info(Self)
     }
-    base :: (ref Self) -> ref ComponentBase {
+    base :: (&Self) -> &ComponentBase {
         return self
     }
-    serialize :: (ref Self, stream: ref String) {
+    serialize :: (&Self, stream: &String) {
     }
 }
 
@@ -219,13 +219,13 @@ CameraController :: struct ComponentBase {
 }
 
 impl Component for CameraController {
-    init :: (ref Self) {
+    init :: (&Self) {
         cam = entity.get_component(Camera)
         velocity = vec3()
     }
 
-    update :: (ref Self, entity: ref Entity, layer: ref EntityLayer, dt: float) {
-        input := ref layer.get_input()
+    update :: (&Self, entity: &Entity, layer: &EntityLayer, dt: float) {
+        input := &layer.get_input()
 
         move := vec3()
 
@@ -264,16 +264,16 @@ impl Component for CameraController {
 
         entity.position += velocity * dt
     }
-    render :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {
+    render :: (&Self, entity: &Entity, engine: &ShmupEngine, renderer: &Renderer) {
     }
-    render_gizmos :: (ref Self, entity: ref Entity, engine: ref ShmupEngine, renderer: ref Renderer) {}
-    get_type_info :: (ref Self) -> &TypeInfo {
+    render_gizmos :: (&Self, entity: &Entity, engine: &ShmupEngine, renderer: &Renderer) {}
+    get_type_info :: (&Self) -> ^TypeInfo {
         return @type_info(Self)
     }
-    base :: (ref Self) -> ref ComponentBase {
+    base :: (&Self) -> &ComponentBase {
         return self
     }
-    serialize :: (ref Self, stream: ref String) {
+    serialize :: (&Self, stream: &String) {
         stream.appendf("                max_speed   = {}`n", (max_speed))
         stream.appendf("                acc_time    = {}`n", (acc_time))
     }
@@ -285,7 +285,7 @@ Main :: () {
     test  := Test()
 
     shmup_engine := ShmupEngine.new()
-    shmup_engine.push_entity_layer(String.from_string("Test Layer"), &test)
+    shmup_engine.push_entity_layer(String.from_string("Test Layer"), ^test)
     shmup_engine.push_lighting_layer(String.from_string("Lighting"))
     shmup_engine.push_debug_layer(String.from_string("Debug"))
     shmup_engine.start()

@@ -12,22 +12,22 @@ C :: import std.c
 
 #export_scope
 
-current_thread_data : &ThreadData = null #thread_local
+current_thread_data : ^ThreadData = null #thread_local
 
 // thread
 Thread :: struct {
-    data: &ThreadData
+    data: ^ThreadData
 }
 
 ThreadData :: struct {
     handle  : HANDLE
-    user    : &void
-    func    : Fn(&void)
+    user    : ^void
+    func    : Fn(^void)
     id      : int
 }
 
 impl Thread {
-    current :: () -> &ThreadData {
+    current :: () -> ^ThreadData {
         if current_thread_data == null {
             current_thread_data = alloc(ThreadData)
             <<current_thread_data = ThreadData(
@@ -40,9 +40,9 @@ impl Thread {
         return current_thread_data
     }
 
-    create :: (func: Fn(&$T), user_data: &$T) -> Thread {
-        thread_func :: (data: &void) -> u32 #stdcall {
-            thread_data := @cast(&ThreadData, data)
+    create :: (func: Fn(^$T), user_data: ^$T) -> Thread {
+        thread_func :: (data: ^void) -> u32 #stdcall {
+            thread_data := @cast(^ThreadData, data)
             current_thread_data = thread_data
             thread_data.func(thread_data.user)
             return 0
@@ -54,8 +54,8 @@ impl Thread {
 
         td.handle   = handle
         td.id       = cast GetThreadId(handle)
-        td.func     = @cast(Fn(&void), func)
-        td.user     = @cast(&void, user_data)
+        td.func     = @cast(Fn(^void), func)
+        td.user     = @cast(^void, user_data)
 
         return Thread(td)
     }
@@ -65,8 +65,8 @@ impl Thread {
     }
 
     create_without_data :: (func: Fn()) -> Thread {
-        thread_func :: (data: &void) -> u32 #stdcall {
-            thread_data := @cast(&ThreadData, data)
+        thread_func :: (data: ^void) -> u32 #stdcall {
+            thread_data := @cast(^ThreadData, data)
             current_thread_data = thread_data
 
             func := @cast(Fn(), thread_data.func)
@@ -80,22 +80,22 @@ impl Thread {
 
         td.handle   = handle
         td.id       = cast GetThreadId(handle)
-        td.func     = @cast(Fn(&void), func)
+        td.func     = @cast(Fn(^void), func)
         td.user     = null
 
         return Thread(td)
     }
 
-    start :: (ref Self) -> bool {
+    start :: (&Self) -> bool {
         res := ResumeThread(data.handle)
         return res != -1
     }
 
-    join :: (ref Self) {
+    join :: (&Self) {
         WaitForSingleObject(data.handle, INFINITE)
     }
 
-    terminate :: (ref Self) {
+    terminate :: (&Self) {
         TerminateThread(data.handle, -1)
     }
 
@@ -105,7 +105,7 @@ impl Thread {
 }
 
 impl Drop for Thread {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         self.join()
     }
 }
@@ -125,7 +125,7 @@ impl Mutex {
         return Mutex(handle)
     }
 
-    try_lock :: (ref Self, timeout: int) -> bool {
+    try_lock :: (&Self, timeout: int) -> bool {
         return match WaitForSingleObject(handle, cast timeout) {
             0x00000000 -> true
             0x00000080 -> true
@@ -135,7 +135,7 @@ impl Mutex {
         }
     }
 
-    lock :: (ref Self) {
+    lock :: (&Self) {
         match WaitForSingleObject(handle, INFINITE) {
             0x00000000 -> {}
             0x00000080 -> {}
@@ -145,13 +145,13 @@ impl Mutex {
         }
     }
 
-    release :: (ref Self) {
+    release :: (&Self) {
         ReleaseMutex(handle)
     }
 }
 
 impl Drop for Mutex {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         CloseHandle(handle)
     }
 }
@@ -164,20 +164,20 @@ ConditionVariable :: struct {
 impl ConditionVariable {
     new :: () -> Rc[ConditionVariable] {
         cond_var := Rc[ConditionVariable].new(CONDITION_VARIABLE())
-        InitializeConditionVariable(&cond_var.get()._impl)
+        InitializeConditionVariable(^cond_var.get()._impl)
         return cond_var
     }
 
-    wait :: (ref Self, lock: ref ReentrantLock) {
-        SleepConditionVariableCS(&_impl, &lock._impl, INFINITE)
+    wait :: (&Self, lock: &ReentrantLock) {
+        SleepConditionVariableCS(^_impl, ^lock._impl, INFINITE)
     }
 
-    notify :: (ref Self) {
-        WakeConditionVariable(&_impl)
+    notify :: (&Self) {
+        WakeConditionVariable(^_impl)
     }
 
-    notify_all :: (ref Self) {
-        WakeAllConditionVariable(&_impl)
+    notify_all :: (&Self) {
+        WakeAllConditionVariable(^_impl)
     }
 }
 
@@ -190,31 +190,31 @@ ReentrantLock :: struct {
 impl ReentrantLock {
     new :: () -> Rc[ReentrantLock] {
         lock := Rc[ReentrantLock].new(CRITICAL_SECTION())
-        InitializeCriticalSection(&lock.get()._impl)
+        InitializeCriticalSection(^lock.get()._impl)
         return lock
     }
 
-    try_lock :: (ref Self, timeout: int) -> bool {
-        return TryEnterCriticalSection(&_impl) != 0
+    try_lock :: (&Self, timeout: int) -> bool {
+        return TryEnterCriticalSection(^_impl) != 0
     }
 
-    lock :: (ref Self) {
-        EnterCriticalSection(&_impl)
+    lock :: (&Self) {
+        EnterCriticalSection(^_impl)
     }
 
-    release :: (ref Self) {
-        LeaveCriticalSection(&_impl)
+    release :: (&Self) {
+        LeaveCriticalSection(^_impl)
     }
 }
 
 impl Drop for ReentrantLock {
-    drop :: (ref Self) {
-        DeleteCriticalSection(&self._impl)
+    drop :: (&Self) {
+        DeleteCriticalSection(^self._impl)
     }
 }
 
 // thread pool
-ThreadPoolFunc :: (function: fn(&void), data: &void)
+ThreadPoolFunc :: (function: fn(^void), data: ^void)
 
 ThreadPoolData :: struct {
     threads     : Array[Thread]
@@ -225,7 +225,7 @@ ThreadPoolData :: struct {
 }
 
 ThreadPool :: struct {
-    data: &ThreadPoolData
+    data: ^ThreadPoolData
 }
 
 impl ThreadPool {
@@ -240,14 +240,14 @@ impl ThreadPool {
         )
 
         // defined right here so it's not accessible outside
-        worker :: (tp: &ThreadPoolData) {
+        worker :: (tp: ^ThreadPoolData) {
             while true {
                 tp.mutex.lock()
                 if !(tp.running or (tp.empty_queue and tp.functions.get_length() > 0)) {
                     break
                 }
 
-                next : ThreadPoolFunc = (@cast(fn(&void), null), null)
+                next : ThreadPoolFunc = (@cast(fn(^void), null), null)
                 if tp.functions.get_length() > 0 {
                     next = tp.functions.pop()
                 }
@@ -262,7 +262,7 @@ impl ThreadPool {
         }
 
         for 0..num_threads {
-            t := Thread.create(cast(Fn(&ThreadPoolData)) worker, data)
+            t := Thread.create(cast(Fn(^ThreadPoolData)) worker, data)
             t.start()
             data.threads.add(t)
         }
@@ -270,13 +270,13 @@ impl ThreadPool {
         return ThreadPool(data)
     }
 
-    count :: (ref Self) -> int {
+    count :: (&Self) -> int {
         return data.functions.get_length()
     }
 
-    enqueue :: (ref Self, function: fn(&$T), data_ptr: &T) {
+    enqueue :: (&Self, function: fn(^$T), data_ptr: ^T) {
         data.mutex.lock()
-        data.functions.push((@cast(fn(&void), function), @cast(&void, data_ptr)))
+        data.functions.push((@cast(fn(^void), function), @cast(^void, data_ptr)))
         data.mutex.release()
     }
 
@@ -287,7 +287,7 @@ impl ThreadPool {
 }
 
 impl Drop for ThreadPool {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         data.running = false
         for data.threads {
             it.join()

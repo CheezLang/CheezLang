@@ -238,7 +238,7 @@ namespace Cheez.Types.Primitive
 
         public override string ToString()
         {
-            return $"&{TargetType}";
+            return $"^{TargetType}";
         }
 
         public override bool Equals(object obj)
@@ -304,7 +304,7 @@ namespace Cheez.Types.Primitive
 
         public override string ToString()
         {
-            return $"ref {TargetType}";
+            return $"&{TargetType}";
         }
 
         public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)

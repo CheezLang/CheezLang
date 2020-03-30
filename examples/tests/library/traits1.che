@@ -6,23 +6,23 @@ C :: import std.c
 import std.alloca
 
 Printable :: trait {
-    print :: (ref Self);
+    print :: (&Self);
 }
 
 impl Printable for int {
-    print :: (ref Self) {
+    print :: (&Self) {
         C.printf("%lld", self)
     }
 }
 
 impl Printable for bool {
-    print :: (ref Self) {
+    print :: (&Self) {
         C.printf("%s", if self {"true"c} else {"false"c})
     }
 }
 
 impl Printable for string {
-    print :: (ref Self) {
+    print :: (&Self) {
         C.printf("%.*s", self.bytes.length, self.bytes.data)
     }
 }

@@ -22,14 +22,14 @@ JsonValue :: enum {
 }
 
 impl JsonValue {
-    to_number :: (ref Self) -> double {
+    to_number :: (&Self) -> double {
         return match self {
             .JsonNumber($val) -> val
             _ -> @assert(false)
         }
     }
 
-    to_string :: (ref Self) -> String {
+    to_string :: (&Self) -> String {
         return match self {
             .JsonNull -> "null".to_owned()
             .JsonBool($val) -> fmt.format_any(val)
@@ -40,7 +40,7 @@ impl JsonValue {
         }
     }
 
-    as_string_or :: (ref Self, def: fn() -> String) -> String {
+    as_string_or :: (&Self, def: fn() -> String) -> String {
         return match self {
             .JsonString($str) -> str.clone()
             _ -> def()
@@ -54,14 +54,14 @@ impl JsonValue {
         }
     }
 
-    as_array_or :: (ref Self, def: fn() -> Array[JsonValue]) -> Array[JsonValue] {
+    as_array_or :: (&Self, def: fn() -> Array[JsonValue]) -> Array[JsonValue] {
         return match self {
             .JsonArray($arr) -> arr.clone()
             _ -> def()
         }
     }
 
-    as_array :: (ref Self) -> ref Array[JsonValue] {
+    as_array :: (&Self) -> &Array[JsonValue] {
         return match self {
             .JsonArray($arr) -> arr
             _ -> @assert(false)
@@ -75,7 +75,7 @@ impl JsonValue {
         }
     }
 
-    as_map :: (ref Self) -> ref Table[string, JsonValue] {
+    as_map :: (&Self) -> &Table[string, JsonValue] {
         return match self {
             .JsonObject($map) -> map
             _ -> @assert(false)
@@ -84,14 +84,14 @@ impl JsonValue {
 }
 
 impl Printable for JsonValue {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         s := fmt.format_any(self)
         str += s
     }
 }
 
 impl Clone for JsonValue {
-    clone :: (ref Self) -> Self {
+    clone :: (&Self) -> Self {
         return match self {
             .JsonNull -> .JsonNull
             .JsonBool($val) -> .JsonBool(val)
@@ -103,14 +103,14 @@ impl Clone for JsonValue {
     }
 }
 
-serialize_json_value :: (val: ref JsonValue, pretty: bool = false) -> String {
+serialize_json_value :: (val: &JsonValue, pretty: bool = false) -> String {
     result := String.empty()
     if pretty then serialize_json_value_helper_pretty(result, val)
     else serialize_json_value_helper(result, val)
     return result
 }
 
-serialize_json_value_helper_pretty :: (result: ref String, val: ref JsonValue) {
+serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
     match val {
         .JsonNull -> result.append_string("null")
         .JsonBool($val) -> result.appendf("{}", val)
@@ -136,7 +136,7 @@ serialize_json_value_helper_pretty :: (result: ref String, val: ref JsonValue) {
         .JsonObject($map) -> {
             result += "{`n"
             body := String.empty()
-            for kv : <<&map {
+            for kv : <<^map {
                 if it_index > 0 {
                     body += ",`n"
                 }
@@ -158,7 +158,7 @@ serialize_json_value_helper_pretty :: (result: ref String, val: ref JsonValue) {
     }
 }
 
-serialize_json_value_helper :: (result: ref String, val: ref JsonValue) {
+serialize_json_value_helper :: (result: &String, val: &JsonValue) {
     match val {
         .JsonNull -> result.append_string("null")
         .JsonBool($val) -> result.appendf("{}", val)
@@ -176,7 +176,7 @@ serialize_json_value_helper :: (result: ref String, val: ref JsonValue) {
         }
         .JsonObject($map) -> {
             result += "{"
-            for kv : <<&map {
+            for kv : <<^map {
                 if it_index > 0 {
                     result += ","
                 }

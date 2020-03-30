@@ -24,21 +24,21 @@ use import "../shmup_engine"
 #export_scope
 
 Hierarchy :: struct {
-    engine                  : &ShmupEngine = null
-    layer                   : &Layer = null
+    engine                  : ^ShmupEngine = null
+    layer                   : ^Layer = null
     current_entity_index    : i32 = 0
 }
 
 impl Hierarchy {
-    set_layer :: (ref Self, l: &Layer) {
+    set_layer :: (&Self, l: ^Layer) {
         layer = l
     }
 
-    get_layer :: (ref Self) -> Option[&Layer] {
+    get_layer :: (&Self) -> Option[^Layer] {
         return if layer == null then None else Some(layer)
     }
 
-    render :: (ref Self) {
+    render :: (&Self) {
         if layer == null {
             ImGui.Begin("Hierarchy")
             ImGui.End()
@@ -61,7 +61,7 @@ impl Hierarchy {
         }
     }
 
-    render_debug_layer :: (ref Self, layer: ref DebugLayer) {
+    render_debug_layer :: (&Self, layer: &DebugLayer) {
         defer ImGui.End()
         if !ImGui.Begin("Hierarchy") {
             return
@@ -69,17 +69,17 @@ impl Hierarchy {
 
         data := engine.current_mode_data()
         if data != null {
-            ImGui.Checkbox("Show Layer Output", &layer.show_layer_output)
+            ImGui.Checkbox("Show Layer Output", ^layer.show_layer_output)
 
-            ImGui.Checkbox("Play", &layer.playing)
+            ImGui.Checkbox("Play", ^layer.playing)
 
             for v : layer.uiae {
                 str := fmt.format("u{}", [it_index])
-                ImGui.DragFloat(str.as_cstring(), &layer.uiae[it_index], 0.01f)
+                ImGui.DragFloat(str.as_cstring(), ^layer.uiae[it_index], 0.01f)
             }
 
             for l : data.layer_stack {
-                if l == &layer then break
+                if l == ^layer then break
                 ImGui.PushIDPtr(l)
                 defer ImGui.PopID()
 
@@ -114,17 +114,17 @@ impl Hierarchy {
         }
     }
 
-    render_lighting_layer :: (ref Self, layer: ref LightingLayer) {
+    render_lighting_layer :: (&Self, layer: &LightingLayer) {
         defer ImGui.End()
         if !ImGui.Begin("Hierarchy") {
             return
         }
 
-        ImGui.Checkbox("Disabled", &layer.disabled)
-        ImGui.DragFloat("Exposure", &layer.exposure, 0.01f, 0.0f, f32.max)
+        ImGui.Checkbox("Disabled", ^layer.disabled)
+        ImGui.DragFloat("Exposure", ^layer.exposure, 0.01f, 0.0f, f32.max)
     }
 
-    render_entity_list :: (ref Self, layer: ref EntityLayer) {
+    render_entity_list :: (&Self, layer: &EntityLayer) {
         // render list of entities
         if ImGui.Begin("Hierarchy") {
             ImGui.LabelText("Entity Layer", layer.name.as_cstring())
@@ -151,7 +151,7 @@ impl Hierarchy {
                     height := i32(rmax.y - rmin.y)
                     if ImGui.IsMouseHoveringRect(rmin, rmax) {
                         cursor_pos := POINT()
-                        GetCursorPos(&cursor_pos)
+                        GetCursorPos(^cursor_pos)
 
                         if i > 0 and ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGui.ImGuiKey_.UpArrow)) {
                             layer.swap_entities(i, i - 1)

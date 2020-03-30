@@ -9,7 +9,7 @@ io   :: import std.io
 use import clap2
 
 impl Printable for Expr {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         match self {
             EnumExpr($v)    -> v.print(str, format)
             StructExpr($v)  -> v.print(str, format)
@@ -21,13 +21,13 @@ impl Printable for Expr {
 }
 
 impl Printable for EnumExpr {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         // str.appendf("{}", int(typ))
-        sub_str := match ref sub {
+        sub_str := match &sub {
             Some($sub)  -> fmt.format("Some({})", [sub.get()])
             None        -> String.from_string("None")
         }
-        mem_name := match ref mem {
+        mem_name := match &mem {
             Some($mem)  -> mem.name
             None        -> "?"
         }
@@ -37,14 +37,14 @@ impl Printable for EnumExpr {
 }
 
 impl Printable for StructExpr {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         sub_str := String.empty()
         for mem : subs {
             if it_index > 0 {
                 sub_str.append_string(", ")
             }
             sub_str.appendf("member({}, loc={}, sub=", (if mem.mem != null then mem.mem.name else "?", mem.loc))
-            match ref mem.sub {
+            match &mem.sub {
                 Some($sub)  -> sub.get().print(sub_str, "")
                 None        -> sub_str.append_string("None")
                 _           -> @assert(false)
@@ -57,20 +57,20 @@ impl Printable for StructExpr {
 }
 
 impl Printable for ValueExpr {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         result := fmt.format("value(typ={}, loc={}, raw='{}')", [int(typ), loc, raw.slice()])
         str.append(result)
     }
 }
 
 impl Printable for Location {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.appendf("{}..{}", (start, end))
     }
 }
 
 impl Printable for ClapError {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         msg := fmt.format("{}, {}", [loc, msg])
         str.append(msg)
     }

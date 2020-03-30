@@ -24,7 +24,7 @@ use import std.array
 use import std.string
 C :: import std.c
 
-print_array :: (a: ref Array[int]) {
+print_array :: (a: &Array[int]) {
     C.printf("len: %lld`n", a.get_length())
     C.printf("cap: %lld`n", a.get_capacity())
     C.printf("arr: [")
@@ -43,7 +43,7 @@ Foo :: struct {
     x: int
 }
 
-test :: (a: ref int) {
+test :: (a: &int) {
     a = 5
 }
 

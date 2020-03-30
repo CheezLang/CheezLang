@@ -11,19 +11,19 @@ use import compiler
 #export_scope
 
 Scope :: struct {
-    parent  : &Scope
+    parent  : ^Scope
     symbols := Map[string, Symbol].new()
 }
 
 impl Scope {
-    debug_log :: (ref Self, msg: string, args: []&any = []) {
+    debug_log :: (&Self, msg: string, args: []^any = []) {
         // if const DEBUG_JOBS {
         //     str := fmt.format(msg, args)
         //     io.formatln("[{}] [Scope] {}", [Fiber.user_data(FiberContext).thread, str])
         // } 
     }
 
-    define_value :: (ref Self, name: string, typ: &Type, val: Value) -> Result[(), ()] {
+    define_value :: (&Self, name: string, typ: ^Type, val: Value) -> Result[(), ()] {
         if symbols.contains(name) {
             return Err()
         }
@@ -33,27 +33,27 @@ impl Scope {
         return Ok()
     }
 
-    define_function :: (ref Self, name: string, func: ref AstFunction) -> Result[(), ()] {
+    define_function :: (&Self, name: string, func: &AstFunction) -> Result[(), ()] {
         if symbols.contains(name) {
             return Err()
         }
 
-        symbols[name] = Symbol.Func(&func)
+        symbols[name] = Symbol.Func(^func)
 
         return Ok()
     }
 
-    define_const_decl :: (ref Self, name: string, decl: ref AstConstDecl) -> Result[(), ()] {
+    define_const_decl :: (&Self, name: string, decl: &AstConstDecl) -> Result[(), ()] {
         if symbols.contains(name) {
             return Err()
         }
 
-        symbols[name] = Symbol.ConstDecl(&decl)
+        symbols[name] = Symbol.ConstDecl(^decl)
 
         return Ok()
     }
 
-    define_native_function :: (ref Self, name: string, func: NativeFunction) -> Result[(), ()] {
+    define_native_function :: (&Self, name: string, func: NativeFunction) -> Result[(), ()] {
         if symbols.contains(name) {
             return Err()
         }
@@ -63,7 +63,7 @@ impl Scope {
         return Ok()
     }
 
-    get_symbol :: (ref Self, name: string) -> Symbol {
+    get_symbol :: (&Self, name: string) -> Symbol {
         if parent == null {
             wait_until(symbols.contains(name))
             return symbols.at(name)
@@ -77,9 +77,9 @@ impl Scope {
 }
 
 Symbol :: enum #copy {
-    ConstDecl   : &AstConstDecl
-    Val         : (typ: &Type, value: Value)
-    Func        : &AstFunction
+    ConstDecl   : ^AstConstDecl
+    Val         : (typ: ^Type, value: Value)
+    Func        : ^AstFunction
     NativeFunc  : NativeFunction
 }
 

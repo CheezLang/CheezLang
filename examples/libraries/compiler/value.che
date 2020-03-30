@@ -6,7 +6,7 @@ use import interpreter
 
 Value :: enum #copy {
     None
-    Function    : &AstFunction
+    Function    : ^AstFunction
     Bool        : bool
     Int         : int
     Float       : f64
@@ -14,4 +14,4 @@ Value :: enum #copy {
     NativeFunc  : NativeFunction
 }
 
-NativeFunction :: Fn(&Interpreter, int)
+NativeFunction :: Fn(^Interpreter, int)

@@ -23,7 +23,7 @@ Direction :: enum #copy {
 
 action : Direction = Direction.None
 
-onKeyDown :: (window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
+onKeyDown :: (window: ^GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
     if a == GLFW_PRESS {
         action = match key {
             265 -> Direction.Up
@@ -34,7 +34,7 @@ onKeyDown :: (window: &GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
     }
 }
 
-onResize :: (window: &GLFWwindow, w: i32, h: i32) {
+onResize :: (window: ^GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
 }
 
@@ -44,8 +44,8 @@ gridSize : double = 10.0
 width : double = 640.0
 height : double = 480.0
 
-action_to_dir :: (dir: ref Direction, action: Direction) {
-    dir = match (<<&dir, action) {
+action_to_dir :: (dir: &Direction, action: Direction) {
+    dir = match (<<^dir, action) {
         (Direction.Up,      Direction.Down) -> dir
         (Direction.Right,   Direction.Left) -> dir
         (Direction.Down,    Direction.Up)   -> dir
@@ -156,7 +156,7 @@ Main :: () {
                 snake[i].pos = snake[i - 1].pos
             }
 
-            head : ref Quad = snake[0]
+            head : &Quad = snake[0]
 
             head.pos += match dir {
                 Direction.Up    -> Vec2i(0, 1)

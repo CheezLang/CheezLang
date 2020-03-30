@@ -35,25 +35,25 @@ Main :: () {
 
     a.dump(true)
 
-    alloc(string, &a)
-    x := alloc(i64, &a)
-    alloc(i32, &a)
-    alloc(i16, &a)
-    alloc(i8, &a)
-    alloc(i8, &a)
-    alloc(i16, &a)
-    alloc(i32, &a)
-    alloc(i64, &a)
-    s := alloc(string, &a)
+    alloc(string, ^a)
+    x := alloc(i64, ^a)
+    alloc(i32, ^a)
+    alloc(i16, ^a)
+    alloc(i8, ^a)
+    alloc(i8, ^a)
+    alloc(i16, ^a)
+    alloc(i32, ^a)
+    alloc(i64, ^a)
+    s := alloc(string, ^a)
 
     <<s = "lol"
     io.println(<<s)
-    s = realloc_raw(s, 2, &a)
+    s = realloc_raw(s, 2, ^a)
     io.println(<<s)
     
     <<x = 5
     io.println(<<x)
-    x = realloc_raw(x, 5, &a)
+    x = realloc_raw(x, 5, ^a)
     io.println(<<x)
 
     a.dump(true)

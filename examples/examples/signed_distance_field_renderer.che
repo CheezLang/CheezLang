@@ -28,45 +28,45 @@ Ray :: struct {
 
 DistanceShaderPair :: struct {
     distance : double
-    shader   : &Shader
+    shader   : ^Shader
 }
 
 ////////////////////////////////// SDF //////////////////////////////////////////////
 
 ///////////////////// basic ///////////////////
 SDF :: trait {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair;
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair;
 }
 
 Sphere :: struct {
     radius: double
-    shader: &Shader
+    shader: ^Shader
 }
 
 impl SDF for Sphere {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         return DistanceShaderPair(v.mag() - radius, shader)
     }
 }
 
 PlaneY :: struct {
     location : double
-    shader   : &Shader
+    shader   : ^Shader
 }
 
 impl SDF for PlaneY {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         return DistanceShaderPair(v.y - location, shader)
     }
 }
 
 Cube :: struct {
     radius : double
-    shader : &Shader
+    shader : ^Shader
 }
 
 impl SDF for Cube {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         dx := fabs(v.x) - radius
         dy := fabs(v.y) - radius
         dz := fabs(v.z) - radius
@@ -110,44 +110,44 @@ impl SDF for Cube {
 ///////////////////// transformations //////////////////////////
 
 TranslatedSDF :: struct {
-    sdf         : &SDF
+    sdf         : ^SDF
     translation : Vec3
 }
 
 impl SDF for TranslatedSDF {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         return sdf.distance(v - translation)
     }
 }
 
 ScaledSDF :: struct {
-    sdf   : &SDF
+    sdf   : ^SDF
     scale : Vec3
 }
 
 impl SDF for ScaledSDF {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         return sdf.distance(v / scale)
     }
 }
 
 RotatedXSDF :: struct {
-    sdf   : &SDF
+    sdf   : ^SDF
     angle : double
 }
 
 RotatedYSDF :: struct {
-    sdf   : &SDF
+    sdf   : ^SDF
     angle : double
 }
 
 RotatedZSDF :: struct {
-    sdf   : &SDF
+    sdf   : ^SDF
     angle : double
 }
 
 impl SDF for RotatedXSDF {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         rad := angle / 360 * 2 * 3.1415
         c := cos(rad)
         s := sin(rad)
@@ -158,7 +158,7 @@ impl SDF for RotatedXSDF {
 }
 
 impl SDF for RotatedYSDF {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         rad := angle / 360 * 2 * 3.1415
         c := cos(rad)
         s := sin(rad)
@@ -169,7 +169,7 @@ impl SDF for RotatedYSDF {
 }
 
 impl SDF for RotatedZSDF {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         rad := angle / 360 * 2 * 3.1415
         c := cos(rad)
         s := sin(rad)
@@ -181,12 +181,12 @@ impl SDF for RotatedZSDF {
 
 ////////////////////// combinations ///////////////////////
 UnionSDF :: struct {
-    sdf1 : &SDF
-    sdf2 : &SDF
+    sdf1 : ^SDF
+    sdf2 : ^SDF
 }
 
 impl SDF for UnionSDF {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         a := sdf1.distance(v)
         b := sdf2.distance(v)
         if a.distance < b.distance {
@@ -198,12 +198,12 @@ impl SDF for UnionSDF {
 }
 
 IntersectionSDF :: struct {
-    sdf1 : &SDF
-    sdf2 : &SDF
+    sdf1 : ^SDF
+    sdf2 : ^SDF
 }
 
 impl SDF for IntersectionSDF {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         a := sdf1.distance(v)
         b := sdf2.distance(v)
         if a.distance > b.distance {
@@ -215,12 +215,12 @@ impl SDF for IntersectionSDF {
 }
 
 SubtractionSDF :: struct {
-    sdf1 : &SDF
-    sdf2 : &SDF
+    sdf1 : ^SDF
+    sdf2 : ^SDF
 }
 
 impl SDF for SubtractionSDF {
-    distance :: (ref Self, v: Vec3) -> DistanceShaderPair {
+    distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         a := sdf1.distance(v)
         b := sdf2.distance(v)
 
@@ -236,7 +236,7 @@ impl SDF for SubtractionSDF {
 ////////////////////////////// shaders //////////////////////////////////
 
 Shader :: trait {
-    shade :: (ref Self, ray: Ray, raymarcher: ref Raymarcher) -> Vec3;
+    shade :: (&Self, ray: Ray, raymarcher: &Raymarcher) -> Vec3;
 }
 
 ConstantColorShader :: struct {
@@ -244,7 +244,7 @@ ConstantColorShader :: struct {
 }
 
 impl Shader for ConstantColorShader {
-    shade :: (ref Self, ray: Ray, raymarcher: ref Raymarcher) -> Vec3 {
+    shade :: (&Self, ray: Ray, raymarcher: &Raymarcher) -> Vec3 {
         return color
     }
 }
@@ -255,7 +255,7 @@ LambertianShader :: struct {
 }
 
 impl Shader for LambertianShader {
-    shade :: (ref Self, ray: Ray, raymarcher: ref Raymarcher) -> Vec3 {
+    shade :: (&Self, ray: Ray, raymarcher: &Raymarcher) -> Vec3 {
         (ld, lc) := raymarcher.sampleLightDirection()
         normal := raymarcher.normal(ray.origin)
 
@@ -283,13 +283,13 @@ impl Shader for LambertianShader {
 
 CheckerBoardShader :: struct {
     size    : double
-    shader1 : &Shader
-    shader2 : &Shader
+    shader1 : ^Shader
+    shader2 : ^Shader
 }
 
 
 impl Shader for CheckerBoardShader {
-    shade :: (ref Self, ray: Ray, raymarcher: ref Raymarcher) -> Vec3 {
+    shade :: (&Self, ray: Ray, raymarcher: &Raymarcher) -> Vec3 {
         x := mod(ray.origin.x, 2 * size)
         y := mod(ray.origin.y, 2 * size)
         z := mod(ray.origin.z, 2 * size)
@@ -308,7 +308,7 @@ Background :: struct {
 }
 
 impl Background {
-    project :: (ref Self, ray: Ray) -> Vec3 {
+    project :: (&Self, ray: Ray) -> Vec3 {
         i := ray.direction.y + 0.5
         i *= i
         return Vec3(i, i, i)
@@ -316,13 +316,13 @@ impl Background {
 }
 
 Raymarcher :: struct {
-    sdf                : &SDF
+    sdf                : ^SDF
     background         : Background
     backgroundDistance : double = 1000
 }
 
 impl Raymarcher {
-    project :: (ref Self, ray: Ray) -> Vec3 {
+    project :: (&Self, ray: Ray) -> Vec3 {
         ds := sdf.distance(ray.origin)
 
         while fabs(ds.distance) > 0.0000001 {
@@ -338,13 +338,13 @@ impl Raymarcher {
         return ds.shader.shade(ray, self)
     }
 
-    sampleLightDirection :: (ref Self) -> (ld: Vec3, lc: Vec3) {
+    sampleLightDirection :: (&Self) -> (ld: Vec3, lc: Vec3) {
         ld = Vec3(-1.0, 1.5, 1)
         ld.normalize()
         lc = Vec3(1, 1, 1)
     }
 
-    normal :: (ref Self, p: Vec3) -> Vec3 {
+    normal :: (&Self, p: Vec3) -> Vec3 {
         off : double = 0.001
 
         n := Vec3(
@@ -367,7 +367,7 @@ PerspectiveCamera :: struct {
 }
 
 impl PerspectiveCamera {
-    project :: (ref Self, x: double, y: double) -> Ray {
+    project :: (&Self, x: double, y: double) -> Ray {
         dir := Vec3(
             x = (x - 0.5) * sensorWidth
             y = -(y - 0.5) * sensorHeight
@@ -389,7 +389,7 @@ Film :: struct {
 }
 
 impl Film {
-    trigger :: (ref Self, camera: ref PerspectiveCamera, scene: ref Raymarcher) {
+    trigger :: (&Self, camera: &PerspectiveCamera, scene: &Raymarcher) {
 
         io.printf("({}, {})`n", (width, height))
 
@@ -447,99 +447,99 @@ impl SDFAllocator {
         return SDFAllocator(StackAllocator.create(1024 * 2))
     }
 
-    allocate :: (ref Self, $T: type) -> &T {
-        t := cast(&T) allocator.allocate(1, @sizeof(T), @alignof(T))
-        io.printf("{}`n", (&allocator))
+    allocate :: (&Self, $T: type) -> ^T {
+        t := cast(^T) allocator.allocate(1, @sizeof(T), @alignof(T))
+        io.printf("{}`n", (^allocator))
         return t
     }
 
-    sphere :: (ref Self, radius: double, shader: &Shader) -> &SDF {
-        s := alloc(Sphere, &allocator)
+    sphere :: (&Self, radius: double, shader: ^Shader) -> ^SDF {
+        s := alloc(Sphere, ^allocator)
         s.radius = radius
         s.shader = shader
         return s
     }
 
-    sphereT :: (ref Self, position: Vec3, radius: double, shader: &Shader) -> &SDF {
+    sphereT :: (&Self, position: Vec3, radius: double, shader: ^Shader) -> ^SDF {
         return self.translate(self.sphere(radius, shader), position)
     }
 
-    planeY :: (ref Self, location: double, shader: &Shader) -> &SDF {
-        s := alloc(PlaneY, &allocator)
+    planeY :: (&Self, location: double, shader: ^Shader) -> ^SDF {
+        s := alloc(PlaneY, ^allocator)
         s.location = location
         s.shader = shader
         return s
     }
 
-    cube :: (ref Self, radius: double, shader: &Shader) -> &SDF {
-        s := alloc(Cube, &allocator)
+    cube :: (&Self, radius: double, shader: ^Shader) -> ^SDF {
+        s := alloc(Cube, ^allocator)
         s.radius = radius
         s.shader = shader
         return s
     }
 
-    cubeT :: (ref Self, position: Vec3, radius: double, shader: &Shader) -> &SDF {
+    cubeT :: (&Self, position: Vec3, radius: double, shader: ^Shader) -> ^SDF {
         return self.translate(self.cube(radius, shader), position)
     }
 
-    translate :: (ref Self, sdf: &SDF, translation: Vec3) -> &SDF {
-        t := alloc(TranslatedSDF, &allocator)
+    translate :: (&Self, sdf: ^SDF, translation: Vec3) -> ^SDF {
+        t := alloc(TranslatedSDF, ^allocator)
         t.sdf = sdf
         t.translation = translation
         return t
     }
 
-    rotateX :: (ref Self, sdf: &SDF, angle: double) -> &SDF {
-        t := alloc(RotatedXSDF, &allocator)
+    rotateX :: (&Self, sdf: ^SDF, angle: double) -> ^SDF {
+        t := alloc(RotatedXSDF, ^allocator)
         t.sdf = sdf
         t.angle = angle
         return t
     }
 
-    rotateY :: (ref Self, sdf: &SDF, angle: double) -> &SDF {
-        t := alloc(RotatedYSDF, &allocator)
+    rotateY :: (&Self, sdf: ^SDF, angle: double) -> ^SDF {
+        t := alloc(RotatedYSDF, ^allocator)
         t.sdf = sdf
         t.angle = angle
         return t
     }
 
-    rotateZ :: (ref Self, sdf: &SDF, angle: double) -> &SDF {
-        t := alloc(RotatedZSDF, &allocator)
+    rotateZ :: (&Self, sdf: ^SDF, angle: double) -> ^SDF {
+        t := alloc(RotatedZSDF, ^allocator)
         t.sdf = sdf
         t.angle = angle
         return t
     }
 
-    scale :: (ref Self, sdf: &SDF, x: double = 1, y: double = 1, z: double = 1) -> &SDF {
-        t := alloc(ScaledSDF, &allocator)
+    scale :: (&Self, sdf: ^SDF, x: double = 1, y: double = 1, z: double = 1) -> ^SDF {
+        t := alloc(ScaledSDF, ^allocator)
         t.sdf = sdf
         t.scale = Vec3(x, y, z)
         return t
     }
 
-    add :: (ref Self, sdf1: &SDF, sdf2: &SDF) -> &SDF {
-        t := alloc(UnionSDF, &allocator)
+    add :: (&Self, sdf1: ^SDF, sdf2: ^SDF) -> ^SDF {
+        t := alloc(UnionSDF, ^allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return t
     }
 
-    intersect :: (ref Self, sdf1: &SDF, sdf2: &SDF) -> &SDF {
-        t := alloc(IntersectionSDF, &allocator)
+    intersect :: (&Self, sdf1: ^SDF, sdf2: ^SDF) -> ^SDF {
+        t := alloc(IntersectionSDF, ^allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return t
     }
 
-    subtract :: (ref Self, sdf1: &SDF, sdf2: &SDF) -> &SDF {
-        t := alloc(SubtractionSDF, &allocator)
+    subtract :: (&Self, sdf1: ^SDF, sdf2: ^SDF) -> ^SDF {
+        t := alloc(SubtractionSDF, ^allocator)
         t.sdf1 = sdf1
         t.sdf2 = sdf2
         return t
     }
 }
 
-renderImage :: (film: ref Film) {
+renderImage :: (film: &Film) {
     for i : 0..film.pixels.length {
         film.pixels[i] = Vec3(0, 0, 0)
     }
@@ -558,7 +558,7 @@ renderImage :: (film: ref Film) {
     //
     sChecker1    := LambertianShader(Vec3(0.9, 0.8, 0.8))
     sChecker2    := LambertianShader(Vec3(0.2, 0.1, 0.1))
-    sChecker  := CheckerBoardShader(1, &sChecker1, &sChecker2)
+    sChecker  := CheckerBoardShader(1, ^sChecker1, ^sChecker2)
 
     sWhite    := LambertianShader(Vec3(1, 1, 1))
     sBlack    := LambertianShader(Vec3(0, 0, 0))
@@ -567,14 +567,14 @@ renderImage :: (film: ref Film) {
     sBlue   := LambertianShader(Vec3(0, 0, 1))
 
     //
-    ground := all.planeY(-1.25, &sWhite)
-    s1 := all.sphereT(Vec3(0, 0.5, 0), 1, &sRed)
-    s2 := all.sphereT(Vec3(0, 0, 0), 0.3, &sGreen)
-    c1 := all.cubeT(Vec3(0, 0.5, 0), 0.8, &sBlue)
+    ground := all.planeY(-1.25, ^sWhite)
+    s1 := all.sphereT(Vec3(0, 0.5, 0), 1, ^sRed)
+    s2 := all.sphereT(Vec3(0, 0, 0), 0.3, ^sGreen)
+    c1 := all.cubeT(Vec3(0, 0.5, 0), 0.8, ^sBlue)
 
     sdf := {
         sdf := {
-            sdf: &SDF
+            sdf: ^SDF
             {
                 sdf = c1
                 sdf = all.subtract(sdf, s1)
@@ -627,5 +627,5 @@ Main :: () {
     io.printf("Rendering took {} seconds`n", dur)
 
     // store image as bmp
-    write_bmp(cast(i32) width, cast(i32) height, cast(&double) imageArr.get_raw(), "sdfr.bmp")
+    write_bmp(cast(i32) width, cast(i32) height, cast(^double) imageArr.get_raw(), "sdfr.bmp")
 }

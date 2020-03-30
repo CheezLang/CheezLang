@@ -11,41 +11,41 @@ fmt :: import std.fmt
 #export_scope
 
 Printable :: trait {
-    print :: (ref Self, str: ref String, format: string);
+    print :: (&Self, str: &String, format: string);
 }
 
 impl Printable for () {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str += "()"
     }
 }
 
 impl Printable for string {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.append_string(self)
     }
 }
 
 impl Printable for char8 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.append_char(cast self)
     }
 }
 
 impl Printable for char16 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.append_char(cast self)
     }
 }
 
 impl Printable for char32 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.append_char(self)
     }
 }
 
 impl Printable for float {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         buff : []char8 = @alloca(char8, 128)
         buff.length = C.sprintf(buff.data, "%g", double(self))
         str.append_cstring(buff.data)
@@ -53,7 +53,7 @@ impl Printable for float {
 }
 
 impl Printable for double {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         buff : []char8 = @alloca(char8, 128)
         buff.length = C.sprintf(buff.data, "%g", self)
         str.append_cstring(buff.data)
@@ -61,7 +61,7 @@ impl Printable for double {
 }
 
 impl Printable for bool {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.append_string(if streq(format, "b") {
             if self {"1"} else {"0"}
         } else if streq(format, "s") {
@@ -73,58 +73,58 @@ impl Printable for bool {
 }
 
 impl Printable for i8 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for i16 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for i32 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for i64 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for u8 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for u16 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for u32 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl Printable for u64 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         printf_int_to_string(str, self, format)
     }
 }
 
 impl(T: type) Printable for Option[T] if T: Printable {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         match self {
             Some($v) -> {
-                v_str := fmt.format("Some({})", [&v])
+                v_str := fmt.format("Some({})", [^v])
                 str.append(v_str)
             }
             None -> str.append_string("None")
@@ -133,7 +133,7 @@ impl(T: type) Printable for Option[T] if T: Printable {
 }
 
 impl(T: type) Printable for Array[T] if T: Printable {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str += "["
         for(by_ref=true) v : self.slice() {
             if it_index > 0 {
@@ -146,9 +146,9 @@ impl(T: type) Printable for Array[T] if T: Printable {
 }
 
 impl(K: type, V: type) Printable for Table[K, V] if K: Printable, V: Printable {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str += "{"
-        for v : <<&self {
+        for v : <<^self {
             if it_index > 0 {
                 str += ", "
             }
@@ -161,14 +161,14 @@ impl(K: type, V: type) Printable for Table[K, V] if K: Printable, V: Printable {
 }
 
 impl(T: type) Printable for Box[T] {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         msg := fmt.format("Box({})", [_value])
         str.append(msg)
     }
 }
 
 impl(V: type, E: type) Printable for Result[V, E] if V: Printable, E: Printable {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         match self {
             Ok($v)  -> str.appendf("Ok({})", fmt.format_any(v))
             Err($v) -> str.appendf("Err({})", fmt.format_any(v))
@@ -177,13 +177,13 @@ impl(V: type, E: type) Printable for Result[V, E] if V: Printable, E: Printable 
 }
 
 impl Printable for Complex {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.appendf("{} + {}i", (r, i))
     }
 }
 
 #file_scope
-printf_int_to_string :: (str: ref String, i: $T, format: string) {
+printf_int_to_string :: (str: &String, i: $T, format: string) {
     base := if streq("b", format) then 2
     else if streq("x", format) then 16
     else 10

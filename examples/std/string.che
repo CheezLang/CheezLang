@@ -21,11 +21,11 @@ if const @is_os("windows") {
 String :: struct {
     data      : []u8
     length    : int
-    allocator : &Allocator
+    allocator : ^Allocator
 }
 
 impl Drop for String {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         if allocator != null {
             free_n(data, allocator)
         }
@@ -35,29 +35,29 @@ impl Drop for String {
 }
 
 impl String {
-    empty :: (allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    empty :: (allocator: ^Allocator = ^DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return String(null, 0, allocator)
     }
 
-    with_capacity :: (cap: int, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    with_capacity :: (cap: int, allocator: ^Allocator = ^DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         result := String(null, 0, allocator)
         result.reserve(cap)
         return result
     }
 
-    from_raw_ptr :: (ptr: &u8, cap: int) -> Self {
+    from_raw_ptr :: (ptr: ^u8, cap: int) -> Self {
         sl : []u8 = ptr
         sl.length = cap
         return String(sl, 0, null)
     }
 
-    from_string :: (str: string, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    from_string :: (str: string, allocator: ^Allocator = ^DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         s := Self.empty(allocator)
         s.append_string(str)
         return s
     }
 
-    from_cstring :: (str: c_string, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    from_cstring :: (str: c_string, allocator: ^Allocator = ^DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         s := Self.empty(allocator)
         s.append_cstring(str)
         return s
@@ -74,32 +74,32 @@ impl String {
         return Ok(result)
     }
 
-    get_capacity :: (ref Self) -> int {
+    get_capacity :: (&Self) -> int {
         return data.length
     }
 
-    get_length :: (ref Self) -> int {
+    get_length :: (&Self) -> int {
         return length
     }
 
-    get_raw :: (ref Self) -> &u8 {
+    get_raw :: (&Self) -> ^u8 {
         return data.data
     }
 
-    char_at :: (ref Self, i: int) -> ref char #operator("[]") {
+    char_at :: (&Self, i: int) -> &char #operator("[]") {
         code_point, len := Utf8.decode(data[i..data.length])
         return code_point
     }
 
-    set_char_at :: (ref Self, i: int, c: u8) #operator("set[]") {
+    set_char_at :: (&Self, i: int, c: u8) #operator("set[]") {
         data[i] = c
     }
 
-    reserve_more :: (ref Self, amount: int) {
+    reserve_more :: (&Self, amount: int) {
         reserve(length + amount)
     }
 
-    reserve :: (ref Self, size: int) {
+    reserve :: (&Self, size: int) {
         if data.length > size {
             return
         }
@@ -116,75 +116,75 @@ impl String {
         }
     }
 
-    clear :: (ref Self) {
+    clear :: (&Self) {
         length = 0
     }
 
-    resize :: (ref Self, size: int) {
+    resize :: (&Self, size: int) {
         self.reserve(size)
         length = size
     }
 
-    append :: (ref Self, other: ref Self) -> ref Self #operator("+=") {
+    append :: (&Self, other: &Self) -> &Self #operator("+=") {
         if other.data.data == null {
             return self
         }
         newLength := length + other.length
         self.reserve(newLength)
-        C.memcpy(cast &data.data[length], cast other.data.data, cast(uint) (other.length * @sizeof(u8)))
+        C.memcpy(cast ^data.data[length], cast other.data.data, cast(uint) (other.length * @sizeof(u8)))
         length = newLength
         return self
     }
 
-    append_string :: (ref Self, other: string) -> ref Self #operator("+=") {
+    append_string :: (&Self, other: string) -> &Self #operator("+=") {
         newLength := length + other.bytes.length
         self.reserve(newLength)
-        C.memcpy(cast &data.data[length], cast other.bytes.data, cast other.bytes.length)
+        C.memcpy(cast ^data.data[length], cast other.bytes.data, cast other.bytes.length)
         length = newLength
         return self
     }
 
-    append_cstring :: (ref Self, other: c_string) -> ref Self #operator("+=") {
+    append_cstring :: (&Self, other: c_string) -> &Self #operator("+=") {
         otherLen := C.strlen(other)
         newLength := length + int(otherLen)
         self.reserve(newLength)
-        C.memcpy(cast &data.data[length], cast other, cast otherLen)
+        C.memcpy(cast ^data.data[length], cast other, cast otherLen)
         length = newLength
         return self
     }
 
-    append_char :: (ref Self, ch: char) -> ref Self #operator("+=") {
+    append_char :: (&Self, ch: char) -> &Self #operator("+=") {
         bytes, count := Utf8.encode(ch)
         newLength := length + int(count)
         self.reserve(newLength)
-        C.memcpy(&data[length], &bytes[0], cast count)
+        C.memcpy(^data[length], ^bytes[0], cast count)
         length = newLength
         return self
     }
 
-    sliceFT :: (ref Self, from: int, to: int) -> string {
-        slice := string(&data[from], to - from)
+    sliceFT :: (&Self, from: int, to: int) -> string {
+        slice := string(^data[from], to - from)
         return slice
     }
 
-    sliceFL :: (ref Self, from: int, len: int) -> string {
-        slice := string(&data[from], len)
+    sliceFL :: (&Self, from: int, len: int) -> string {
+        slice := string(^data[from], len)
         return slice
     }
 
-    slice :: (ref Self) -> string {
+    slice :: (&Self) -> string {
         return self.sliceFL(0, length)
     }
 
-    sliceF :: (ref Self, from: int) -> string {
+    sliceF :: (&Self, from: int) -> string {
         return self.sliceFL(from, length - from)
     }
     
-    sliceL :: (ref Self, len: int) -> string {
+    sliceL :: (&Self, len: int) -> string {
         return self.sliceFL(0, len)
     }
 
-    index_of :: (ref Self, ch: char) -> int {
+    index_of :: (&Self, ch: char) -> int {
         for i : 0..length {
             if data[i] == u8(ch) {
                 return i
@@ -194,7 +194,7 @@ impl String {
         return -1
     }
 
-    as_cstring :: (ref Self) -> c_string {
+    as_cstring :: (&Self) -> c_string {
         reserve(length + 1)
         data[length] = 0u8
         return cast data.data
@@ -202,7 +202,7 @@ impl String {
 }
 
 impl Equatable[String] for String {
-    equal :: (ref Self, other: ref String) -> bool {
+    equal :: (&Self, other: &String) -> bool {
         str := self.slice()
         oth := other.slice()
         return streq_string(str, oth)
@@ -210,27 +210,27 @@ impl Equatable[String] for String {
 }
 
 impl Equatable[string] for String {
-    equal :: (ref Self, other: ref string) -> bool {
+    equal :: (&Self, other: &string) -> bool {
         str := self.slice()
         return streq_string(str, other)
     }
 }
 
 impl Equatable[string] for string {
-    equal :: (ref Self, b: ref string) -> bool {
+    equal :: (&Self, b: &string) -> bool {
         return streq_string(self, b)
     }
 }
 
 impl Hashable for String {
-    hash :: (ref Self) -> uint {
+    hash :: (&Self) -> uint {
         str := self.slice()
         return str.hash()
     }
 }
 
 impl Clone for String {
-    clone :: (ref Self) -> Self {
+    clone :: (&Self) -> Self {
         other := String.empty()
         other.append(self)
         return other
@@ -238,29 +238,29 @@ impl Clone for String {
 }
 
 impl String {
-    append_print :: (ref Self, pr: &Printable) -> ref Self #operator("+=") {
+    append_print :: (&Self, pr: ^Printable) -> &Self #operator("+=") {
         pr.print(self, "")
         return self
     }
 
-    appendf :: (ref Self, format: string, arguments: $T) {
+    appendf :: (&Self, format: string, arguments: $T) {
         if const @is_tuple(T) {
             if const T.length == 0 {
-                args : [1]&Printable = [&arguments]
+                args : [1]^Printable = [^arguments]
             } else {
-                args : [T.length]&Printable = default
+                args : [T.length]^Printable = default
                 @for_tuple_values(arguments, (v, i) => {
-                    args[i] = &v
+                    args[i] = ^v
                 })
             }
         } else {
-            args : [1]&Printable = [&arguments]
+            args : [1]^Printable = [^arguments]
         }
         self.append_printables(format, args)
     }
 
 
-    append_printables :: (ref Self, format: string, args: []&Printable) {
+    append_printables :: (&Self, format: string, args: []^Printable) {
         formatSpecifier := {
             len :: 64
             mem := @alloca(u8, len)
@@ -329,7 +329,7 @@ impl String {
         return s
     }
 
-    split_at_char :: (ref Self, c: char, remove_empty: bool = false) -> Array[string] {
+    split_at_char :: (&Self, c: char, remove_empty: bool = false) -> Array[string] {
         result := Array[string].create()
 
         start := 0
@@ -424,7 +424,7 @@ for_extension_string_split_char_iterator :: (self: StringSplitCharIterator, body
 }
 
 impl Printable for String {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str += self
     }
 }
@@ -638,7 +638,7 @@ impl string {
 }
 
 impl Into[String] for string {
-    into :: (ref Self) -> String {
+    into :: (&Self) -> String {
         return self.to_owned()
     }
 }

@@ -7,7 +7,7 @@ Foo :: enum {
 
 Main :: () {
     a := Foo.A
-    b := ref a
+    b := &a
 
     // compiles
     match b {
@@ -17,7 +17,7 @@ Main :: () {
     // doesnt compile
     /*
 D:\Programming\CheezLang\CompilerLibrary\SemanticAnalysis\TypeInference.cs:655 - MatchPatternWithType()
-D:\Programming\CheezLang\examples\bugs\bug2.che:27:10: Can't match type ref Foo to pattern Foo.A
+D:\Programming\CheezLang\examples\bugs\bug2.che:27:10: Can't match type &Foo to pattern Foo.A
 26>     match (b, Foo.B) {
 27>         (Foo.A, Foo.B) -> {}
              ^————

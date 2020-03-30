@@ -1,18 +1,18 @@
 #lib("./lua53.lib")
 
 // :lualib.che
-luaL_openlibs :: (L: &lua_State);
+luaL_openlibs :: (L: ^lua_State);
 
 // :lauxlib.che
-luaL_newstate :: () -> &lua_State;
-luaL_loadstring :: (L: &lua_State, s: c_string) -> i32;
-luaL_loadfilex :: (L: &lua_State, s: c_string, mode: c_string) -> i32;
+luaL_newstate :: () -> ^lua_State;
+luaL_loadstring :: (L: ^lua_State, s: c_string) -> i32;
+luaL_loadfilex :: (L: ^lua_State, s: c_string, mode: c_string) -> i32;
 
-lua_pcall :: (L: &lua_State, nargs: i32, nresults: i32, errfunc: i32) -> i32 {
+lua_pcall :: (L: ^lua_State, nargs: i32, nresults: i32, errfunc: i32) -> i32 {
     return lua_pcallk(L, nargs, nresults, errfunc, 0, null)
 }
 
-luaL_dostring :: (L: &lua_State, s: c_string) -> i32 {
+luaL_dostring :: (L: ^lua_State, s: c_string) -> i32 {
     a := luaL_loadstring(L, s)
     if a != 0 {
         return a
@@ -21,11 +21,11 @@ luaL_dostring :: (L: &lua_State, s: c_string) -> i32 {
     return lua_pcall(L, 0, LUA_MULTRET, 0)
 }
 
-luaL_loadfile :: (L: &lua_State, s: c_string) -> i32 {
+luaL_loadfile :: (L: ^lua_State, s: c_string) -> i32 {
     return luaL_loadfilex(L, s, null)
 }
 
-luaL_dofile :: (L: &lua_State, s: c_string) -> i32 {
+luaL_dofile :: (L: ^lua_State, s: c_string) -> i32 {
     a := luaL_loadfile(L, s)
     if a != 0 {
         return a
@@ -43,11 +43,11 @@ lua_Integer     :: i64
 lua_Unsigned    :: u64
 lua_Number      :: double
 
-lua_KFunction   :: fn(&lua_State, i32, lua_KContext) -> i32
-lua_CFunction   :: fn(&lua_State) -> i32
-lua_Alloc       :: fn(&void, &void, int, int) -> &void
-lua_Reader      :: fn(&lua_State, &void, int) -> c_string
-lua_Writer      :: fn(&lua_State, &void, int, &void) -> i32
+lua_KFunction   :: fn(^lua_State, i32, lua_KContext) -> i32
+lua_CFunction   :: fn(^lua_State) -> i32
+lua_Alloc       :: fn(^void, ^void, int, int) -> ^void
+lua_Reader      :: fn(^lua_State, ^void, int) -> c_string
+lua_Writer      :: fn(^lua_State, ^void, int, ^void) -> i32
 
 
 LUA_MULTRET   : i32   : -1
@@ -74,126 +74,126 @@ LUA_TUSERDATA         : i32   : 7
 LUA_TTHREAD           : i32   : 8
 
 // #defines
-lua_tostring :: (L: &lua_State, idx: i32) -> c_string {
+lua_tostring :: (L: ^lua_State, idx: i32) -> c_string {
     return lua_tolstring(L, idx, null)
 }
 
-lua_tonumber :: (L: &lua_State, idx: i32) -> lua_Number {
+lua_tonumber :: (L: ^lua_State, idx: i32) -> lua_Number {
     return lua_tonumberx(L, idx, null)
 }
 
-lua_pop :: (L: &lua_State, n: i32) {
+lua_pop :: (L: ^lua_State, n: i32) {
     lua_settop(L, -n - 1)
 }
 
-lua_pushcfunction :: (L: &lua_State, f: lua_CFunction) {
+lua_pushcfunction :: (L: ^lua_State, f: lua_CFunction) {
     lua_pushcclosure(L, f, 0)
 }
 
-lua_register :: (L: &lua_State, n: c_string, f: lua_CFunction) {
+lua_register :: (L: ^lua_State, n: c_string, f: lua_CFunction) {
     lua_pushcfunction(L, f)
     lua_setglobal(L, n)
 }
 
-lua_isfunction :: (L: &lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TFUNCTION }
-lua_istable :: (L: &lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TTABLE }
-lua_islightuserdata :: (L: &lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TLIGHTUSERDATA }
-lua_isnil :: (L: &lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TNIL }
-lua_isboolean :: (L: &lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TBOOLEAN }
-lua_isthread :: (L: &lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TTHREAD }
-lua_isnone :: (L: &lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TNONE }
-lua_isnoneornil :: (L: &lua_State, n: i32) -> bool { return lua_type(L, n) <= 0 }
+lua_isfunction :: (L: ^lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TFUNCTION }
+lua_istable :: (L: ^lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TTABLE }
+lua_islightuserdata :: (L: ^lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TLIGHTUSERDATA }
+lua_isnil :: (L: ^lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TNIL }
+lua_isboolean :: (L: ^lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TBOOLEAN }
+lua_isthread :: (L: ^lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TTHREAD }
+lua_isnone :: (L: ^lua_State, n: i32) -> bool { return lua_type(L, n) == LUA_TNONE }
+lua_isnoneornil :: (L: ^lua_State, n: i32) -> bool { return lua_type(L, n) <= 0 }
 
 /*
 ** state manipulation
 */
-lua_newstate :: (f: lua_Alloc, ud: &void) -> &lua_State;
-lua_close :: (L: &lua_State);
-lua_newthread :: (L: &lua_State) -> &lua_State;
-lua_atpanic :: (L: &lua_State, panicf: lua_CFunction) -> lua_CFunction;
-lua_version :: (L: &lua_State) -> &lua_Number;
+lua_newstate :: (f: lua_Alloc, ud: ^void) -> ^lua_State;
+lua_close :: (L: ^lua_State);
+lua_newthread :: (L: ^lua_State) -> ^lua_State;
+lua_atpanic :: (L: ^lua_State, panicf: lua_CFunction) -> lua_CFunction;
+lua_version :: (L: ^lua_State) -> ^lua_Number;
 
 /*
 ** push functions (C -> stack)
 */
-lua_pushnil :: (L: &lua_State);
-lua_pushnumber :: (L: &lua_State, n: lua_Number);
-lua_pushinteger :: (L: &lua_State, n: lua_Integer);
-lua_pushlstring :: (L: &lua_State, s: c_string, len: int) -> c_string;
-lua_pushstring :: (L: &lua_State, s: c_string) -> c_string;
-lua_pushvfstring :: (L: &lua_State, fmt: c_string) -> c_string;
-lua_pushfstring :: (L: &lua_State, fmt: c_string) -> c_string #varargs;
-lua_pushcclosure :: (L: &lua_State, f: lua_CFunction, n: i32);
-lua_pushboolean :: (L: &lua_State, b: i32);
-lua_pushlightuserdata :: (L: &lua_State, p: &void);
-lua_pushthread :: (L: &lua_State) -> i32;
+lua_pushnil :: (L: ^lua_State);
+lua_pushnumber :: (L: ^lua_State, n: lua_Number);
+lua_pushinteger :: (L: ^lua_State, n: lua_Integer);
+lua_pushlstring :: (L: ^lua_State, s: c_string, len: int) -> c_string;
+lua_pushstring :: (L: ^lua_State, s: c_string) -> c_string;
+lua_pushvfstring :: (L: ^lua_State, fmt: c_string) -> c_string;
+lua_pushfstring :: (L: ^lua_State, fmt: c_string) -> c_string #varargs;
+lua_pushcclosure :: (L: ^lua_State, f: lua_CFunction, n: i32);
+lua_pushboolean :: (L: ^lua_State, b: i32);
+lua_pushlightuserdata :: (L: ^lua_State, p: ^void);
+lua_pushthread :: (L: ^lua_State) -> i32;
 
 
 /*
 ** get functions (Lua -> stack)
 */
-lua_getglobal ::     (L: &lua_State, name: c_string) -> i32;
-lua_gettable ::      (L: &lua_State, idx: i32) -> i32;
-lua_getfield ::      (L: &lua_State, idx: i32, k: c_string) -> i32;
-lua_geti ::          (L: &lua_State, idx: i32, n: lua_Integer) -> i32;
-lua_rawget ::        (L: &lua_State, idx: i32) -> i32;
-lua_rawgeti ::       (L: &lua_State, idx: i32, n: lua_Integer) -> i32;
-lua_rawgetp ::       (L: &lua_State, idx: i32, p: &void) -> i32;
-lua_createtable ::   (L: &lua_State, narr: i32, nrec: i32) ;
-lua_newuserdata ::   (L: &lua_State, sz: int) -> &void;
-lua_getmetatable ::  (L: &lua_State, objindex: i32) -> i32;
-lua_getuservalue ::  (L: &lua_State, idx: i32) -> i32;
+lua_getglobal ::     (L: ^lua_State, name: c_string) -> i32;
+lua_gettable ::      (L: ^lua_State, idx: i32) -> i32;
+lua_getfield ::      (L: ^lua_State, idx: i32, k: c_string) -> i32;
+lua_geti ::          (L: ^lua_State, idx: i32, n: lua_Integer) -> i32;
+lua_rawget ::        (L: ^lua_State, idx: i32) -> i32;
+lua_rawgeti ::       (L: ^lua_State, idx: i32, n: lua_Integer) -> i32;
+lua_rawgetp ::       (L: ^lua_State, idx: i32, p: ^void) -> i32;
+lua_createtable ::   (L: ^lua_State, narr: i32, nrec: i32) ;
+lua_newuserdata ::   (L: ^lua_State, sz: int) -> ^void;
+lua_getmetatable ::  (L: ^lua_State, objindex: i32) -> i32;
+lua_getuservalue ::  (L: ^lua_State, idx: i32) -> i32;
 
 /*
 ** set functions (stack -> Lua)
 */
-lua_setglobal :: (L: &lua_State, name: c_string);
-lua_settable :: (L: &lua_State, idx: i32);
-lua_setfield :: (L: &lua_State, idx: i32, k: c_string);
-lua_seti :: (L: &lua_State, idx: i32, n: lua_Integer);
-lua_rawset :: (L: &lua_State, idx: i32);
-lua_rawseti :: (L: &lua_State, idx: i32, n: lua_Integer);
-lua_rawsetp :: (L: &lua_State, idx: i32, p: &void);
-lua_setmetatable :: (L: &lua_State, objindex: i32) -> int;
-lua_setuservalue :: (L: &lua_State, idx: i32);
+lua_setglobal :: (L: ^lua_State, name: c_string);
+lua_settable :: (L: ^lua_State, idx: i32);
+lua_setfield :: (L: ^lua_State, idx: i32, k: c_string);
+lua_seti :: (L: ^lua_State, idx: i32, n: lua_Integer);
+lua_rawset :: (L: ^lua_State, idx: i32);
+lua_rawseti :: (L: ^lua_State, idx: i32, n: lua_Integer);
+lua_rawsetp :: (L: ^lua_State, idx: i32, p: ^void);
+lua_setmetatable :: (L: ^lua_State, objindex: i32) -> int;
+lua_setuservalue :: (L: ^lua_State, idx: i32);
 
 /*
 ** access functions (stack -> C)
 */
-lua_isnumber :: (L: &lua_State, idx: i32) -> i32;
-lua_isstring :: (L: &lua_State, idx: i32) -> i32;
-lua_iscfunction :: (L: &lua_State, idx: i32) -> i32;
-lua_isinteger :: (L: &lua_State, idx: i32) -> i32;
-lua_isuserdata :: (L: &lua_State, idx: i32) -> i32;
-lua_type :: (L: &lua_State, idx: i32) -> i32;
-lua_typename :: (L: &lua_State, tp: i32) -> c_string;
-lua_tonumberx :: (L: &lua_State, idx: i32, isnum: &i32) -> lua_Number;
-lua_tointegerx :: (L: &lua_State, idx: i32, isnum: &i32) -> lua_Integer;
-lua_toboolean :: (L: &lua_State, idx: i32) -> i32;
-lua_tolstring :: (L: &lua_State, idx: i32, len: &int) -> c_string;
-lua_rawlen :: (L: &lua_State, idx: i32) -> i32;
-lua_tocfunction :: (L: &lua_State, idx: i32) -> lua_CFunction;
-lua_touserdata :: (L: &lua_State, idx: i32) -> &void;
-lua_tothread :: (L: &lua_State, idx: i32) -> &lua_State;
-lua_topointer :: (L: &lua_State, idx: i32) -> &void;
+lua_isnumber :: (L: ^lua_State, idx: i32) -> i32;
+lua_isstring :: (L: ^lua_State, idx: i32) -> i32;
+lua_iscfunction :: (L: ^lua_State, idx: i32) -> i32;
+lua_isinteger :: (L: ^lua_State, idx: i32) -> i32;
+lua_isuserdata :: (L: ^lua_State, idx: i32) -> i32;
+lua_type :: (L: ^lua_State, idx: i32) -> i32;
+lua_typename :: (L: ^lua_State, tp: i32) -> c_string;
+lua_tonumberx :: (L: ^lua_State, idx: i32, isnum: ^i32) -> lua_Number;
+lua_tointegerx :: (L: ^lua_State, idx: i32, isnum: ^i32) -> lua_Integer;
+lua_toboolean :: (L: ^lua_State, idx: i32) -> i32;
+lua_tolstring :: (L: ^lua_State, idx: i32, len: ^int) -> c_string;
+lua_rawlen :: (L: ^lua_State, idx: i32) -> i32;
+lua_tocfunction :: (L: ^lua_State, idx: i32) -> lua_CFunction;
+lua_touserdata :: (L: ^lua_State, idx: i32) -> ^void;
+lua_tothread :: (L: ^lua_State, idx: i32) -> ^lua_State;
+lua_topointer :: (L: ^lua_State, idx: i32) -> ^void;
 
 /*
 ** 'load' and 'call' functions (load and run Lua code)
 */
-lua_callk :: (L: &lua_State, nargs: i32, nresults: i32, ctx: lua_KContext, k: lua_KFunction);
-lua_pcallk :: (L: &lua_State, nargs: i32, nresults: i32, errfunc: i32, ctx: lua_KContext, k: lua_KFunction) -> i32;
-lua_load :: (L: &lua_State, reader: lua_Reader, dt: &void, chunkname: c_string, mode: c_string) -> i32;
-lua_dump :: (L: &lua_State, writer: lua_Writer, data: &void, strip: int) -> i32;
+lua_callk :: (L: ^lua_State, nargs: i32, nresults: i32, ctx: lua_KContext, k: lua_KFunction);
+lua_pcallk :: (L: ^lua_State, nargs: i32, nresults: i32, errfunc: i32, ctx: lua_KContext, k: lua_KFunction) -> i32;
+lua_load :: (L: ^lua_State, reader: lua_Reader, dt: ^void, chunkname: c_string, mode: c_string) -> i32;
+lua_dump :: (L: ^lua_State, writer: lua_Writer, data: ^void, strip: int) -> i32;
 
 /*
 ** basic stack manipulation
 */
-lua_absindex :: (L: &lua_State, idx: i32) -> i32;
-lua_gettop :: (L: &lua_State) -> i32;
-lua_settop :: (L: &lua_State, idx: i32);
-lua_pushvalue :: (L: &lua_State, idx: i32);
-lua_rotate :: (L: &lua_State, idx: i32, n: i32);
-lua_copy :: (L: &lua_State, fromidx: i32, toidx: i32);
-lua_checkstack :: (L: &lua_State, n: i32) -> i32;
+lua_absindex :: (L: ^lua_State, idx: i32) -> i32;
+lua_gettop :: (L: ^lua_State) -> i32;
+lua_settop :: (L: ^lua_State, idx: i32);
+lua_pushvalue :: (L: ^lua_State, idx: i32);
+lua_rotate :: (L: ^lua_State, idx: i32, n: i32);
+lua_copy :: (L: ^lua_State, fromidx: i32, toidx: i32);
+lua_checkstack :: (L: ^lua_State, n: i32) -> i32;
 
-lua_xmove :: (from: &lua_State, to: &lua_State, n: i32);
+lua_xmove :: (from: ^lua_State, to: ^lua_State, n: i32);

@@ -14,7 +14,7 @@ Vector :: struct(T: type) #copy {
 }
 
 impl(T: type) Vector[T] {
-    add :: (ref Self, other: Vector[T]) -> ref Vector[T] {
+    add :: (&Self, other: Vector[T]) -> &Vector[T] {
         x += other.x
         y += other.y
 

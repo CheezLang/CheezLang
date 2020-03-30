@@ -9,14 +9,14 @@
 
 #export_scope
 
-CXIndex             :: &void
-CXTranslationUnit   :: &void
-CXClientData        :: &void
-CXFile              :: &void
-CXCursorVisitor     :: fn(&CXCursor, &CXCursor, CXClientData) -> CXChildVisitResult
+CXIndex             :: ^void
+CXTranslationUnit   :: ^void
+CXClientData        :: ^void
+CXFile              :: ^void
+CXCursorVisitor     :: fn(^CXCursor, ^CXCursor, CXClientData) -> CXChildVisitResult
 
 // functions
-clang_getTranslationUnitCursor      :: (cursor: &CXCursor, unit: CXTranslationUnit);
+clang_getTranslationUnitCursor      :: (cursor: ^CXCursor, unit: CXTranslationUnit);
 clang_createIndex                   :: (excludeDeclarationsFromPCH: i32, displayDiagnostics: i32) -> CXIndex;
 clang_disposeIndex                  :: (index: CXIndex);
 clang_parseTranslationUnit          :: (
@@ -24,71 +24,71 @@ clang_parseTranslationUnit          :: (
     source_filename       : c_string,
     command_line_args     : c_string,
     num_command_line_args : i32,
-    unsaved_files         : &CXUnsavedFile,
+    unsaved_files         : ^CXUnsavedFile,
     num_unsaved_files     : u32,
     options               : u32) -> CXTranslationUnit;
 clang_disposeTranslationUnit        :: (unit: CXTranslationUnit);
-clang_visitChildrenHelper           :: (cursor: &CXCursor, visitor: CXCursorVisitor, client_data: CXClientData) -> u32;
+clang_visitChildrenHelper           :: (cursor: ^CXCursor, visitor: CXCursorVisitor, client_data: CXClientData) -> u32;
 
-clang_getCursorKindHelper           :: (cursor: &CXCursor) -> CXCursorKind;
-clang_getCursorSpellingHelper       :: (ret: &CXString, cursor: &CXCursor);
-clang_getCursorSpelling             :: (cursor: &CXCursor) -> CXString { gen_binding(cursor) }
-clang_getCursorKindSpellingHelper   :: (ret: &CXString, kind: CXCursorKind);
+clang_getCursorKindHelper           :: (cursor: ^CXCursor) -> CXCursorKind;
+clang_getCursorSpellingHelper       :: (ret: ^CXString, cursor: ^CXCursor);
+clang_getCursorSpelling             :: (cursor: ^CXCursor) -> CXString { gen_binding(cursor) }
+clang_getCursorKindSpellingHelper   :: (ret: ^CXString, kind: CXCursorKind);
 clang_getCursorKindSpelling         :: (kind: CXCursorKind) -> CXString { gen_binding(kind) }
-clang_getCursorTypeHelper           :: (ret: &CXType, cursor: &CXCursor);
-clang_getCursorType                 :: (cursor: &CXCursor) -> CXType { gen_binding(cursor) }
+clang_getCursorTypeHelper           :: (ret: ^CXType, cursor: ^CXCursor);
+clang_getCursorType                 :: (cursor: ^CXCursor) -> CXType { gen_binding(cursor) }
 
-clang_getCStringHelper              :: (str: &CXString) -> c_string;
-clang_disposeStringHelper           :: (str: &CXString);
+clang_getCStringHelper              :: (str: ^CXString) -> c_string;
+clang_disposeStringHelper           :: (str: ^CXString);
 
 // type functions
-clang_getTypeSpellingHelper         :: (ret: &CXString, typ: &CXType);
-clang_getTypeSpelling               :: (typ: CXType) -> CXString { gen_binding(&typ) }
-clang_getTypeKindSpellingHelper     :: (ret: &CXString, kind: CXTypeKind);
+clang_getTypeSpellingHelper         :: (ret: ^CXString, typ: ^CXType);
+clang_getTypeSpelling               :: (typ: CXType) -> CXString { gen_binding(^typ) }
+clang_getTypeKindSpellingHelper     :: (ret: ^CXString, kind: CXTypeKind);
 clang_getTypeKindSpelling           :: (kind: CXTypeKind) -> CXString { gen_binding(kind) }
 
-clang_Type_getSizeOfHelper          :: (typ: &CXType) -> int;
-clang_Type_getSizeOf                :: (typ: CXType) -> int { gen_binding2(&typ) }
-clang_getArraySizeHelper            :: (typ: &CXType) -> int;
-clang_getArraySize                  :: (typ: CXType) -> int { gen_binding2(&typ) }
+clang_Type_getSizeOfHelper          :: (typ: ^CXType) -> int;
+clang_Type_getSizeOf                :: (typ: CXType) -> int { gen_binding2(^typ) }
+clang_getArraySizeHelper            :: (typ: ^CXType) -> int;
+clang_getArraySize                  :: (typ: CXType) -> int { gen_binding2(^typ) }
 
-clang_getResultTypeHelper           :: (ret: &CXType, typ: &CXType);
-clang_getResultType                 :: (typ: CXType) -> CXType { gen_binding(&typ) }
-clang_getPointeeTypeHelper          :: (ret: &CXType, typ: &CXType);
-clang_getPointeeType                :: (typ: CXType) -> CXType { gen_binding(&typ) }
-clang_getArrayElementTypeHelper     :: (ret: &CXType, typ: &CXType);
-clang_getArrayElementType           :: (typ: CXType) -> CXType { gen_binding(&typ) }
-clang_Type_getNamedTypeHelper       :: (ret: &CXType, typ: &CXType);
-clang_Type_getNamedType             :: (typ: CXType) -> CXType { gen_binding(&typ) }
-clang_getTypeDeclarationHelper      :: (ret: &CXCursor, typ: &CXType);
-clang_getTypeDeclaration            :: (typ: CXType) -> CXCursor { gen_binding(&typ) }
-clang_getTypedefDeclUnderlyingTypeHelper :: (ret: &CXType, cursor: &CXCursor);
-clang_getTypedefDeclUnderlyingType       :: (cursor: CXCursor) -> CXType { gen_binding(&cursor) }
-clang_getEnumDeclIntegerTypeHelper  :: (ret: &CXType, cursor: &CXCursor);
-clang_getEnumDeclIntegerType        :: (cursor: CXCursor) -> CXType { gen_binding(&cursor) }
-clang_getArgTypeHelper              :: (ret: &CXType, T: &CXType, index: u32);
+clang_getResultTypeHelper           :: (ret: ^CXType, typ: ^CXType);
+clang_getResultType                 :: (typ: CXType) -> CXType { gen_binding(^typ) }
+clang_getPointeeTypeHelper          :: (ret: ^CXType, typ: ^CXType);
+clang_getPointeeType                :: (typ: CXType) -> CXType { gen_binding(^typ) }
+clang_getArrayElementTypeHelper     :: (ret: ^CXType, typ: ^CXType);
+clang_getArrayElementType           :: (typ: CXType) -> CXType { gen_binding(^typ) }
+clang_Type_getNamedTypeHelper       :: (ret: ^CXType, typ: ^CXType);
+clang_Type_getNamedType             :: (typ: CXType) -> CXType { gen_binding(^typ) }
+clang_getTypeDeclarationHelper      :: (ret: ^CXCursor, typ: ^CXType);
+clang_getTypeDeclaration            :: (typ: CXType) -> CXCursor { gen_binding(^typ) }
+clang_getTypedefDeclUnderlyingTypeHelper :: (ret: ^CXType, cursor: ^CXCursor);
+clang_getTypedefDeclUnderlyingType       :: (cursor: CXCursor) -> CXType { gen_binding(^cursor) }
+clang_getEnumDeclIntegerTypeHelper  :: (ret: ^CXType, cursor: ^CXCursor);
+clang_getEnumDeclIntegerType        :: (cursor: CXCursor) -> CXType { gen_binding(^cursor) }
+clang_getArgTypeHelper              :: (ret: ^CXType, T: ^CXType, index: u32);
 clang_getArgType                    :: (T: CXType, index: u32) -> CXType {
     res : CXType = default
-    clang_getArgTypeHelper(&res, &T, index)
+    clang_getArgTypeHelper(^res, ^T, index)
     return res
 }
 
-clang_getEnumConstantDeclValueHelper         :: (T: &CXCursor) -> i64;
-clang_getEnumConstantDeclValue               :: (T: CXCursor) -> i64 { gen_binding2(&T) }
-clang_getEnumConstantDeclUnsignedValueHelper :: (T: &CXCursor) -> u64;
-clang_getEnumConstantDeclUnsignedValue       :: (T: CXCursor) -> u64 { gen_binding2(&T) }
+clang_getEnumConstantDeclValueHelper         :: (T: ^CXCursor) -> i64;
+clang_getEnumConstantDeclValue               :: (T: CXCursor) -> i64 { gen_binding2(^T) }
+clang_getEnumConstantDeclUnsignedValueHelper :: (T: ^CXCursor) -> u64;
+clang_getEnumConstantDeclUnsignedValue       :: (T: CXCursor) -> u64 { gen_binding2(^T) }
 
-clang_getCursorLocationHelper       :: (ret: &CXSourceLocation, cursor: &CXCursor);
-clang_getCursorLocation             :: (cursor: CXCursor) -> CXSourceLocation { gen_binding(&cursor) }
-clang_Location_isFromMainFileHelper :: (T: &CXSourceLocation) -> i32;
-clang_Location_isFromMainFile       :: (T: CXSourceLocation) -> i32 { gen_binding2(&T) }
-clang_getFileLocationHelper         :: (location: &CXSourceLocation, file: &CXFile, line: &u32, column: &u32, offset: &u32);
+clang_getCursorLocationHelper       :: (ret: ^CXSourceLocation, cursor: ^CXCursor);
+clang_getCursorLocation             :: (cursor: CXCursor) -> CXSourceLocation { gen_binding(^cursor) }
+clang_Location_isFromMainFileHelper :: (T: ^CXSourceLocation) -> i32;
+clang_Location_isFromMainFile       :: (T: CXSourceLocation) -> i32 { gen_binding2(^T) }
+clang_getFileLocationHelper         :: (location: ^CXSourceLocation, file: ^CXFile, line: ^u32, column: ^u32, offset: ^u32);
 clang_getFileLocation               :: (location: CXSourceLocation) -> (file: CXFile, line: int, column: int, offset: int) {
     file   : CXFile = default
     line   : u32    = default
     column : u32    = default
     offset : u32    = default
-    clang_getFileLocationHelper(&location, &file, &line, &column, &offset)
+    clang_getFileLocationHelper(^location, ^file, ^line, ^column, ^offset)
     return file, int(line), int(column), int(offset)
 }
 
@@ -98,23 +98,23 @@ clang_Cursor_isExternalSymbol_result :: struct {
     defined_in   : CXString = default
     is_generated : u32      = default
 }
-clang_Cursor_isExternalSymbolHelper :: (C: &CXCursor, language: &CXString, defined_in: &CXString, is_generated: &u32) -> u32;
+clang_Cursor_isExternalSymbolHelper :: (C: ^CXCursor, language: ^CXString, defined_in: ^CXString, is_generated: ^u32) -> u32;
 clang_Cursor_isExternalSymbol       :: (C: CXCursor) -> Option[clang_Cursor_isExternalSymbol_result] {
     result : clang_Cursor_isExternalSymbol_result = default
-    if clang_Cursor_isExternalSymbolHelper(&C, &result.language, &result.defined_in, &result.is_generated) != 0 {
+    if clang_Cursor_isExternalSymbolHelper(^C, ^result.language, ^result.defined_in, ^result.is_generated) != 0 {
         return Some(result)
     } else {
         return None
     }
 }
 
-clang_getFileNameHelper             :: (ret: &CXString, cursor: CXFile);
+clang_getFileNameHelper             :: (ret: ^CXString, cursor: CXFile);
 clang_getFileName                   :: (cursor: CXFile) -> CXString { gen_binding(cursor) }
 
 // binding helpers
 gen_binding :: (param: Code) #macro {
     res : @function_type().return_type = default
-    @id(@function_name() + "Helper")(&res, @insert(param))
+    @id(@function_name() + "Helper")(^res, @insert(param))
     return res
 }
 
@@ -124,7 +124,7 @@ gen_binding2 :: (param: Code) #macro {
 
 // types
 CXString :: struct {
-    data  : &void = null
+    data  : ^void = null
     flags : u32   = 0
 }
 
@@ -137,16 +137,16 @@ CXUnsavedFile :: struct #copy {
 CXCursor :: struct #copy {
     kind  : CXCursorKind = CXCursorKind.Unknown
     xdata : i32          = 0
-    data  : [3]&void     = default
+    data  : [3]^void     = default
 }
 
 CXType :: struct #copy {
     kind : CXTypeKind = CXTypeKind.Invalid
-    data : [2]&void   = default
+    data : [2]^void   = default
 }
 
 CXSourceLocation :: struct #copy {
-  ptr_data : [2]&void = default
+  ptr_data : [2]^void = default
   int_data : u32      = default
 }
 
@@ -411,10 +411,10 @@ CXCursorKind :: enum #copy #repr("C") #tag_type(i32) {
   LastDecl                      = CXXAccessSpecifier
 
   /* References */
-  FirstRef                      = 40 /* Decl references */
-  ObjCSuperClassRef             = 40
-  ObjCProtocolRef               = 41
-  ObjCClassRef                  = 42
+  First&                     = 40 /* Decl references */
+  ObjCSuperClass&            = 40
+  ObjCProtocol&              = 41
+  ObjCClass&                 = 42
   /**
    * A reference to a type declaration.
    *
@@ -430,22 +430,22 @@ CXCursorKind :: enum #copy #repr("C") #tag_type(i32) {
    * while the type of the variable "size" is referenced. The cursor
    * referenced by the type of size is the typedef for size_type.
    */
-  TypeRef                       = 43
+  Type&                      = 43
   CXXBaseSpecifier              = 44
   /**
    * A reference to a class template, function template, template
    * template parameter, or class template partial specialization.
    */
-  TemplateRef                   = 45
+  Template&                  = 45
   /**
    * A reference to a namespace or namespace alias.
    */
-  NamespaceRef                  = 46
+  Namespace&                 = 46
   /**
    * A reference to a member of a struct, union, or class that occurs in
    * some non-expression context, e.g., a designated initializer.
    */
-  MemberRef                     = 47
+  Member&                    = 47
   /**
    * A reference to a labeled statement.
    *
@@ -461,7 +461,7 @@ CXCursorKind :: enum #copy #repr("C") #tag_type(i32) {
    *
    * A label reference cursor refers to a label statement.
    */
-  LabelRef                      = 48
+  Label&                     = 48
 
   /**
    * A reference to a set of overloaded functions or function templates
@@ -471,10 +471,10 @@ CXCursorKind :: enum #copy #repr("C") #tag_type(i32) {
    * a dependent name refers to a function. For example:
    *
    * \code
-   * template<typename T> void swap(T&, T&);
+   * template<typename T> void swap(T^, T^);
    *
    * struct X { ... };
-   * void swap(X&, X&);
+   * void swap(X^, X^);
    *
    * template<typename T>
    * void reverse(T* first, T* last) {
@@ -485,7 +485,7 @@ CXCursorKind :: enum #copy #repr("C") #tag_type(i32) {
    * }
    *
    * struct Y { };
-   * void swap(Y&, Y&);
+   * void swap(Y^, Y^);
    * \endcode
    *
    * Here, the identifier "swap" is associated with an overloaded declaration
@@ -499,15 +499,15 @@ CXCursorKind :: enum #copy #repr("C") #tag_type(i32) {
    * \c clang_getOverloadedDecl() can be used to retrieve the definitions
    * referenced by this cursor.
    */
-  OverloadedDeclRef             = 49
+  OverloadedDecl&            = 49
 
   /**
    * A reference to a variable that occurs in some non-expression
    * context, e.g., a C++ lambda capture list.
    */
-  VariableRef                   = 50
+  Variable&                  = 50
 
-  LastRef                       = VariableRef
+  Last&                      = VariableRef
 
   /* Error conditions */
   FirstInvalid                  = 70
@@ -616,7 +616,7 @@ CXCursorKind :: enum #copy #repr("C") #tag_type(i32) {
    */
   InitListExpr                  = 119
 
-  /** The GNU address of label extension, representing &&label.
+  /** The GNU address of label extension, representing ^^label.
    */
   AddrLabelExpr                 = 120
 
@@ -734,8 +734,8 @@ CXCursorKind :: enum #copy #repr("C") #tag_type(i32) {
    *
    * \code
    * template<typename F, typename ...Types>
-   * void forward(F f, Types &&...args) {
-   *  f(static_cast<Types&&>(args)...);
+   * void forward(F f, Types ^^...args) {
+   *  f(static_cast<Types^^>(args)...);
    * }
    * \endcode
    */

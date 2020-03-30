@@ -20,7 +20,7 @@ Main :: () {
     print_a(a)
 }
 
-print_a :: (a: ref Option[int]) {
+print_a :: (a: &Option[int]) {
     match a {
         Some($a) -> {
             C.printf("%lld`n", a)
@@ -31,12 +31,12 @@ print_a :: (a: ref Option[int]) {
     }
 }
 
-get_ref :: (a: ref Option[int]) -> ref Option[int] {
+get_ref :: (a: &Option[int]) -> &Option[int] {
     C.puts("get_ref")
     return a
 }
 
-inc1 :: (a: ref Option[int]) {
+inc1 :: (a: &Option[int]) {
     match get_ref(a) {
         Some($v) -> {
             v += 1
@@ -45,9 +45,9 @@ inc1 :: (a: ref Option[int]) {
 
 }
 
-inc2 :: (a: ref Option[int]) {
+inc2 :: (a: &Option[int]) {
     a_ref := get_ref(a)
-    match <<&a_ref {
+    match <<^a_ref {
         Some($v) -> {
             v += 2
         }
@@ -55,7 +55,7 @@ inc2 :: (a: ref Option[int]) {
 }
 
 inc3 :: (a: Option[int]) {
-    match ref a {
+    match &a {
         Some($v) -> {
             v += 4
         }

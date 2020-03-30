@@ -50,7 +50,7 @@ write_file :: (path: string, content: string) -> Result[(), FsError] {
     }
 
     bytes_written : u32 = 0
-    if WriteFile(handle, content.bytes.data, cast content.bytes.length, &bytes_written, null) == 0 {
+    if WriteFile(handle, content.bytes.data, cast content.bytes.length, ^bytes_written, null) == 0 {
         return Err(FsError.Unknown)
     }
 
@@ -72,7 +72,7 @@ append_file :: (path: string, content: string) -> Result[(), FsError] {
     SetFilePointerEx(handle, 0, null, FILE_END)
 
     bytes_written : u32 = 0
-    if WriteFile(handle, content.bytes.data, cast content.bytes.length, &bytes_written, null) == 0 {
+    if WriteFile(handle, content.bytes.data, cast content.bytes.length, ^bytes_written, null) == 0 {
         return Err(FsError.Unknown)
     }
 
@@ -92,7 +92,7 @@ read_file :: (path: string) -> Result[String, FsError] {
     }
 
     size := 0
-    if GetFileSizeEx(handle, &size) == 0 {
+    if GetFileSizeEx(handle, ^size) == 0 {
         return Err(FsError.Unknown)
     }
 
@@ -100,7 +100,7 @@ read_file :: (path: string) -> Result[String, FsError] {
     result.resize(size)
     
     bytesRead : u32 = 0
-    if ReadFile(handle, result.get_raw(), cast(u32)size, &bytesRead, null) == 0 {
+    if ReadFile(handle, result.get_raw(), cast(u32)size, ^bytesRead, null) == 0 {
         return Err(FsError.Unknown)
     }
 

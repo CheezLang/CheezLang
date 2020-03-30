@@ -45,8 +45,8 @@ FunctionType :: enum {
 }
 
 Compiler :: struct {
-    enclosing   : &Compiler
-    function    : &ObjFunction
+    enclosing   : ^Compiler
+    function    : ^ObjFunction
     kind        : FunctionType
     locals      : [256]Local
     local_count : int
@@ -69,14 +69,14 @@ impl Compiler {
 }
 
 ClassCompiler :: struct {
-    enclosing   : &ClassCompiler
+    enclosing   : ^ClassCompiler
     name        : Token
     has_super   : bool
 }
 
 
 
-compile :: (source: string) -> &ObjFunction {
+compile :: (source: string) -> ^ObjFunction {
     lexer := Lexer.create(source)
     compiler := Compiler.create(FunctionType.Script)
 
@@ -119,7 +119,7 @@ ObjKind :: enum {
 Obj :: struct {
     kind    : ObjKind
     is_dark : bool = false
-    next    : &Obj = null
+    next    : ^Obj = null
 }
 
 ObjFunction :: struct {
@@ -140,7 +140,7 @@ Value :: enum {
     Nil
     Bool    : bool
     Num     : double
-    Obj     : &Object
+    Obj     : ^Object
 }
 
 Object :: struct {
@@ -195,24 +195,24 @@ impl Lexer {
         )
     }
 
-    next_char :: (ref Self) -> char {
+    next_char :: (&Self) -> char {
         current += 1
         return source[current - 1]
     }
 
-    peek_char :: (ref Self) -> char {
+    peek_char :: (&Self) -> char {
         return if is_at_end() { char(0) } else { source[current] }
     }
 
-    peek_next_char :: (ref Self) -> char {
+    peek_next_char :: (&Self) -> char {
         return if current >= source.length - 1 { char(0) } else { source[current + 1] }
     }
 
-    is_at_end :: (ref Self) -> bool {
+    is_at_end :: (&Self) -> bool {
         return current >= source.length
     }
 
-    skip_whitespace :: (ref Self) {
+    skip_whitespace :: (&Self) {
         while true {
             c := peek_char()
             match c {
@@ -238,11 +238,11 @@ impl Lexer {
         }
     }
 
-    make_token :: (ref Self, kind: TokenKind, length: int = 1) -> Token {
+    make_token :: (&Self, kind: TokenKind, length: int = 1) -> Token {
         return Token(kind, source.slice(current - 1, length), line)
     }
 
-    make_string :: (ref Self) -> Token {
+    make_string :: (&Self) -> Token {
         start := current - 1
         l := line
         while !is_at_end() and peek_char() != '"' {
@@ -262,7 +262,7 @@ impl Lexer {
         return Token(TokenKind.String, source.slice(start, current - start), l)
     }
 
-    make_number :: (ref Self) -> Token {
+    make_number :: (&Self) -> Token {
         start := current - 1
 
         while !is_at_end() and is_digit(peek_char()) {
@@ -281,7 +281,7 @@ impl Lexer {
         return Token(TokenKind.Number, source.slice(start, current - start), line)
     }
 
-    make_identifier :: (ref Self) -> Token {
+    make_identifier :: (&Self) -> Token {
         start := current - 1
         while !is_at_end() and (is_alpha(peek_char()) or is_alpha(peek_char())) {
             next_char()
@@ -290,7 +290,7 @@ impl Lexer {
         return check_keywords(Token(TokenKind.Identifier, source.slice(start, current - start), line))
     }
 
-    check_keywords :: (ref Self, token: Token) -> Token {
+    check_keywords :: (&Self, token: Token) -> Token {
         token.kind = match token.text {
             $txt if streq(txt, "and")       -> TokenKind.And
             $txt if streq(txt, "var")       -> TokenKind.Var
@@ -326,7 +326,7 @@ impl Lexer {
                 (c == '_')
     }
 
-    next_token :: (ref Self) -> Token {
+    next_token :: (&Self) -> Token {
         skip_whitespace()
         if is_at_end() {
             return Token(TokenKind.Eof, "", line)
@@ -369,7 +369,7 @@ impl Lexer {
 }
 
 impl Printable for TokenKind {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.append_string(match self {
             use TokenKind
 
@@ -454,12 +454,12 @@ impl Chunk {
         )
     }
 
-    write :: (ref Self, byte: u8, line: int) {
+    write :: (&Self, byte: u8, line: int) {
         code.add(byte)
         lines.add(line)
     }
 
-    add_constant :: (ref Self, value: Value) {
+    add_constant :: (&Self, value: Value) {
         // gc
         // push(value)
         constants.add(value)

@@ -15,7 +15,7 @@ align :: (amount: int) -> FmtAlign {
 }
 
 impl Printable for FmtAlign {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         while str.get_length() < amount {
             str += ' '
         }
@@ -39,7 +39,7 @@ parse_int :: (str: string) -> int {
     return val * sign
 }
 
-format_int :: (buffer: ref String, val: $T, _base: int = 10) {
+format_int :: (buffer: &String, val: $T, _base: int = 10) {
     digit_to_char :: (i: $T) -> char {
         c := char(i)
         return if i < 10 { c + '0' } else { (c - char(10)) + 'A' }
@@ -77,11 +77,11 @@ format_int :: (buffer: ref String, val: $T, _base: int = 10) {
     }
 }
 
-format_any :: (arg: &any) -> String {
+format_any :: (arg: ^any) -> String {
     return format("{}", [arg])
 }
 
-format_into :: (result: ref String, text: string, args: []&any = []) {
+format_into :: (result: &String, text: string, args: []^any = []) {
     State :: enum #copy { Text, Format, Escape }
     use State
 
@@ -154,7 +154,7 @@ format_into :: (result: ref String, text: string, args: []&any = []) {
     }
 }
 
-format :: (text: string, args: []&any = []) -> String {
+format :: (text: string, args: []^any = []) -> String {
     result := String.empty()
     format_into(result, text, args)
     return result
@@ -162,18 +162,18 @@ format :: (text: string, args: []&any = []) -> String {
 
 #file_scope
 
-format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, format: string, recursive: bool) {
+format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format: string, recursive: bool) {
     if !recursive {
-        trait_func := typ.get_trait_function(Printable, "print", fn(&void, ref String, string))
+        trait_func := typ.get_trait_function(Printable, "print", fn(^void, &String, string))
         if trait_func != null {
             trait_func(data, result, "")
             return
         }
     }
 
-    match ref <<typ {
-        TypeInfoStruct($str) if str.get_trait_function(Printable, "print", fn(&void, ref String, string)) != null -> {
-            trait_func := str.get_trait_function(Printable, "print", fn(&void, ref String, string))
+    match &<<typ {
+        TypeInfoStruct($str) if str.get_trait_function(Printable, "print", fn(^void, &String, string)) != null -> {
+            trait_func := str.get_trait_function(Printable, "print", fn(^void, &String, string))
             if trait_func != null {
                 trait_func(data, result, "")
                 return
@@ -181,29 +181,29 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
         }
 
         TypeInfoString(_) -> {
-            ptr := cast(&string) data
+            ptr := cast(^string) data
             result.append_string(<<ptr)
         }
 
         TypeInfoInt($ti) -> {
             match (ti.size, ti.signed) {
-                (1, true)  -> format_int(result, <<cast(&i8) data)
-                (2, true)  -> format_int(result, <<cast(&i16) data)
-                (4, true)  -> format_int(result, <<cast(&i32) data)
-                (8, true)  -> format_int(result, <<cast(&i64) data)
-                (1, false) -> format_int(result, <<cast(&u8) data)
-                (2, false) -> format_int(result, <<cast(&u16) data)
-                (4, false) -> format_int(result, <<cast(&u32) data)
-                (8, false) -> format_int(result, <<cast(&u64) data)
+                (1, true)  -> format_int(result, <<cast(^i8) data)
+                (2, true)  -> format_int(result, <<cast(^i16) data)
+                (4, true)  -> format_int(result, <<cast(^i32) data)
+                (8, true)  -> format_int(result, <<cast(^i64) data)
+                (1, false) -> format_int(result, <<cast(^u8) data)
+                (2, false) -> format_int(result, <<cast(^u16) data)
+                (4, false) -> format_int(result, <<cast(^u32) data)
+                (8, false) -> format_int(result, <<cast(^u64) data)
             }
         }
 
         TypeInfoFloat(_) -> {
             if typ.size == 4 {
-                ptr := cast(&float) data
+                ptr := cast(^float) data
                 result.appendf("{}", <<ptr)
             } else if typ.size == 8 {
-                ptr := cast(&double) data
+                ptr := cast(^double) data
                 result.appendf("{}", <<ptr)
             } else {
                 result.appendf("<float: invalid size {}>", typ.size)
@@ -212,22 +212,22 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
         }
 
         TypeInfoBool(_) -> {
-            ptr := cast(&bool) data
+            ptr := cast(^bool) data
             if <<ptr then result.append_string("true") else result.append_string("false")
         }
 
         TypeInfoChar(_) -> {
-            ptr := cast(&char) data
+            ptr := cast(^char) data
             result.appendf("'{}'", <<ptr)
         }
 
         TypeInfoPointer($ti) -> {
-            ptr := cast(&&void) data
+            ptr := cast(^^void) data
             result.appendf("0x{:x}", int(<<ptr))
         }
 
         TypeInfoSlice($ti) -> {
-            ptr := <<cast(&[]void) data
+            ptr := <<cast(^[]void) data
             result += "["
             for i : 0..ptr.length {
                 if i > 0 {
@@ -241,7 +241,7 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
         }
 
         TypeInfoArray($ti) -> {
-            ptr := cast(&void) data
+            ptr := cast(^void) data
             result += "["
             for i : 0..ti.length {
                 if i > 0 {
@@ -255,14 +255,14 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
         }
 
         TypeInfoStruct($tstruct) -> {
-            ptr := cast(&void) data
+            ptr := cast(^void) data
             result += tstruct.name
 
             result += "("
             if tstruct.members.data != null {
                 comma := false
                 for i : 0..tstruct.members.length {
-                    member_info := &tstruct.members[i]
+                    member_info := ^tstruct.members[i]
                     if member_info.has_attribute("fmt_ignore") then continue
 
                     if comma {
@@ -280,15 +280,15 @@ format_any_into_string :: (result: ref String, data: &void, typ: &TypeInfo, form
         }
 
         TypeInfoEnum($tenum) -> {
-            ptr := cast(&void) data
+            ptr := cast(^void) data
             result += tenum.name
             result += '.'
 
             tag := match tenum.tag_type.size {
-                1  -> int(<<cast(&u8) ptr)
-                2  -> int(<<cast(&u16) ptr)
-                4  -> int(<<cast(&u32) ptr)
-                8  -> int(<<cast(&u64) ptr)
+                1  -> int(<<cast(^u8) ptr)
+                2  -> int(<<cast(^u16) ptr)
+                4  -> int(<<cast(^u32) ptr)
+                8  -> int(<<cast(^u64) ptr)
                 $_ -> {
                     @panic("Unsupported tag size")
                     0

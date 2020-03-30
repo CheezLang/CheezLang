@@ -30,32 +30,32 @@ Entity :: struct {
 }
 
 impl Entity {
-    init :: (ref Self) {
+    init :: (&Self) {
         for components {
             it.get().init()
         }
     }
 
-    update :: (ref Self, layer: ref EntityLayer, dt: float) {
+    update :: (&Self, layer: &EntityLayer, dt: float) {
         for components {
             it.get().update(self, layer, dt)
         }
     }
 
-    render :: (ref Self, engine: ref ShmupEngine, renderer: ref Renderer) {
+    render :: (&Self, engine: &ShmupEngine, renderer: &Renderer) {
         for components {
             it.get().render(self, engine, renderer)
         }
     }
 
-    add_component :: (ref Self, component: Rc[Component]) {
-        component.get().base().entity = &self
+    add_component :: (&Self, component: Rc[Component]) {
+        component.get().base().entity = ^self
         components.add(component)
     }
 
-    get_component :: (ref Self, $T: type) -> Option[Rc[T]] {
+    get_component :: (&Self, $T: type) -> Option[Rc[T]] {
         for components {
-            match ref it.get() {
+            match &it.get() {
                 T($comp) -> {
                     return Some(it.clone().change_type(T))
                 }
@@ -67,7 +67,7 @@ impl Entity {
 }
 
 impl IParser[Rc[Entity]] for Rc[Entity] {
-    parse :: (parser: ref Parser, lexer: ref Lexer, error_handler: &ErrorHandler) -> Option[Self] {
+    parse :: (parser: &Parser, lexer: &Lexer, error_handler: ^ErrorHandler) -> Option[Self] {
         return match parser.parse(Entity, lexer, error_handler) {
             Some($i) -> Some(Rc[Entity].new(i))
             None -> None

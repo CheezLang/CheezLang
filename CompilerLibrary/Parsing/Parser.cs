@@ -197,6 +197,7 @@ namespace Cheez.Parsing
                 case TokenType.OpenParen:
                 case TokenType.OpenBracket:
                 case TokenType.Ampersand:
+                case TokenType.Hat:
                 case TokenType.Identifier:
                 case TokenType.DollarIdentifier:
                 case TokenType.Kwfn:
@@ -231,6 +232,7 @@ namespace Cheez.Parsing
                 case TokenType.KwMatch:
                 case TokenType.KwIf:
                 case TokenType.Ampersand:
+                case TokenType.Hat:
                 case TokenType.Asterisk:
                 case TokenType.Bang:
                 case TokenType.Identifier:
@@ -1449,7 +1451,7 @@ namespace Cheez.Parsing
         private AstExpression ParseUnaryExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver errorMessage = null)
         {
             var next = PeekToken();
-            if (next.type == TokenType.Ampersand)
+            if (next.type == TokenType.Hat)
             {
                 NextToken();
                 SkipNewlines();
@@ -2168,7 +2170,7 @@ namespace Cheez.Parsing
                     //     }
                     // }
 
-                case TokenType.KwRef:
+                case TokenType.Ampersand:
                     NextToken();
                     SkipNewlines();
                     var target = ParseExpression(allowCommaForTuple);

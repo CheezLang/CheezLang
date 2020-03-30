@@ -25,24 +25,24 @@ BoolType  :: struct Type {}
 StringType :: struct Type {}
 
 PointerType :: struct Type {
-    target : ref Type
+    target : &Type
 }
 
 ReferenceType :: struct Type {
-    target : ref Type
+    target : &Type
 }
 
 SliceType :: struct Type {
-    target : ref Type
+    target : &Type
 }
 
 ArrayType :: struct Type {
-    target : ref Type
+    target : &Type
     length : int
 }
 
 // impl Printable for Type {
-//     print :: (ref Self, str: ref String, format: string) {
+//     print :: (&Self, str: &String, format: string) {
 //         match self {
 //             VoidType($t)      -> str.appendf("void", ())
 //             TypeType($t)      -> str.appendf("type", ())
@@ -51,10 +51,10 @@ ArrayType :: struct Type {
 //             FloatType($t)     -> str.appendf("f{}", t.size * 8)
 //             BoolType($t)      -> str.appendf("bool", ())
 //             StringType($t)    -> str.appendf("string", ())
-//             PointerType($t)   -> str.append_printables("&{}", [&t.target])
-//             ReferenceType($t) -> str.append_printables("ref {}", [&t.target])
-//             SliceType($t)     -> str.append_printables("[]{}", [&t.target])
-//             ArrayType($t)     -> str.append_printables("[{}]{}", [&t.length, &t.target])
+//             PointerType($t)   -> str.append_printables("^{}", [^t.target])
+//             ReferenceType($t) -> str.append_printables("&{}", [^t.target])
+//             SliceType($t)     -> str.append_printables("[]{}", [^t.target])
+//             ArrayType($t)     -> str.append_printables("[{}]{}", [^t.length, ^t.target])
 //         }
 //     }
 // }

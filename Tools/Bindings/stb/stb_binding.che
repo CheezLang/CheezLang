@@ -28,69 +28,69 @@ __codecvt_result :: enum #copy #repr("C") #tag_type(i32) {
     _codecvt_error   = 0x2
     _codecvt_noconv  = 0x3
 }
-stbi_load_from_memory :: (_buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_uc {
-    result : &stbi_uc = default
-    __c__stbi_load_from_memory(&result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
+stbi_load_from_memory :: (_buffer: ^stbi_uc, _len: i32, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^stbi_uc {
+    result : ^stbi_uc = default
+    __c__stbi_load_from_memory(^result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_load_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_uc {
-    result : &stbi_uc = default
-    __c__stbi_load_from_callbacks(&result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
+stbi_load_from_callbacks :: (_clbk: ^stbi_io_callbacks, _user: ^void, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^stbi_uc {
+    result : ^stbi_uc = default
+    __c__stbi_load_from_callbacks(^result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_load :: (_filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_uc {
-    result : &stbi_uc = default
-    __c__stbi_load(&result, _filename, _x, _y, _channels_in_file, _desired_channels)
+stbi_load :: (_filename: ^char8, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^stbi_uc {
+    result : ^stbi_uc = default
+    __c__stbi_load(^result, _filename, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_load_from_file :: (_f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_uc {
-    result : &stbi_uc = default
-    __c__stbi_load_from_file(&result, _f, _x, _y, _channels_in_file, _desired_channels)
+stbi_load_from_file :: (_f: ^FILE, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^stbi_uc {
+    result : ^stbi_uc = default
+    __c__stbi_load_from_file(^result, _f, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_load_gif_from_memory :: (_buffer: &stbi_uc, _len: i32, _delays: &&i32, _x: &i32, _y: &i32, _z: &i32, _comp: &i32, _req_comp: i32) -> &stbi_uc {
-    result : &stbi_uc = default
-    __c__stbi_load_gif_from_memory(&result, _buffer, _len, _delays, _x, _y, _z, _comp, _req_comp)
+stbi_load_gif_from_memory :: (_buffer: ^stbi_uc, _len: i32, _delays: ^^i32, _x: ^i32, _y: ^i32, _z: ^i32, _comp: ^i32, _req_comp: i32) -> ^stbi_uc {
+    result : ^stbi_uc = default
+    __c__stbi_load_gif_from_memory(^result, _buffer, _len, _delays, _x, _y, _z, _comp, _req_comp)
     return result
 }
-stbi_load_16_from_memory :: (_buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_us {
-    result : &stbi_us = default
-    __c__stbi_load_16_from_memory(&result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
+stbi_load_16_from_memory :: (_buffer: ^stbi_uc, _len: i32, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^stbi_us {
+    result : ^stbi_us = default
+    __c__stbi_load_16_from_memory(^result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_load_16_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_us {
-    result : &stbi_us = default
-    __c__stbi_load_16_from_callbacks(&result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
+stbi_load_16_from_callbacks :: (_clbk: ^stbi_io_callbacks, _user: ^void, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^stbi_us {
+    result : ^stbi_us = default
+    __c__stbi_load_16_from_callbacks(^result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_load_16 :: (_filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_us {
-    result : &stbi_us = default
-    __c__stbi_load_16(&result, _filename, _x, _y, _channels_in_file, _desired_channels)
+stbi_load_16 :: (_filename: ^char8, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^stbi_us {
+    result : ^stbi_us = default
+    __c__stbi_load_16(^result, _filename, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_load_from_file_16 :: (_f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &stbi_us {
-    result : &stbi_us = default
-    __c__stbi_load_from_file_16(&result, _f, _x, _y, _channels_in_file, _desired_channels)
+stbi_load_from_file_16 :: (_f: ^FILE, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^stbi_us {
+    result : ^stbi_us = default
+    __c__stbi_load_from_file_16(^result, _f, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_loadf_from_memory :: (_buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &f32 {
-    result : &f32 = default
-    __c__stbi_loadf_from_memory(&result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
+stbi_loadf_from_memory :: (_buffer: ^stbi_uc, _len: i32, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^f32 {
+    result : ^f32 = default
+    __c__stbi_loadf_from_memory(^result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_loadf_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &f32 {
-    result : &f32 = default
-    __c__stbi_loadf_from_callbacks(&result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
+stbi_loadf_from_callbacks :: (_clbk: ^stbi_io_callbacks, _user: ^void, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^f32 {
+    result : ^f32 = default
+    __c__stbi_loadf_from_callbacks(^result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_loadf :: (_filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &f32 {
-    result : &f32 = default
-    __c__stbi_loadf(&result, _filename, _x, _y, _channels_in_file, _desired_channels)
+stbi_loadf :: (_filename: ^char8, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^f32 {
+    result : ^f32 = default
+    __c__stbi_loadf(^result, _filename, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
-stbi_loadf_from_file :: (_f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32) -> &f32 {
-    result : &f32 = default
-    __c__stbi_loadf_from_file(&result, _f, _x, _y, _channels_in_file, _desired_channels)
+stbi_loadf_from_file :: (_f: ^FILE, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32) -> ^f32 {
+    result : ^f32 = default
+    __c__stbi_loadf_from_file(^result, _f, _x, _y, _channels_in_file, _desired_channels)
     return result
 }
 stbi_hdr_to_ldr_gamma :: (_gamma: f32) {
@@ -105,72 +105,72 @@ stbi_ldr_to_hdr_gamma :: (_gamma: f32) {
 stbi_ldr_to_hdr_scale :: (_scale: f32) {
     __c__stbi_ldr_to_hdr_scale(_scale)
 }
-stbi_is_hdr_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void) -> i32 {
+stbi_is_hdr_from_callbacks :: (_clbk: ^stbi_io_callbacks, _user: ^void) -> i32 {
     result : i32 = default
-    __c__stbi_is_hdr_from_callbacks(&result, _clbk, _user)
+    __c__stbi_is_hdr_from_callbacks(^result, _clbk, _user)
     return result
 }
-stbi_is_hdr_from_memory :: (_buffer: &stbi_uc, _len: i32) -> i32 {
+stbi_is_hdr_from_memory :: (_buffer: ^stbi_uc, _len: i32) -> i32 {
     result : i32 = default
-    __c__stbi_is_hdr_from_memory(&result, _buffer, _len)
+    __c__stbi_is_hdr_from_memory(^result, _buffer, _len)
     return result
 }
-stbi_is_hdr :: (_filename: &char8) -> i32 {
+stbi_is_hdr :: (_filename: ^char8) -> i32 {
     result : i32 = default
-    __c__stbi_is_hdr(&result, _filename)
+    __c__stbi_is_hdr(^result, _filename)
     return result
 }
-stbi_is_hdr_from_file :: (_f: &FILE) -> i32 {
+stbi_is_hdr_from_file :: (_f: ^FILE) -> i32 {
     result : i32 = default
-    __c__stbi_is_hdr_from_file(&result, _f)
+    __c__stbi_is_hdr_from_file(^result, _f)
     return result
 }
-stbi_failure_reason :: () -> &char8 {
-    result : &char8 = default
-    __c__stbi_failure_reason(&result)
+stbi_failure_reason :: () -> ^char8 {
+    result : ^char8 = default
+    __c__stbi_failure_reason(^result)
     return result
 }
-stbi_image_free :: (_retval_from_stbi_load: &void) {
+stbi_image_free :: (_retval_from_stbi_load: ^void) {
     __c__stbi_image_free(_retval_from_stbi_load)
 }
-stbi_info_from_memory :: (_buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi_info_from_memory :: (_buffer: ^stbi_uc, _len: i32, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi_info_from_memory(&result, _buffer, _len, _x, _y, _comp)
+    __c__stbi_info_from_memory(^result, _buffer, _len, _x, _y, _comp)
     return result
 }
-stbi_info_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi_info_from_callbacks :: (_clbk: ^stbi_io_callbacks, _user: ^void, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi_info_from_callbacks(&result, _clbk, _user, _x, _y, _comp)
+    __c__stbi_info_from_callbacks(^result, _clbk, _user, _x, _y, _comp)
     return result
 }
-stbi_is_16_bit_from_memory :: (_buffer: &stbi_uc, _len: i32) -> i32 {
+stbi_is_16_bit_from_memory :: (_buffer: ^stbi_uc, _len: i32) -> i32 {
     result : i32 = default
-    __c__stbi_is_16_bit_from_memory(&result, _buffer, _len)
+    __c__stbi_is_16_bit_from_memory(^result, _buffer, _len)
     return result
 }
-stbi_is_16_bit_from_callbacks :: (_clbk: &stbi_io_callbacks, _user: &void) -> i32 {
+stbi_is_16_bit_from_callbacks :: (_clbk: ^stbi_io_callbacks, _user: ^void) -> i32 {
     result : i32 = default
-    __c__stbi_is_16_bit_from_callbacks(&result, _clbk, _user)
+    __c__stbi_is_16_bit_from_callbacks(^result, _clbk, _user)
     return result
 }
-stbi_info :: (_filename: &char8, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi_info :: (_filename: ^char8, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi_info(&result, _filename, _x, _y, _comp)
+    __c__stbi_info(^result, _filename, _x, _y, _comp)
     return result
 }
-stbi_info_from_file :: (_f: &FILE, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi_info_from_file :: (_f: ^FILE, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi_info_from_file(&result, _f, _x, _y, _comp)
+    __c__stbi_info_from_file(^result, _f, _x, _y, _comp)
     return result
 }
-stbi_is_16_bit :: (_filename: &char8) -> i32 {
+stbi_is_16_bit :: (_filename: ^char8) -> i32 {
     result : i32 = default
-    __c__stbi_is_16_bit(&result, _filename)
+    __c__stbi_is_16_bit(^result, _filename)
     return result
 }
-stbi_is_16_bit_from_file :: (_f: &FILE) -> i32 {
+stbi_is_16_bit_from_file :: (_f: ^FILE) -> i32 {
     result : i32 = default
-    __c__stbi_is_16_bit_from_file(&result, _f)
+    __c__stbi_is_16_bit_from_file(^result, _f)
     return result
 }
 stbi_set_unpremultiply_on_load :: (_flag_true_if_should_unpremultiply: i32) {
@@ -185,197 +185,197 @@ stbi_set_flip_vertically_on_load :: (_flag_true_if_should_flip: i32) {
 stbi_set_flip_vertically_on_load_thread :: (_flag_true_if_should_flip: i32) {
     __c__stbi_set_flip_vertically_on_load_thread(_flag_true_if_should_flip)
 }
-stbi_zlib_decode_malloc_guesssize :: (_buffer: &char8, _len: i32, _initial_size: i32, _outlen: &i32) -> &char8 {
-    result : &char8 = default
-    __c__stbi_zlib_decode_malloc_guesssize(&result, _buffer, _len, _initial_size, _outlen)
+stbi_zlib_decode_malloc_guesssize :: (_buffer: ^char8, _len: i32, _initial_size: i32, _outlen: ^i32) -> ^char8 {
+    result : ^char8 = default
+    __c__stbi_zlib_decode_malloc_guesssize(^result, _buffer, _len, _initial_size, _outlen)
     return result
 }
-stbi_zlib_decode_malloc_guesssize_headerflag :: (_buffer: &char8, _len: i32, _initial_size: i32, _outlen: &i32, _parse_header: i32) -> &char8 {
-    result : &char8 = default
-    __c__stbi_zlib_decode_malloc_guesssize_headerflag(&result, _buffer, _len, _initial_size, _outlen, _parse_header)
+stbi_zlib_decode_malloc_guesssize_headerflag :: (_buffer: ^char8, _len: i32, _initial_size: i32, _outlen: ^i32, _parse_header: i32) -> ^char8 {
+    result : ^char8 = default
+    __c__stbi_zlib_decode_malloc_guesssize_headerflag(^result, _buffer, _len, _initial_size, _outlen, _parse_header)
     return result
 }
-stbi_zlib_decode_malloc :: (_buffer: &char8, _len: i32, _outlen: &i32) -> &char8 {
-    result : &char8 = default
-    __c__stbi_zlib_decode_malloc(&result, _buffer, _len, _outlen)
+stbi_zlib_decode_malloc :: (_buffer: ^char8, _len: i32, _outlen: ^i32) -> ^char8 {
+    result : ^char8 = default
+    __c__stbi_zlib_decode_malloc(^result, _buffer, _len, _outlen)
     return result
 }
-stbi_zlib_decode_buffer :: (_obuffer: &char8, _olen: i32, _ibuffer: &char8, _ilen: i32) -> i32 {
+stbi_zlib_decode_buffer :: (_obuffer: ^char8, _olen: i32, _ibuffer: ^char8, _ilen: i32) -> i32 {
     result : i32 = default
-    __c__stbi_zlib_decode_buffer(&result, _obuffer, _olen, _ibuffer, _ilen)
+    __c__stbi_zlib_decode_buffer(^result, _obuffer, _olen, _ibuffer, _ilen)
     return result
 }
-stbi_zlib_decode_noheader_malloc :: (_buffer: &char8, _len: i32, _outlen: &i32) -> &char8 {
-    result : &char8 = default
-    __c__stbi_zlib_decode_noheader_malloc(&result, _buffer, _len, _outlen)
+stbi_zlib_decode_noheader_malloc :: (_buffer: ^char8, _len: i32, _outlen: ^i32) -> ^char8 {
+    result : ^char8 = default
+    __c__stbi_zlib_decode_noheader_malloc(^result, _buffer, _len, _outlen)
     return result
 }
-stbi_zlib_decode_noheader_buffer :: (_obuffer: &char8, _olen: i32, _ibuffer: &char8, _ilen: i32) -> i32 {
+stbi_zlib_decode_noheader_buffer :: (_obuffer: ^char8, _olen: i32, _ibuffer: ^char8, _ilen: i32) -> i32 {
     result : i32 = default
-    __c__stbi_zlib_decode_noheader_buffer(&result, _obuffer, _olen, _ibuffer, _ilen)
+    __c__stbi_zlib_decode_noheader_buffer(^result, _obuffer, _olen, _ibuffer, _ilen)
     return result
 }
-stbi__refill_buffer :: (_s: &stbi__context) {
+stbi__refill_buffer :: (_s: ^stbi__context) {
     __c__stbi__refill_buffer(_s)
 }
-stbi__jpeg_test :: (_s: &stbi__context) -> i32 {
+stbi__jpeg_test :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__jpeg_test(&result, _s)
+    __c__stbi__jpeg_test(^result, _s)
     return result
 }
-stbi__jpeg_load :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info) -> &void {
-    result : &void = default
-    __c__stbi__jpeg_load(&result, _s, _x, _y, _comp, _req_comp, _ri)
+stbi__jpeg_load :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info) -> ^void {
+    result : ^void = default
+    __c__stbi__jpeg_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
     return result
 }
-stbi__jpeg_info :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi__jpeg_info :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi__jpeg_info(&result, _s, _x, _y, _comp)
+    __c__stbi__jpeg_info(^result, _s, _x, _y, _comp)
     return result
 }
-stbi__png_test :: (_s: &stbi__context) -> i32 {
+stbi__png_test :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__png_test(&result, _s)
+    __c__stbi__png_test(^result, _s)
     return result
 }
-stbi__png_load :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info) -> &void {
-    result : &void = default
-    __c__stbi__png_load(&result, _s, _x, _y, _comp, _req_comp, _ri)
+stbi__png_load :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info) -> ^void {
+    result : ^void = default
+    __c__stbi__png_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
     return result
 }
-stbi__png_info :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi__png_info :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi__png_info(&result, _s, _x, _y, _comp)
+    __c__stbi__png_info(^result, _s, _x, _y, _comp)
     return result
 }
-stbi__png_is16 :: (_s: &stbi__context) -> i32 {
+stbi__png_is16 :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__png_is16(&result, _s)
+    __c__stbi__png_is16(^result, _s)
     return result
 }
-stbi__bmp_test :: (_s: &stbi__context) -> i32 {
+stbi__bmp_test :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__bmp_test(&result, _s)
+    __c__stbi__bmp_test(^result, _s)
     return result
 }
-stbi__bmp_load :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info) -> &void {
-    result : &void = default
-    __c__stbi__bmp_load(&result, _s, _x, _y, _comp, _req_comp, _ri)
+stbi__bmp_load :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info) -> ^void {
+    result : ^void = default
+    __c__stbi__bmp_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
     return result
 }
-stbi__bmp_info :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi__bmp_info :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi__bmp_info(&result, _s, _x, _y, _comp)
+    __c__stbi__bmp_info(^result, _s, _x, _y, _comp)
     return result
 }
-stbi__tga_test :: (_s: &stbi__context) -> i32 {
+stbi__tga_test :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__tga_test(&result, _s)
+    __c__stbi__tga_test(^result, _s)
     return result
 }
-stbi__tga_load :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info) -> &void {
-    result : &void = default
-    __c__stbi__tga_load(&result, _s, _x, _y, _comp, _req_comp, _ri)
+stbi__tga_load :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info) -> ^void {
+    result : ^void = default
+    __c__stbi__tga_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
     return result
 }
-stbi__tga_info :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi__tga_info :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi__tga_info(&result, _s, _x, _y, _comp)
+    __c__stbi__tga_info(^result, _s, _x, _y, _comp)
     return result
 }
-stbi__psd_test :: (_s: &stbi__context) -> i32 {
+stbi__psd_test :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__psd_test(&result, _s)
+    __c__stbi__psd_test(^result, _s)
     return result
 }
-stbi__psd_load :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info, _bpc: i32) -> &void {
-    result : &void = default
-    __c__stbi__psd_load(&result, _s, _x, _y, _comp, _req_comp, _ri, _bpc)
+stbi__psd_load :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info, _bpc: i32) -> ^void {
+    result : ^void = default
+    __c__stbi__psd_load(^result, _s, _x, _y, _comp, _req_comp, _ri, _bpc)
     return result
 }
-stbi__psd_info :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi__psd_info :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi__psd_info(&result, _s, _x, _y, _comp)
+    __c__stbi__psd_info(^result, _s, _x, _y, _comp)
     return result
 }
-stbi__psd_is16 :: (_s: &stbi__context) -> i32 {
+stbi__psd_is16 :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__psd_is16(&result, _s)
+    __c__stbi__psd_is16(^result, _s)
     return result
 }
-stbi__hdr_test :: (_s: &stbi__context) -> i32 {
+stbi__hdr_test :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__hdr_test(&result, _s)
+    __c__stbi__hdr_test(^result, _s)
     return result
 }
-stbi__hdr_load :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info) -> &f32 {
-    result : &f32 = default
-    __c__stbi__hdr_load(&result, _s, _x, _y, _comp, _req_comp, _ri)
+stbi__hdr_load :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info) -> ^f32 {
+    result : ^f32 = default
+    __c__stbi__hdr_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
     return result
 }
-stbi__hdr_info :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi__hdr_info :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi__hdr_info(&result, _s, _x, _y, _comp)
+    __c__stbi__hdr_info(^result, _s, _x, _y, _comp)
     return result
 }
-stbi__pic_test :: (_s: &stbi__context) -> i32 {
+stbi__pic_test :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__pic_test(&result, _s)
+    __c__stbi__pic_test(^result, _s)
     return result
 }
-stbi__pic_load :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info) -> &void {
-    result : &void = default
-    __c__stbi__pic_load(&result, _s, _x, _y, _comp, _req_comp, _ri)
+stbi__pic_load :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info) -> ^void {
+    result : ^void = default
+    __c__stbi__pic_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
     return result
 }
-stbi__pic_info :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi__pic_info :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi__pic_info(&result, _s, _x, _y, _comp)
+    __c__stbi__pic_info(^result, _s, _x, _y, _comp)
     return result
 }
-stbi__gif_test :: (_s: &stbi__context) -> i32 {
+stbi__gif_test :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__gif_test(&result, _s)
+    __c__stbi__gif_test(^result, _s)
     return result
 }
-stbi__gif_load :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info) -> &void {
-    result : &void = default
-    __c__stbi__gif_load(&result, _s, _x, _y, _comp, _req_comp, _ri)
+stbi__gif_load :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info) -> ^void {
+    result : ^void = default
+    __c__stbi__gif_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
     return result
 }
-stbi__load_gif_main :: (_s: &stbi__context, _delays: &&i32, _x: &i32, _y: &i32, _z: &i32, _comp: &i32, _req_comp: i32) -> &void {
-    result : &void = default
-    __c__stbi__load_gif_main(&result, _s, _delays, _x, _y, _z, _comp, _req_comp)
+stbi__load_gif_main :: (_s: ^stbi__context, _delays: ^^i32, _x: ^i32, _y: ^i32, _z: ^i32, _comp: ^i32, _req_comp: i32) -> ^void {
+    result : ^void = default
+    __c__stbi__load_gif_main(^result, _s, _delays, _x, _y, _z, _comp, _req_comp)
     return result
 }
-stbi__gif_info :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi__gif_info :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi__gif_info(&result, _s, _x, _y, _comp)
+    __c__stbi__gif_info(^result, _s, _x, _y, _comp)
     return result
 }
-stbi__pnm_test :: (_s: &stbi__context) -> i32 {
+stbi__pnm_test :: (_s: ^stbi__context) -> i32 {
     result : i32 = default
-    __c__stbi__pnm_test(&result, _s)
+    __c__stbi__pnm_test(^result, _s)
     return result
 }
-stbi__pnm_load :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info) -> &void {
-    result : &void = default
-    __c__stbi__pnm_load(&result, _s, _x, _y, _comp, _req_comp, _ri)
+stbi__pnm_load :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info) -> ^void {
+    result : ^void = default
+    __c__stbi__pnm_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
     return result
 }
-stbi__pnm_info :: (_s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32) -> i32 {
+stbi__pnm_info :: (_s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32) -> i32 {
     result : i32 = default
-    __c__stbi__pnm_info(&result, _s, _x, _y, _comp)
+    __c__stbi__pnm_info(^result, _s, _x, _y, _comp)
     return result
 }
-stbi__ldr_to_hdr :: (_data: &stbi_uc, _x: i32, _y: i32, _comp: i32) -> &f32 {
-    result : &f32 = default
-    __c__stbi__ldr_to_hdr(&result, _data, _x, _y, _comp)
+stbi__ldr_to_hdr :: (_data: ^stbi_uc, _x: i32, _y: i32, _comp: i32) -> ^f32 {
+    result : ^f32 = default
+    __c__stbi__ldr_to_hdr(^result, _data, _x, _y, _comp)
     return result
 }
-stbi__hdr_to_ldr :: (_data: &f32, _x: i32, _y: i32, _comp: i32) -> &stbi_uc {
-    result : &stbi_uc = default
-    __c__stbi__hdr_to_ldr(&result, _data, _x, _y, _comp)
+stbi__hdr_to_ldr :: (_data: ^f32, _x: i32, _y: i32, _comp: i32) -> ^stbi_uc {
+    result : ^stbi_uc = default
+    __c__stbi__hdr_to_ldr(^result, _data, _x, _y, _comp)
     return result
 }
 
@@ -385,77 +385,77 @@ stbi__hdr_to_ldr :: (_data: &f32, _x: i32, _y: i32, _comp: i32) -> &stbi_uc {
 
 #file_scope
 
-__c__stbi_load_from_memory :: (ret: &&stbi_uc, _buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_load_from_callbacks :: (ret: &&stbi_uc, _clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_load :: (ret: &&stbi_uc, _filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_load_from_file :: (ret: &&stbi_uc, _f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_load_gif_from_memory :: (ret: &&stbi_uc, _buffer: &stbi_uc, _len: i32, _delays: &&i32, _x: &i32, _y: &i32, _z: &i32, _comp: &i32, _req_comp: i32);
-__c__stbi_load_16_from_memory :: (ret: &&stbi_us, _buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_load_16_from_callbacks :: (ret: &&stbi_us, _clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_load_16 :: (ret: &&stbi_us, _filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_load_from_file_16 :: (ret: &&stbi_us, _f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_loadf_from_memory :: (ret: &&f32, _buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_loadf_from_callbacks :: (ret: &&f32, _clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_loadf :: (ret: &&f32, _filename: &char8, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
-__c__stbi_loadf_from_file :: (ret: &&f32, _f: &FILE, _x: &i32, _y: &i32, _channels_in_file: &i32, _desired_channels: i32);
+__c__stbi_load_from_memory :: (ret: ^^stbi_uc, _buffer: ^stbi_uc, _len: i32, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_load_from_callbacks :: (ret: ^^stbi_uc, _clbk: ^stbi_io_callbacks, _user: ^void, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_load :: (ret: ^^stbi_uc, _filename: ^char8, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_load_from_file :: (ret: ^^stbi_uc, _f: ^FILE, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_load_gif_from_memory :: (ret: ^^stbi_uc, _buffer: ^stbi_uc, _len: i32, _delays: ^^i32, _x: ^i32, _y: ^i32, _z: ^i32, _comp: ^i32, _req_comp: i32);
+__c__stbi_load_16_from_memory :: (ret: ^^stbi_us, _buffer: ^stbi_uc, _len: i32, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_load_16_from_callbacks :: (ret: ^^stbi_us, _clbk: ^stbi_io_callbacks, _user: ^void, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_load_16 :: (ret: ^^stbi_us, _filename: ^char8, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_load_from_file_16 :: (ret: ^^stbi_us, _f: ^FILE, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_loadf_from_memory :: (ret: ^^f32, _buffer: ^stbi_uc, _len: i32, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_loadf_from_callbacks :: (ret: ^^f32, _clbk: ^stbi_io_callbacks, _user: ^void, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_loadf :: (ret: ^^f32, _filename: ^char8, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
+__c__stbi_loadf_from_file :: (ret: ^^f32, _f: ^FILE, _x: ^i32, _y: ^i32, _channels_in_file: ^i32, _desired_channels: i32);
 __c__stbi_hdr_to_ldr_gamma :: (_gamma: f32);
 __c__stbi_hdr_to_ldr_scale :: (_scale: f32);
 __c__stbi_ldr_to_hdr_gamma :: (_gamma: f32);
 __c__stbi_ldr_to_hdr_scale :: (_scale: f32);
-__c__stbi_is_hdr_from_callbacks :: (ret: &i32, _clbk: &stbi_io_callbacks, _user: &void);
-__c__stbi_is_hdr_from_memory :: (ret: &i32, _buffer: &stbi_uc, _len: i32);
-__c__stbi_is_hdr :: (ret: &i32, _filename: &char8);
-__c__stbi_is_hdr_from_file :: (ret: &i32, _f: &FILE);
-__c__stbi_failure_reason :: (ret: &&char8);
-__c__stbi_image_free :: (_retval_from_stbi_load: &void);
-__c__stbi_info_from_memory :: (ret: &i32, _buffer: &stbi_uc, _len: i32, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi_info_from_callbacks :: (ret: &i32, _clbk: &stbi_io_callbacks, _user: &void, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi_is_16_bit_from_memory :: (ret: &i32, _buffer: &stbi_uc, _len: i32);
-__c__stbi_is_16_bit_from_callbacks :: (ret: &i32, _clbk: &stbi_io_callbacks, _user: &void);
-__c__stbi_info :: (ret: &i32, _filename: &char8, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi_info_from_file :: (ret: &i32, _f: &FILE, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi_is_16_bit :: (ret: &i32, _filename: &char8);
-__c__stbi_is_16_bit_from_file :: (ret: &i32, _f: &FILE);
+__c__stbi_is_hdr_from_callbacks :: (ret: ^i32, _clbk: ^stbi_io_callbacks, _user: ^void);
+__c__stbi_is_hdr_from_memory :: (ret: ^i32, _buffer: ^stbi_uc, _len: i32);
+__c__stbi_is_hdr :: (ret: ^i32, _filename: ^char8);
+__c__stbi_is_hdr_from_file :: (ret: ^i32, _f: ^FILE);
+__c__stbi_failure_reason :: (ret: ^^char8);
+__c__stbi_image_free :: (_retval_from_stbi_load: ^void);
+__c__stbi_info_from_memory :: (ret: ^i32, _buffer: ^stbi_uc, _len: i32, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi_info_from_callbacks :: (ret: ^i32, _clbk: ^stbi_io_callbacks, _user: ^void, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi_is_16_bit_from_memory :: (ret: ^i32, _buffer: ^stbi_uc, _len: i32);
+__c__stbi_is_16_bit_from_callbacks :: (ret: ^i32, _clbk: ^stbi_io_callbacks, _user: ^void);
+__c__stbi_info :: (ret: ^i32, _filename: ^char8, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi_info_from_file :: (ret: ^i32, _f: ^FILE, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi_is_16_bit :: (ret: ^i32, _filename: ^char8);
+__c__stbi_is_16_bit_from_file :: (ret: ^i32, _f: ^FILE);
 __c__stbi_set_unpremultiply_on_load :: (_flag_true_if_should_unpremultiply: i32);
 __c__stbi_convert_iphone_png_to_rgb :: (_flag_true_if_should_convert: i32);
 __c__stbi_set_flip_vertically_on_load :: (_flag_true_if_should_flip: i32);
 __c__stbi_set_flip_vertically_on_load_thread :: (_flag_true_if_should_flip: i32);
-__c__stbi_zlib_decode_malloc_guesssize :: (ret: &&char8, _buffer: &char8, _len: i32, _initial_size: i32, _outlen: &i32);
-__c__stbi_zlib_decode_malloc_guesssize_headerflag :: (ret: &&char8, _buffer: &char8, _len: i32, _initial_size: i32, _outlen: &i32, _parse_header: i32);
-__c__stbi_zlib_decode_malloc :: (ret: &&char8, _buffer: &char8, _len: i32, _outlen: &i32);
-__c__stbi_zlib_decode_buffer :: (ret: &i32, _obuffer: &char8, _olen: i32, _ibuffer: &char8, _ilen: i32);
-__c__stbi_zlib_decode_noheader_malloc :: (ret: &&char8, _buffer: &char8, _len: i32, _outlen: &i32);
-__c__stbi_zlib_decode_noheader_buffer :: (ret: &i32, _obuffer: &char8, _olen: i32, _ibuffer: &char8, _ilen: i32);
-__c__stbi__refill_buffer :: (_s: &stbi__context);
-__c__stbi__jpeg_test :: (ret: &i32, _s: &stbi__context);
-__c__stbi__jpeg_load :: (ret: &&void, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info);
-__c__stbi__jpeg_info :: (ret: &i32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi__png_test :: (ret: &i32, _s: &stbi__context);
-__c__stbi__png_load :: (ret: &&void, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info);
-__c__stbi__png_info :: (ret: &i32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi__png_is16 :: (ret: &i32, _s: &stbi__context);
-__c__stbi__bmp_test :: (ret: &i32, _s: &stbi__context);
-__c__stbi__bmp_load :: (ret: &&void, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info);
-__c__stbi__bmp_info :: (ret: &i32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi__tga_test :: (ret: &i32, _s: &stbi__context);
-__c__stbi__tga_load :: (ret: &&void, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info);
-__c__stbi__tga_info :: (ret: &i32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi__psd_test :: (ret: &i32, _s: &stbi__context);
-__c__stbi__psd_load :: (ret: &&void, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info, _bpc: i32);
-__c__stbi__psd_info :: (ret: &i32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi__psd_is16 :: (ret: &i32, _s: &stbi__context);
-__c__stbi__hdr_test :: (ret: &i32, _s: &stbi__context);
-__c__stbi__hdr_load :: (ret: &&f32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info);
-__c__stbi__hdr_info :: (ret: &i32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi__pic_test :: (ret: &i32, _s: &stbi__context);
-__c__stbi__pic_load :: (ret: &&void, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info);
-__c__stbi__pic_info :: (ret: &i32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi__gif_test :: (ret: &i32, _s: &stbi__context);
-__c__stbi__gif_load :: (ret: &&void, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info);
-__c__stbi__load_gif_main :: (ret: &&void, _s: &stbi__context, _delays: &&i32, _x: &i32, _y: &i32, _z: &i32, _comp: &i32, _req_comp: i32);
-__c__stbi__gif_info :: (ret: &i32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi__pnm_test :: (ret: &i32, _s: &stbi__context);
-__c__stbi__pnm_load :: (ret: &&void, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32, _req_comp: i32, _ri: &stbi__result_info);
-__c__stbi__pnm_info :: (ret: &i32, _s: &stbi__context, _x: &i32, _y: &i32, _comp: &i32);
-__c__stbi__ldr_to_hdr :: (ret: &&f32, _data: &stbi_uc, _x: i32, _y: i32, _comp: i32);
-__c__stbi__hdr_to_ldr :: (ret: &&stbi_uc, _data: &f32, _x: i32, _y: i32, _comp: i32);
+__c__stbi_zlib_decode_malloc_guesssize :: (ret: ^^char8, _buffer: ^char8, _len: i32, _initial_size: i32, _outlen: ^i32);
+__c__stbi_zlib_decode_malloc_guesssize_headerflag :: (ret: ^^char8, _buffer: ^char8, _len: i32, _initial_size: i32, _outlen: ^i32, _parse_header: i32);
+__c__stbi_zlib_decode_malloc :: (ret: ^^char8, _buffer: ^char8, _len: i32, _outlen: ^i32);
+__c__stbi_zlib_decode_buffer :: (ret: ^i32, _obuffer: ^char8, _olen: i32, _ibuffer: ^char8, _ilen: i32);
+__c__stbi_zlib_decode_noheader_malloc :: (ret: ^^char8, _buffer: ^char8, _len: i32, _outlen: ^i32);
+__c__stbi_zlib_decode_noheader_buffer :: (ret: ^i32, _obuffer: ^char8, _olen: i32, _ibuffer: ^char8, _ilen: i32);
+__c__stbi__refill_buffer :: (_s: ^stbi__context);
+__c__stbi__jpeg_test :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__jpeg_load :: (ret: ^^void, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info);
+__c__stbi__jpeg_info :: (ret: ^i32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi__png_test :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__png_load :: (ret: ^^void, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info);
+__c__stbi__png_info :: (ret: ^i32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi__png_is16 :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__bmp_test :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__bmp_load :: (ret: ^^void, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info);
+__c__stbi__bmp_info :: (ret: ^i32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi__tga_test :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__tga_load :: (ret: ^^void, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info);
+__c__stbi__tga_info :: (ret: ^i32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi__psd_test :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__psd_load :: (ret: ^^void, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info, _bpc: i32);
+__c__stbi__psd_info :: (ret: ^i32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi__psd_is16 :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__hdr_test :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__hdr_load :: (ret: ^^f32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info);
+__c__stbi__hdr_info :: (ret: ^i32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi__pic_test :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__pic_load :: (ret: ^^void, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info);
+__c__stbi__pic_info :: (ret: ^i32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi__gif_test :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__gif_load :: (ret: ^^void, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info);
+__c__stbi__load_gif_main :: (ret: ^^void, _s: ^stbi__context, _delays: ^^i32, _x: ^i32, _y: ^i32, _z: ^i32, _comp: ^i32, _req_comp: i32);
+__c__stbi__gif_info :: (ret: ^i32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi__pnm_test :: (ret: ^i32, _s: ^stbi__context);
+__c__stbi__pnm_load :: (ret: ^^void, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32, _req_comp: i32, _ri: ^stbi__result_info);
+__c__stbi__pnm_info :: (ret: ^i32, _s: ^stbi__context, _x: ^i32, _y: ^i32, _comp: ^i32);
+__c__stbi__ldr_to_hdr :: (ret: ^^f32, _data: ^stbi_uc, _x: i32, _y: i32, _comp: i32);
+__c__stbi__hdr_to_ldr :: (ret: ^^stbi_uc, _data: ^f32, _x: i32, _y: i32, _comp: i32);

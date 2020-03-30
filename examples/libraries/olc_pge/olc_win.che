@@ -14,7 +14,7 @@ io :: import std.io
 #export_scope
 
 impl PixelGameEngine {
-    olc_window_create :: (ref Self) -> HWND {
+    olc_window_create :: (&Self) -> HWND {
         wc : WNDCLASS = default
         wc.hIcon = LoadIconA(null, IDI_APPLICATION)
         wc.hCursor = LoadCursorA(null, IDC_ARROW)
@@ -27,7 +27,7 @@ impl PixelGameEngine {
         wc.hbrBackground = null
         wc.lpszClassName = "OLC_PIXEL_GAME_ENGINE"
         
-        RegisterClassA(&wc)
+        RegisterClassA(^wc)
 
 
         // Define window furniture
@@ -40,12 +40,12 @@ impl PixelGameEngine {
         )
 
         // // Keep client size as requested
-        AdjustWindowRectEx(&rWndRect, dwStyle, 0, dwExStyle)
+        AdjustWindowRectEx(^rWndRect, dwStyle, 0, dwExStyle)
 
         width : i32 = rWndRect.right - rWndRect.left
         height : i32 = rWndRect.bottom - rWndRect.top
 
-        olc_hWnd = CreateWindowExA(dwExStyle, "OLC_PIXEL_GAME_ENGINE", "Window Title", dwStyle, 30, 30, width, height, null, null, GetModuleHandleA(null), cast &self)
+        olc_hWnd = CreateWindowExA(dwExStyle, "OLC_PIXEL_GAME_ENGINE", "Window Title", dwStyle, 30, 30, width, height, null, null, GetModuleHandleA(null), cast ^self)
 
         // Create Keyboard Mapping
         mapKeys[0x00] = Key.NONE
@@ -159,14 +159,14 @@ impl PixelGameEngine {
     }
 }
 
-pixel_game_engine_ptr : &PixelGameEngine = null
+pixel_game_engine_ptr : ^PixelGameEngine = null
 olc_window_event :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     match msg {
         WM_DESTROY -> PostQuitMessage(0)
         WM_CLOSE   -> { pixel_game_engine_ptr.active = false }
 
         WM_CREATE -> {
-            pixel_game_engine_ptr = cast(&PixelGameEngine) (cast(&CREATESTRUCTA)lparam).lpCreateParams
+            pixel_game_engine_ptr = cast(^PixelGameEngine) (cast(^CREATESTRUCTA)lparam).lpCreateParams
         }
 
         WM_MOUSEMOVE -> {

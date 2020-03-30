@@ -1,7 +1,7 @@
 #export_scope
 
 DWORD                :: u32
-HANDLE               :: &void
+HANDLE               :: ^void
 HWND                 :: HANDLE
 HINSTANCE            :: HANDLE
 HMODULE              :: HANDLE
@@ -31,8 +31,8 @@ UCHAR                :: u8
 BYTE                 :: u8
 WORD                 :: u16
 SIZE_T               :: u64
-THREAD_START_ROUTINE :: fn(&void) -> DWORD #stdcall
-WAITORTIMERCALLBACK  :: fn(&void, bool) #stdcall
+THREAD_START_ROUTINE :: fn(^void) -> DWORD #stdcall
+WAITORTIMERCALLBACK  :: fn(^void, bool) #stdcall
 
 POINT :: struct {
     x   : i32   = 0
@@ -105,7 +105,7 @@ POWERBROADCAST_SETTING :: struct {
 }
 
 CREATESTRUCTA :: struct {
-    lpCreateParams  : &void
+    lpCreateParams  : ^void
     hInstance       : HINSTANCE
     hMenu           : HMENU
     hwndParent      : HWND
@@ -150,7 +150,7 @@ PIXELFORMATDESCRIPTOR :: struct {
 
 SECURITY_ATTRIBUTES :: struct {
   nLength               : DWORD
-  lpSecurityDescriptor  : &void
+  lpSecurityDescriptor  : ^void
   bInheritHandle        : BOOL
 }
 
@@ -169,7 +169,7 @@ STARTUPINFOA :: struct {
   dwFlags         : DWORD     = default
   wShowWindow     : WORD      = default
   cbReserved2     : WORD      = default
-  lpReserved2     : &BYTE     = default
+  lpReserved2     : ^BYTE     = default
   hStdInput       : HANDLE    = default
   hStdOutput      : HANDLE    = default
   hStdError       : HANDLE    = default
@@ -183,7 +183,7 @@ PROCESS_INFORMATION :: struct {
 }
 
 CRITICAL_SECTION :: struct {
-    DebugInfo      : &void      = default
+    DebugInfo      : ^void      = default
     LockCount      : LONG       = default
     RecursionCount : LONG       = default
     OwningThread   : HANDLE     = default // from the thread's ClientId->UniqueThread
@@ -192,7 +192,7 @@ CRITICAL_SECTION :: struct {
 }
 
 CONDITION_VARIABLE :: struct { 
-    ptr : &void = default
+    ptr : ^void = default
 }
 
 // #define UNICODE_NOCHAR                  0xFFFF

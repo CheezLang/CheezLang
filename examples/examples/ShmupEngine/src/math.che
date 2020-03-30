@@ -13,31 +13,31 @@ vec3  :: Vector3[f32]
 vec4  :: Vector4[f32]
 
 impl Into[ImGui.ImVec2] for vec2 {
-    into :: (ref Self) -> ImGui.ImVec2 {
+    into :: (&Self) -> ImGui.ImVec2 {
         return ImGui.ImVec2(x, y)
     }
 }
 
 impl Into[ImGui.ImVec2] for vec3 {
-    into :: (ref Self) -> ImGui.ImVec2 {
+    into :: (&Self) -> ImGui.ImVec2 {
         return ImGui.ImVec2(x, y)
     }
 }
 
 impl Into[vec2] for ImGui.ImVec2 {
-    into :: (ref Self) -> vec2 {
+    into :: (&Self) -> vec2 {
         return vec2(x, y)
     }
 }
 
 impl Into[vec3] for ImGui.ImVec2 {
-    into :: (ref Self) -> vec3 {
+    into :: (&Self) -> vec3 {
         return vec3(x, y, 0)
     }
 }
 
 impl vec3 {
-    to_color32 :: (ref Self) -> u32 {
+    to_color32 :: (&Self) -> u32 {
         return ImGui.Color32(u8(x * 255), u8(y * 255), u8(z * 255))
     }
 }

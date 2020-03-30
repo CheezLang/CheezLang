@@ -8,7 +8,7 @@ use import std.hash
 
 Variables :: Table[string, Complex]
 
-evaluate :: (code: []OpCode, vars: ref Variables) -> Option[Complex] {
+evaluate :: (code: []OpCode, vars: &Variables) -> Option[Complex] {
     stack := @alloca(Complex, 128)
     sp := 0
 
@@ -25,7 +25,7 @@ evaluate :: (code: []OpCode, vars: ref Variables) -> Option[Complex] {
             OpCode.Var($name) -> {
                 match vars.get(name) {
                     Some($v) -> {
-                        stack[sp] = <<&v
+                        stack[sp] = <<^v
                         sp += 1
                     }
                     None -> {
@@ -128,7 +128,7 @@ OpCode :: enum #copy {
 }
 
 impl Printable for OpCode {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         use OpCode
         match self {
             Real($v)    -> str.appendf("Real({})", v)

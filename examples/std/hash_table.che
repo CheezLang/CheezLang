@@ -11,7 +11,7 @@ Table :: struct(K: type, V: type) {
     max_load  : double
     count     : uint
     entries   : []Entry[K, V]
-    allocator : &Allocator
+    allocator : ^Allocator
     comparer  : fn (K, K) -> bool
 }
 
@@ -23,7 +23,7 @@ Entry :: struct(K: type, V: type) {
 }
 
 impl(K: type, V: type) Drop for Table[K, V] {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         if entries.data != null {
             for(by_ref=true) e, _ : entries {
                 if e.filled then Memory.drop(e.value <- None)
@@ -34,7 +34,7 @@ impl(K: type, V: type) Drop for Table[K, V] {
 }
 
 impl(K: type, V: type) Table[K, V] {
-    create :: (comp: fn(K, K) -> bool, allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    create :: (comp: fn(K, K) -> bool, allocator: ^Allocator = ^DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         return Table[K, V](
             allocator   = allocator
             comparer    = comp
@@ -44,7 +44,7 @@ impl(K: type, V: type) Table[K, V] {
         )
     }
 
-    clear :: (ref Self) {
+    clear :: (&Self) {
         // @todo
         for(by_ref=true) entry : entries {
             entry.filled = false
@@ -54,25 +54,25 @@ impl(K: type, V: type) Table[K, V] {
         count = 0
     }
 
-    empty :: (ref Self) -> bool {
+    empty :: (&Self) -> bool {
         return count == 0
     }
 
-    get_count :: (ref Self) -> int {
+    get_count :: (&Self) -> int {
         return cast count
     }
 
-    get_entries :: (ref Self) -> []Entry[K, V] {
+    get_entries :: (&Self) -> []Entry[K, V] {
         return entries
     }
 
-    find_entry :: (ref Self, the_entries: []Entry[K, V], key: K) -> &Entry[K, V] {
+    find_entry :: (&Self, the_entries: []Entry[K, V], key: K) -> ^Entry[K, V] {
 
         index := K.hash(key) % cast(uint) the_entries.length
-        tombstone : &Entry[K, V] = null
+        tombstone : ^Entry[K, V] = null
 
         while true {
-            entry := &the_entries[int(index)]
+            entry := ^the_entries[int(index)]
 
             if !entry.filled {
                 if !entry.is_tombstone {
@@ -95,7 +95,7 @@ impl(K: type, V: type) Table[K, V] {
         return null
     }
 
-    set :: (ref Self, key: K, value: V) -> bool #operator("set[]") {
+    set :: (&Self, key: K, value: V) -> bool #operator("set[]") {
         if entries.data == null {
             adjust_capacity(13)
         }
@@ -117,7 +117,7 @@ impl(K: type, V: type) Table[K, V] {
         return is_new_key
     }
 
-    get :: (ref Self, key: K) -> Option[ref V] {
+    get :: (&Self, key: K) -> Option[&V] {
         if entries.data == null {
             return None
         }
@@ -127,13 +127,13 @@ impl(K: type, V: type) Table[K, V] {
             return None
         }
 
-        return match ref entry.value {
+        return match &entry.value {
             Some($val)  -> Some(val)
             None        -> None
         }
     }
 
-    get_or_insert :: (ref Self, key: K, value: fn() -> V) -> ref V {
+    get_or_insert :: (&Self, key: K, value: fn() -> V) -> &V {
         if entries.data == null {
             adjust_capacity(13)
         }
@@ -147,25 +147,25 @@ impl(K: type, V: type) Table[K, V] {
             count += 1
         }
 
-        return match ref entry.value {
+        return match &entry.value {
             Some($val)  -> val
             None        -> @assert(false)
         }
     }
 
-    get_unchecked :: (ref Self, key: K) -> ref V #operator("[]") {
+    get_unchecked :: (&Self, key: K) -> &V #operator("[]") {
         entry := find_entry(entries, key)
         @assert(entry.filled)
         return entry.value.Some
     }
 
-    at :: (ref Self, key: K) -> ref V {
+    at :: (&Self, key: K) -> &V {
         entry := find_entry(entries, key)
         @assert(entry.filled)
         return entry.value.Some
     }
 
-    delete :: (ref Self, key: K) -> bool {
+    delete :: (&Self, key: K) -> bool {
         if count == 0 or entries.data == null { return false }
 
         entry := find_entry(entries, key)
@@ -180,7 +180,7 @@ impl(K: type, V: type) Table[K, V] {
         return true
     }
 
-    adjust_capacity :: (ref Self, cap: uint) {
+    adjust_capacity :: (&Self, cap: uint) {
         entries_new := alloc_n(Entry[K, V], cap, allocator)
 
         for i : 0..entries_new.length {
@@ -192,7 +192,7 @@ impl(K: type, V: type) Table[K, V] {
         if entries.data != null {
             count = 0
             for i : 0..entries.length {
-                entry := &entries[i]
+                entry := ^entries[i]
                 if entry.filled {
                     dest := find_entry(entries_new, entry.key)
                     dest.key = entry.key
@@ -208,34 +208,34 @@ impl(K: type, V: type) Table[K, V] {
         entries = entries_new
     }
 
-    contains :: (ref Self, key: $K2) -> bool {
+    contains :: (&Self, key: $K2) -> bool {
         if count == 0 or entries.data == null { return false }
         entry := find_entry(entries, key)
         if !entry.filled { return false }
         return true
     }
 
-    iterator :: (ref Self) -> TableIterator[K, V] {
+    iterator :: (&Self) -> TableIterator[K, V] {
         return TableIterator[K, V](self, 0)
     }
 }
 
 impl(K: type, V: type) Clone for Table[K, V] if K : Clone, V : Clone {
-    clone :: (ref Self) -> Self {
+    clone :: (&Self) -> Self {
         result := Table[K, V].create(self.comparer)
         result.adjust_capacity(cast self.entries.length)
-        for kv : <<&self {
+        for kv : <<^self {
             result[kv.name.clone()] = kv.value.clone()
         }
         return result
     }
 }
 
-for_extension_table :: (r: ref Table[$K, $V], code: Code) #for {
+for_extension_table :: (r: &Table[$K, $V], code: Code) #for {
     it_index := 0
     for(by_ref=true) e, _ : r.get_entries() {
         if !e.filled then continue
-        it : (name: K, value: ref V) = e.key, ref e.value.Some
+        it : (name: K, value: &V) = e.key, &e.value.Some
         @insert(code, _break=@link(break), _continue=@link(continue))
         it_index += 1
     }
@@ -243,15 +243,15 @@ for_extension_table :: (r: ref Table[$K, $V], code: Code) #for {
 
 // iterator
 TableIterator :: struct(K: type, V: type) {
-    table: ref Table[K, V]
+    table: &Table[K, V]
     index: int
 }
 
 impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
-    next :: (ref Self) -> Option[(K, V)] {
+    next :: (&Self) -> Option[(K, V)] {
         entries := table.get_entries()
         while index < entries.length {
-            e := ref entries[index]
+            e := &entries[index]
             index += 1
 
             if e.filled {
@@ -262,7 +262,7 @@ impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
         return None
     }
 
-    dispose :: (ref Self) {
-        free(&self)
+    dispose :: (&Self) {
+        free(^self)
     }
 }

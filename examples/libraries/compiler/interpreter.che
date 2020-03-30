@@ -21,7 +21,7 @@ use import config
 
 
 CodeRunner :: trait {
-    run :: (ref Self, interp: ref Interpreter);
+    run :: (&Self, interp: &Interpreter);
 }
 
 NormalCodeRunner :: struct CodeRunner {
@@ -29,7 +29,7 @@ NormalCodeRunner :: struct CodeRunner {
 }
 
 impl CodeRunner for NormalCodeRunner {
-    run :: (ref Self, interp: ref Interpreter) {
+    run :: (&Self, interp: &Interpreter) {
         interp.run()
     }
 }
@@ -47,7 +47,7 @@ CBCDebugInfo :: struct {
 }
 
 impl CBCDebugInfo {
-    get_line_for_ip :: (ref Self, ip: int) -> int {
+    get_line_for_ip :: (&Self, ip: int) -> int {
         // g_logger.log("get_line_for_ip({}, lines: {})", [ip, lines.slice()])
         i := 0
         for lines {
@@ -60,7 +60,7 @@ impl CBCDebugInfo {
 
         return -1
     }
-    get_line_for_ip2 :: (ref Self, ip: int, print: Fn(string, []&any, string)) -> int {
+    get_line_for_ip2 :: (&Self, ip: int, print: Fn(string, []^any, string)) -> int {
         line := get_line_for_ip(ip)
         // print("get_line_for_ip({}) -> {}  (lines: {})", [ip, line, lines.slice()], "console")
         return line
@@ -68,7 +68,7 @@ impl CBCDebugInfo {
 }
 
 CBCFunction :: struct {
-    ast_function    : &AstFunction = null
+    ast_function    : ^AstFunction = null
     instructions    := Array[u64].create()
     debug_info      := CBCDebugInfo()
 }
@@ -80,27 +80,27 @@ StackFrame :: struct {
     bp      : int   = default
     code    : []u64 = default
     stack   : []int = default
-    func    : &CBCFunction = null
+    func    : ^CBCFunction = null
 }
 
 impl StackFrame {
-    push_int :: (ref Self, val: int) {
+    push_int :: (&Self, val: int) {
         stack[sp] = val
         sp += 1
     }
 
-    pop_int :: (ref Self) -> int {
+    pop_int :: (&Self) -> int {
         @assert(sp > 0)
         sp -= 1
         return stack[sp]
     }
 
-    get_arg :: (ref Self, index: int) -> int {
+    get_arg :: (&Self, index: int) -> int {
         @assert(index >= 0 and index < bp)
         return stack[index]
     }
 
-    dump_stack :: (ref Self) -> String {
+    dump_stack :: (&Self) -> String {
         str := String.with_capacity(128)
 
         str += "[ "
@@ -140,7 +140,7 @@ Interpreter :: struct {
 }
 
 impl Interpreter {
-    new :: () -> &Interpreter {
+    new :: () -> ^Interpreter {
         interp := mem.alloc(Interpreter)
         <<interp = Interpreter(
             sp          = 0
@@ -152,26 +152,26 @@ impl Interpreter {
         return interp
     }
 
-    print :: (format: string, args: []&any = [], category: string = "console") {
+    print :: (format: string, args: []^any = [], category: string = "console") {
         g_logger.log(format, args)
     }
 
-    top_frame :: (ref Self) -> &StackFrame {
+    top_frame :: (&Self) -> ^StackFrame {
         @assert(fp >= 0)
-        return &frames[fp]
+        return ^frames[fp]
     }
 
-    get_stackframes :: (ref Self) -> []StackFrame {
+    get_stackframes :: (&Self) -> []StackFrame {
         return frames[..=fp]
     }
 
-    comp_call :: (ref Self, function: ref AstFunction) {
+    comp_call :: (&Self, function: &AstFunction) {
         push_frame(function.bytecode, function.params.count())
     }
 
-    push_frame :: (ref Self, func: &CBCFunction, arg_count: int = 0) {
+    push_frame :: (&Self, func: ^CBCFunction, arg_count: int = 0) {
         if fp + 1 >= frames.length {
-            frame := ref frames[fp]
+            frame := &frames[fp]
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
                 frame.func.debug_info.path.slice()
                 frame.func.debug_info.get_line_for_ip(frame.ip_prev)
@@ -202,9 +202,9 @@ impl Interpreter {
         )
     }
 
-    push_native_frame :: (ref Self, arg_count: int) {
+    push_native_frame :: (&Self, arg_count: int) {
         if fp + 1 >= frames.length {
-            frame := ref frames[fp]
+            frame := &frames[fp]
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
                 frame.func.debug_info.path.slice()
                 frame.func.debug_info.get_line_for_ip(frame.ip_prev)
@@ -235,22 +235,22 @@ impl Interpreter {
         )
     }
 
-    pop_frame :: (ref Self) {
+    pop_frame :: (&Self) {
         _fp, _sp := fp, sp
         defer { if const DEBUG_INTERPRETER then g_logger.log("pop_frame (fp = {} -> {}, sp = {} -> {})", [_fp, fp, _sp, sp]) }
 
         fp -= 1
         if fp >= 0 {
             sp -= frames[fp].sp - frames[fp].bp
-            (&frames[fp]).sp -= frames[fp + 1].bp
+            (^frames[fp]).sp -= frames[fp + 1].bp
         }
     }
 
-    step :: (ref Self) -> enum { Continue, Done } {
+    step :: (&Self) -> enum { Continue, Done } {
         @assert(fp >= 0)
-        frame := &frames[fp]
+        frame := ^frames[fp]
         arg :: (T: type) #macro {
-            val := <<cast(&T)&frame.code[frame.ip]
+            val := <<cast(^T)^frame.code[frame.ip]
             frame.ip += 1
             val
         }
@@ -301,15 +301,15 @@ impl Interpreter {
             }
             .AddressOf -> {
                 index := arg(int)
-                address := cast(int) &frame.stack[frame.bp + index]
+                address := cast(int) ^frame.stack[frame.bp + index]
                 push(address)
             }
             .Load -> {
-                address := cast(&int) pop()
+                address := cast(^int) pop()
                 push(<<address)
             }
             .Store -> {
-                address := cast(&int) pop()
+                address := cast(^int) pop()
                 value := pop()
                 <<address = value
             }
@@ -382,7 +382,7 @@ impl Interpreter {
             }
 
             .NativeCall -> {
-                func := FatFunctions.from_pointers(Fn(&Interpreter, int), arg(&void), arg(&void))
+                func := FatFunctions.from_pointers(Fn(^Interpreter, int), arg(^void), arg(^void))
                 arity := arg(int)
 
                 push_native_frame(arity)
@@ -396,7 +396,7 @@ impl Interpreter {
                         fmt.align(35), frame.dump_stack()
                     ], "stdout")
                 }}
-                func(&self, arity)
+                func(^self, arity)
                 if const DEBUG_INTERPRETER {{
                     frame := top_frame()
                     g_logger.log("{}{}{}{}{}{}{}{}", [
@@ -409,7 +409,7 @@ impl Interpreter {
                 pop_frame()
             }
             .CompCall -> {
-                func := arg(&AstFunction)
+                func := arg(^AstFunction)
                 _ := arg(int)
                 _ := arg(int)
                 wait_until(func.bytecode != null)
@@ -422,7 +422,7 @@ impl Interpreter {
                 pop_frame()
                 if fp >= 0 {
                     // @fixme frames[fp].sp += 1 // fails to compile
-                    (&frames[fp]).sp += 1
+                    (^frames[fp]).sp += 1
                 } else {
                     return .Done
                 }
@@ -435,7 +435,7 @@ impl Interpreter {
             }
 
             .Panic -> {
-                str := string(arg(&u8), arg(int))
+                str := string(arg(^u8), arg(int))
                 file := frame.func.debug_info.path.slice()
                 line := frame.func.debug_info.get_line_for_ip(frame.ip_prev)
                 g_logger.log("[PANIC] {}:{}: {}", [file, line, str], "stderr")
@@ -454,7 +454,7 @@ impl Interpreter {
             }
         }
 
-        // frame = &frames[fp]
+        // frame = ^frames[fp]
         // line := frame.func.debug_info.get_line_for_ip(frame.ip)
         // g_logger.log("{}{}{}{}{}{}{}{}{}{}{}", [
         //     line
@@ -468,9 +468,9 @@ impl Interpreter {
         return .Continue
     }
 
-    run :: (ref Self) {
+    run :: (&Self) {
         @assert(fp >= 0)
-        frame := &frames[fp]
+        frame := ^frames[fp]
         while frame.ip >= 0 and frame.ip < frame.code.length {
             if step() == .Done {
                 return
@@ -505,7 +505,7 @@ impl Instruction {
         @assert(code.length > 0)
 
         arg :: (T: type, index: int) #macro {
-            <<cast(&T)&code[index + 1]
+            <<cast(^T)^code[index + 1]
         }
 
         return match Instruction(code[0]) {
@@ -535,14 +535,14 @@ impl Instruction {
             .Branch         -> fmt.format("Branch {}", [arg(int, 0)])
             .BranchIf       -> fmt.format("BranchIf {}", [arg(int, 0)])
 
-            .Call           -> fmt.format("Call {} {}", [string(arg(&u8, 0), arg(int, 1)), arg(int, 2)])
-            .NativeCall     -> fmt.format("NativeCall {2}", [arg(&void, 0), arg(&void, 1), arg(int, 2)])
-            .CompCall       -> fmt.format("CompCall #{}", [arg(&AstFunction, 0).id])
+            .Call           -> fmt.format("Call {} {}", [string(arg(^u8, 0), arg(int, 1)), arg(int, 2)])
+            .NativeCall     -> fmt.format("NativeCall {2}", [arg(^void, 0), arg(^void, 1), arg(int, 2)])
+            .CompCall       -> fmt.format("CompCall #{}", [arg(^AstFunction, 0).id])
             .Return         -> fmt.format("Return")
             .ReturnVoid     -> fmt.format("ReturnVoid")
 
             .Halt           -> fmt.format("Halt")
-            .Panic          -> fmt.format("Panic `"{}`"", [string(arg(&u8, 0), arg(int, 1))])
+            .Panic          -> fmt.format("Panic `"{}`"", [string(arg(^u8, 0), arg(int, 1))])
             _               -> fmt.format("Unknown {}", [code[0]])
         }
     }

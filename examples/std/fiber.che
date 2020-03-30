@@ -8,17 +8,17 @@ use import std.os.windows_macros
 #export_scope
 
 // @fixme cyclic dependency, but should work
-// thread_fiber : Fiber = Fiber(ConvertThreadToFiber(&thread_fiber), null)
+// thread_fiber : Fiber = Fiber(ConvertThreadToFiber(^thread_fiber), null)
 
 Fiber :: struct {
-    ptr             : &void
-    parent          : &Fiber = null
-    func            : Fn(&void)
-    user_data       : &void
+    ptr             : ^void
+    parent          : ^Fiber = null
+    func            : Fn(^void)
+    user_data       : ^void
 }
 
 impl Drop for Fiber {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         DeleteFiber(ptr)
     }
 }
@@ -35,9 +35,9 @@ impl Fiber {
         // printfln("[{}] Fiber.init: ({:x}:{:x})", (Thread.current().id, int(f), int(f.ptr)))
     }
 
-    new :: (func: Fn(&$T), ud: &T = null) -> &Fiber {
-        fiber_func :: (param: &void) #stdcall #nostacktrace {
-            f := cast(&Fiber)param
+    new :: (func: Fn(^$T), ud: ^T = null) -> ^Fiber {
+        fiber_func :: (param: ^void) #stdcall #nostacktrace {
+            f := cast(^Fiber)param
             f.func(f.user_data)
             while true {
                 Fiber.yield()
@@ -53,11 +53,11 @@ impl Fiber {
         return f
     }
 
-    to_func :: (ref Self) -> Fn() {
+    to_func :: (&Self) -> Fn() {
         return cast self.resume
     }
 
-    resume :: (ref Self) #nostacktrace {
+    resume :: (&Self) #nostacktrace {
         parent = current()
         SwitchToFiber(ptr)
     }
@@ -72,11 +72,11 @@ impl Fiber {
         }
     }
 
-    current :: () -> &Fiber {
+    current :: () -> ^Fiber {
         return cast GetFiberData()
     }
 
-    user_data :: ($T: type) -> &T {
-        return cast(&T) Fiber.current().user_data
+    user_data :: ($T: type) -> ^T {
+        return cast(^T) Fiber.current().user_data
     }
 }

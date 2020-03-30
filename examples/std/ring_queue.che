@@ -6,17 +6,17 @@ C :: import std.c
 #export_scope
 
 RingQueue :: struct(T: type) {
-    data        : &T
+    data        : ^T
     capacity    : int
     first       : int
     last        : int
-    allocator   : &Allocator
+    allocator   : ^Allocator
 }
 
 impl(T: type) RingQueue[T] {
-    new :: (init_size: int = 10, allocator: &Allocator = null) -> Self {
+    new :: (init_size: int = 10, allocator: ^Allocator = null) -> Self {
         if allocator == null {
-            allocator = &DEFAULT_STD_HEAP_ALLOCATOR
+            allocator = ^DEFAULT_STD_HEAP_ALLOCATOR
         }
 
         data := alloc_raw(T, cast init_size, allocator)
@@ -29,21 +29,21 @@ impl(T: type) RingQueue[T] {
         )
     }
 
-    get_capacity :: (ref Self) -> int {
+    get_capacity :: (&Self) -> int {
         return capacity
     }
 
-    get_length :: (ref Self) -> int {
+    get_length :: (&Self) -> int {
         // return if (last >= first) then (last - first) else (last - first + capacity)
         return (last - first + capacity) % capacity
     }
 
-    count :: (ref Self) -> int {
+    count :: (&Self) -> int {
         // return if (last >= first) then (last - first) else (last - first + capacity)
         return (last - first + capacity) % capacity
     }
 
-    reserve :: (ref Self, size: int) {
+    reserve :: (&Self, size: int) {
         if capacity > size {
             return
         }
@@ -72,11 +72,11 @@ impl(T: type) RingQueue[T] {
         capacity = size
 
         if size > get_length() {
-            C.memset(cast &data[get_length()], 0, u64((size - get_length()) * @sizeof(T)))
+            C.memset(cast ^data[get_length()], 0, u64((size - get_length()) * @sizeof(T)))
         }
     }
 
-    push :: (ref Self, val: T) {
+    push :: (&Self, val: T) {
         if get_length() == capacity - 1 {
             reserve(capacity * 2)
         }
@@ -85,7 +85,7 @@ impl(T: type) RingQueue[T] {
         last = (last + 1) % capacity
     }
 
-    pop :: (ref Self) -> T {
+    pop :: (&Self) -> T {
         @assert(first != last)
 
         val := data[first]
@@ -94,7 +94,7 @@ impl(T: type) RingQueue[T] {
         return val
     }
 
-    at :: (ref Self, index: int) -> ref T {
+    at :: (&Self, index: int) -> &T {
         @assert(index >= 0 and index < count())
         index = (first + index) % capacity
         return data[index]
@@ -102,7 +102,7 @@ impl(T: type) RingQueue[T] {
 }
 
 impl(T: type) Drop for RingQueue[T] {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         if first <= last {
             for first..last {
                 Memory.drop(data[it])

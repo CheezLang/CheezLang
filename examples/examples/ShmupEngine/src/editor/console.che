@@ -39,7 +39,7 @@ ConsoleEntry :: struct {
 Console :: struct {
     m_buffer         : []char8
     items            : RingQueue[ConsoleEntry]
-    on_command       : Fn(ref Command)
+    on_command       : Fn(&Command)
 
     force_focus      := false
 
@@ -54,13 +54,13 @@ Console :: struct {
 }
 
 impl Drop for Console {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         mem.free_n(m_buffer)
     }
 }
 
 impl Console {
-    new :: (on_command: Fn(ref Command)) -> Console {
+    new :: (on_command: Fn(&Command)) -> Console {
         buff := mem.alloc_n(char8, 1024)
         buff[0] = char8(0)
 
@@ -72,15 +72,15 @@ impl Console {
         )
     }
 
-    log :: (ref Self, format: string, args: []&any = []) {
+    log :: (&Self, format: string, args: []^any = []) {
         add_entry(MessageType.Log, fmt.format(format, args))
     }
 
-    log_error :: (ref Self, format: string, args: []&any = []) {
+    log_error :: (&Self, format: string, args: []^any = []) {
         add_entry(MessageType.Error, fmt.format(format, args))
     }
 
-    add_entry :: (ref Self, typ: MessageType, log: String) {
+    add_entry :: (&Self, typ: MessageType, log: String) {
         if items.count() == items.get_capacity() - 1 {
             items.pop()
         }
@@ -88,7 +88,7 @@ impl Console {
         items.push(ConsoleEntry(typ, log))
     }
 
-    execute_command :: (ref Self, cmd_string: String) {
+    execute_command :: (&Self, cmd_string: String) {
         scroll_to_bottom = true
 
         cmd := clap.parse_args_from_string(Command, cmd_string.slice())
@@ -96,7 +96,7 @@ impl Console {
         match cmd {
             Ok($cmd) -> {
                 add_entry(MessageType.Command, fmt.format("> {}", [cmd_string.slice()]))
-                match ref cmd.get() {
+                match &cmd.get() {
                     Command.Help -> {
                         // add_entry(MessageType.Log, clap.get_help_message(@type_info(Command)))
                     }
@@ -124,7 +124,7 @@ impl Console {
         history.push(cmd_string)
     }
 
-    auto_complete :: (ref Self, data: &ImGui.ImGuiInputTextCallbackData) -> i32 {
+    auto_complete :: (&Self, data: ^ImGui.ImGuiInputTextCallbackData) -> i32 {
         // scroll_to_bottom = true
 
         match ImGui.ImGuiInputTextFlags_(data.EventFlag) {
@@ -169,7 +169,7 @@ impl Console {
 
                 if prev_history_pos != history_pos {
                     cmd := if history_pos == -1 {
-                        match ref current_command {
+                        match &current_command {
                             Some($cmd) -> cmd.slice()
                             None -> ""
                         }
@@ -188,7 +188,7 @@ impl Console {
         return 0
     }
 
-    render :: (ref Self) {
+    render :: (&Self) {
         {
             initial_size := ImGui.ImVec2(520, 600)
             ImGui.SetNextWindowSize(initial_size, ImGui.ImGuiCond_.FirstUseEver)
@@ -208,7 +208,7 @@ impl Console {
             line_spacing := ImGui.ImVec2(4,1)
             ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.ItemSpacing, line_spacing)
             for i : 0 .. items.count() {
-                item := ref items.at(i)
+                item := &items.at(i)
 
                 color, has_color := match item.typ {
                     MessageType.Log     -> ImGui.ImVec4(1, 1, 1, 1), true
@@ -234,8 +234,8 @@ impl Console {
         ImGui.Separator()
 
         // input area
-        auto_complete_callback :: (data: &ImGui.ImGuiInputTextCallbackData) -> i32 {
-            console := cast(&Console) data.UserData
+        auto_complete_callback :: (data: ^ImGui.ImGuiInputTextCallbackData) -> i32 {
+            console := cast(^Console) data.UserData
             return console.auto_complete(data)
         }
 
@@ -247,7 +247,7 @@ impl Console {
 
         padding := ImGui.ImVec2(7, 3)
         ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.FramePadding, padding)
-        if ImGui.InputText("Input", m_buffer.data, cast m_buffer.length, input_flags, auto_complete_callback, &self) {
+        if ImGui.InputText("Input", m_buffer.data, cast m_buffer.length, input_flags, auto_complete_callback, ^self) {
             text := string(cast m_buffer.data, cast C.strlen(m_buffer.data))
             text = text.trim()
             if text.bytes.length > 0 {

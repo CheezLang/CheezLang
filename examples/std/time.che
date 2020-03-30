@@ -11,10 +11,10 @@ if const @is_os("linux") {
 get_time_microseconds :: () -> int {
     if const @is_os("windows") {
         freq := 1
-        QueryPerformanceFrequency(&freq)
+        QueryPerformanceFrequency(^freq)
 
         time := 0
-        QueryPerformanceCounter(&time)
+        QueryPerformanceCounter(^time)
 
         time *= 1000000
         time /= freq
@@ -23,7 +23,7 @@ get_time_microseconds :: () -> int {
     }
     if const @is_os("linux") {
         tv : timeval = default
-        err := gettimeofday(&tv, null)
+        err := gettimeofday(^tv, null)
         if err == -1 {
             return -1
         }
@@ -35,10 +35,10 @@ get_time_microseconds :: () -> int {
 get_time_milliseconds :: () -> int {
     if const @is_os("windows") {
         freq := 1
-        QueryPerformanceFrequency(&freq)
+        QueryPerformanceFrequency(^freq)
 
         time := 0
-        QueryPerformanceCounter(&time)
+        QueryPerformanceCounter(^time)
 
         time *= 1000000
         time /= freq
@@ -47,7 +47,7 @@ get_time_milliseconds :: () -> int {
     }
     if const @is_os("linux") {
         tv : timeval = default
-        err := gettimeofday(&tv, null)
+        err := gettimeofday(^tv, null)
         if err == -1 {
             return -1
         }

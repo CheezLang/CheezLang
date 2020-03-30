@@ -15,24 +15,24 @@ impl(T: type) Stack[T] {
         )
     }
 
-    reserve :: (ref Self, size: int) {
+    reserve :: (&Self, size: int) {
         array.reserve(size)
     }
 
-    push :: (ref Self, item: T) {
+    push :: (&Self, item: T) {
         array.add(item)
     }
 
-    pop :: (ref Self) -> T {
+    pop :: (&Self) -> T {
         return array.pop()
     }
 
-    peek :: (ref Self) -> ref T {
+    peek :: (&Self) -> &T {
         @assert(array.length > 0)
         return array[array.length - 1]
     }
 
-    empty :: (ref Self) -> bool {
+    empty :: (&Self) -> bool {
         return array.length == 0
     }
 }

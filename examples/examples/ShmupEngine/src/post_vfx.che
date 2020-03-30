@@ -3,7 +3,7 @@ use import shader
 #export_scope
 
 PostProcessingEffect :: trait {
-    apply :: (ref Self);
+    apply :: (&Self);
 }
 
 ConvertToGreyScale :: struct {
@@ -15,7 +15,7 @@ impl ConvertToGreyScale {
 }
 
 impl PostProcessingEffect for ConvertToGreyScale {
-    apply :: (ref Self) {
+    apply :: (&Self) {
 
     }
 }

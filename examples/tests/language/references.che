@@ -26,7 +26,7 @@ Main :: () {
 
 test4 :: () {
     a := 5
-    ra : ref int = a
+    ra : &int = a
     b := ra
 
     C.printf("%lld`n", a)
@@ -79,15 +79,15 @@ test2 :: () {
     t := (1, 2, a, "lol")
 }
 
-help1 :: (a: ref &int) {
-    b := <<&<<a
+help1 :: (a: &^int) {
+    b := <<^<<a
 }
 
 test1 :: () {
     a := 5
-    pa := &a
+    pa := ^a
     b := <<pa
-    c := <<&<<&a
+    c := <<^<<^a
 
     help1(pa)
 }

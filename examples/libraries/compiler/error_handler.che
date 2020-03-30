@@ -8,14 +8,14 @@ fmt :: import std.fmt
 #export_scope
 
 ErrorHandler :: trait {
-    text_provider : &TextProvider
-    has_errors :: (ref Self) -> bool;
-    report_error_at :: (ref Self, location: ref Location, message: string, args: []&any = []);
-    report_error :: (ref Self, message: string, args: []&any = []);
+    text_provider : ^TextProvider
+    has_errors :: (&Self) -> bool;
+    report_error_at :: (&Self, location: &Location, message: string, args: []^any = []);
+    report_error :: (&Self, message: string, args: []^any = []);
 }
 
 TextProvider :: trait {
-    get_text :: (ref Self, filename: string) -> string;
+    get_text :: (&Self, filename: string) -> string;
 }
 
 ConsoleErrorHandler :: struct ErrorHandler {
@@ -26,17 +26,17 @@ ConsoleErrorHandler :: struct ErrorHandler {
 }
 
 impl ConsoleErrorHandler {
-    new :: (text_provider: &TextProvider) -> ConsoleErrorHandler {
+    new :: (text_provider: ^TextProvider) -> ConsoleErrorHandler {
         return ConsoleErrorHandler(text_provider)
     }
 }
 
 impl ErrorHandler for ConsoleErrorHandler {
-    has_errors :: (ref Self) -> bool {
+    has_errors :: (&Self) -> bool {
         return error_count > 0
     }
 
-    report_error_at :: (ref Self, location: ref Location, message: string, args: []&any = []) {
+    report_error_at :: (&Self, location: &Location, message: string, args: []^any = []) {
         error_count += 1
 
         io.printf("{}:{}:{}: ", (location.file, location.line, location.column))
@@ -47,7 +47,7 @@ impl ErrorHandler for ConsoleErrorHandler {
         if do_print_location then print_location(location)
     }
 
-    report_error :: (ref Self, message: string, args: []&any = []) {
+    report_error :: (&Self, message: string, args: []^any = []) {
         error_count += 1
 
         io.set_console_color(io.ConsoleColor.Red, io.ConsoleColor.Black)
@@ -55,7 +55,7 @@ impl ErrorHandler for ConsoleErrorHandler {
         io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
     }
 
-    print_location :: (ref Self, location: ref Location) {
+    print_location :: (&Self, location: &Location) {
         text := text_provider.get_text(location.file)
 
         // returns index of first character in the same line

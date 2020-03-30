@@ -27,32 +27,32 @@ use import shmup_engine
 #export_scope
 
 EntityLayerCallbacks :: trait {
-    init         :: (ref Self, layer: ref EntityLayer) -> bool;
-    update       :: (ref Self, dt: float);
-    render       :: (ref Self, renderer: ref Renderer);
-    imgui_render :: (ref Self);
+    init         :: (&Self, layer: &EntityLayer) -> bool;
+    update       :: (&Self, dt: float);
+    render       :: (&Self, renderer: &Renderer);
+    imgui_render :: (&Self);
 }
 
 
 Layer :: trait {
-    get_name        :: (ref Self) -> c_string;
-    get_base        :: (ref Self) -> ref LayerBase;
-    get_input       :: (ref Self) -> ref Input;
-    init            :: (ref Self) -> bool;
-    update          :: (ref Self, dt: float);
-    render          :: (ref Self, renderer: ref Renderer);
-    imgui_render    :: (ref Self);
-    on_key_event    :: (ref Self, key: int, action: int) -> bool;
-    clone           :: (ref Self) -> Option[&Layer];
-    load_from_file  :: (ref Self, file: string);
-    save_to_file    :: (ref Self, file: ref String);
+    get_name        :: (&Self) -> c_string;
+    get_base        :: (&Self) -> &LayerBase;
+    get_input       :: (&Self) -> &Input;
+    init            :: (&Self) -> bool;
+    update          :: (&Self, dt: float);
+    render          :: (&Self, renderer: &Renderer);
+    imgui_render    :: (&Self);
+    on_key_event    :: (&Self, key: int, action: int) -> bool;
+    clone           :: (&Self) -> Option[^Layer];
+    load_from_file  :: (&Self, file: string);
+    save_to_file    :: (&Self, file: &String);
 }
 
 LayerBase :: trait {
     name        : String
-    engine      : ref ShmupEngine
-    input       : ref Input
-    callbacks   : &EntityLayerCallbacks
+    engine      : &ShmupEngine
+    input       : &Input
+    callbacks   : ^EntityLayerCallbacks
 }
 
 DebugLayer :: struct LayerBase {
@@ -68,35 +68,35 @@ DebugLayer :: struct LayerBase {
 }
 
 impl DebugLayer {
-    new :: (name: String, engine: ref ShmupEngine, input: ref Input) -> DebugLayer {
+    new :: (name: String, engine: &ShmupEngine, input: &Input) -> DebugLayer {
         return DebugLayer(name, engine, input, null)
     }
 }
 
 impl Layer for DebugLayer {
-    get_name :: (ref Self) -> c_string {
+    get_name :: (&Self) -> c_string {
         return name.as_cstring()
     }
 
-    get_base :: (ref Self) -> ref LayerBase {
+    get_base :: (&Self) -> &LayerBase {
         return self
     }
 
-    get_input :: (ref Self) -> ref Input {
+    get_input :: (&Self) -> &Input {
         return input
     }
 
-    init :: (ref Self) -> bool {
+    init :: (&Self) -> bool {
         return true
     }
 
-    update :: (ref Self, dt: float) {
+    update :: (&Self, dt: float) {
 
     }
 
-    render :: (ref Self, renderer: ref Renderer) {
+    render :: (&Self, renderer: &Renderer) {
         // bind stuff
-        // target := ref renderer.targets().color_map.get()
+        // target := &renderer.targets().color_map.get()
 
         // if !show_layer_output {
         //     renderer.targets(1).color_map.get().copy_to(target)
@@ -126,7 +126,7 @@ impl Layer for DebugLayer {
 
         renderer.apply_light_shader.bind()
 
-        viewport := ref engine.current_viewport()
+        viewport := &engine.current_viewport()
         if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Right) {
             mouse_screen := ImGui.GetMousePos()
             mouse := viewport.screen_to_local(mouse_screen.into()) / viewport.size.xy()
@@ -150,25 +150,25 @@ impl Layer for DebugLayer {
         renderer.render_effect(renderer.apply_light_shader)
     }
 
-    imgui_render :: (ref Self) {
+    imgui_render :: (&Self) {
 
     }
 
-    on_key_event :: (ref Self, key: int, action: int) -> bool {
+    on_key_event :: (&Self, key: int, action: int) -> bool {
         return false
     }
 
-    clone :: (ref Self) -> Option[&Layer] {
+    clone :: (&Self) -> Option[^Layer] {
         result := mem.alloc(DebugLayer)
         <<result = DebugLayer.new(name.clone(), engine, input)
         return Some(result)
     }
 
-    load_from_file :: (ref Self, file: string) {
+    load_from_file :: (&Self, file: string) {
 
     }
 
-    save_to_file :: (ref Self, file: ref String) {
+    save_to_file :: (&Self, file: &String) {
 
     }
 
@@ -180,33 +180,33 @@ LightingLayer :: struct LayerBase {
 }
 
 impl LightingLayer {
-    new :: (name: String, engine: ref ShmupEngine, input: ref Input) -> LightingLayer {
+    new :: (name: String, engine: &ShmupEngine, input: &Input) -> LightingLayer {
         return LightingLayer(name, engine, input, null)
     }
 }
 
 impl Layer for LightingLayer {
-    get_name :: (ref Self) -> c_string {
+    get_name :: (&Self) -> c_string {
         return name.as_cstring()
     }
 
-    get_base :: (ref Self) -> ref LayerBase {
+    get_base :: (&Self) -> &LayerBase {
         return self
     }
 
-    get_input :: (ref Self) -> ref Input {
+    get_input :: (&Self) -> &Input {
         return input
     }
 
-    init :: (ref Self) -> bool {
+    init :: (&Self) -> bool {
         return true
     }
 
-    update :: (ref Self, dt: float) {
+    update :: (&Self, dt: float) {
 
     }
 
-    render :: (ref Self, renderer: ref Renderer) {
+    render :: (&Self, renderer: &Renderer) {
         if disabled {
             renderer.targets(1).color_map.get().copy_to(renderer.targets().color_map.get())
             return
@@ -218,25 +218,25 @@ impl Layer for LightingLayer {
         renderer.render_effect(renderer.apply_light_shader)
     }
 
-    imgui_render :: (ref Self) {
+    imgui_render :: (&Self) {
 
     }
 
-    on_key_event :: (ref Self, key: int, action: int) -> bool {
+    on_key_event :: (&Self, key: int, action: int) -> bool {
         return false
     }
 
-    clone :: (ref Self) -> Option[&Layer] {
+    clone :: (&Self) -> Option[^Layer] {
         result := mem.alloc(LightingLayer)
         <<result = LightingLayer.new(name.clone(), engine, input)
         return Some(result)
     }
 
-    load_from_file :: (ref Self, file: string) {
+    load_from_file :: (&Self, file: string) {
 
     }
 
-    save_to_file :: (ref Self, file: ref String) {
+    save_to_file :: (&Self, file: &String) {
 
     }
 
@@ -248,11 +248,11 @@ EntityLayer :: struct LayerBase {
 }
 
 impl EntityLayer {
-    new :: (name: String, callbacks: &EntityLayerCallbacks, engine: ref ShmupEngine, input: ref Input) -> EntityLayer {
+    new :: (name: String, callbacks: ^EntityLayerCallbacks, engine: &ShmupEngine, input: &Input) -> EntityLayer {
         return EntityLayer(name, engine, input, callbacks)
     }
 
-    find_entity :: (ref Self, id: int) -> Option[Rc[Entity]] {
+    find_entity :: (&Self, id: int) -> Option[Rc[Entity]] {
         for e : entities {
             if e.get().id == id {
                 return Some(e.clone())
@@ -261,11 +261,11 @@ impl EntityLayer {
         return None
     }
 
-    new_entity :: (ref Self) -> Rc[Entity] {
+    new_entity :: (&Self) -> Rc[Entity] {
         return new_entity_with_id(next_entity_id)
     }
 
-    new_entity_with_id :: (ref Self, id: int) -> Rc[Entity] {
+    new_entity_with_id :: (&Self, id: int) -> Rc[Entity] {
         if next_entity_id <= id {
             next_entity_id = id + 1
         }
@@ -275,25 +275,25 @@ impl EntityLayer {
         return ptr
     }
 
-    new_component :: (ref Self, value: $T) -> Rc[Component] {
+    new_component :: (&Self, value: $T) -> Rc[Component] {
         return Rc[Component].new(value)
     }
 
-    new_component2 :: (ref Self, ti: &TypeInfo, vtable: &void) -> Rc[Component] {
+    new_component2 :: (&Self, ti: ^TypeInfo, vtable: ^void) -> Rc[Component] {
         ptr := mem.alloc_raw(u8, cast ti.size)
         C.memset(ptr, 0, cast ti.size)
         return Rc[Component].from_pointer(Traits.from_vtable_and_pointer(Component, vtable, ptr), false)
     }
 
-    alloc_component :: (ti: &TypeInfo, vtable: &void) -> Rc[Component] {
+    alloc_component :: (ti: ^TypeInfo, vtable: ^void) -> Rc[Component] {
         ptr := mem.alloc_raw(u8, cast ti.size)
         C.memset(ptr, 0, cast ti.size)
         return Rc[Component].from_pointer(Traits.from_vtable_and_pointer(Component, vtable, ptr), false)
     }
 
-    remove_dead_entities :: (ref Self) {
+    remove_dead_entities :: (&Self) {
         while i := 0, i < entities.get_length(), i += 1 {
-            e := ref entities[i].get()
+            e := &entities[i].get()
             if !e.dead then continue
 
             // try to delete e
@@ -321,7 +321,7 @@ impl EntityLayer {
         }
     }
 
-    swap_entities :: (ref Self, i0: int, i1: int) {
+    swap_entities :: (&Self, i0: int, i1: int) {
         @assert(i0 != i1 and i0 >= 0 and i0 < entities.get_length() and i1 >= 0 and i1 < entities.get_length())
         e0 := entities[i0].clone()
         e1 := entities[i1].clone()
@@ -331,19 +331,19 @@ impl EntityLayer {
 }
 
 impl Layer for EntityLayer {
-    get_name :: (ref Self) -> c_string {
+    get_name :: (&Self) -> c_string {
         return name.as_cstring()
     }
 
-    get_base :: (ref Self) -> ref LayerBase {
+    get_base :: (&Self) -> &LayerBase {
         return self
     }
 
-    get_input :: (ref Self) -> ref Input {
+    get_input :: (&Self) -> &Input {
         return input
     }
 
-    init :: (ref Self) -> bool {
+    init :: (&Self) -> bool {
         ok := callbacks.init(self)
         if !ok {
             return false
@@ -356,11 +356,11 @@ impl Layer for EntityLayer {
         return true
     }
 
-    update :: (ref Self, dt: float) {
+    update :: (&Self, dt: float) {
         callbacks.update(dt)
 
         while i := 0, i < entities.get_length(), i += 1 {
-            e := ref entities[i].get()
+            e := &entities[i].get()
             if e.active {
                 e.update(self, dt)
             }
@@ -392,7 +392,7 @@ impl Layer for EntityLayer {
         }
     }
 
-    render :: (ref Self, renderer: ref Renderer) {
+    render :: (&Self, renderer: &Renderer) {
         // io.println(fmt.format("{}", [engine.game_viewport.projection_matrix]))
         callbacks.render(renderer)
 
@@ -403,11 +403,11 @@ impl Layer for EntityLayer {
         }
     }
 
-    imgui_render :: (ref Self) {
+    imgui_render :: (&Self) {
         callbacks.imgui_render()
     }
 
-    on_key_event :: (ref Self, key: int, action: int) -> bool {
+    on_key_event :: (&Self, key: int, action: int) -> bool {
         match (action, key) {
             (GLFW_PRESS, $keycode) -> {
                 input.set_key_state(keycode, true)
@@ -420,7 +420,7 @@ impl Layer for EntityLayer {
         return false
     }
 
-    clone :: (ref Self) -> Option[&Layer] {
+    clone :: (&Self) -> Option[^Layer] {
         result := mem.alloc(EntityLayer)
         <<result = EntityLayer.new(name.clone(), callbacks, engine, input)
 
@@ -431,11 +431,11 @@ impl Layer for EntityLayer {
         return Some(result)
     }
 
-    clone_entity :: (ref Self, template: Rc[Entity]) -> Rc[Entity] {
+    clone_entity :: (&Self, template: Rc[Entity]) -> Rc[Entity] {
         return clone_entity_with_id(template, next_entity_id)
     }
 
-    clone_entity_with_id :: (ref Self, template: Rc[Entity], id: int) -> Rc[Entity] {
+    clone_entity_with_id :: (&Self, template: Rc[Entity], id: int) -> Rc[Entity] {
         e_new := self.new_entity_with_id(id)
         e_new.get().name        = template.get().name.clone()
         e_new.get().active      = template.get().active
@@ -444,7 +444,7 @@ impl Layer for EntityLayer {
         e_new.get().angle       = template.get().angle
 
         for template.get().components {
-            template := ref it.get()
+            template := &it.get()
             component := self.new_component2(template.get_type_info(), @vtable_of_trait(template))
             C.memcpy(@ptr_of_trait(component.get()), @ptr_of_trait(template), cast template.get_type_info().size)
             e_new.get().add_component(component)
@@ -453,7 +453,7 @@ impl Layer for EntityLayer {
         return e_new
     }
 
-    load_from_file :: (ref Self, file: string) {
+    load_from_file :: (&Self, file: string) {
         console_error_handler := ConsoleErrorHandler.new(null)
         string_db := StringDatabase.new()
 
@@ -463,10 +463,10 @@ impl Layer for EntityLayer {
                 io.println("Failed to read layer from file")
                 return
             })
-        console_error_handler.text_provider = &lexer.get()
+        console_error_handler.text_provider = ^lexer.get()
 
         parser := serpa.Parser(expect_struct_name=false)
-        result := parser.parse(Array[Rc[Entity]], lexer.get(), &console_error_handler)
+        result := parser.parse(Array[Rc[Entity]], lexer.get(), ^console_error_handler)
 
         match result {
             Some($entities) -> {
@@ -479,7 +479,7 @@ impl Layer for EntityLayer {
 
                     // set entity pointer in components
                     for c : e.get().components {
-                        c.get().base().entity = &e.get()
+                        c.get().base().entity = ^e.get()
                     }
                 }
             }
@@ -489,10 +489,10 @@ impl Layer for EntityLayer {
         }
     }
 
-    save_to_file :: (ref Self, file: ref String) {
+    save_to_file :: (&Self, file: &String) {
         file.append_string("[`n")
         for rc : entities {
-            e := ref rc.get()
+            e := &rc.get()
             file.append_string("    {`n")
             file.appendf("        id          = {}`n", e.id)
             file.appendf("        name        = `"{}`"`n", e.name.slice())
@@ -504,7 +504,7 @@ impl Layer for EntityLayer {
             file.appendf("        components  = [`n", ())
 
             for cd : e.components {
-                file.appendf("            {} ``{`n", @cast(&TypeInfoStruct, cd.get().get_type_info()).name)
+                file.appendf("            {} ``{`n", @cast(^TypeInfoStruct, cd.get().get_type_info()).name)
                 cd.get().serialize(file)
                 file.append_string("            }`n")
             }

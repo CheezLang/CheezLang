@@ -35,15 +35,15 @@ Main :: () {
     io.println(fmt.format_any(<<compiler_args))
 
     match <<compiler_args {
-        MainCommand.Compile($options) -> command_compile(&options)
+        MainCommand.Compile($options) -> command_compile(^options)
 
         MainCommand.Project($poptions) -> match poptions {
-            CommandProject.New($options) -> command_project_new(&options)
+            CommandProject.New($options) -> command_project_new(^options)
         }
 
         MainCommand.Help -> io.println(get_help_message(@type_info(MainCommand)))
 
-        // MainCommand.FindToken($options) -> find_tokens_of_type(&options)
+        // MainCommand.FindToken($options) -> find_tokens_of_type(^options)
     }
 }
 
@@ -149,7 +149,7 @@ CommandFindToken :: struct {
     suffix : Option[String] = None
 }
 
-find_tokens_of_type :: (options: &CommandFindToken) {
+find_tokens_of_type :: (options: ^CommandFindToken) {
     console_error_handler := ConsoleErrorHandler.new(null)
     console_error_handler.code_color_error  = io.ConsoleColor.Green
     console_error_handler.code_color_normal = io.ConsoleColor.White
@@ -162,9 +162,9 @@ find_tokens_of_type :: (options: &CommandFindToken) {
                 io.printfln("Failed to open file '{}'", options.file.slice())
                 return
             })
-    console_error_handler.text_provider = &lexer.get()
+    console_error_handler.text_provider = ^lexer.get()
 
-    suffix, filter_suffix := match ref options.suffix {
+    suffix, filter_suffix := match &options.suffix {
         Some($str) -> str.slice(), true
         None -> "", false
     }
@@ -186,21 +186,21 @@ find_tokens_of_type :: (options: &CommandFindToken) {
     }
 }
 
-command_project_new :: (options: &CommandProjectNew) {
+command_project_new :: (options: ^CommandProjectNew) {
     // io.println(fmt.format("creating new project named '{}' of type {}", [options.name.slice(), options.typ]))
-    match ref options.typ {
+    match &options.typ {
         ProjectType.Program -> command_project_new_program(options)
     }
 }
 
-command_project_new_program :: (options: &CommandProjectNew) {
-    create_dir :: (dir_format: string, dir_args: []&any) #macro {
+command_project_new_program :: (options: ^CommandProjectNew) {
+    create_dir :: (dir_format: string, dir_args: []^any) #macro {
         dir := fmt.format(dir_format, dir_args)
         // io.printfln("Creating directory '{}'", dir.slice())
         fs.create_directory(dir.slice())
     }
 
-    create_file :: (path_format: string, path_args: []&any, content_format: string, content_args: []&any) {
+    create_file :: (path_format: string, path_args: []^any, content_format: string, content_args: []^any) {
         path    := fmt.format(path_format, path_args)
         content := fmt.format(content_format, content_args)
         // io.printfln("Creating file '{}'", path.slice())
@@ -226,7 +226,7 @@ Main :: () ``{
                 [options.name.slice()],
 "[CmdletBinding()]
 param ([Parameter(ValueFromRemainingArguments)] [string[]] $Passthrough)
-&cheezc ./src/main.che --out ./bin --name {} --time @Passthrough",
+^cheezc ./src/main.che --out ./bin --name {} --time @Passthrough",
                 [options.name.slice()])
 
     if !options.no_git {
@@ -249,6 +249,6 @@ bin/", [])
     }
 }
 
-command_compile :: (options: &CommandCompile) {
+command_compile :: (options: ^CommandCompile) {
     compile_files(options.files.slice())
 }

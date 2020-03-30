@@ -5,7 +5,7 @@ use import std.math
 #export_scope
 
 Texture :: trait {
-    value :: (ref Self, u: real, v: real, p: ref vec3) -> vec3;
+    value :: (&Self, u: real, v: real, p: &vec3) -> vec3;
 }
 
 //
@@ -14,32 +14,32 @@ ConstantTexture :: struct {
 }
 
 impl ConstantTexture {
-    create :: (color: vec3) -> &Texture {
+    create :: (color: vec3) -> ^Texture {
         return create_object(Texture, ConstantTexture(color))
     }
 }
 
 impl Texture for ConstantTexture {
-    value :: (ref Self, u: real, v: real, p: ref vec3) -> vec3 {
+    value :: (&Self, u: real, v: real, p: &vec3) -> vec3 {
         return color
     }
 }
 
 //
 CheckerTexture :: struct {
-    even: &Texture
-    odd : &Texture
+    even: ^Texture
+    odd : ^Texture
     size: real
 }
 
 impl CheckerTexture {
-    create :: (even: &Texture, odd: &Texture, size: real = 10) -> &Texture {
+    create :: (even: ^Texture, odd: ^Texture, size: real = 10) -> ^Texture {
         return create_object(Texture, CheckerTexture(even=even, odd=odd, size=size))
     }
 }
 
 impl Texture for CheckerTexture {
-    value :: (ref Self, u: real, v: real, p: ref vec3) -> vec3 {
+    value :: (&Self, u: real, v: real, p: &vec3) -> vec3 {
         sines := real(sin(size * p.x) * sin(size * p.y) * sin(size * p.z))
         return if sines >= 0 then even.value(u, v, p) else odd.value(u, v, p)
     }

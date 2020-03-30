@@ -2,7 +2,7 @@ io :: import std.io
 
 use import lua.lua
 
-check_lua :: (L: &lua_State, r: i32) -> bool {
+check_lua :: (L: ^lua_State, r: i32) -> bool {
     if r != LUA_OK {
         errormsg := lua_tostring(L, -1)
         io.printf("[LUA ERROR] {}`n", errormsg)
@@ -12,7 +12,7 @@ check_lua :: (L: &lua_State, r: i32) -> bool {
     return true
 }
 
-lua_HostFunction :: (L: &lua_State) -> i32 {
+lua_HostFunction :: (L: ^lua_State) -> i32 {
     a := lua_tonumber(L, 1)
     b := lua_tonumber(L, 2)
     io.printf("[CHEEZ] HostFunction({}, {}) has been called`n", (a, b))

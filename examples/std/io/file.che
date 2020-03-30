@@ -27,7 +27,7 @@ load_filec :: (filename: c_string) -> Result[String, String] {
     }
 
     size : int = 0
-    if GetFileSizeEx(handle, &size) == 0 {
+    if GetFileSizeEx(handle, ^size) == 0 {
         lastError := GetLastError()
         return Err(fmt.format("failed to get file size: 0x{:x}", [lastError]))
     }
@@ -35,7 +35,7 @@ load_filec :: (filename: c_string) -> Result[String, String] {
     content.resize(size)
     
     bytesRead : u32 = 0
-    if ReadFile(handle, content.get_raw(), cast(u32)size, &bytesRead, null) == 0 {
+    if ReadFile(handle, content.get_raw(), cast(u32)size, ^bytesRead, null) == 0 {
         lastError := GetLastError()
         return Err(fmt.format("failed to read content: 0x{:x}", [lastError]))
     }
@@ -55,14 +55,14 @@ load_filecb :: (filename: c_string) -> Option[[]u8] {
     }
 
     size : int = 0
-    if GetFileSizeEx(handle, &size) == 0 {
+    if GetFileSizeEx(handle, ^size) == 0 {
         return None
     }
 
     content := mem.alloc_n(u8, cast size)
     
     bytesRead : u32 = 0
-    if ReadFile(handle, cast content.data, cast(u32)size, &bytesRead, null) == 0 {
+    if ReadFile(handle, cast content.data, cast(u32)size, ^bytesRead, null) == 0 {
         mem.free_n(content)
         return None
     }
@@ -83,7 +83,7 @@ write_filecb :: (filename: c_string, data: []u8) -> bool {
     }
 
     bytesRead : u32 = 0
-    if WriteFile(handle, cast data.data, cast(u32)data.length, &bytesRead, null) == 0 {
+    if WriteFile(handle, cast data.data, cast(u32)data.length, ^bytesRead, null) == 0 {
         io.println("failed to write data")
         return false
     }
@@ -111,7 +111,7 @@ write_file_string :: (filename: string, str: string) -> bool {
     }
 
     bytesRead : u32 = 0
-    if WriteFile(handle, cast str.bytes.data, cast(u32)str.bytes.length, &bytesRead, null) == 0 {
+    if WriteFile(handle, cast str.bytes.data, cast(u32)str.bytes.length, ^bytesRead, null) == 0 {
         io.println("failed to write data")
         return false
     }

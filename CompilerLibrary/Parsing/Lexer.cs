@@ -40,6 +40,7 @@ namespace Cheez.Parsing
         PeriodPeriod,
         Equal,
         Ampersand,
+        Hat,
 
         Bang,
 
@@ -81,7 +82,6 @@ namespace Cheez.Parsing
 
         KwLambda,
         KwReturn,
-        KwRef,
         Kwfn,
         KwFn,
         KwStruct,
@@ -246,6 +246,7 @@ namespace Cheez.Parsing
                 case ']': SimpleToken(ref token, TokenType.ClosingBracket); break;
                 case ',': SimpleToken(ref token, TokenType.Comma); break;
                 case '&': SimpleToken(ref token, TokenType.Ampersand); break;
+                case '^': SimpleToken(ref token, TokenType.Hat); break;
                 case '*': SimpleToken(ref token, TokenType.Asterisk); break;
                 case '/': SimpleToken(ref token, TokenType.ForwardSlash); break;
                 case '+': SimpleToken(ref token, TokenType.Plus); break;
@@ -369,7 +370,6 @@ namespace Cheez.Parsing
             {
                 case "lambda":   token.type = TokenType.KwLambda; break;
                 case "return":   token.type = TokenType.KwReturn; break;
-                case "ref":      token.type = TokenType.KwRef; break;
                 case "fn":       token.type = TokenType.Kwfn; break;
                 case "Fn":       token.type = TokenType.KwFn; break;
                 case "struct":   token.type = TokenType.KwStruct; break;

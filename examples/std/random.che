@@ -15,11 +15,11 @@ impl LinearCongruentialGenerator {
         return Self(seed)
     }
 
-    set_seed :: (ref Self, seed: u64) {
+    set_seed :: (&Self, seed: u64) {
         self.seed = seed
     }
 
-    next :: (ref Self) -> u32 {
+    next :: (&Self) -> u32 {
         M : u64 = cast(u64) u32.max
         A : u64 = 1664525
         B : u64 = 1013904223
@@ -28,28 +28,28 @@ impl LinearCongruentialGenerator {
         return cast(u32) seed
     }
 
-    next_int :: (ref Self, min: int = 0, max: int = cast u32.max) -> int {
+    next_int :: (&Self, min: int = 0, max: int = cast u32.max) -> int {
         return (cast(int)next()) % (max - min) + min
     }
 }
 
 impl PseudoRandomGen for LinearCongruentialGenerator {
-    next_u32 :: (ref Self) -> u32 {
+    next_u32 :: (&Self) -> u32 {
         return self.next()
     }
 
-    next_double :: (ref Self) -> double {
+    next_double :: (&Self) -> double {
         r := double(self.next())
         m := double(u32.max)
         return r / m
     }
 }
 
-lcg : &LinearCongruentialGenerator = null
+lcg : ^LinearCongruentialGenerator = null
 
 PseudoRandomGen :: trait {
-    next_u32 :: (ref Self) -> u32;
-    next_double :: (ref Self) -> double;
+    next_u32 :: (&Self) -> u32;
+    next_double :: (&Self) -> double;
 }
 
 PseudoRandom :: struct {}
@@ -86,12 +86,12 @@ impl PseudoRandom {
 
 // distributions
 IDistribution :: trait(T: type) {
-    sample :: (ref Self) -> T;
+    sample :: (&Self) -> T;
 }
 
 IDiscreteDistribution :: trait(T: type) {
-    get_weight :: (ref Self, t: T) -> int;
-    // support :: (ref Self) -> T;
+    get_weight :: (&Self, t: T) -> int;
+    // support :: (&Self) -> T;
 }
 
 // iterator
@@ -100,16 +100,16 @@ DistributionIterator :: struct(T: type) {
 }
 
 impl(T: type) Iterator[T] for DistributionIterator[T] {
-    next :: (ref Self) -> Option[T] {
+    next :: (&Self) -> Option[T] {
         return Some(dist.sample())
     }
 
-    dispose :: (ref Self) {
-        free(&self)
+    dispose :: (&Self) {
+        free(^self)
     }
 }
 
-for_extension_random :: (dist: &IDistribution[$T], code: Code) #for {
+for_extension_random :: (dist: ^IDistribution[$T], code: Code) #for {
     while it_index := 0, true, it_index += 1 {
         it := dist.sample()
         @insert(code)
@@ -118,7 +118,7 @@ for_extension_random :: (dist: &IDistribution[$T], code: Code) #for {
 
 // i
 impl(T: type) IDistribution[T] {
-    samples :: (ref Self) -> Iterator[T] {
+    samples :: (&Self) -> Iterator[T] {
         it := alloc(DistributionIterator[T])
         <<it = DistributionIterator[T](self)
         return <<it
@@ -127,16 +127,16 @@ impl(T: type) IDistribution[T] {
 
 // Standard Continuous Uniform distribution
 StandardContinuousUniform :: struct(T: type) {
-    prng: &T
+    prng: ^T
 }
 impl(T: type) IDistribution[double] for StandardContinuousUniform[T] if T : PseudoRandomGen {
-    sample :: (ref Self) -> double {
+    sample :: (&Self) -> double {
         return prng.next_double()
     }
 }
 
 impl(T: type) StandardContinuousUniform[T] if T : PseudoRandomGen {
-    create :: (prng: &T) -> Self {
+    create :: (prng: ^T) -> Self {
         return StandardContinuousUniform[T](prng)
     }
 }
@@ -155,7 +155,7 @@ impl NormalDistribution {
 }
 
 impl IDistribution[double] for NormalDistribution {
-    sample :: (ref Self) -> double {
+    sample :: (&Self) -> double {
         a := scu.sample()
         b := scu.sample()
         return mean + sigma * (
@@ -170,12 +170,12 @@ StandardDiscreteUniform :: struct {
     max: int
 }
 impl IDiscreteDistribution[int] for StandardDiscreteUniform {
-    get_weight :: (ref Self, i: int) -> int {
+    get_weight :: (&Self, i: int) -> int {
         return if i >= min and i <= max {1} else {0}
     }
 }
 impl IDistribution[int] for StandardDiscreteUniform {
-    sample :: (ref Self) -> int {
+    sample :: (&Self) -> int {
         d := PseudoRandom.next_double()
         mi := cast(double)min
         ma := cast(double)max
@@ -189,7 +189,7 @@ SingletonDistribution :: struct(T: type) {
 }
 
 impl IDistribution[int] for SingletonDistribution[int] {
-    sample :: (ref Self) -> int {
+    sample :: (&Self) -> int {
         return value
     }
 }
@@ -201,7 +201,7 @@ BernoulliDistribution :: struct {
 }
 
 impl IDistribution[int] for BernoulliDistribution {
-    sample :: (ref Self) -> int {
+    sample :: (&Self) -> int {
         z := cast(double)zero
         o := cast(double)one
         d := PseudoRandom.next_double()
@@ -217,7 +217,7 @@ impl BernoulliDistribution {
 }
 
 // histograms
-print_histogram :: (dist: &IDistribution[$T], low: double, high: double){
+print_histogram :: (dist: ^IDistribution[$T], low: double, high: double){
     width : int : 160
     height: int : 30
     samples   : int : 1000000
@@ -299,7 +299,7 @@ print_histogram :: (dist: &IDistribution[$T], low: double, high: double){
     it.dispose()
 }
 
-print_discrete_histogram :: (dist: &IDistribution[$T]){
+print_discrete_histogram :: (dist: ^IDistribution[$T]){
     width : int : 40
     samples   : int : 100000
     it := dist.samples().take(samples)

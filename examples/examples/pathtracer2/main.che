@@ -38,15 +38,15 @@ max_depth := 15
 scenes := [simple_light, cornell_box, basic_scene, random_scene, big_scene]
 scene  := 4
 
-file_write_mutex : &Mutex = null
+file_write_mutex : ^Mutex = null
 
 RenderContext :: struct {
     id      : int
     min     : Vector2[int]
     max     : Vector2[int]
     image   : []double
-    world   : &Hittable
-    cam     : ref Camera
+    world   : ^Hittable
+    cam     : &Camera
     random  : Random
 }
 
@@ -134,7 +134,7 @@ pathtracer2 :: () {
     }
 }
 
-render_loop :: (context: &RenderContext) {
+render_loop :: (context: ^RenderContext) {
     profile_function()
     {
         h := (height - 1) / grid_size + 1
@@ -185,7 +185,7 @@ render_loop :: (context: &RenderContext) {
     }
 }
 
-color :: (r: Ray, world: &Hittable, random: ref Random, depth: int = 0) -> vec3 {
+color :: (r: Ray, world: ^Hittable, random: &Random, depth: int = 0) -> vec3 {
     return match world.hit(r, 0.001, 1000000.0, random) {
         Some($hit) -> {
             match hit.m.scatter(r, hit, random) {
@@ -206,7 +206,7 @@ color :: (r: Ray, world: &Hittable, random: ref Random, depth: int = 0) -> vec3 
     }
 }
 
-random_scene :: (cam: ref Camera) -> &Hittable {
+random_scene :: (cam: &Camera) -> ^Hittable {
     io.println("random_scene")
     cam_pos := vec3(20.0, 2.25, 5.0)
     lookat  := vec3(4.0, 1.0, 1.0)
@@ -219,7 +219,7 @@ random_scene :: (cam: ref Camera) -> &Hittable {
         vec3.mag(cam_pos - lookat))
 
     //
-    list := Array[&Hittable].create()
+    list := Array[^Hittable].create()
     list.add(create_object(Hittable, Sphere(
         center = vec3(0, -1000, 0)
         radius = 1000
@@ -318,7 +318,7 @@ random_scene :: (cam: ref Camera) -> &Hittable {
     }
 }
 
-basic_scene :: (cam: ref Camera) -> &Hittable {
+basic_scene :: (cam: &Camera) -> ^Hittable {
     io.println("basic_scene")
     cam_pos := vec3(20.0, 2.25, 5.0)
     lookat  := vec3(4.0, 1.0, 1.0)
@@ -330,7 +330,7 @@ basic_scene :: (cam: ref Camera) -> &Hittable {
         0.0,
         vec3.mag(cam_pos - lookat))
 
-    list := Array[&Hittable].create()
+    list := Array[^Hittable].create()
     list.add(create_object(Hittable, Sphere(
         center = vec3(0, -1000, 0)
         radius = 1000
@@ -375,7 +375,7 @@ basic_scene :: (cam: ref Camera) -> &Hittable {
     }
 }
 
-simple_light :: (cam: ref Camera) -> &Hittable {
+simple_light :: (cam: &Camera) -> ^Hittable {
     io.println("simple_light")
     cam = Camera.create(
         vec3(20.0, 4.0, 5.0),
@@ -384,7 +384,7 @@ simple_light :: (cam: ref Camera) -> &Hittable {
         real(width) / real(height)
     )
 
-    list := Array[&Hittable].create()
+    list := Array[^Hittable].create()
 
     // ground
     list.add(create_object(Hittable, Sphere(
@@ -417,7 +417,7 @@ simple_light :: (cam: ref Camera) -> &Hittable {
     }
 }
 
-cornell_box :: (cam: ref Camera) -> &Hittable {
+cornell_box :: (cam: &Camera) -> ^Hittable {
     io.println("cornell_box")
     cam = Camera.create(
         vec3(278, 278, -800),
@@ -435,7 +435,7 @@ cornell_box :: (cam: ref Camera) -> &Hittable {
     light := create_object(Material, Emissive(vec3(15, 15, 15)))
 
     // room
-    list := Array[&Hittable].create()
+    list := Array[^Hittable].create()
     list.add(FlipNormals.create(create_object(Hittable, YZRect(  0, 555,   0, 555, 555, green))))  // left
     list.add(                    create_object(Hittable, YZRect(  0, 555,   0, 555,   0, red)))     // right
     list.add(                    create_object(Hittable, ZXRect(213, 343, 227, 332, 554, light)))   // light
@@ -455,7 +455,7 @@ cornell_box :: (cam: ref Camera) -> &Hittable {
     }
 }
 
-big_scene :: (cam: ref Camera) -> &Hittable {
+big_scene :: (cam: &Camera) -> ^Hittable {
     io.println("big_scene")
     // change random number gen for better level gen
     {
@@ -478,7 +478,7 @@ big_scene :: (cam: ref Camera) -> &Hittable {
         focus_dist
     )
 
-    list := Array[&Hittable].create()
+    list := Array[^Hittable].create()
 
     nb := 20
 
@@ -487,7 +487,7 @@ big_scene :: (cam: ref Camera) -> &Hittable {
 
     // boxes
     {
-        boxlist := Array[&Hittable].create()
+        boxlist := Array[^Hittable].create()
         for i: 0..nb {
             for j : 0..nb {
                 w := real(100.0)

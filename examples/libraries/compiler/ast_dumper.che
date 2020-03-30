@@ -7,7 +7,7 @@ fmt :: import std.fmt
 
 #export_scope
 
-dump_ast :: (node: ref AstNode, recurse: bool = true) -> String {
+dump_ast :: (node: &AstNode, recurse: bool = true) -> String {
     result := String.empty()
     dump_ast_helper(result, node, recurse, 0)
     return result
@@ -15,7 +15,7 @@ dump_ast :: (node: ref AstNode, recurse: bool = true) -> String {
 
 #file_scope
 
-dump_ast_helper :: (result: ref String, node: ref AstNode, recurse: bool, indent: int) {
+dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int) {
     print :: (msg: string, amount: int) #macro {
         for 0 .. amount {
             result += "  "

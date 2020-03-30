@@ -9,7 +9,7 @@ use import std.random.mt
 
 #export_scope
 
-create_object :: ($T: type, val: $V) -> &T {
+create_object :: ($T: type, val: $V) -> ^T {
     mem := alloc(V)
     <<mem = val
     return mem
@@ -17,16 +17,16 @@ create_object :: ($T: type, val: $V) -> &T {
 
 vec3 :: Vector3[real]
 
-global_random : &MTwister = null
+global_random : ^MTwister = null
 
 Random :: MTwister
 
 impl Random {
-    random_real :: (ref Self) -> real {
+    random_real :: (&Self) -> real {
         return real(self.next_double())
     }
 
-    random_in_unit_sphere :: (ref Self) -> vec3 {
+    random_in_unit_sphere :: (&Self) -> vec3 {
         p : vec3 = default
         while true {
             r := vec3(self.random_real(), self.random_real(), self.random_real())
@@ -39,7 +39,7 @@ impl Random {
         return p
     }
 
-    random_in_unit_disk :: (ref Self) -> vec3 {
+    random_in_unit_disk :: (&Self) -> vec3 {
         p : vec3 = default
         while true {
             r := vec3(self.random_real(), self.random_real(), 0.0)
@@ -68,7 +68,7 @@ impl Ray {
         return Ray(a, dir.normalized())
     }
 
-    at :: (ref Self, t: real) -> vec3 {
+    at :: (&Self, t: real) -> vec3 {
         return origin + direction * t
     }
 }
@@ -111,7 +111,7 @@ impl Camera {
         )
     }
 
-    get_ray :: (ref Self, s: real, t: real, random: ref Random) -> Ray {
+    get_ray :: (&Self, s: real, t: real, random: &Random) -> Ray {
         rd := random.random_in_unit_disk() * lens_radius
         offset := u * rd.x + v * rd.y
         return Ray.from_to(origin + offset, lower_left_corner + horizontal * s + vertical * t)
@@ -119,13 +119,13 @@ impl Camera {
 }
 
 impl Printable for vec3 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.appendf("v3({}, {}, {})", (x, y, z))
     }
 }
 
 impl Printable for Ray {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.appendf("ray({}, {})", (origin, direction))
     }
 }
@@ -140,7 +140,7 @@ impl AABB {
         return AABB(min, max)
     }
 
-    help :: (min_w: real, max_w: real, origin_w: real, dir_w: real, t_min: ref real, t_max: ref real) -> bool {
+    help :: (min_w: real, max_w: real, origin_w: real, dir_w: real, t_min: &real, t_max: &real) -> bool {
         inv_d := real(1.0) / dir_w
         t0 := (min_w - origin_w) * inv_d
         t1 := (max_w - origin_w) * inv_d
@@ -152,7 +152,7 @@ impl AABB {
         return t_max <= t_min
     }
 
-    hit :: (ref Self, r: ref Ray, t_min: real, t_max: real) -> bool {
+    hit :: (&Self, r: &Ray, t_min: real, t_max: real) -> bool {
         if help(_min.x, _max.x, r.origin.x, r.direction.x, t_min, t_max) {
             return false
         }
@@ -166,7 +166,7 @@ impl AABB {
         return true
     }
 
-    surrounding_box :: (a: ref AABB, b: ref AABB) -> AABB {
+    surrounding_box :: (a: &AABB, b: &AABB) -> AABB {
         small := vec3(
             x = min(a._min.x, b._min.x)
             y = min(a._min.y, b._min.y)

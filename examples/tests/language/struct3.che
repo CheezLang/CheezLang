@@ -11,7 +11,7 @@ Test :: struct(T: type) {
 }
 
 impl(T: type) Test[T] {
-    foo :: (ref Self, a: int) -> Test[T] {
+    foo :: (&Self, a: int) -> Test[T] {
         self.x = cast a
         return Test[T](cast a)
     }

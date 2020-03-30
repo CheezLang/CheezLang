@@ -78,7 +78,7 @@ impl(T: type) Matrix4[T] {
     //     ])
     // }
 
-    invert_orthographic :: (ref Self) -> Self {
+    invert_orthographic :: (&Self) -> Self {
         return Self([
             1 / values[0]   , 0             , 0                 , -values[3]
             0               , 1 / values[5] , 0                 , -values[7]
@@ -100,18 +100,18 @@ impl(T: type) Matrix4[T] {
         ])
     }
 
-    data :: (ref Self) -> &T {
+    data :: (&Self) -> ^T {
         return values.data
     }
 
-    muls :: (ref Self, s: T) #operator("*=") {
+    muls :: (&Self, s: T) #operator("*=") {
         values : []T = values
         for(by_ref=true) values {
             it *= s
         }
     }
 
-    mulm :: (ref Self, other: ref Matrix4[T]) #operator("*=") {
+    mulm :: (&Self, other: &Matrix4[T]) #operator("*=") {
         // copy of own values
         a := values
         b : []T = other.values
@@ -151,7 +151,7 @@ impl(T: type) Matrix4[T] {
         )
     }
 
-    mulv :: (ma: ref Matrix4[T], v: Vector3[T], w: T = 1) -> Vector3[T] {
+    mulv :: (ma: &Matrix4[T], v: Vector3[T], w: T = 1) -> Vector3[T] {
         a : []T = ma.values
         return Vector3[T](
             x = a[0] * v.x + a[1] * v.y + a[2]  * v.z + a[3]  * w
@@ -162,7 +162,7 @@ impl(T: type) Matrix4[T] {
 }
 
 impl(T: type) Printable for Matrix4[T] {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         for r : 0..4 {
             if r > 0 then str.append_string("`n")
             for c : 0..4 {

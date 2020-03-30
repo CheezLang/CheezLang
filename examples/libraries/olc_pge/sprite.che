@@ -8,7 +8,7 @@ Sprite :: struct {
     width: int
     height: int
     mode : SpriteMode = SpriteMode.Normal
-    data: &Pixel = null
+    data: ^Pixel = null
 }
 
 SpriteMode :: enum #copy {
@@ -31,7 +31,7 @@ impl Sprite {
         )
     }
 
-    dispose :: (ref Self) {
+    dispose :: (&Self) {
         free(data)
 
         width = 0
@@ -39,11 +39,11 @@ impl Sprite {
         data = null
     }
 
-    set_sample_mode :: (ref Self, mode: SpriteMode) {
+    set_sample_mode :: (&Self, mode: SpriteMode) {
         self.mode = mode
     }
 
-    get_pixel :: (ref Self, x: int, y: int) -> Pixel {
+    get_pixel :: (&Self, x: int, y: int) -> Pixel {
         return match mode {
             SpriteMode.Normal -> {
                 if x >= 0 and x < width and y >= 0 and y < height {
@@ -58,7 +58,7 @@ impl Sprite {
         }
     }
 
-    set_pixel :: (ref Self, x: int, y: int, p: Pixel) -> bool {
+    set_pixel :: (&Self, x: int, y: int, p: Pixel) -> bool {
         if x >= 0 and x < width and y >= 0 and y < height {
             data[x + y * width] = p
             return true
@@ -67,17 +67,17 @@ impl Sprite {
         }
     }
 
-    acc_pixel_op :: (ref Self, p: (int, int)) -> ref Pixel #operator("[]") {
+    acc_pixel_op :: (&Self, p: (int, int)) -> &Pixel #operator("[]") {
         return data[mod_pos(p[0], width) + mod_pos(p[1], height) * width]
     }
 
-    sample :: (ref Self, x: float, y: float) -> Pixel {
+    sample :: (&Self, x: float, y: float) -> Pixel {
         sx := cast(int) fminf(x * cast(float)width, cast width - 1)
         sy := cast(int) fminf(y * cast(float)height, cast height - 1)
         return get_pixel(sx, sy)
     }
 
-    get_data :: (ref Self) -> &Pixel {
+    get_data :: (&Self) -> ^Pixel {
         return data
     }
 }

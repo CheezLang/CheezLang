@@ -4,27 +4,27 @@ use import windows_constants
 #export_scope
 
 // new, incomplete
-GetCursorPos :: (pos: &POINT) -> i32 #stdcall;
+GetCursorPos :: (pos: ^POINT) -> i32 #stdcall;
 SetCursorPos :: (x: i32, y: i32) -> i32 #stdcall;
 
 MultiByteToWideChar :: (
   CodePage       : u32,
   dwFlags        : DWORD,
-  lpMultiByteStr : &u8,
+  lpMultiByteStr : ^u8,
   cbMultiByte    : i32,
-  lpWideCharStr  : &u16,
+  lpWideCharStr  : ^u16,
   cchWideChar    : i32
 ) -> i32 #stdcall;
 
 WideCharToMultiByte :: (
   CodePage          : u32,
   dwFlags           : DWORD,
-  lpWideCharStr     : &u16,
+  lpWideCharStr     : ^u16,
   cchWideChar       : i32,
-  lpMultiByteStr    : &u8,
+  lpMultiByteStr    : ^u8,
   cbMultiByte       : i32,
-  lpDefaultChar     : &u8,
-  lpUsedDefaultChar : &BOOL
+  lpDefaultChar     : ^u8,
+  lpUsedDefaultChar : ^BOOL
 ) -> i32 #stdcall;
 
 FindFirstChangeNotificationA :: (
@@ -36,29 +36,29 @@ FindFirstChangeNotificationA :: (
 FindNextChangeNotification  :: (hChangeHandle: HANDLE) -> BOOL #stdcall;
 FindCloseChangeNotification :: (hChangeHandle: HANDLE) -> BOOL #stdcall;
 RegisterWaitForSingleObject :: (
-  phNewWaitObject   : &HANDLE,
+  phNewWaitObject   : ^HANDLE,
   hObject           : HANDLE,
   callback          : WAITORTIMERCALLBACK,
-  context           : &void,
+  context           : ^void,
   dwMilliseconds    : u32,
   dwFlags           : u32
 ) -> BOOL #stdcall;
 
 ReadDirectoryChangesW :: (
     hDirectory          : HANDLE,
-    lpBuffer            : &void,
+    lpBuffer            : ^void,
     nBufferLength       : DWORD,
     bWatchSubtree       : BOOL,
     dwNotifyFilter      : DWORD,
-    lpBytesReturned     : &DWORD,
-    lpOverlapped        : &void,
-    lpCompletionRoutine : &void
+    lpBytesReturned     : ^DWORD,
+    lpOverlapped        : ^void,
+    lpCompletionRoutine : ^void
 ) -> BOOL #stdcall;
 
-WaitForSingleObject :: (handle: &void, millis: DWORD) -> DWORD #stdcall;
+WaitForSingleObject :: (handle: ^void, millis: DWORD) -> DWORD #stdcall;
 WaitForMultipleObjects :: (
   nCount         : DWORD,
-  lpHandles      : &HANDLE,
+  lpHandles      : ^HANDLE,
   bWaitAll       : BOOL,
   dwMilliseconds : DWORD
 ) -> DWORD #stdcall;
@@ -69,54 +69,54 @@ UnregisterWait :: (handle: HANDLE) #stdcall;
 
 // command line
 GetCommandLineA    :: () -> c_string #stdcall;
-GetCommandLineW    :: () -> &u16 #stdcall;
-CommandLineToArgvW :: (lpCmdLine: &u16, pNumArgs: &i32) -> &&u16 #stdcall;
+GetCommandLineW    :: () -> ^u16 #stdcall;
+CommandLineToArgvW :: (lpCmdLine: ^u16, pNumArgs: ^i32) -> ^^u16 #stdcall;
 
 // general stuff
 GetLastError              :: () -> WindowsErrorCode #stdcall;
 CloseHandle               :: (hObject: HANDLE) -> BOOL #stdcall;
-QueryPerformanceCounter   :: (lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
-QueryPerformanceFrequency :: (lpPerformanceCount: &LARGE_INTEGER) -> BOOL #stdcall;
+QueryPerformanceCounter   :: (lpPerformanceCount: ^LARGE_INTEGER) -> BOOL #stdcall;
+QueryPerformanceFrequency :: (lpPerformanceCount: ^LARGE_INTEGER) -> BOOL #stdcall;
 Sleep                     :: (millis: DWORD) #stdcall;
 
 // file stuff
 GetStdHandle     :: (nStdHandle: DWORD) -> HANDLE #stdcall;
-SetFilePointerEx :: (hFile: HANDLE, liDistanceToMove: LARGE_INTEGER, lpNewFilePointer: &LARGE_INTEGER, dwMoveMethod: DWORD) -> BOOL #stdcall;
-WriteFile        :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
-ReadFile         :: (hFile: HANDLE, lpBuffer: &void, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
-CreateFileA      :: (lpFileName: &u8,  dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &SECURITY_ATTRIBUTES, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
-CreateFileW      :: (lpFileName: &u16, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: &SECURITY_ATTRIBUTES, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
-CreateDirectoryA :: (lpPathName: &u8,  lpSecurityAttributes: &SECURITY_ATTRIBUTES) -> BOOL #stdcall;
-CreateDirectoryW :: (lpPathName: &u16, lpSecurityAttributes: &SECURITY_ATTRIBUTES) -> BOOL #stdcall;
-GetFileSize      :: (hFile: HANDLE, lpFileSizeHigh: &DWORD) -> DWORD #stdcall;
-GetFileSizeEx    :: (hFile: HANDLE, lpFileSize: &LARGE_INTEGER) -> BOOL #stdcall;
-GetFullPathNameW :: (lpFileName: &u16, nBufferLength: DWORD, lpBuffer: c_string, lpFilePart: &c_string) -> DWORD #stdcall;
+SetFilePointerEx :: (hFile: HANDLE, liDistanceToMove: LARGE_INTEGER, lpNewFilePointer: ^LARGE_INTEGER, dwMoveMethod: DWORD) -> BOOL #stdcall;
+WriteFile        :: (hFile: HANDLE, lpBuffer: ^void, nNumberOfBytesToWrite: DWORD, lpNumberOfBytesWritten: ^DWORD, lpOverlapped: ^void) -> BOOL #stdcall;
+ReadFile         :: (hFile: HANDLE, lpBuffer: ^void, nNumberOfBytesToRead: DWORD, lpNumberOfBytesRead: ^DWORD, lpOverlapped: ^void) -> BOOL #stdcall;
+CreateFileA      :: (lpFileName: ^u8,  dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: ^SECURITY_ATTRIBUTES, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
+CreateFileW      :: (lpFileName: ^u16, dwDesiredAccess: DWORD, dwShareMode: DWORD, lpSecurityAttributes: ^SECURITY_ATTRIBUTES, dwCreationDisposition: DWORD, dwFlagsAndAttributes: DWORD, hTemplateFile: HANDLE) -> HANDLE #stdcall;
+CreateDirectoryA :: (lpPathName: ^u8,  lpSecurityAttributes: ^SECURITY_ATTRIBUTES) -> BOOL #stdcall;
+CreateDirectoryW :: (lpPathName: ^u16, lpSecurityAttributes: ^SECURITY_ATTRIBUTES) -> BOOL #stdcall;
+GetFileSize      :: (hFile: HANDLE, lpFileSizeHigh: ^DWORD) -> DWORD #stdcall;
+GetFileSizeEx    :: (hFile: HANDLE, lpFileSize: ^LARGE_INTEGER) -> BOOL #stdcall;
+GetFullPathNameW :: (lpFileName: ^u16, nBufferLength: DWORD, lpBuffer: c_string, lpFilePart: ^c_string) -> DWORD #stdcall;
 
 // console stuff
-WriteConsoleW    :: (hConsoleOutput: HANDLE, lpBuffer: &void, nNumberOfBytesToWrite: DWORD, lpNumberOfCharsWritten: &DWORD, lpOverlapped: &void) -> BOOL #stdcall;
-GetConsoleMode   :: (hConsoleHandle: HANDLE, lpMode: &DWORD) -> BOOL #stdcall;
+WriteConsoleW    :: (hConsoleOutput: HANDLE, lpBuffer: ^void, nNumberOfBytesToWrite: DWORD, lpNumberOfCharsWritten: ^DWORD, lpOverlapped: ^void) -> BOOL #stdcall;
+GetConsoleMode   :: (hConsoleHandle: HANDLE, lpMode: ^DWORD) -> BOOL #stdcall;
 SetConsoleTextAttribute :: (hConsoleOutput: HANDLE, wAttributes: WORD) -> BOOL #stdcall;
 
 // window stuff
 GetModuleHandleA   :: (lpModuleName: c_string) -> HMODULE #stdcall;
 SetWindowTextA     :: (hWnd: HWND, lpString: c_string) -> BOOL #stdcall;
-SetWindowTextW     :: (hWnd: HWND, lpString: &u16) -> BOOL #stdcall;
+SetWindowTextW     :: (hWnd: HWND, lpString: ^u16) -> BOOL #stdcall;
 DefWindowProcA     :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT #stdcall;
-RegisterClassA     :: (wndClass: &WNDCLASSA) -> ATOM #stdcall;
-AdjustWindowRectEx :: (lpRect: &RECT, dwStyle: DWORD, bMenu: BOOL, dwExStyle: DWORD) -> BOOL #stdcall;
-CreateWindowExA    :: (dwExStyle: DWORD, lpClassNa: c_string, lpWindowName : c_string, dwSty: DWORD, X: i32, Y: i32, nWidt: i32, nHeig: i32, hWndParen: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpPar: &void) -> HWND #stdcall;
+RegisterClassA     :: (wndClass: ^WNDCLASSA) -> ATOM #stdcall;
+AdjustWindowRectEx :: (lpRect: ^RECT, dwStyle: DWORD, bMenu: BOOL, dwExStyle: DWORD) -> BOOL #stdcall;
+CreateWindowExA    :: (dwExStyle: DWORD, lpClassNa: c_string, lpWindowName : c_string, dwSty: DWORD, X: i32, Y: i32, nWidt: i32, nHeig: i32, hWndParen: HWND, hMenu: HMENU, hInstance: HINSTANCE, lpPar: ^void) -> HWND #stdcall;
 PostMessageA       :: (hWnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> BOOL #stdcall;
-PeekMessageA       :: (lpMsg: &MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT, wRemoveMsg: UINT) -> BOOL #stdcall;
-GetMessageA        :: (lpMsg: &MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT) -> BOOL #stdcall;
-TranslateMessage   :: (lpMsg: &MSG) -> BOOL #stdcall;
-DispatchMessageA   :: (lpMsg: &MSG) -> LRESULT #stdcall;
+PeekMessageA       :: (lpMsg: ^MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT, wRemoveMsg: UINT) -> BOOL #stdcall;
+GetMessageA        :: (lpMsg: ^MSG, hWnd: HWND, wMsgFilterMin: UINT, wMsgFilterMax: UINT) -> BOOL #stdcall;
+TranslateMessage   :: (lpMsg: ^MSG) -> BOOL #stdcall;
+DispatchMessageA   :: (lpMsg: ^MSG) -> LRESULT #stdcall;
 LoadIconA          :: (hInstance: HINSTANCE, lpIconName: c_string) -> HICON #stdcall;
 LoadCursorA        :: (hInstance: HINSTANCE, lpIconName: c_string) -> HCURSOR #stdcall;
 PostQuitMessage    :: (exitCode: i32) #stdcall;
 
 GetDC              :: (hwnd: HWND) -> HDC #stdcall;
-ChoosePixelFormat  :: (hdc: HDC, ppfd: &PIXELFORMATDESCRIPTOR) -> i32 #stdcall;
-SetPixelFormat     :: (hdc: HDC, format: i32, ppfd: &PIXELFORMATDESCRIPTOR) -> BOOL #stdcall;
+ChoosePixelFormat  :: (hdc: HDC, ppfd: ^PIXELFORMATDESCRIPTOR) -> i32 #stdcall;
+SetPixelFormat     :: (hdc: HDC, format: i32, ppfd: ^PIXELFORMATDESCRIPTOR) -> BOOL #stdcall;
 SwapBuffers        :: (HDC) -> BOOL #stdcall;
 
 // wgl
@@ -125,56 +125,56 @@ wglMakeCurrent     :: (HDC, HGLRC) -> BOOL #stdcall;
 wglGetProcAddress  :: (c_string) -> (fn() #stdcall) #stdcall;
 
 // fiber
-ConvertThreadToFiber :: (lpParameter: &void) -> &void #stdcall;
-SwitchToFiber        :: (fiber: &void) #stdcall;
-CreateFiber          :: (dwStackSize: int, lpStartAddress: fn(&void) #stdcall, lpParameter: &void) -> &void #stdcall;
-DeleteFiber          :: (fiber: &void) #stdcall;
+ConvertThreadToFiber :: (lpParameter: ^void) -> ^void #stdcall;
+SwitchToFiber        :: (fiber: ^void) #stdcall;
+CreateFiber          :: (dwStackSize: int, lpStartAddress: fn(^void) #stdcall, lpParameter: ^void) -> ^void #stdcall;
+DeleteFiber          :: (fiber: ^void) #stdcall;
 
 // process
 CreateProcessA :: (
     lpApplicationName: c_string,
     lpCommandLine: c_string,
-    lpProcessAttributes: &SECURITY_ATTRIBUTES,
-    lpThreadAttributes: &SECURITY_ATTRIBUTES,
+    lpProcessAttributes: ^SECURITY_ATTRIBUTES,
+    lpThreadAttributes: ^SECURITY_ATTRIBUTES,
     bInheritHandles: BOOL,
     dwCreationFlags: DWORD,
-    lpEnvironment: &void,
+    lpEnvironment: ^void,
     lpCurrentDirectory: c_string,
-    lpStartupInfo: &STARTUPINFOA,
-    lpProcessInformation: &PROCESS_INFORMATION
+    lpStartupInfo: ^STARTUPINFOA,
+    lpProcessInformation: ^PROCESS_INFORMATION
 ) -> BOOL #stdcall;
 
 // requires shlwapi.lib
-PathFindOnPathA :: (pszPath: c_string, ppszOtherDirs: &c_string) -> BOOL #stdcall;
+PathFindOnPathA :: (pszPath: c_string, ppszOtherDirs: ^c_string) -> BOOL #stdcall;
 
 // threads
 GetCurrentThread   :: () -> HANDLE #stdcall;
 GetCurrentThreadId :: () -> DWORD #stdcall;
 GetThreadId        :: (handle: HANDLE) -> DWORD #stdcall;
-CreateThread       :: (lpThreadAttributes: &SECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress: THREAD_START_ROUTINE, lpParameter: &void, dwCreationFlags: DWORD, lpThreadId: &DWORD) -> HANDLE #stdcall;
+CreateThread       :: (lpThreadAttributes: ^SECURITY_ATTRIBUTES, dwStackSize: SIZE_T, lpStartAddress: THREAD_START_ROUTINE, lpParameter: ^void, dwCreationFlags: DWORD, lpThreadId: ^DWORD) -> HANDLE #stdcall;
 ResumeThread       :: (hThread: HANDLE) -> DWORD #stdcall;
 ExitThread         :: (exitCode: DWORD) -> DWORD #stdcall;
 TerminateThread    :: (hThread: HANDLE, dwExitCode: DWORD) -> BOOL #stdcall;
 ReleaseMutex       :: (handle: HANDLE) -> BOOL #stdcall;
-CreateMutexA       :: (lpMutexAttributes: &void, bInitialOwner: BOOL, lpName: &char) -> HANDLE #stdcall;
+CreateMutexA       :: (lpMutexAttributes: ^void, bInitialOwner: BOOL, lpName: ^char) -> HANDLE #stdcall;
 
-InitializeCriticalSection               :: (section: &CRITICAL_SECTION) #stdcall;
-EnterCriticalSection                    :: (section: &CRITICAL_SECTION) #stdcall;
-LeaveCriticalSection                    :: (section: &CRITICAL_SECTION) #stdcall;
-InitializeCriticalSectionAndSpinCount   :: (section: &CRITICAL_SECTION, spin_count: DWORD) -> BOOL #stdcall;
-InitializeCriticalSectionEx             :: (section: &CRITICAL_SECTION, spin_count: DWORD, flags: DWORD) -> BOOL #stdcall;
-SetCriticalSectionSpinCount             :: (section: &CRITICAL_SECTION, spin_count: DWORD) -> DWORD #stdcall;
-TryEnterCriticalSection                 :: (section: &CRITICAL_SECTION) -> BOOL #stdcall;
-DeleteCriticalSection                   :: (section: &CRITICAL_SECTION) #stdcall;
+InitializeCriticalSection               :: (section: ^CRITICAL_SECTION) #stdcall;
+EnterCriticalSection                    :: (section: ^CRITICAL_SECTION) #stdcall;
+LeaveCriticalSection                    :: (section: ^CRITICAL_SECTION) #stdcall;
+InitializeCriticalSectionAndSpinCount   :: (section: ^CRITICAL_SECTION, spin_count: DWORD) -> BOOL #stdcall;
+InitializeCriticalSectionEx             :: (section: ^CRITICAL_SECTION, spin_count: DWORD, flags: DWORD) -> BOOL #stdcall;
+SetCriticalSectionSpinCount             :: (section: ^CRITICAL_SECTION, spin_count: DWORD) -> DWORD #stdcall;
+TryEnterCriticalSection                 :: (section: ^CRITICAL_SECTION) -> BOOL #stdcall;
+DeleteCriticalSection                   :: (section: ^CRITICAL_SECTION) #stdcall;
 
-InitializeConditionVariable             :: (var: &CONDITION_VARIABLE) #stdcall;
-WakeConditionVariable                   :: (var: &CONDITION_VARIABLE) #stdcall;
-WakeAllConditionVariable                :: (var: &CONDITION_VARIABLE) #stdcall;
-SleepConditionVariableCS                :: (var: &CONDITION_VARIABLE, section: &CRITICAL_SECTION, milliseconds: DWORD) -> BOOL #stdcall;
-// SleepConditionVariableSRW               :: (var: &CONDITION_VARIABLE, SRWLock: &SRWLOCK, milliseconds: DWORD, flags: ULONG) -> BOOL #stdcall;
+InitializeConditionVariable             :: (var: ^CONDITION_VARIABLE) #stdcall;
+WakeConditionVariable                   :: (var: ^CONDITION_VARIABLE) #stdcall;
+WakeAllConditionVariable                :: (var: ^CONDITION_VARIABLE) #stdcall;
+SleepConditionVariableCS                :: (var: ^CONDITION_VARIABLE, section: ^CRITICAL_SECTION, milliseconds: DWORD) -> BOOL #stdcall;
+// SleepConditionVariableSRW               :: (var: ^CONDITION_VARIABLE, SRWLock: ^SRWLOCK, milliseconds: DWORD, flags: ULONG) -> BOOL #stdcall;
 
-_InterlockedCompareExchange64           :: (dest: &LONG64, value: LONG64, compare_to: LONG64) -> LONG64 #stdcall;
-_InterlockedExchange64                  :: (dest: &LONG64, value: LONG64) -> LONG64 #stdcall;
+_InterlockedCompareExchange64           :: (dest: ^LONG64, value: LONG64, compare_to: LONG64) -> LONG64 #stdcall;
+_InterlockedExchange64                  :: (dest: ^LONG64, value: LONG64) -> LONG64 #stdcall;
 
 
 // somehow not linking

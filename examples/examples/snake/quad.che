@@ -14,7 +14,7 @@ Quad :: struct #copy {
 }
 
 impl Quad {
-    draw :: (ref Self) {
+    draw :: (&Self) {
         glBegin      :: (mode: GLenum) #stdcall;
         glEnd        :: () #stdcall;
         glVertex2d   :: (x: f64, y: f64) #stdcall;

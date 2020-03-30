@@ -57,7 +57,7 @@ compile_files :: (files: []String) {
 
     console_error_handler := ConsoleErrorHandler.new(null)
 
-    compiler := Compiler.new(1, &console_error_handler)
+    compiler := Compiler.new(1, ^console_error_handler)
     compiler.get().global_scope.define_native_function("print", cast(NativeFunction) (interp, arg_count) => {
         frame := interp.top_frame()
         for 0..arg_count {
@@ -79,29 +79,29 @@ compile_files :: (files: []String) {
 }
 
 FiberContext :: struct {
-    fiber   : &Fiber
-    interp  : &Interpreter
-    job     : &CompilationJob = null
+    fiber   : ^Fiber
+    interp  : ^Interpreter
+    job     : ^CompilationJob = null
     thread  : int = -1
 }
 
 Compiler :: struct {
-    jobs            := RingQueue[&CompilationJob].new()
+    jobs            := RingQueue[^CompilationJob].new()
 
-    fibers          := Array[&FiberContext].create(1024)
-    waiting_fibers  := RingQueue[&FiberContext].new()
-    paused_fibers   := RingQueue[&FiberContext].new()
+    fibers          := Array[^FiberContext].create(1024)
+    waiting_fibers  := RingQueue[^FiberContext].new()
+    paused_fibers   := RingQueue[^FiberContext].new()
     any_progress    := false
 
     mutex           : Mutex
     threads         : Array[Thread]
     active_threads  := 0
 
-    error_handler   : &ErrorHandler
+    error_handler   : ^ErrorHandler
     string_database : StringDatabase
 
-    global_scope    : &Scope = null
-    all_nodes       := Array[&AstNode].create()
+    global_scope    : ^Scope = null
+    all_nodes       := Array[^AstNode].create()
 
     code_runner     : Rc[CodeRunner]
 
@@ -110,13 +110,13 @@ Compiler :: struct {
     sources         := Map[string, String].new()
 
     // allocators
-    scope_allocator : &mem.Allocator
-    ast_allocator   : &mem.Allocator
-    bc_allocator    : &mem.Allocator
+    scope_allocator : ^mem.Allocator
+    ast_allocator   : ^mem.Allocator
+    bc_allocator    : ^mem.Allocator
 }
 
 impl Drop for Compiler {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         // for f : fibers {
         //     Memory.drop(f.fiber)
         // }
@@ -124,7 +124,7 @@ impl Drop for Compiler {
 }
 
 impl TextProvider for Compiler {
-    get_text :: (ref Self, filename: string) -> string {
+    get_text :: (&Self, filename: string) -> string {
         return match self.sources.get(filename) {
             Some($content) -> content.slice()
             None -> @assert(false)
@@ -133,7 +133,7 @@ impl TextProvider for Compiler {
 }
 
 impl Compiler {
-    new :: (thread_count: int, error_handler: &ErrorHandler) -> Rc[Compiler] {
+    new :: (thread_count: int, error_handler: ^ErrorHandler) -> Rc[Compiler] {
         scope_allocator     := mem.alloc(StdHeapAllocator)
         ast_allocator       := mem.alloc(StdHeapAllocator)
         bc_allocator        := mem.alloc(StdHeapAllocator)
@@ -153,7 +153,7 @@ impl Compiler {
             bc_allocator    = bc_allocator
             scope_allocator = scope_allocator
         ))
-        comp.get().error_handler.text_provider = &comp.get()
+        comp.get().error_handler.text_provider = ^comp.get()
         comp.get().global_scope = comp.get().new_scope()
         for 0..thread_count {
             comp.get().threads.add(Thread.new(cast comp.get().thread_func))
@@ -161,26 +161,26 @@ impl Compiler {
         return comp
     }
 
-    lock :: (ref Self) {
+    lock :: (&Self) {
         if threads.get_length() > 1 then mutex.lock()
     }
 
-    release :: (ref Self) {
+    release :: (&Self) {
         if threads.get_length() > 1 then mutex.release()
     }
 
-    add_job :: (ref Self, job: $T) {
+    add_job :: (&Self, job: $T) {
         ptr := mem.alloc(T)
         <<ptr = job
-        ptr.compiler = &self
+        ptr.compiler = ^self
         jobs.push(ptr)
     }
 
-    run_job :: (ref Self, context: &FiberContext) {
+    run_job :: (&Self, context: ^FiberContext) {
         context.job.execute(self)
     }
 
-    new_scope :: (ref Self, parent: &Scope = null) -> &Scope {
+    new_scope :: (&Self, parent: ^Scope = null) -> ^Scope {
         scope := mem.alloc(Scope, scope_allocator)
         <<scope = Scope(
             parent = parent
@@ -190,13 +190,13 @@ impl Compiler {
 }
 
 impl Compiler {
-    start_compilation :: (ref Self) {
+    start_compilation :: (&Self) {
         for threads {
             it.start()
         }
     }
 
-    wait_until_done :: (ref Self) {
+    wait_until_done :: (&Self) {
         handles := mem.alloc_raw(HANDLE, cast threads.get_length())
 
         for threads {
@@ -211,7 +211,7 @@ impl Compiler {
         g_logger.log("[compiler] finished compilation with {} fibers", [fibers.get_length()])
     }
 
-    find_free_fiber :: (ref Self) -> &FiberContext {
+    find_free_fiber :: (&Self) -> ^FiberContext {
         for f : fibers {
             if f.job == null and f.thread == -1 {
                 return f
@@ -220,7 +220,7 @@ impl Compiler {
         {
             new_fiber := mem.alloc(FiberContext)
             <<new_fiber = FiberContext(
-                fiber   = Fiber.new(cast(Fn(&FiberContext)) self.fiber_func, new_fiber)
+                fiber   = Fiber.new(cast(Fn(^FiberContext)) self.fiber_func, new_fiber)
                 interp  = Interpreter.new()
             )
             fibers.add(new_fiber)
@@ -228,7 +228,7 @@ impl Compiler {
         }
     }
 
-    fiber_func :: (ref Self, fiber_context: &FiberContext) {
+    fiber_func :: (&Self, fiber_context: ^FiberContext) {
         while true {
             while fiber_context.job == null {
                 Fiber.yield()
@@ -241,11 +241,11 @@ impl Compiler {
         }
     }
 
-    thread_func :: (ref Self) {
+    thread_func :: (&Self) {
         Fiber.init()
         thread_id := Thread.current().id
 
-        current_fiber : &FiberContext = null
+        current_fiber : ^FiberContext = null
         while true #label main_loop {
             {
                 self.lock()

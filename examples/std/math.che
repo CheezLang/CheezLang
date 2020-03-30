@@ -81,37 +81,37 @@ Vector4 :: struct(T: type) #copy {
 
 impl(T: type) Vector2[T] {
     // ref
-    addv :: (ref Self, other: Self) -> ref Self #operator("+=") {
+    addv :: (&Self, other: Self) -> &Self #operator("+=") {
         x += other.x
         y += other.y
         return self
     }
 
-    subv :: (ref Self, other: Self) -> ref Self #operator("-=") {
+    subv :: (&Self, other: Self) -> &Self #operator("-=") {
         x -= other.x
         y -= other.y
         return self
     }
 
-    mulv :: (ref Self, other: Self) -> ref Self #operator("*=") {
+    mulv :: (&Self, other: Self) -> &Self #operator("*=") {
         x *= other.x
         y *= other.y
         return self
     }
 
-    muls :: (ref Self, other: T) -> ref Self #operator("*=") {
+    muls :: (&Self, other: T) -> &Self #operator("*=") {
         x *= other
         y *= other
         return self
     }
 
-    divv :: (ref Self, other: Self) -> ref Self #operator("/=") {
+    divv :: (&Self, other: Self) -> &Self #operator("/=") {
         x /= other.x
         y /= other.y
         return self
     }
 
-    normalize :: (ref Self) -> ref Self {
+    normalize :: (&Self) -> &Self {
         mag := self.mag()
         if mag != 0 {
             x /= mag
@@ -180,7 +180,7 @@ impl(T: type) Vector2[T] {
         return a.x * b.x + a.y * b.y
     }
 
-    eq :: (a: ref Self, b: ref Self) -> bool #operator("==") {
+    eq :: (a: &Self, b: &Self) -> bool #operator("==") {
         return a.x == b.x and a.y == b.y
     }
 
@@ -213,42 +213,42 @@ impl(T: type) Vector2[T] {
 
 impl(T: type) Vector3[T] {
     // ref
-    addv :: (ref Self, other: Self) -> ref Self #operator("+=") {
+    addv :: (&Self, other: Self) -> &Self #operator("+=") {
         x += other.x
         y += other.y
         z += other.z
         return self
     }
 
-    subv :: (ref Self, other: Self) -> ref Self #operator("-=") {
+    subv :: (&Self, other: Self) -> &Self #operator("-=") {
         x -= other.x
         y -= other.y
         z -= other.z
         return self
     }
 
-    mulv :: (ref Self, other: Self) -> ref Self #operator("*=") {
+    mulv :: (&Self, other: Self) -> &Self #operator("*=") {
         x *= other.x
         y *= other.y
         z *= other.z
         return self
     }
 
-    muls :: (ref Self, other: T) -> ref Self #operator("*=") {
+    muls :: (&Self, other: T) -> &Self #operator("*=") {
         x *= other
         y *= other
         z *= other
         return self
     }
 
-    divv :: (ref Self, other: Self) -> ref Self #operator("/=") {
+    divv :: (&Self, other: Self) -> &Self #operator("/=") {
         x /= other.x
         y /= other.y
         z /= other.z
         return self
     }
 
-    normalize :: (ref Self) -> ref Self {
+    normalize :: (&Self) -> &Self {
         mag := self.mag()
         if mag != 0 {
             x /= mag
@@ -353,7 +353,7 @@ impl(T: type) Vector3[T] {
         return a.x * b.x + a.y * b.y + a.z * b.z
     }
 
-    cross :: (ref Self, other: Self) -> Self {
+    cross :: (&Self, other: Self) -> Self {
         return Vector3[T](
             y * other.z - z * other.y
             z * other.x - x * other.z
@@ -361,11 +361,11 @@ impl(T: type) Vector3[T] {
         )
     }
 
-    reflect :: (ref Self, normal: Self) -> Self {
-        return normal * -Self.dot(self, normal) * T(2) + <<&self
+    reflect :: (&Self, normal: Self) -> Self {
+        return normal * -Self.dot(self, normal) * T(2) + <<^self
     }
 
-    refract :: (ref Self, normal: Self, ior: T) -> Option[Self] {
+    refract :: (&Self, normal: Self, ior: T) -> Option[Self] {
         uv := self
         dt := Self.dot(uv, normal)
         discriminant := 1 - ior * ior * (1 - dt * dt)
@@ -377,7 +377,7 @@ impl(T: type) Vector3[T] {
         }
     }
 
-    max_component :: (ref Self) -> T {
+    max_component :: (&Self) -> T {
         return max(x, max(y, z))
     }
 
@@ -416,7 +416,7 @@ impl(T: type) Vector3[T] {
 
 impl(T: type) Vector4[T] {
     // ref
-    addv :: (ref Self, other: Self) -> ref Self #operator("+=") {
+    addv :: (&Self, other: Self) -> &Self #operator("+=") {
         x += other.x
         y += other.y
         z += other.z
@@ -424,7 +424,7 @@ impl(T: type) Vector4[T] {
         return self
     }
 
-    subv :: (ref Self, other: Self) -> ref Self #operator("-=") {
+    subv :: (&Self, other: Self) -> &Self #operator("-=") {
         x -= other.x
         y -= other.y
         z -= other.z
@@ -432,7 +432,7 @@ impl(T: type) Vector4[T] {
         return self
     }
 
-    mulv :: (ref Self, other: Self) -> ref Self #operator("*=") {
+    mulv :: (&Self, other: Self) -> &Self #operator("*=") {
         x *= other.x
         y *= other.y
         z *= other.z
@@ -440,7 +440,7 @@ impl(T: type) Vector4[T] {
         return self
     }
 
-    muls :: (ref Self, other: T) -> ref Self #operator("*=") {
+    muls :: (&Self, other: T) -> &Self #operator("*=") {
         x *= other
         y *= other
         z *= other
@@ -448,7 +448,7 @@ impl(T: type) Vector4[T] {
         return self
     }
 
-    divv :: (ref Self, other: Self) -> ref Self #operator("/=") {
+    divv :: (&Self, other: Self) -> &Self #operator("/=") {
         x /= other.x
         y /= other.y
         z /= other.z
@@ -456,7 +456,7 @@ impl(T: type) Vector4[T] {
         return self
     }
 
-    normalize :: (ref Self) -> ref Self {
+    normalize :: (&Self) -> &Self {
         mag := self.mag()
         if mag != 0 {
             x /= mag
@@ -571,11 +571,11 @@ impl(T: type) Vector4[T] {
         return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w
     }
 
-    reflect :: (ref Self, normal: Self) -> Self {
-        return normal * -Self.dot(self, normal) * T(2) + <<&self
+    reflect :: (&Self, normal: Self) -> Self {
+        return normal * -Self.dot(self, normal) * T(2) + <<^self
     }
 
-    max_component :: (ref Self) -> T {
+    max_component :: (&Self) -> T {
         return max(x, max(y, max(z, w)))
     }
 

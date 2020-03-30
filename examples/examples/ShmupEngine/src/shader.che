@@ -19,14 +19,14 @@ Shader :: struct {
 }
 
 impl Into[String] for String {
-    into :: (ref Self) -> String {
+    into :: (&Self) -> String {
         return self.clone()
     }
 }
 
 impl Into[String] for fs.FsError {
-    into :: (ref Self) -> String {
-        return fmt.format("[ERROR] Failed to open file: {}", [&self])
+    into :: (&Self) -> String {
+        return fmt.format("[ERROR] Failed to open file: {}", [self])
     }
 }
 
@@ -98,7 +98,7 @@ impl Shader {
         GL(glLinkProgram(shader_program))
 
         success := 0i32
-        GL(glGetProgramiv(shader_program, GL_LINK_STATUS, &success))
+        GL(glGetProgramiv(shader_program, GL_LINK_STATUS, ^success))
         if success == 0 {
             info_log : [512]char8 = default
             GL(glGetProgramInfoLog(shader_program, cast info_log.length, null, info_log.data))
@@ -112,14 +112,14 @@ impl Shader {
     }
 
     compile_sub_shader :: (source: string, typ: u32) -> Result[u32, String] {
-        sources := [cast(&char8) source.bytes.data]
+        sources := [cast(^char8) source.bytes.data]
         lengths := [cast(i32)    source.bytes.length]
         id := glCreateShader(typ)
         GL(glShaderSource(id, 1, sources.data, lengths.data))
         GL(glCompileShader(id))
 
         success := 0i32
-        GL(glGetShaderiv(id, GL_COMPILE_STATUS, &success))
+        GL(glGetShaderiv(id, GL_COMPILE_STATUS, ^success))
         if success == 0 {
             info_log : [512]char8 = default
             GL(glGetShaderInfoLog(id, cast info_log.length, null, info_log.data))
@@ -132,15 +132,15 @@ impl Shader {
         return Ok(id)
     }
 
-    bind :: (ref Self) {
+    bind :: (&Self) {
         GL(glUseProgram(id))
     }
 
-    unbind :: (ref Self) {
+    unbind :: (&Self) {
         GL(glUseProgram(0))
     }
 
-    get_uniform_location :: (ref Self, name: string) -> i32 {
+    get_uniform_location :: (&Self, name: string) -> i32 {
         return match uniforms.get(name) {
             Some($loc) -> loc
             None -> {
@@ -153,7 +153,7 @@ impl Shader {
         }
     }
 
-    set_uniform_vec2 :: (ref Self, name: string, value: vec2) -> bool {
+    set_uniform_vec2 :: (&Self, name: string, value: vec2) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
             return false
@@ -163,7 +163,7 @@ impl Shader {
         return true
     }
 
-    set_uniform_vec3 :: (ref Self, name: string, value: vec3) -> bool {
+    set_uniform_vec3 :: (&Self, name: string, value: vec3) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
             return false
@@ -173,7 +173,7 @@ impl Shader {
         return true
     }
 
-    set_uniform_vec4 :: (ref Self, name: string, value: vec4) -> bool {
+    set_uniform_vec4 :: (&Self, name: string, value: vec4) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
             return false
@@ -183,7 +183,7 @@ impl Shader {
         return true
     }
 
-    set_uniform_float :: (ref Self, name: string, value: f32) -> bool {
+    set_uniform_float :: (&Self, name: string, value: f32) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
             return false
@@ -193,7 +193,7 @@ impl Shader {
         return true
     }
 
-    set_uniform_floats :: (ref Self, name: string, values: []f32) -> bool {
+    set_uniform_floats :: (&Self, name: string, values: []f32) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
             return false
@@ -203,7 +203,7 @@ impl Shader {
         return true
     }
 
-    set_uniform_int :: (ref Self, name: string, value: i32) -> bool {
+    set_uniform_int :: (&Self, name: string, value: i32) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
             return false
@@ -213,7 +213,7 @@ impl Shader {
         return true
     }
 
-    set_uniform_ints :: (ref Self, name: string, values: []i32) -> bool {
+    set_uniform_ints :: (&Self, name: string, values: []i32) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
             return false
@@ -223,7 +223,7 @@ impl Shader {
         return true
     }
 
-    set_uniform_mat4 :: (ref Self, name: string, value: ref mat4) -> bool {
+    set_uniform_mat4 :: (&Self, name: string, value: &mat4) -> bool {
         loc := get_uniform_location(name)
         if loc == -1 {
             return false
@@ -233,7 +233,7 @@ impl Shader {
         return true
     }
 
-    get_uniform_int :: (ref Self, name: string, result: []i32, count: int = 1) {
+    get_uniform_int :: (&Self, name: string, result: []i32, count: int = 1) {
         loc := get_uniform_location(name)
         if loc == -1 {
             @assert(false)

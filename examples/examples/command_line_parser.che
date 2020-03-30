@@ -70,14 +70,14 @@ CompileOptions :: struct {
 }
 
 // impl(T: type) Printable for Array[T] if T : Printable, #notyet {
-//     print :: (ref Self, str: ref String, format: string) {
+//     print :: (&Self, str: &String, format: string) {
 //         str += "["
 //         for(by_ref=true) v : self.slice() {
 //             if it_index > 0 {
 //                 str += ", "
 //             }
 
-//             p : &Printable = &v
+//             p : ^Printable = ^v
 //             p.print(str, "")
 //         }
 //         str += "]"

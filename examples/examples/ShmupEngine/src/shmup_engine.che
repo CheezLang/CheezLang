@@ -41,15 +41,15 @@ EnabledEditors :: struct {
 }
 
 PropertyEdit :: enum #copy {
-    EditInt     : (ptr: &int, name: c_string)
-    EditFloat   : (ptr: &float, name: c_string, step: float)
-    EditVec3    : (ptr: &vec3, name: c_string)
-    EditVec4    : (ptr: &vec4, name: c_string)
-    EditColor3  : (ptr: &vec3, name: c_string)
+    EditInt     : (ptr: ^int, name: c_string)
+    EditFloat   : (ptr: ^float, name: c_string, step: float)
+    EditVec3    : (ptr: ^vec3, name: c_string)
+    EditVec4    : (ptr: ^vec4, name: c_string)
+    EditColor3  : (ptr: ^vec3, name: c_string)
 }
 
 // impl PlayMode {
-//     initialize :: (ref Self, edit_mode: ref EditMode) {
+//     initialize :: (&Self, edit_mode: &EditMode) {
 //         layer_stack.clear()
 //         for l : edit_mode.layer_stack {
 //             match l.clone() {
@@ -67,38 +67,38 @@ Editor :: struct {
 }
 
 EngineModeData :: struct {
-    layer_stack := Array[&Layer].create()
+    layer_stack := Array[^Layer].create()
 }
 
 EngineMode :: enum #copy {
     None
-    Edit    : &EngineModeData
-    Play    : &EngineModeData
-    Pause   : &EngineModeData
+    Edit    : ^EngineModeData
+    Play    : ^EngineModeData
+    Pause   : ^EngineModeData
 }
 
 ShmupEngine :: struct {
     // engine stuff
-    world_size          := vec3(10, 10, 0)
+    world_size              := vec3(10, 10, 0)
 
-    current_mode        := EngineMode.None
-    edit_mode           := EngineModeData()
-    play_mode           := EngineModeData()
+    current_mode            := EngineMode.None
+    edit_mode               := EngineModeData()
+    play_mode               := EngineModeData()
 
     // io stuff
-    global_input        : &Input = null
-    game_input          : &Input = null
+    global_input            : ^Input = null
+    game_input              : ^Input = null
 
     // editor stuff
-    editor              : Editor = default
-    enabled_editors     : EnabledEditors = default
-    current_fps         := 0
-    current_frame_time  := 0.0
-    properties_to_edit  := Array[PropertyEdit].create()
-    inspector           : EntityInspector = default
-    hierarchy           : Hierarchy = default
-    current_layer_index : i32 = 0
-    console             := Rc[Console].empty()
+    editor                  : Editor = default
+    enabled_editors         : EnabledEditors = default
+    current_fps             := 0
+    current_frame_time      := 0.0
+    properties_to_edit      := Array[PropertyEdit].create()
+    inspector               : EntityInspector = default
+    hierarchy               : Hierarchy = default
+    current_layer_index     : i32 = 0
+    console                 := Rc[Console].empty()
     editor_edit_mode_color  := vec3()
     editor_play_mode_color  := vec3(0.027f, 0.2f, 0.047f)
     save_file               := Option[String].None
@@ -107,30 +107,30 @@ ShmupEngine :: struct {
     active_editor_window    := Rc[GameView].empty()
 
     // window stuff
-    glfw_window         : &GLFWwindow = null
-    vsync_enabled       := true
-    window_size         := vec2i(0, 0)
+    glfw_window             : ^GLFWwindow = null
+    vsync_enabled           := true
+    window_size             := vec2i(0, 0)
 
     // rendering stuff
-    renderer : &Renderer = null
+    renderer                : ^Renderer = null
 
-    viewport_size_max : vec2i = default
+    viewport_size_max       : vec2i = default
 }
 
 impl ShmupEngine {
-    new :: () -> &ShmupEngine {
+    new :: () -> ^ShmupEngine {
         ptr := mem.alloc(ShmupEngine)
         <<ptr = ShmupEngine()
 
         // setup modes
-        ptr.current_mode = EngineMode.Edit(&ptr.edit_mode)
+        ptr.current_mode = EngineMode.Edit(^ptr.edit_mode)
 
         return ptr
     }
 
-    start :: (ref Self) {
-        on_framebuffer_resize :: (window: &GLFWwindow, w: i32, h: i32) {
-            engine := cast(&ShmupEngine) glfwGetWindowUserPointer(window)
+    start :: (&Self) {
+        on_framebuffer_resize :: (window: ^GLFWwindow, w: i32, h: i32) {
+            engine := cast(^ShmupEngine) glfwGetWindowUserPointer(window)
             engine.window_size = vec2i(int(w), int(h))
             glViewport(0, 0, w, h)
         }
@@ -154,7 +154,7 @@ impl ShmupEngine {
 
         monitor, monitor_pos := {
             count := 0i32
-            monitors := glfwGetMonitors(&count)
+            monitors := glfwGetMonitors(^count)
             if count == 0 {
                 io.println("[ERROR] No monitors found")
                 return
@@ -167,7 +167,7 @@ impl ShmupEngine {
             // monitor := monitors[0]
 
             monitor_pos := Vector2[i32]()
-            glfwGetMonitorPos(monitor, &monitor_pos.x, &monitor_pos.y)
+            glfwGetMonitorPos(monitor, ^monitor_pos.x, ^monitor_pos.y)
 
             monitor, monitor_pos
         }
@@ -183,7 +183,7 @@ impl ShmupEngine {
 
         glfwSetWindowPos(glfw_window, monitor_pos.x + 100, monitor_pos.y + 100)
         glfwMakeContextCurrent(glfw_window)
-        glfwSetWindowUserPointer(glfw_window, &self)
+        glfwSetWindowUserPointer(glfw_window, ^self)
         glfwSwapInterval(if vsync_enabled then 1 else 0)
 
         // initialize glad
@@ -204,7 +204,7 @@ impl ShmupEngine {
         {
             w : i32 = 0
             h : i32 = 0
-            glfwGetFramebufferSize(glfw_window, &w, &h)
+            glfwGetFramebufferSize(glfw_window, ^w, ^h)
             window_size = vec2i(int(w), int(h))
             glViewport(0, 0, w, h)
         }
@@ -237,7 +237,7 @@ impl ShmupEngine {
         renderer     = Renderer.create(viewport_size_max)
 
         // setup editors
-        hierarchy.engine = &self
+        hierarchy.engine = ^self
         console = Rc[Console].new(Console.new(cast self.on_command))
         
         {
@@ -249,10 +249,10 @@ impl ShmupEngine {
         render_loop()
     }
 
-    initialize_viewport :: (ref Self) -> bool {
-        editor_windows.add(WindowBase.new(EditorWindow, &self))
-        editor_windows.add(WindowBase.new(GameWindow, &self))
-        editor_windows.add(WindowBase.new(GameAndEditorWindow, &self))
+    initialize_viewport :: (&Self) -> bool {
+        editor_windows.add(WindowBase.new(EditorWindow, ^self))
+        editor_windows.add(WindowBase.new(GameWindow, ^self))
+        editor_windows.add(WindowBase.new(GameAndEditorWindow, ^self))
         editor_windows[2].get().base().enabled = false
         active_editor_window = editor_windows[0].clone()
 
@@ -264,8 +264,8 @@ impl ShmupEngine {
         return true
     }
 
-    glfw_key_callback :: (window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
-        engine := cast(&ShmupEngine) glfwGetWindowUserPointer(window)
+    glfw_key_callback :: (window: ^GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
+        engine := cast(^ShmupEngine) glfwGetWindowUserPointer(window)
 
         match (action, key, mods) {
             (GLFW_PRESS, GLFW_KEY_F12, _) -> {
@@ -284,7 +284,7 @@ impl ShmupEngine {
             }
             
             (GLFW_PRESS, GLFW_KEY_L, GLFW_MOD_CONTROL) -> {
-                match ref engine.save_file {
+                match &engine.save_file {
                     Some($file) -> {
                         match engine.current_mode {
                             EngineMode.Edit($data) -> {
@@ -304,14 +304,14 @@ impl ShmupEngine {
                 return
             }
             (GLFW_PRESS, GLFW_KEY_S, GLFW_MOD_CONTROL) -> {
-                match ref engine.save_file {
+                match &engine.save_file {
                     Some($file_name) -> {
                         match engine.current_mode {
                             EngineMode.Edit($data) -> {
                                 engine.console.get().log("Saving layers")
                                 file_content := String.empty()
                                 for layer : data.layer_stack {
-                                    layer.save_to_file(ref file_content)
+                                    layer.save_to_file(&file_content)
                                 }
                                 fs.write_file(file_name.slice(), file_content.slice())
                             }
@@ -341,7 +341,7 @@ impl ShmupEngine {
         }
     }
 
-    render_loop :: (ref Self) {
+    render_loop :: (&Self) {
         // @temp
         save_file = Some(String.from_string("D:/Programming/CheezLang/data/example_layer.txt"))
 
@@ -390,7 +390,7 @@ impl ShmupEngine {
         }
     }
 
-    frame_without_editor :: (ref Self, delta_time: float) {
+    frame_without_editor :: (&Self, delta_time: float) {
         // // handle events and input
         // global_input.reset()
         // game_input.reset()
@@ -415,7 +415,7 @@ impl ShmupEngine {
         // // renderer.end_scene()
     }
 
-    frame_with_editor :: (ref Self, delta_time: float) {
+    frame_with_editor :: (&Self, delta_time: float) {
         glClearColor(1, 0, 1, 1)
         glClear(GL_COLOR_BUFFER_BIT)
         imgui_begin_frame()
@@ -442,7 +442,7 @@ impl ShmupEngine {
         imgui_end_frame()
     }
 
-    update :: (ref Self, dt: f32) {
+    update :: (&Self, dt: f32) {
         for window : editor_windows {
             if !window.get().base().enabled then continue
             window.get().update(world_size)
@@ -474,7 +474,7 @@ impl ShmupEngine {
         }
     }
 
-    render_menu_bar :: (ref Self) {
+    render_menu_bar :: (&Self) {
         if ImGui.BeginMainMenuBar() {
             if ImGui.BeginMenu("File") {
                 // ShowExampleMenuFile()
@@ -491,8 +491,8 @@ impl ShmupEngine {
             }
 
             if ImGui.BeginMenu("Debug") {
-                if ImGui.MenuItem_2("Show Stats", null, &enabled_editors.stats, true) {}
-                if ImGui.MenuItem_2("Show Demo Menu", null, &enabled_editors.demo_window, true) {}
+                if ImGui.MenuItem_2("Show Stats", null, ^enabled_editors.stats, true) {}
+                if ImGui.MenuItem_2("Show Demo Menu", null, ^enabled_editors.demo_window, true) {}
                 ImGui.EndMenu()
             }
 
@@ -500,9 +500,9 @@ impl ShmupEngine {
         }
     }
 
-    render_editor :: (ref Self) {
+    render_editor :: (&Self) {
         if enabled_editors.demo_window {
-            ImGui.ShowDemoWindow(&enabled_editors.demo_window)
+            ImGui.ShowDemoWindow(^enabled_editors.demo_window)
         }
 
         if enabled_editors.stats {
@@ -516,7 +516,7 @@ impl ShmupEngine {
                 ImGui.ImGuiWindowFlags_.AlwaysAutoResize,
                 ImGui.ImGuiWindowFlags_.NoFocusOnAppearing,
                 ImGui.ImGuiWindowFlags_.NoNav)
-            if ImGui.Begin("Stats", &enabled_editors.stats, overlay_flags) {
+            if ImGui.Begin("Stats", ^enabled_editors.stats, overlay_flags) {
                 // viewport dimensions
                 dimensions := fmt.format("{} x {}", [active_editor_window.get().base().viewport.size.x, active_editor_window.get().base().viewport.size.y])
                 ImGui.LabelText("Active Editor Dimensions", dimensions.as_cstring())
@@ -536,15 +536,15 @@ impl ShmupEngine {
             if ImGui.Begin("Game Settings") {
                 // render settings
                 ImGui.Text("Render Settings")
-                if ImGui.Checkbox("VSync", &vsync_enabled) {
+                if ImGui.Checkbox("VSync", ^vsync_enabled) {
                     glfwSwapInterval(if vsync_enabled then 1 else 0)
                 }
-                ImGui.ColorEdit3("play mode editor background", &editor_play_mode_color.x, 0)
+                ImGui.ColorEdit3("play mode editor background", ^editor_play_mode_color.x, 0)
                 ImGui.Separator()
 
                 // camera settings
                 ImGui.Text("Camera Settings")
-                ImGui.InputFloat2("World Size", &world_size.x)
+                ImGui.InputFloat2("World Size", ^world_size.x)
             }
             ImGui.End()
         }
@@ -601,13 +601,13 @@ impl ShmupEngine {
         console.get().render()
     }
 
-    edit_property :: (ref Self, edit: PropertyEdit) {
+    edit_property :: (&Self, edit: PropertyEdit) {
         properties_to_edit.add(edit)
     }
 }
 
 impl ShmupEngine {
-    register_builtin_components :: (ref Self) {
+    register_builtin_components :: (&Self) {
         self.inspector.register_component_info(PathFollowComponent(null))
         self.inspector.register_component_info(BasicMoveComponent(null, vec3(), 0))
         self.inspector.register_component_info(QuadComponent(null, vec3(1, 1, 1)))
@@ -616,25 +616,25 @@ impl ShmupEngine {
         self.inspector.register_component_info(Camera(null, vec2(10, 10)))
     }
 
-    push_entity_layer :: (ref Self, name: String, callbacks: &EntityLayerCallbacks) {
+    push_entity_layer :: (&Self, name: String, callbacks: ^EntityLayerCallbacks) {
         ptr := mem.alloc(EntityLayer)
         <<ptr = EntityLayer.new(name, callbacks, self, <<Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
-    push_lighting_layer :: (ref Self, name: String) {
+    push_lighting_layer :: (&Self, name: String) {
         ptr := mem.alloc(LightingLayer)
         <<ptr = LightingLayer.new(name, self, <<Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
-    push_debug_layer :: (ref Self, name: String) {
+    push_debug_layer :: (&Self, name: String) {
         ptr := mem.alloc(DebugLayer)
         <<ptr = DebugLayer.new(name, self, <<Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
-    on_command :: (ref Self, cmd: ref Command) {
+    on_command :: (&Self, cmd: &Command) {
         match cmd {
             Command.Quit -> {
                 glfwSetWindowShouldClose(glfw_window, 1)
@@ -665,7 +665,7 @@ impl ShmupEngine {
 
             Command.DeleteEntity($id) -> {
                 match hierarchy.get_layer() {
-                    Some($layer) -> match ref <<layer {
+                    Some($layer) -> match &<<layer {
                         EntityLayer($layer) -> match layer.find_entity(id) {
                             Some($entity) -> {
                                 T :: @typeof(layer)
@@ -678,7 +678,7 @@ impl ShmupEngine {
             }
 
             Command.NewEntity -> match hierarchy.get_layer() {
-                Some($layer) -> match ref <<layer {
+                Some($layer) -> match &<<layer {
                     EntityLayer($layer) -> {
                         e := layer.new_entity()
                     }
@@ -686,12 +686,12 @@ impl ShmupEngine {
             }
 
             $c -> {
-                io.println(fmt.format("Can't execute command {}", [&c]))
+                io.println(fmt.format("Can't execute command {}", [^c]))
             }
         }
     }
 
-    toggle_play_mode :: (ref Self) {
+    toggle_play_mode :: (&Self) {
         match current_mode {
             EngineMode.Edit(_) -> enter_play_mode()
             EngineMode.Play(_) -> exit_play_mode()
@@ -699,7 +699,7 @@ impl ShmupEngine {
         }
     }
 
-    enter_play_mode :: (ref Self) {
+    enter_play_mode :: (&Self) {
         match current_mode {
             EngineMode.Play(_) -> {
                 console.get().log("Already in play mode")
@@ -727,7 +727,7 @@ impl ShmupEngine {
                 }
             }
         }
-        current_mode = EngineMode.Play(&play_mode)
+        current_mode = EngineMode.Play(^play_mode)
 
         set_editor_background_color(editor_play_mode_color)
 
@@ -737,7 +737,7 @@ impl ShmupEngine {
         }
     }
 
-    exit_play_mode :: (ref Self) {
+    exit_play_mode :: (&Self) {
         match current_mode {
             EngineMode.Edit(_) -> {
                 console.get().log("Already in edit mode")
@@ -746,7 +746,7 @@ impl ShmupEngine {
         }
 
         console.get().log("Exiting play mode")
-        current_mode = EngineMode.Edit(&edit_mode)
+        current_mode = EngineMode.Edit(^edit_mode)
 
         set_editor_background_color(editor_edit_mode_color)
 
@@ -756,11 +756,11 @@ impl ShmupEngine {
         }
     }
 
-    set_editor_background_color :: (ref Self, col: vec3) {
+    set_editor_background_color :: (&Self, col: vec3) {
         ImGui.GetStyle().Colors[int(ImGui.ImGuiCol_.WindowBg)] = ImGui.ImVec4(col.x, col.y, col.z, 1)
     }
 
-    current_mode_data :: (ref Self) -> &EngineModeData {
+    current_mode_data :: (&Self) -> ^EngineModeData {
         return match current_mode {
             EngineMode.Edit($data) -> {data}
             EngineMode.Play($data) -> {data}
@@ -769,7 +769,7 @@ impl ShmupEngine {
         }
     }
 
-    current_viewport :: (ref Self) -> ref Viewport {
+    current_viewport :: (&Self) -> &Viewport {
         return active_editor_window.get().base().viewport
     }
 }
@@ -798,7 +798,7 @@ imgui_end_frame :: () {
     }
 }
 
-init_imgui :: (window: &GLFWwindow) -> bool {
+init_imgui :: (window: ^GLFWwindow) -> bool {
     context := ImGui.CreateContext(null)
 
     if context == null {
@@ -806,7 +806,7 @@ init_imgui :: (window: &GLFWwindow) -> bool {
         return false
     }
 
-    imgui_io := ref ImGui.GetIO()
+    imgui_io := &ImGui.GetIO()
     imgui_io.ConfigWindowsMoveFromTitleBarOnly = true
     imgui_io.ConfigFlags = @bin_or(
         imgui_io.ConfigFlags,
@@ -816,8 +816,8 @@ init_imgui :: (window: &GLFWwindow) -> bool {
     ImGui.StyleColorsDark(null)
 
     // change corners so they are right angles instead of rounded
-    style := ref ImGui.GetStyle()	
-    style.WindowRounding = 0.0	
+    style := &ImGui.GetStyle()
+    style.WindowRounding = 0.0
 
     //
     if !ImGui.ImGui_ImplGlfw_InitForOpenGL(window, true) {
@@ -880,13 +880,13 @@ create_dock_space :: () {
     ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.WindowPadding, window_padding)
 
     open := true
-    ImGui.Begin("DockSpace Demo", &open, window_flags)
+    ImGui.Begin("DockSpace Demo", ^open, window_flags)
     ImGui.PopStyleVar()
 
     if opt_fullscreen then ImGui.PopStyleVar(2)
 
     // DockSpace
-    io := ref ImGui.GetIO()
+    io := &ImGui.GetIO()
     if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.DockingEnable)) != 0 {
         dockspace_id := ImGui.GetID("MyDockSpace")
         size := ImGui.ImVec2(0.0f, 0.0f)
@@ -922,7 +922,7 @@ ShowExampleMenuFile :: () {
     //     ImGui.Separator()
     //     if ImGui.BeginMenu("Options") {
     //         enabled := true #static
-    //         ImGui.MenuItem_2("Enabled", "", &enabled)
+    //         ImGui.MenuItem_2("Enabled", "", ^enabled)
 
     //         size := ImGui.ImVec2(0, 60)
     //         ImGui.BeginChild("child", size, true)
@@ -935,10 +935,10 @@ ShowExampleMenuFile :: () {
     //         f := 0.5f #static
     //         n := 0i32 #static
     //         b := true #static
-    //         ImGui.SliderFloat("Value", &f, 0.0f, 1.0f)
-    //         ImGui.InputFloat("Input", &f, 0.1f)
-    //         ImGui.Combo_2("Combo", &n, "Yes\0No\0Maybe\0\0")
-    //         ImGui.Checkbox("Check", &b)
+    //         ImGui.SliderFloat("Value", ^f, 0.0f, 1.0f)
+    //         ImGui.InputFloat("Input", ^f, 0.1f)
+    //         ImGui.Combo_2("Combo", ^n, "Yes\0No\0Maybe\0\0")
+    //         ImGui.Checkbox("Check", ^b)
     //         ImGui.EndMenu()
     //     }
     //     if (ImGui.BeginMenu("Colors"))

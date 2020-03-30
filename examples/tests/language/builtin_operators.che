@@ -92,8 +92,8 @@ Main :: () {
     a := 5
     b := 6
     test_pointers(null, null)
-    test_pointers(&a, &a)
-    test_pointers(&a, &b)
+    test_pointers(^a, ^a)
+    test_pointers(^a, ^b)
 
     test_and_or()
 
@@ -138,6 +138,6 @@ test_bool :: (a: bool, b: bool) {
     C.printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }
 
-test_pointers :: (a: &int, b: &int) {
+test_pointers :: (a: ^int, b: ^int) {
     C.printf("%lld, %lld`n", cast(int) (a == b), cast(int) (a != b))
 }

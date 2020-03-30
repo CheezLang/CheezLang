@@ -16,29 +16,29 @@ Bar :: struct #copy {
 Baz :: enum #copy {
     A           = 353
     B : int     = 46
-    C : &int    = 96
+    C : ^int    = 96
 }
 
-do_print_any :: (data: &void, typ: &TypeInfo) {
+do_print_any :: (data: ^void, typ: ^TypeInfo) {
     match typ.kind {
         use TypeInfoKind
 
         Int($tint) -> {
             if tint.signed {
-                ptr := cast(&int) data
+                ptr := cast(^int) data
                 C.printf("%lld", <<ptr)
             } else {
-                ptr := cast(&uint) data
+                ptr := cast(^uint) data
                 C.printf("%llu", <<ptr)
             }
         }
 
         Float -> {
             if typ.size == 4 {
-                ptr := cast(&float) data
+                ptr := cast(^float) data
                 C.printf("%g", double(<<ptr))
             } else if typ.size == 8 {
-                ptr := cast(&double) data
+                ptr := cast(^double) data
                 C.printf("%g", <<ptr)
             } else {
                 C.printf("<float: invalid size %lld>", typ.size)
@@ -46,22 +46,22 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
         }
 
         Bool -> {
-            ptr := cast(&bool) data
+            ptr := cast(^bool) data
             if <<ptr then C.printf("true") else C.printf("false")
         }
 
         Char -> {
-            ptr := cast(&char) data
+            ptr := cast(^char) data
             C.printf("'%c'", <<ptr)
         }
 
         Pointer($target) -> {
-            ptr := cast(&&void) data
+            ptr := cast(^^void) data
             C.printf("0x%llX", <<ptr)
         }
 
         Slice($target) -> {
-            ptr := <<cast(&[]void) data
+            ptr := <<cast(^[]void) data
             C.printf("[")
             for i : 0..ptr.length {
                 if i > 0 then C.printf(", ")
@@ -73,19 +73,19 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
         }
 
         String -> {
-            str := <<cast(&string) data
+            str := <<cast(^string) data
             C.printf("%.*s", i32(str.bytes.length), str.bytes.data)
         }
 
         Struct($tstruct) -> {
-            ptr := cast(&void) data
+            ptr := cast(^void) data
             C.printf("%.*s", i32(tstruct.name.bytes.length), tstruct.name.bytes.data)
 
             C.printf("(")
             if tstruct.members.data != null {
                 for i : 0..tstruct.members.length {
                     if i > 0 then C.printf(", ")
-                    member_info := &tstruct.members[i]
+                    member_info := ^tstruct.members[i]
                     member_ptr  := pointer_add(ptr, member_info.offset)
                     member_type := member_info.typ
                     C.printf("%.*s = ", i32(member_info.name.bytes.length), member_info.name.bytes.data)
@@ -96,14 +96,14 @@ do_print_any :: (data: &void, typ: &TypeInfo) {
         }
 
         TypeInfoKind.Enum($tenum) -> {
-            ptr := cast(&void) data
+            ptr := cast(^void) data
             C.printf("%.*s.", i32(tenum.name.bytes.length), tenum.name.bytes.data)
 
             tag := match tenum.tag_type.size {
-                1  -> int(<<cast(&u8) ptr)
-                2  -> int(<<cast(&u16) ptr)
-                4  -> int(<<cast(&u32) ptr)
-                8  -> int(<<cast(&u64) ptr)
+                1  -> int(<<cast(^u8) ptr)
+                2  -> int(<<cast(^u16) ptr)
+                4  -> int(<<cast(^u32) ptr)
+                8  -> int(<<cast(^u64) ptr)
                 $_ -> {
                     @panic("Unsupported tag size")
                     0
@@ -157,7 +157,7 @@ Main :: () {
     println_any(bar)
     println_any(foo)
     println_any(Foo(654, bar, Baz.B(420)))
-    println_any(Foo(741, bar, Baz.C(&a)))
+    println_any(Foo(741, bar, Baz.C(^a)))
 
     println_any((struct{
         num       : int

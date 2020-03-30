@@ -59,7 +59,7 @@ Frame :: struct {
 }
 
 impl Frame {
-    get :: (ref Self, x: int, y: int) -> double {
+    get :: (&Self, x: int, y: int) -> double {
         if x < 0 or y < 0 or x >= image_width or y >= image_height {
             return 0
         }
@@ -68,7 +68,7 @@ impl Frame {
         return (p.x + p.y + p.z) * 0.3333333333
     }
 
-    get_rgb :: (ref Self, x: int, y: int) -> Color {
+    get_rgb :: (&Self, x: int, y: int) -> Color {
         if x < 0 or y < 0 or x >= image_width or y >= image_height {
             return Color(0, 0, 0)
         }
@@ -76,7 +76,7 @@ impl Frame {
         return pixels[x + y * image_width]
     }
 
-    set :: (ref Self, x: int, y: int, value: double) {
+    set :: (&Self, x: int, y: int, value: double) {
         if x < 0 or y < 0 or x >= image_width or y >= image_height {
             return
         }
@@ -84,7 +84,7 @@ impl Frame {
         pixels[x + y * image_width] = Color(value, value, value)
     }
 
-    set_rgb :: (ref Self, x: int, y: int, value: Color) {
+    set_rgb :: (&Self, x: int, y: int, value: Color) {
         if x < 0 or y < 0 or x >= image_width or y >= image_height {
             return
         }
@@ -92,21 +92,21 @@ impl Frame {
         pixels[x + y * image_width] = value
     }
 
-    copy_to :: (ref Self, target: ref Frame) {
-        C.memcpy(cast &target.pixels, cast &pixels, cast @sizeof(@typeof(pixels)))
+    copy_to :: (&Self, target: &Frame) {
+        C.memcpy(cast ^target.pixels, cast ^pixels, cast @sizeof(@typeof(pixels)))
     }
 }
 
 ImageProcessingGame :: struct {
-    pge     : &PixelGameEngine
+    pge     : ^PixelGameEngine
     frames  : [num_images_x * num_images_y]Frame
     last_frame : Frame
-    capture : &CvCapture
+    capture : ^CvCapture
     primer  : bool = false
 }
 
 impl Game for ImageProcessingGame {
-    on_create :: (ref Self, pge: &PixelGameEngine) -> bool {
+    on_create :: (&Self, pge: ^PixelGameEngine) -> bool {
         self.pge = pge
 
         // clear images to black
@@ -138,12 +138,12 @@ impl Game for ImageProcessingGame {
         return true
     }
 
-    on_destroy :: (ref Self) -> bool {
-        cvReleaseCapture(&capture)
+    on_destroy :: (&Self) -> bool {
+        cvReleaseCapture(^capture)
         return true
     }
 
-    draw_frame :: (ref Self, slot_x: int, slot_y: int, frame: ref Frame) {
+    draw_frame :: (&Self, slot_x: int, slot_y: int, frame: &Frame) {
         for x : 0..image_width {
             for y : 0..image_height {
                 col := frame.get_rgb(x, y)
@@ -156,7 +156,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    capture_webcam :: (ref Self, targetFrame: ref Frame) {
+    capture_webcam :: (&Self, targetFrame: &Frame) {
         res := cvQueryFrame(capture)
         if res != null {
             xScale := (cast(double)image_width) / (cast(double)res.width)
@@ -175,7 +175,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    move_detection :: (ref Self, source_frame: ref Frame, last_frame: ref Frame, target_frame: ref Frame) {
+    move_detection :: (&Self, source_frame: &Frame, last_frame: &Frame, target_frame: &Frame) {
         for x : 0..image_width {
             for y : 0..image_height {
                 last := last_frame.get(x, y)
@@ -191,7 +191,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    temporal_low_pass_filter :: (ref Self, source_frame: ref Frame, target_frame: ref Frame, activity_frame: ref Frame) {
+    temporal_low_pass_filter :: (&Self, source_frame: &Frame, target_frame: &Frame, activity_frame: &Frame) {
         for x : 0..image_width {
             for y : 0..image_height {
                 dl := source_frame.get_rgb(x, y) - activity_frame.get_rgb(x, y)
@@ -202,7 +202,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    dilation_erosion :: (ref Self, input: ref Frame, last: ref Frame, activity: ref Frame, output: ref Frame) {
+    dilation_erosion :: (&Self, input: &Frame, last: &Frame, activity: &Frame, output: &Frame) {
         steps := 5.0
         // activity
         for x : 0..image_width {
@@ -255,7 +255,7 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    adaptive_threshold :: (input: ref Frame, output: ref Frame) {
+    adaptive_threshold :: (input: &Frame, output: &Frame) {
         adaptive_bias := 1.0
 
         for x : 0..image_width {
@@ -272,10 +272,10 @@ impl Game for ImageProcessingGame {
         }
     }
 
-    on_update :: (ref Self, dt: float) -> bool {
+    on_update :: (&Self, dt: float) -> bool {
         pge.clear(Pixel.rgba(0, 0, 100))
 
-        webcam : ref Frame = frames[0]
+        webcam : &Frame = frames[0]
 
         capture_webcam(webcam)
 

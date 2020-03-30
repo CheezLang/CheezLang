@@ -30,7 +30,7 @@ num_add :: (a: Num, b: Num) -> Num #operator("+") {
     return Num(a.x + b.x)
 }
 
-num_inc :: (a: &Num, b: Num) #operator("+=") {
+num_inc :: (a: ^Num, b: Num) #operator("+=") {
     a.x += b.x
 }
 

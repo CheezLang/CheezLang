@@ -59,7 +59,7 @@ C :: import std.c
         return streq(a, b)
     }
 
-get_and_print :: (table: ref Table[$K, $V], key: K) {
+get_and_print :: (table: &Table[$K, $V], key: K) {
     match table.get(key) {
         Some($v) -> {
             io.printf("{} = {}`n", (key, v))
@@ -70,7 +70,7 @@ get_and_print :: (table: ref Table[$K, $V], key: K) {
     }
 }
 
-test :: (t1: ref $T1, t2: ref $T2) {
+test :: (t1: &$T1, t2: &$T2) {
     get_and_print(t2, "first name")
     get_and_print(t2, "last name")
     get_and_print(t2, "gender")

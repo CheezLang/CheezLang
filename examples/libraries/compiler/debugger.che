@@ -35,9 +35,9 @@ CBC_FILE :: "p:/dev/debug_adapter_test/fac.cbc"
 
 Main :: () {
     logger := FileLogger.new(LOG_PATH)
-    // g_logger = cast &logger.get()
+    // g_logger = cast ^logger.get()
     {
-        l : &Logger = &logger.get()
+        l : ^Logger = ^logger.get()
         Logger.set_global_logger(l)
     }
 
@@ -48,19 +48,19 @@ Main :: () {
 }
 
 DebuggerCallbacks :: trait {
-    hit_breakpoint :: (ref Self);
-    step_done :: (ref Self);
-    terminated :: (ref Self);
-    output_generated :: (ref Self, format: string, args: []&any = [], category: string = "console");
+    hit_breakpoint :: (&Self);
+    step_done :: (&Self);
+    terminated :: (&Self);
+    output_generated :: (&Self, format: string, args: []^any = [], category: string = "console");
 }
 
 Debugger :: struct {
-    interp      : &Interpreter
+    interp      : ^Interpreter
     cond_run    : Rc[ConditionVariable]
     lock_run    : Rc[ReentrantLock]
     cond_pause  : Rc[ConditionVariable]
     lock_pause  : Rc[ReentrantLock]
-    callbacks   : &DebuggerCallbacks
+    callbacks   : ^DebuggerCallbacks
 
     breakpoints : Map[String, Array[Breakpoint]]
 
@@ -91,63 +91,63 @@ impl Debugger {
         ))
     }
 
-    set_callbacks :: (ref Self, callbacks: &DebuggerCallbacks) {
+    set_callbacks :: (&Self, callbacks: ^DebuggerCallbacks) {
         self.callbacks = callbacks
     }
 
-    store_old_state :: (ref Self) {
+    store_old_state :: (&Self) {
         if interp == null {
             return
         }
-        self.old_frame = <<&interp.frames[interp.fp]
+        self.old_frame = <<^interp.frames[interp.fp]
         self.fp_old = interp.fp
         self.line_break = get_current_line()
     }
 
-    get_current_line :: (ref Self) -> int {
-        frame := ref interp.get_stackframes()[interp.fp]
+    get_current_line :: (&Self) -> int {
+        frame := &interp.get_stackframes()[interp.fp]
         return frame.func.debug_info.get_line_for_ip(frame.ip)
     }
 
-    launch :: (ref Self) {
+    launch :: (&Self) {
         resume()
     }
 
-    pause :: (ref Self) {
+    pause :: (&Self) {
         running = false
         // cond_pause.get().wait(lock_pause.get())
         // lock_pause.get().release()
     }
 
-    resume :: (ref Self) {
+    resume :: (&Self) {
         running = true
         store_old_state()
         self.break_cond = BreakCondition.None
         cond_run.get().notify()
     }
 
-    step :: (ref Self) {
+    step :: (&Self) {
         running = true
         store_old_state()
         self.break_cond = BreakCondition.Step
         cond_run.get().notify()
     }
 
-    step_in :: (ref Self) {
+    step_in :: (&Self) {
         running = true
         store_old_state()
         self.break_cond = BreakCondition.StepIn
         cond_run.get().notify()
     }
 
-    step_out :: (ref Self) {
+    step_out :: (&Self) {
         running = true
         store_old_state()
         self.break_cond = BreakCondition.StepOut
         cond_run.get().notify()
     }
 
-    is_on_breakpoint :: (ref Self) -> bool {
+    is_on_breakpoint :: (&Self) -> bool {
         if interp == null {
             return false
         }
@@ -155,7 +155,7 @@ impl Debugger {
             return false
         }
 
-        frame := ref interp.get_stackframes()[interp.fp]
+        frame := &interp.get_stackframes()[interp.fp]
 
         path := frame.func.debug_info.path.slice()
         line := frame.func.debug_info.get_line_for_ip(frame.ip)
@@ -173,14 +173,14 @@ impl Debugger {
         return false
     }
 
-    generate_output :: (ref Self, format: string, args: []&any = [], category: string = "console") {
+    generate_output :: (&Self, format: string, args: []^any = [], category: string = "console") {
         if callbacks != null then callbacks.output_generated(format, args, category)
     }
 }
 
 impl CodeRunner for Debugger {
-    run :: (ref Self, interp: ref Interpreter) {
-        self.interp = &interp
+    run :: (&Self, interp: &Interpreter) {
+        self.interp = ^interp
 
         self.store_old_state()
 
@@ -200,7 +200,7 @@ impl CodeRunner for Debugger {
 
             // 
             while running {
-                frame := ref interp.get_stackframes()[interp.fp]
+                frame := &interp.get_stackframes()[interp.fp]
                 line := frame.func.debug_info.get_line_for_ip(frame.ip)
 
                 if frame.func != old_frame.func or line != line_break {
@@ -217,7 +217,7 @@ impl CodeRunner for Debugger {
                     break
                 }
 
-                do_break := match ref self.break_cond {
+                do_break := match &self.break_cond {
                     .None    -> false
                     .Step    -> interp.fp < fp_old or (frame.func == old_frame.func and line != line_break)
                     .StepIn  -> interp.fp != fp_old or (frame.func == old_frame.func and line != line_break)
@@ -256,7 +256,7 @@ CheezDebugAdapter :: struct CommandHandler {
 
     string_db       := StringDatabase.new()
 
-    text_provider   : &TextProvider = null
+    text_provider   : ^TextProvider = null
 
     compiler        := Rc[Compiler].empty()
 }
@@ -273,23 +273,23 @@ impl CheezDebugAdapter {
         return Rc[CommandHandler].from_pointer(command_handler, owned = true)
     }
 
-    clear_variable_refs :: (ref Self) {
+    clear_variable_refs :: (&Self) {
         variable_refs.clear()
     }
 
-    get_variable_reference :: (ref Self, index: int) -> ref VariableRef {
+    get_variable_reference :: (&Self, index: int) -> &VariableRef {
         @assert(index >= 1 and index <= variable_refs.count())
         return variable_refs[index - 1].get()
     }
 
-    add_variable_ref :: (ref Self, var_ref: Rc[VariableRef]) -> int {
+    add_variable_ref:: (&Self, var_ref: Rc[VariableRef]) -> int {
         index := variable_refs.count() + 1
         var_ref.get().index = index
         variable_refs.add(var_ref)
         return index
     }
 
-    collect_scopes :: (ref Self, frame: int) -> Array[Rc[VariableRef]] {
+    collect_scopes :: (&Self, frame: int) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
 
 
@@ -305,7 +305,7 @@ impl CheezDebugAdapter {
         return result
     }
 
-    print :: (ref Self, interp: &Interpreter, arg_count: int) {
+    print :: (&Self, interp: ^Interpreter, arg_count: int) {
         frame := interp.top_frame()
         for 0..arg_count {
             val := frame.get_arg(it_index)
@@ -314,8 +314,8 @@ impl CheezDebugAdapter {
 
     }
 
-    compile_cheez_program :: (ref Self, path: string) {
-        compiler = Compiler.new(1, &self)
+    compile_cheez_program :: (&Self, path: string) {
+        compiler = Compiler.new(1, ^self)
         compiler.get().global_scope.define_native_function("print", cast(NativeFunction) self.print)
         compiler.get().code_runner = debugger.clone().change_type(CodeRunner)
         compiler.get().add_job(LoadFileJob.new(path.to_owned()))
@@ -324,16 +324,16 @@ impl CheezDebugAdapter {
 }
 
 impl ErrorHandler for CheezDebugAdapter {
-    has_errors :: (ref Self) -> bool {
+    has_errors :: (&Self) -> bool {
         return false
     }
 
-    report_error_at :: (ref Self, location: ref Location, message: string, args: []&any) {
+    report_error_at :: (&Self, location: &Location, message: string, args: []^any) {
         msg := fmt.format(message, args)
         g_logger.log("[Code Gen] {}: {}", [location, msg])
     }
 
-    report_error :: (ref Self, message: string, args: []&any) {
+    report_error :: (&Self, message: string, args: []^any) {
         msg := fmt.format(message, args)
         g_logger.log("[Code Gen] {}", [msg])
     }
@@ -341,33 +341,33 @@ impl ErrorHandler for CheezDebugAdapter {
 
 
 impl DebuggerCallbacks for CheezDebugAdapter {
-    hit_breakpoint :: (ref Self) {
+    hit_breakpoint :: (&Self) {
         self.adapter.emit_stop_event("breakpoint")
     }
 
-    step_done :: (ref Self) {
+    step_done :: (&Self) {
         self.adapter.emit_stop_event("step")
     }
 
-    terminated :: (ref Self) {
+    terminated :: (&Self) {
         self.adapter.emit_terminated_event()
     }
 
-    output_generated :: (ref Self, format: string, args: []&any = [], category: string = "console") {
+    output_generated :: (&Self, format: string, args: []^any = [], category: string = "console") {
         g_logger.log("output_generated")
         self.adapter.emit_output_event(fmt.format(format, args), category)
     }
 }
 
 impl CommandHandler for CheezDebugAdapter {
-    initialize :: (ref Self) -> Result[(), String] {
+    initialize :: (&Self) -> Result[(), String] {
         adapter.emit_initialized_event()
         // adapter.enqueue_event(.Initialized)
         return Ok()
     }
 
-    launch :: (ref Self, arguments: DapReqLaunch) -> Result[(), String] {
-        debugger.get().set_callbacks(&self)
+    launch :: (&Self, arguments: DapReqLaunch) -> Result[(), String] {
+        debugger.get().set_callbacks(^self)
 
         if arguments.program.slice().ends_with(".che") {
             self.compile_cheez_program(arguments.program.slice())
@@ -380,7 +380,7 @@ impl CommandHandler for CheezDebugAdapter {
         return Ok()
     }
 
-    threads :: (ref Self) -> Result[Array[DapThread], String] {
+    threads :: (&Self) -> Result[Array[DapThread], String] {
         g_logger.log("request threads")
         result := Array[DapThread].create()
         result.add(DapThread(0, "Main Thread".to_owned()))
@@ -388,7 +388,7 @@ impl CommandHandler for CheezDebugAdapter {
         return Ok(result)
     }
 
-    set_breakpoints :: (ref Self, arguments: DapSetBreakpoints) -> Result[(), String] {
+    set_breakpoints :: (&Self, arguments: DapSetBreakpoints) -> Result[(), String] {
         breaks := Array[Breakpoint].create()
         for br : arguments.breakpoints {
             breaks.add(Breakpoint(br.line))
@@ -398,7 +398,7 @@ impl CommandHandler for CheezDebugAdapter {
         return Ok()
     }
 
-    stacktrace :: (ref Self) -> Result[Array[DapStackFrame], String] {
+    stacktrace :: (&Self) -> Result[Array[DapStackFrame], String] {
         debugger.get().pause()
 
         frames := debugger.get().interp.get_stackframes()
@@ -428,12 +428,12 @@ impl CommandHandler for CheezDebugAdapter {
         return Ok(stack_frames)
     }
 
-    scopes :: (ref Self, arguments: DapReqScopes) -> Result[Array[DapScope], String] {
+    scopes :: (&Self, arguments: DapReqScopes) -> Result[Array[DapScope], String] {
         debugger.get().pause()
 
         frame_id := arguments.frame_id
 
-        frame := ref debugger.get().interp.get_stackframes()[frame_id]
+        frame := &debugger.get().interp.get_stackframes()[frame_id]
         scopes_json := Array[DapScope].create()
 
         scopes := self.collect_scopes(frame_id)
@@ -450,18 +450,18 @@ impl CommandHandler for CheezDebugAdapter {
         return Ok(scopes_json)
     }
 
-    variables :: (ref Self, arguments: DapReqVariables) -> Result[Array[DapVariable], String] {
+    variables :: (&Self, arguments: DapReqVariables) -> Result[Array[DapVariable], String] {
         debugger.get().pause()
 
         index := arguments.variables_reference
         variables_json := Array[DapVariable].create()
 
-        var_ref := ref self.get_variable_reference(index)
+        var_ref := &self.get_variable_reference(index)
         vars := var_ref.get_variables()
         for var : vars {
             self.add_variable_ref(var.clone())
 
-            match ref var.get() {
+            match &var.get() {
                 Variable($var) -> {
 
                     variables_json.add(DapVariable(
@@ -477,31 +477,31 @@ impl CommandHandler for CheezDebugAdapter {
         return Ok(variables_json)
     }
 
-    pause :: (ref Self) -> Result[(), String] {
+    pause :: (&Self) -> Result[(), String] {
         debugger.get().pause()
         adapter.emit_stop_event("pause")
         return Ok()
     }
 
-    resume :: (ref Self) -> Result[(), String] {
+    resume :: (&Self) -> Result[(), String] {
         self.clear_variable_refs()
         debugger.get().resume()
         return Ok()
     }
 
-    next :: (ref Self) -> Result[(), String] {
+    next :: (&Self) -> Result[(), String] {
         self.clear_variable_refs()
         debugger.get().step()
         return Ok()
     }
 
-    step_in :: (ref Self) -> Result[(), String] {
+    step_in :: (&Self) -> Result[(), String] {
         self.clear_variable_refs()
         debugger.get().step_in()
         return Ok()
     }
 
-    step_out :: (ref Self) -> Result[(), String] {
+    step_out :: (&Self) -> Result[(), String] {
         self.clear_variable_refs()
         debugger.get().step_out()
         return Ok()
@@ -517,13 +517,13 @@ Breakpoint :: struct #copy {
 }
 
 VariableRef :: trait {
-    interp  : &Interpreter
+    interp  : ^Interpreter
     frame   : int
     name    : String
     hint    : String
     index   : int
 
-    get_variables :: (ref Self) -> Array[Rc[VariableRef]];
+    get_variables :: (&Self) -> Array[Rc[VariableRef]];
 }
 
 ArgumentsScope :: struct VariableRef {
@@ -531,15 +531,15 @@ ArgumentsScope :: struct VariableRef {
 }
 
 impl ArgumentsScope {
-    new :: (interp: &Interpreter, frame: int) -> Rc[ArgumentsScope] {
+    new :: (interp: ^Interpreter, frame: int) -> Rc[ArgumentsScope] {
         return Rc[ArgumentsScope].new(ArgumentsScope(interp, frame, "Arguments".to_string(), "arguments".to_string(), -1))
     }
 }
 
 impl VariableRef for ArgumentsScope {
-    get_variables :: (ref Self) -> Array[Rc[VariableRef]] {
+    get_variables :: (&Self) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
-        stackframe := ref interp.get_stackframes()[self.frame]
+        stackframe := &interp.get_stackframes()[self.frame]
         for name : stackframe.func.debug_info.parameters {
             value := stackframe.stack[stackframe.bp - it_index - 1]
             var := Variable.new(interp, frame, name.clone(), fmt.format("{}", [value]))
@@ -554,15 +554,15 @@ LocalsScope :: struct VariableRef {
 }
 
 impl LocalsScope {
-    new :: (interp: &Interpreter, frame: int) -> Rc[LocalsScope] {
+    new :: (interp: ^Interpreter, frame: int) -> Rc[LocalsScope] {
         return Rc[LocalsScope].new(LocalsScope(interp, frame, "Locals".to_string(), "locals".to_string(), -1))
     }
 }
 
 impl VariableRef for LocalsScope {
-    get_variables :: (ref Self) -> Array[Rc[VariableRef]] {
+    get_variables :: (&Self) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
-        stackframe := ref interp.get_stackframes()[self.frame]
+        stackframe := &interp.get_stackframes()[self.frame]
         for name : stackframe.func.debug_info.locals {
             value := stackframe.stack[stackframe.bp + it_index]
             var := Variable.new(interp, frame, name.clone(), fmt.format("{}", [value]))
@@ -577,16 +577,16 @@ RegistersScope :: struct VariableRef {
 }
 
 impl RegistersScope {
-    new :: (interp: &Interpreter, frame: int) -> Rc[RegistersScope] {
+    new :: (interp: ^Interpreter, frame: int) -> Rc[RegistersScope] {
         return Rc[RegistersScope].new(RegistersScope(interp, frame, "Registers".to_string(), "registers".to_string(), -1))
     }
 }
 
 impl VariableRef for RegistersScope {
-    get_variables :: (ref Self) -> Array[Rc[VariableRef]] {
+    get_variables :: (&Self) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
 
-        stackframe := ref interp.get_stackframes()[self.frame]
+        stackframe := &interp.get_stackframes()[self.frame]
 
         ip := Variable.new(interp, frame, "ip".to_owned(), fmt.format("{}", [stackframe.ip]))
         result.add(ip.clone().change_type(VariableRef))
@@ -604,13 +604,13 @@ Variable :: struct VariableRef {
 }
 
 impl Variable {
-    new :: (interp: &Interpreter, frame: int, name: String, value: String) -> Rc[Variable] {
+    new :: (interp: ^Interpreter, frame: int, name: String, value: String) -> Rc[Variable] {
         return Rc[Variable].new(Variable(interp, frame, name, String.empty(), -1, value))
     }
 }
 
 impl VariableRef for Variable {
-    get_variables :: (ref Self) -> Array[Rc[VariableRef]] {
+    get_variables :: (&Self) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         return result
     }

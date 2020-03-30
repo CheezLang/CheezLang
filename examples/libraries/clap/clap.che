@@ -22,11 +22,11 @@ Location :: struct #copy {
 }
 
 impl Location {
-    contains :: (ref Self, pos: int) -> bool {
+    contains :: (&Self, pos: int) -> bool {
         return pos >= start and pos <= end
     }
 
-    before :: (ref Self, pos: int) -> bool {
+    before :: (&Self, pos: int) -> bool {
         return pos >= end
     }
 }
@@ -108,7 +108,7 @@ impl Clap {
     }
 }
 
-parse_arguments_from_string :: ($T: type, str: string) -> &T {
+parse_arguments_from_string :: ($T: type, str: string) -> ^T {
     args := Array[String].create()
 
     State :: enum #copy {
@@ -172,7 +172,7 @@ parse_arguments_from_string :: ($T: type, str: string) -> &T {
     return parse_arguments(T, args.slice())
 }
 
-parse_arguments :: ($T: type, args: []String) -> &T {
+parse_arguments :: ($T: type, args: []String) -> ^T {
     result := alloc(T)
     ok := parse_arguments_help(@type_info(T), args, result)
 
@@ -187,11 +187,11 @@ parse_arguments :: ($T: type, args: []String) -> &T {
 get_cmd_args :: () -> Array[String] {
     cmdLineArgs := GetCommandLineW()
     count := 0i32
-    args := CommandLineToArgvW(cmdLineArgs, &count)
+    args := CommandLineToArgvW(cmdLineArgs, ^count)
     return to_ascii_strings(args, int(count))
 }
 
-get_help_message :: (type_info: &TypeInfo) -> String {
+get_help_message :: (type_info: ^TypeInfo) -> String {
     result := String.empty()
     result += "Usage:`n"
 
@@ -202,7 +202,7 @@ get_help_message :: (type_info: &TypeInfo) -> String {
 
 #file_scope
 
-parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) -> bool {
+parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> bool {
     if const console_debug_print {
         io.formatln("parsing help: {}", [type_info.kind])
         log_args(args)
@@ -217,11 +217,11 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
         return true
     }
 
-    return match ref <<type_info {
+    return match &<<type_info {
         // String
         _ if type_info == @type_info(String) -> {
             if !require_arg(args) { return false }
-            <<cast(&String) result = args[0].clone()
+            <<cast(^String) result = args[0].clone()
             args = args[1..]
             true
         }
@@ -233,21 +233,21 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
         _ if type_info == @type_info(Option[String]) -> {
             temp := @alloca(String, 1)
             parse_arguments_help(@type_info(String), args, temp.data)
-            <<cast(&Option[String]) result = Some(<<temp.data)
+            <<cast(^Option[String]) result = Some(<<temp.data)
             true
         }
 
-        TypeInfoEnum($info)   -> parse_arguments_enum(&info, args, result)
-        TypeInfoStruct($info) -> parse_arguments_struct(&info, args, result)
+        TypeInfoEnum($info)   -> parse_arguments_enum(^info, args, result)
+        TypeInfoStruct($info) -> parse_arguments_struct(^info, args, result)
         TypeInfoInt(_)    -> {
             if !require_arg(args) { return false }
-            <<cast(&int) result = fmt.parse_int(args[0].slice())
+            <<cast(^int) result = fmt.parse_int(args[0].slice())
             args = args[1..]
             true
         }
 
         TypeInfoBool(_) -> {
-            <<cast(&bool) result = true
+            <<cast(^bool) result = true
             true
         }
         _ -> {
@@ -257,17 +257,17 @@ parse_arguments_help :: (type_info: &TypeInfo, args: ref []String, result: &$T) 
     }
 }
 
-parse_arguments_string_array :: (args: ref []String, result: &void) -> bool {
+parse_arguments_string_array :: (args: &[]String, result: ^void) -> bool {
     if const console_debug_print {
         io.println("parse_arguments_string_array")
         log_args(args)
     }
 
-    array := cast(&Array[String]) result
+    array := cast(^Array[String]) result
     <<array = Array[String].create()
 
     while args.length > 0 {
-        arg := ref args[0]
+        arg := &args[0]
         @assert(arg.length > 0)
 
         if arg[0] == '-' {
@@ -281,7 +281,7 @@ parse_arguments_string_array :: (args: ref []String, result: &void) -> bool {
     return true
 }
 
-parse_arguments_enum :: (type_info: &TypeInfoEnum, args: ref []String, result: &void) -> bool {
+parse_arguments_enum :: (type_info: ^TypeInfoEnum, args: &[]String, result: ^void) -> bool {
     if const console_debug_print {
         io.printfln("parsing into enum {}", type_info.name)
         log_args(args)
@@ -295,14 +295,14 @@ parse_arguments_enum :: (type_info: &TypeInfoEnum, args: ref []String, result: &
         return false
     }
 
-    command := ref args[0]
+    command := &args[0]
     args = args[1..]
 
     for(by_ref=true) mem : type_info.members {
         mem_name := get_display_name_for_member(mem)
         if streq(command.slice(), mem_name) {
             // first store the tag
-            tag_ptr := cast(&int) result
+            tag_ptr := cast(^int) result
             <<tag_ptr = mem.tag
 
             if mem.typ != null {
@@ -324,14 +324,14 @@ parse_arguments_enum :: (type_info: &TypeInfoEnum, args: ref []String, result: &
     return false
 }
 
-parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, result: &void) -> bool {
+parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: ^void) -> bool {
     if const console_debug_print {
         io.printfln("parsing into struct {}", type_info.name)
         log_args(args)
     }
 
     // filter members of struct + handle #name and #ignore
-    MemberInfo :: (name: string, mem: &TypeInfoStructMember, set: bool)
+    MemberInfo :: (name: string, mem: ^TypeInfoStructMember, set: bool)
     members := Array[MemberInfo].create()
     for(by_ref=true) m : type_info.members {
         mem_name := get_display_name_for_member(m)
@@ -341,13 +341,13 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
             continue
         }
 
-        members.add((mem_name, &m, false))
+        members.add((mem_name, ^m, false))
     }
 
-    get_member :: (arr: ref @typeof(members), name: string) -> &MemberInfo {
+    get_member :: (arr: &@typeof(members), name: string) -> ^MemberInfo {
         for(by_ref=true) arr.slice() {
             if streq(it.name, name) {
-                return &it
+                return ^it
             }
         }
         return null
@@ -355,7 +355,7 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
 
     // parse arguments
     while args.length > 0 {
-        arg := ref args[0]
+        arg := &args[0]
         @assert(arg.length > 0)
 
         args = args[1..]
@@ -403,22 +403,22 @@ parse_arguments_struct :: (type_info: &TypeInfoStruct, args: ref []String, resul
     return true
 }
 
-get_help_message_helper :: (type_info: &TypeInfo, result: ref String, indent: int) {
-    match ref <<type_info {
-        _ if &type_info == @type_info(String) -> {
+get_help_message_helper :: (type_info: ^TypeInfo, result: &String, indent: int) {
+    match &<<type_info {
+        _ if ^type_info == @type_info(String) -> {
             indent_string(result, indent)
             result += "String"
         }
-        _ if &type_info == @type_info(Array[String]) -> {
+        _ if ^type_info == @type_info(Array[String]) -> {
             result += "Array[String]"
         }
 
-        TypeInfoStruct($ti) -> get_help_message_struct(&ti, result, indent)
-        TypeInfoEnum($ti) -> get_help_message_enum(&ti, result, indent)
+        TypeInfoStruct($ti) -> get_help_message_struct(^ti, result, indent)
+        TypeInfoEnum($ti) -> get_help_message_enum(^ti, result, indent)
     }
 }
 
-get_help_message_struct :: (type_info: &TypeInfoStruct, result: ref String, indent: int) {
+get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent: int) {
     old_indent := indent
     indent += indent_size
 
@@ -444,7 +444,7 @@ get_help_message_struct :: (type_info: &TypeInfoStruct, result: ref String, inde
         if help_text_att != null {
             @assert(help_text_att.args.length == 1)
             @assert(@type_info_of_any(help_text_att.args[0]) == @type_info(string))
-            text := String.from_string(<<cast(&string) @ptr_of_any(help_text_att.args[0]))
+            text := String.from_string(<<cast(^string) @ptr_of_any(help_text_att.args[0]))
 
             lines := text.split_at_char('`n', true)
 
@@ -474,7 +474,7 @@ get_help_message_struct :: (type_info: &TypeInfoStruct, result: ref String, inde
     }
 }
 
-get_help_message_enum :: (type_info: &TypeInfoEnum, result: ref String, indent: int) {
+get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int) {
     old_indent := indent
     indent += indent_size
 
@@ -499,7 +499,7 @@ get_help_message_enum :: (type_info: &TypeInfoEnum, result: ref String, indent: 
         if help_text_att != null {
             @assert(help_text_att.args.length == 1)
             @assert(@type_info_of_any(help_text_att.args[0]) == @type_info(string))
-            text := String.from_string(<<cast(&string) @ptr_of_any(help_text_att.args[0]))
+            text := String.from_string(<<cast(^string) @ptr_of_any(help_text_att.args[0]))
 
             lines := text.split_at_char('`n', true)
 
@@ -534,8 +534,8 @@ get_help_message_enum :: (type_info: &TypeInfoEnum, result: ref String, indent: 
     }
 }
 
-get_help_message_member :: (result: ref String, type_info: &TypeInfo, name: string, format: string, indent: int, indent2: int) {
-    match ref <<type_info {
+get_help_message_member :: (result: &String, type_info: ^TypeInfo, name: string, format: string, indent: int, indent2: int) {
+    match &<<type_info {
         $_ if type_info == @type_info(String) -> {
             indent_string(result, indent)
             result.appendf(format, name)
@@ -573,7 +573,7 @@ get_help_message_member :: (result: ref String, type_info: &TypeInfo, name: stri
     }
 }
 
-assign_value_to_member :: (member: &TypeInfoStructMember, result: &void, value: &any) -> bool {
+assign_value_to_member :: (member: ^TypeInfoStructMember, result: ^void, value: ^any) -> bool {
     if member.typ == @type_info_of_any(value) {
         C.memcpy(result, @ptr_of_any(value), cast member.typ.size)
         return true
@@ -585,7 +585,7 @@ assign_value_to_member :: (member: &TypeInfoStructMember, result: &void, value: 
 
 // helper functions
 
-to_ascii_strings :: (argv: &&u16, argc: int) -> Array[String] {
+to_ascii_strings :: (argv: ^^u16, argc: int) -> Array[String] {
     array := Array[String].create(argc)
     for i : 0..argc {
         str := String.empty()
@@ -598,14 +598,14 @@ to_ascii_strings :: (argv: &&u16, argc: int) -> Array[String] {
     return array
 }
 
-indent_string :: (str: ref String, amount: int) {
+indent_string :: (str: &String, amount: int) {
     str.reserve_more(amount)
     for 0..amount {
         str += " "
     }
 }
 
-get_display_name_for_member :: (mem: ref $T) -> string {
+get_display_name_for_member :: (mem: &$T) -> string {
     name_att := mem.get_attribute("name")
     if name_att == null {
         return mem.name
@@ -613,7 +613,7 @@ get_display_name_for_member :: (mem: ref $T) -> string {
 
     @assert(name_att.args.length == 1)
     @assert(@type_info_of_any(name_att.args[0]) == @type_info(string))
-    name := <<cast(&string) @ptr_of_any(name_att.args[0])
+    name := <<cast(^string) @ptr_of_any(name_att.args[0])
     return name
 }
 

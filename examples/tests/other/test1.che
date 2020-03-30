@@ -3,7 +3,7 @@ S1 :: struct {
 }
 S2 :: struct(T: TYPE) {
     t    : T      = default
-    next : &S2[T] = null
+    next : ^S2[T] = null
 }
 
 E1 :: enum {
@@ -11,36 +11,36 @@ E1 :: enum {
 }
 E2 :: enum(T: TYPE) {
     t: T
-    next: &E2[T]
+    next: ^E2[T]
 }
 
 T1 :: trait {
-    t :: (ref Self) -> int;
+    t :: (&Self) -> int;
 }
 T2 :: trait(T: TYPE) {
-    t :: (ref Self) -> T;
+    t :: (&Self) -> T;
 }
 
 impl T1 for S1 {
-    t :: (ref Self) -> int {
+    t :: (&Self) -> int {
         return 0
     }
 }
 
 impl T2[string] for S1 {
-    t :: (ref Self) -> string {
+    t :: (&Self) -> string {
         return ""
     }
 }
 
 impl T1 for int {
-    t :: (ref Self) -> int {
+    t :: (&Self) -> int {
         return 0
     }
 }
 
 impl T2[string] for int {
-    t :: (ref Self) -> string {
+    t :: (&Self) -> string {
         return ""
     }
 }
@@ -52,9 +52,9 @@ TYPE  :: type
 TUPLE :: (int, string)
 DWORD :: int
 TD1   :: S1
-TD2   :: &S1
+TD2   :: ^S1
 TD3   :: []S1
-TD4   :: ref S1
+TD4   :: &S1
 TD5   :: fn (S1) -> E1
 TD6   :: S2[DWORD]
 TD7   :: [10]S1

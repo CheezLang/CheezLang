@@ -20,13 +20,13 @@ C :: import std.c
 use import std.string
 
 Test :: trait {
-    foo :: (ref Self, a: int);
-    print :: (ref Self);
+    foo :: (&Self, a: int);
+    print :: (&Self);
 }
 
 Test2 :: trait {
-    bar :: (ref Self);
-    print :: (ref Self);
+    bar :: (&Self);
+    print :: (&Self);
 }
 
 S :: struct {
@@ -38,36 +38,36 @@ S2 :: struct {
 }
 
 impl Test for S {
-    foo :: (ref Self, a: int) {
+    foo :: (&Self, a: int) {
         C.printf("Test.foo(S{%lld}, %lld)`n", self.a, a)
     }
 
-    print :: (ref Self) {
+    print :: (&Self) {
         C.printf("Test.print(S{%lld})`n", a)
     }
 }
 
 impl Test2 for S {
-    bar :: (ref Self) {
+    bar :: (&Self) {
         C.printf("Test2.bar(S{%lld})`n", a)
     }
 
-    print :: (ref Self) {
+    print :: (&Self) {
         C.printf("Test2.print(S{%lld})`n", a)
     }
 }
 
 impl Test for S2 {
-    foo :: (ref Self, a: int) {
+    foo :: (&Self, a: int) {
         C.printf("Test.foo(S2{%s}, %lld)`n", x, a)
     }
 
-    print :: (ref Self) {
+    print :: (&Self) {
         C.printf("Test.print(S2{%s})`n", x)
     }
 }
 
-test :: (t: &Test) {
+test :: (t: ^Test) {
     t.foo(123)
     t.print()
     C.puts("")
@@ -82,7 +82,7 @@ Main :: () {
 
     {
         tmp := S(5)
-        t : &Test = &tmp
+        t : ^Test = ^tmp
         t.foo(7)
         t.print()
         C.puts("")
@@ -90,7 +90,7 @@ Main :: () {
     
     {
         tmp := S(5)
-        t : &Test2 = &tmp
+        t : ^Test2 = ^tmp
         t.bar()
         t.print()
         C.puts("")
@@ -98,7 +98,7 @@ Main :: () {
     
     {
         tmp := S2("hello")
-        t : &Test = &tmp
+        t : ^Test = ^tmp
         t.foo(23)
         t.print()
         C.puts("")
@@ -107,11 +107,11 @@ Main :: () {
     {
         {
             tmp := S(1)
-            test(&tmp)
+            test(^tmp)
         }
         {
             tmp := S2("zwei")
-            test(&tmp)
+            test(^tmp)
         }
     }
 }

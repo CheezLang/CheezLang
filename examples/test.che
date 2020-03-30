@@ -63,11 +63,11 @@ import compiler.cli
 //     lexer         := Lexer.from_file("P:/dev/CheezLang/data/basic_cheez.che", string_db)
 //     match lexer {
 //         Ok($lexer) -> {
-//             error_handler.text_provider = &lexer
+//             error_handler.text_provider = ^lexer
 //             allocator := DEFAULT_STD_HEAP_ALLOCATOR
-//             parser := Parser.new(lexer, &error_handler, &allocator)
+//             parser := Parser.new(lexer, ^error_handler, ^allocator)
 
-//             funcs := Array[&AstNode].create()
+//             funcs := Array[^AstNode].create()
 
 //             loop {
 //                 decl := parser.parse_constant_declaration()
@@ -77,7 +77,7 @@ import compiler.cli
 //                 funcs.add(decl)
 //             }
 
-//             compile_and_run(string_db, error_handler, &allocator, funcs)
+//             compile_and_run(string_db, error_handler, ^allocator, funcs)
 //         }
 
 //         Err(_) -> {
@@ -86,11 +86,11 @@ import compiler.cli
 //     }
 // }
 
-// print :: (format: string, args: []&any = [], category: string = "console") {
+// print :: (format: string, args: []^any = [], category: string = "console") {
 //     io.formatln(format, args)
 // }
 
-// compile_and_run :: (string_db: ref StringDatabase, error_handler: ref ErrorHandler, allocator: &Allocator, nodes: Array[&AstNode]) {
+// compile_and_run :: (string_db: &StringDatabase, error_handler: &ErrorHandler, allocator: ^Allocator, nodes: Array[^AstNode]) {
 //     io.formatln("compile and run {} functions", [nodes.count()])
 
 //     code_generator := ByteCodeGenerator.new(string_db, error_handler, allocator)
@@ -99,9 +99,9 @@ import compiler.cli
 //     interp.printer = cast print
     
 //     for node : nodes {
-//         decl := cast(&AstConstDecl) node
+//         decl := cast(^AstConstDecl) node
 //         name := decl.name.value
-//         func := cast(&AstFunction) &decl.value
+//         func := cast(^AstFunction) ^decl.value
 
 //         code_generator.get().generate_code_for_function(func, name)
 
@@ -204,8 +204,8 @@ import compiler.cli
 // Expr :: trait {
 //     id  : int
 //     typ : string
-//     eval :: (ref Self) -> int;
-//     to_string :: (ref Self) -> String;
+//     eval :: (&Self) -> int;
+//     to_string :: (&Self) -> String;
 // }
 
 // Const :: struct Expr {
@@ -214,22 +214,22 @@ import compiler.cli
 
 // Binary :: struct Expr {
 //     op      : enum #copy {Add, Sub, Mul, Div}
-//     left    : &Expr
-//     right   : &Expr
+//     left    : ^Expr
+//     right   : ^Expr
 // }
 
 // impl Expr for Const {
-//     eval :: (ref Self) -> int {
+//     eval :: (&Self) -> int {
 //         return value
 //     }
 
-//     to_string :: (ref Self) -> String {
+//     to_string :: (&Self) -> String {
 //         return fmt.format("{}:{}", [value, typ])
 //     }
 // }
 
 // impl Expr for Binary {
-//     eval :: (ref Self) -> int {
+//     eval :: (&Self) -> int {
 //         return match op {
 //             .Add -> left.eval() + right.eval()
 //             .Sub -> left.eval() - right.eval()
@@ -238,7 +238,7 @@ import compiler.cli
 //         }
 //     }
 
-//     to_string :: (ref Self) -> String {
+//     to_string :: (&Self) -> String {
 //         l := left.to_string()
 //         r := right.to_string()
 //         o := match op {
@@ -255,10 +255,10 @@ import compiler.cli
 //     a := Const(id=0, typ="int", value=1)
 //     b := Const(id=1, typ="int", value=2)
 //     c := Const(id=2, typ="int", value=3)
-//     d := Binary(id=3, typ="int", op = .Mul, left=&b, right=&c)
-//     e := Binary(id=4, typ="int", op = .Add, left=&a, right=&d)
+//     d := Binary(id=3, typ="int", op = .Mul, left=^b, right=^c)
+//     e := Binary(id=4, typ="int", op = .Add, left=^a, right=^d)
 
-//     expr : &Expr = &e
+//     expr : ^Expr = ^e
 
 //     io.println(expr.id)
 //     io.println(expr.typ)
@@ -321,7 +321,7 @@ Main :: () {
     io.println(fmt.format_any(result))
     io.println("===")
 
-    match ref result {
+    match &result {
         Some($result) -> {
             match get_value(Command, result.get()) {
                 Ok($result) -> io.formatln(result)
@@ -357,20 +357,20 @@ impl CustomParser for String {
         return Some(Box[Expr].from_pointer(cast result)), args[1..args.length]
     }
 
-    validate :: (expr: ref CustomExpr) -> Result[(), ClapError] {
+    validate :: (expr: &CustomExpr) -> Result[(), ClapError] {
         // io.println("String.validate")
-        return match ref expr.sub.get() {
+        return match &expr.sub.get() {
             ValueExpr($v)   -> Ok(())
             EmptyExpr($v)   -> Err(ClapError(v.loc, fmt.format("Missing value for string argument", [])))
             _               -> @assert(false)
         }
     }
 
-    get_value :: (result: &void, expr: ref CustomExpr) {
+    get_value :: (result: ^void, expr: &CustomExpr) {
         // io.println("String.get_value")
-        match ref expr.sub.get() {
+        match &expr.sub.get() {
             ValueExpr($v) -> {
-                <<cast(&String)result = v.raw.clone()
+                <<cast(^String)result = v.raw.clone()
             }
 
             _ -> @assert(false)

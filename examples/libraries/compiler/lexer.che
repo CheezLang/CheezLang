@@ -16,12 +16,11 @@ Lexer :: struct {
     text        : string
     location    : Location
     peek        : Option[Token]
-    string_db   : ref StringDatabase
+    string_db   : &StringDatabase
 
     // interned keywords
     KwLambda   : string
     KwReturn   : string
-    KwRef      : string
     Kwfn       : string
     KwFn       : string
     KwStruct   : string
@@ -54,7 +53,7 @@ Lexer :: struct {
 }
 
 impl TextProvider for Lexer {
-    get_text :: (ref Self, filename: string) -> string {
+    get_text :: (&Self, filename: string) -> string {
         return text
     }
 }
@@ -63,7 +62,7 @@ impl Lexer {
     // i dont know why, but for some reason when I enable trace-stack this function crashes
     // but with #nostacktrace it works...
     // - NO, 09.12.19
-    from_string :: (content: string, string_db: ref StringDatabase) -> Rc[Lexer] #nostacktrace {
+    from_string :: (content: string, string_db: &StringDatabase) -> Rc[Lexer] #nostacktrace {
         return Rc[Lexer].new(Lexer(
             text = content
             location = Location(
@@ -78,7 +77,6 @@ impl Lexer {
 
             KwLambda   = string_db.intern("lambda")
             KwReturn   = string_db.intern("return")
-            KwRef      = string_db.intern("ref")
             Kwfn       = string_db.intern("fn")
             KwFn       = string_db.intern("fn")
             KwStruct   = string_db.intern("struct")
@@ -111,7 +109,7 @@ impl Lexer {
         ))
     }
 
-    from_file :: (filename: string, string_db: ref StringDatabase) -> Result[Rc[Lexer], ()] {
+    from_file :: (filename: string, string_db: &StringDatabase) -> Result[Rc[Lexer], ()] {
         content := {
             content := try_with(read_file(filename), {return Err(())})
             string_db.intern(content.slice())
@@ -121,7 +119,7 @@ impl Lexer {
         return Ok(l)
     }
 
-    expect_token :: (ref Self, typ: TokenType) -> bool, Token {
+    expect_token :: (&Self, typ: TokenType) -> bool, Token {
         token := next_token()
         if int(token.typ) == int(typ) {
             return true, token
@@ -130,8 +128,8 @@ impl Lexer {
         }
     }
 
-    peek_token :: (ref Self) -> ref Token {
-        return match ref peek {
+    peek_token :: (&Self) -> &Token {
+        return match &peek {
             Some($tok) -> tok
 
             None -> {
@@ -142,7 +140,7 @@ impl Lexer {
         }
     }
 
-    next_token :: (ref Self) -> Token {
+    next_token :: (&Self) -> Token {
         match peek {
             Some($t) -> {
                 peek = None
@@ -164,7 +162,7 @@ impl Lexer {
         return read_token()
     }
 
-    skip_whitespace :: (ref Self) {
+    skip_whitespace :: (&Self) {
         while true {
             tok := self.peek_token()
 
@@ -180,7 +178,7 @@ impl Lexer {
         }
     }
 
-    skip_line :: (ref Self) {
+    skip_line :: (&Self) {
         while true {
             tok := self.next_token()
 
@@ -195,7 +193,7 @@ impl Lexer {
         }
     }
 
-    read_token :: (ref Self) -> Token {
+    read_token :: (&Self) -> Token {
         token := Token(
             typ = TokenType.EOF
             data = TokenData.None
@@ -245,9 +243,9 @@ impl Lexer {
             ']', _   -> simple_token(token, TokenType.ClosingBracket, curr_len, 1)
             ',', _   -> simple_token(token, TokenType.Comma,          curr_len, 1)
             '&', _   -> simple_token(token, TokenType.Ampersand,      curr_len, 1)
+            '^', _   -> simple_token(token, TokenType.Hat,            curr_len, 1)
             '*', _   -> simple_token(token, TokenType.Asterisk,       curr_len, 1)
             '/', _   -> simple_token(token, TokenType.ForwardSlash,   curr_len, 1)
-            '^', _   -> simple_token(token, TokenType.Caret,           curr_len, 1)
             '+', _   -> simple_token(token, TokenType.Plus,           curr_len, 1)
             '%', _   -> simple_token(token, TokenType.Percent,        curr_len, 1)
             '-', _   -> simple_token(token, TokenType.Minus,          curr_len, 1)
@@ -304,7 +302,7 @@ impl Lexer {
         return token
     }
 
-    parse_number_literal :: (ref Self, token: ref Token) {
+    parse_number_literal :: (&Self, token: &Token) {
         token.typ = TokenType.NumberLiteral
         base := 10
         str := {
@@ -533,7 +531,7 @@ impl Lexer {
         }
     }
 
-    parse_suffix :: (ref Self, token: ref Token) {
+    parse_suffix :: (&Self, token: &Token) {
         if is_ident_begin(peek_char(0)[0]) {
             start := location.byte_index
             while location.byte_index < text.bytes.length {
@@ -547,13 +545,13 @@ impl Lexer {
         }
     }
 
-    simple_token :: (ref Self, token: ref Token, typ: TokenType, len: int, chars: int) {
+    simple_token :: (&Self, token: &Token, typ: TokenType, len: int, chars: int) {
         token.typ = typ
         location.byte_index += len
         location.column += chars
     }
 
-    parse_identifier :: (ref Self, token: ref Token, typ: TokenType) {
+    parse_identifier :: (&Self, token: &Token, typ: TokenType) {
         token.typ = typ
         start := location.byte_index
 
@@ -568,7 +566,7 @@ impl Lexer {
         token.data = TokenData.String(string_db.intern(str))
     }
 
-    parse_string_literal :: (ref Self, token: ref Token, typ: TokenType, end: char) {
+    parse_string_literal :: (&Self, token: &Token, typ: TokenType, end: char) {
         token.typ = typ
         location.byte_index += 1
         location.column += 1
@@ -607,7 +605,7 @@ impl Lexer {
         token.data = TokenData.String(string_db.intern(str))
     }
 
-    skip_newlines_and_comments :: (ref Self) -> loc: Option[Location] {
+    skip_newlines_and_comments :: (&Self) -> loc: Option[Location] {
         loc = None
 
         while location.byte_index < text.bytes.length {
@@ -640,7 +638,7 @@ impl Lexer {
         }
     }
 
-    peek_char :: (ref Self, offset: int) -> char, i32 {
+    peek_char :: (&Self, offset: int) -> char, i32 {
         index := location.byte_index
         while offset > 0, offset -= 1 {
             _, len := Utf8.decode(text.slice().bytes[index..text.bytes.length])
@@ -653,7 +651,7 @@ impl Lexer {
         return Utf8.decode(text.bytes[index..text.bytes.length])
     }
 
-    parse_multi_line_comment :: (ref Self) {
+    parse_multi_line_comment :: (&Self) {
         level := 0
         while location.byte_index < text.bytes.length {
             curr, curr_len := peek_char(0)
@@ -681,7 +679,7 @@ impl Lexer {
         }
     }
 
-    parse_single_line_comment :: (ref Self) {
+    parse_single_line_comment :: (&Self) {
         while location.byte_index < text.bytes.length {
             next, len := peek_char(0)
             if next == '`n' {
@@ -693,13 +691,12 @@ impl Lexer {
         }
     }
 
-    check_keywords :: (ref Self, token: ref Token) {
+    check_keywords :: (&Self, token: &Token) {
         match token.data {
             TokenData.String($str) -> {
                 token.typ =
                     if string.same(str, KwLambda)          then TokenType.KwLambda
                     else if string.same(str, KwReturn)     then TokenType.KwReturn
-                    else if string.same(str, KwRef)        then TokenType.KwRef
                     else if string.same(str, Kwfn)         then TokenType.Kwfn
                     else if string.same(str, KwFn)         then TokenType.KwFn
                     else if string.same(str, KwStruct)     then TokenType.KwStruct
@@ -773,13 +770,13 @@ TokenData :: enum #copy {
 }
 
 impl Printable for Location {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.appendf("{}:{}->{}", (line, column, end_line))
     }
 }
 
 impl Printable for Token {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.appendf("{} ({})", (typ, location))
         match data {
             TokenData.String($s) -> str.appendf(" String({})", s)
@@ -794,7 +791,7 @@ impl Printable for Token {
 }
 
 impl Printable for TokenType {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         use TokenType
 
         str += cast(string)match self {
@@ -817,8 +814,8 @@ impl Printable for TokenType {
             PeriodPeriod      -> "PeriodPeriod"
             Equal             -> "Equal"
             Ampersand         -> "Ampersand"
+            Hat               -> "Hat"
             Bang              -> "Bang"
-            Caret             -> "Caret"
             Plus              -> "Plus"
             Minus             -> "Minus"
             Asterisk          -> "Asterisk"
@@ -848,7 +845,6 @@ impl Printable for TokenType {
             Pipe              -> "Pipe"
             KwLambda          -> "KwLambda"
             KwReturn          -> "KwReturn"
-            KwRef             -> "KwRef"
             Kwfn              -> "Kwfn"
             KwFn              -> "KwFn"
             KwStruct          -> "KwStruct"
@@ -902,8 +898,8 @@ TokenType :: enum #copy {
     PeriodPeriod
     Equal
     Ampersand
+    Hat
     Bang
-    Caret
     Plus
     Minus
     Asterisk
@@ -933,7 +929,6 @@ TokenType :: enum #copy {
     Pipe
     KwLambda
     KwReturn
-    KwRef
     Kwfn
     KwFn
     KwStruct

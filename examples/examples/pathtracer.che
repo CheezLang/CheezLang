@@ -36,7 +36,7 @@ min_contribution    :: 0.2
 
 pi                  :: 3.14159265359
 
-create :: (val: $T, allocator: &Allocator) -> &T {
+create :: (val: $T, allocator: ^Allocator) -> ^T {
     ptr := alloc(T, allocator)
     <<ptr = val
     return ptr
@@ -49,7 +49,7 @@ impl float {
 }
 
 impl Printable for Vec3 {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         str.appendf("{}, {}, {}", (x, y, z))
     }
 }
@@ -63,7 +63,7 @@ HitInfo :: struct {
     distance: float
     pos     : Vec3
     normal  : Vec3
-    material: &Material
+    material: ^Material
 }
 
 Material :: struct {
@@ -85,17 +85,17 @@ impl Material {
 }
 
 Object :: trait {
-    intersect :: (ref Self, ray: Ray) -> Option[HitInfo];
+    intersect :: (&Self, ray: Ray) -> Option[HitInfo];
 }
 
 Sphere :: struct {
     pos: Vec3
     rad: float
-    mat: &Material
+    mat: ^Material
 }
 
 impl Object for Sphere {
-    intersect :: (ref Self, ray: Ray) -> Option[HitInfo] {
+    intersect :: (&Self, ray: Ray) -> Option[HitInfo] {
         op := pos - ray.pos
         r2 := rad * rad
         b := op.dot(ray.dir)
@@ -121,9 +121,9 @@ impl Object for Sphere {
 }
 
 PathTracer :: struct {
-    pge             : &PixelGameEngine      = null
+    pge             : ^PixelGameEngine      = null
     allocator       : ArenaAllocator
-    objects         : Array[&Object]
+    objects         : Array[^Object]
     cam_fov         : float                 = 0
     cam_pos         : Vec3                  = default
     cam_dir         : Vec3                  = default
@@ -132,14 +132,14 @@ PathTracer :: struct {
     sample_t        : float                 = 0
     total_t         : float                 = 0
     buffer          : []Vec3                = default
-    thread_datas    : [block_count]&RenderContext = default
+    thread_datas    : [block_count]^RenderContext = default
 
     running         : bool = true
     paused          : bool = false
 }
 
 impl Drop for PathTracer {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         free_n(buffer)
     }
 }
@@ -148,7 +148,7 @@ impl PathTracer {
     create :: () -> Self {
         return PathTracer(
             allocator   = ArenaAllocator.create(1024)
-            objects     = Array[&Object].create()
+            objects     = Array[^Object].create()
             buffer      = {
                 b := alloc_n(Vec3, u64(width * height))
                 C.memset(b.data, 0, u64(b.length * @sizeof(Vec3)))
@@ -157,13 +157,13 @@ impl PathTracer {
         )
     }
 
-    add_object :: (ref Self, obj: $T) {
-        dyn := alloc(T, &allocator)
+    add_object :: (&Self, obj: $T) {
+        dyn := alloc(T, ^allocator)
         <<dyn = obj
         objects.add(dyn)
     }
 
-    intersect :: (ref Self, ray: Ray) -> Option[HitInfo] {
+    intersect :: (&Self, ray: Ray) -> Option[HitInfo] {
         nearest : Option[HitInfo] = None
 
         for n : 0..objects.get_length() {
@@ -178,7 +178,7 @@ impl PathTracer {
         return nearest
     }
 
-    calc_color :: (ref Self, ray: Ray, prng: &MTwister, contribution: float, depth: int = 0) -> Vec3 {
+    calc_color :: (&Self, ray: Ray, prng: ^MTwister, contribution: float, depth: int = 0) -> Vec3 {
         if depth >= max_depth or contribution < min_contribution {
             return Vec3()
         }
@@ -280,7 +280,7 @@ impl PathTracer {
 }
 
 RenderContext :: struct {
-    pt      : &PathTracer   = null
+    pt      : ^PathTracer   = null
     min     : Vector2[int]  = default
     max     : Vector2[int]  = default
     samples : int           = 0
@@ -288,7 +288,7 @@ RenderContext :: struct {
     active  : bool
 }
 
-pathtracer_thread :: (data: &RenderContext) {
+pathtracer_thread :: (data: ^RenderContext) {
     data.active = true
     for 0..samples_per_block {
         for current_y : data.min.y..data.max.y {
@@ -307,7 +307,7 @@ pathtracer_thread :: (data: &RenderContext) {
                 dir.normalize()
 
                 // shoot ray into scene and calculate color
-                color := data.pt.calc_color(Ray(data.pt.cam_pos, dir), &data.random, 1)
+                color := data.pt.calc_color(Ray(data.pt.cam_pos, dir), ^data.random, 1)
                 // println(color)
                 data.pt.buffer[index] += color
             }
@@ -326,7 +326,7 @@ pathtracer_thread :: (data: &RenderContext) {
 }
 
 impl Game for PathTracer {
-    on_create :: (ref Self, pge: &PixelGameEngine) -> bool {
+    on_create :: (&Self, pge: ^PixelGameEngine) -> bool {
         self.pge = pge
 
         self.cam_fov = float.to_radians(60.0)
@@ -350,15 +350,15 @@ impl Game for PathTracer {
         self.cam_right  = self.cam_right.normalized() * right_mag
 
         // create objects
-        m_red   := create(Material(Vec3(0.9, 0.2, 0.2)), &allocator)
-        m_green := create(Material(Vec3(0.2, 0.9, 0.2)), &allocator)
-        m_blue  := create(Material(Vec3(0.2, 0.2, 0.9)), &allocator)
-        m_grey  := create(Material(Vec3(0.75, 0.75, 0.75)), &allocator)
+        m_red   := create(Material(Vec3(0.9, 0.2, 0.2)), ^allocator)
+        m_green := create(Material(Vec3(0.2, 0.9, 0.2)), ^allocator)
+        m_blue  := create(Material(Vec3(0.2, 0.2, 0.9)), ^allocator)
+        m_grey  := create(Material(Vec3(0.75, 0.75, 0.75)), ^allocator)
 
-        m_mirror:= create(Material.reflective(Vec3(1, 1, 1)), &allocator)
-        m_glass := create(Material.refrective(Vec3(1, 1, 1), 1.95), &allocator)
+        m_mirror:= create(Material.reflective(Vec3(1, 1, 1)), ^allocator)
+        m_glass := create(Material.refrective(Vec3(1, 1, 1), 1.95), ^allocator)
 
-        m_light := create(Material(emission = Vec3(10, 10, 10)), &allocator)
+        m_light := create(Material(emission = Vec3(10, 10, 10)), ^allocator)
 
         self.add_object(Sphere(Vec3(-1000.0 - size / 2, 0, 0), 1000, m_red)) // left
         self.add_object(Sphere(Vec3(1000.0 + size / 2, 0, 0), 1000, m_green)) // right
@@ -383,7 +383,7 @@ impl Game for PathTracer {
             for x: 0..block_count_x {
                 context := alloc(RenderContext)
                 <<context = RenderContext(
-                    pt      = &self
+                    pt      = ^self
                     min     = Vector2[int](x * block_size, y * block_size)
                     max     = Vector2[int](min((x + 1) * block_size, width), min((y + 1) * block_size, height))
                     random  = MTwister.create(cast C.rand()) // crashes with seed not 0, wtf?
@@ -399,22 +399,22 @@ impl Game for PathTracer {
         return true
     }
 
-    enqueue_threads :: (ref Self) {
+    enqueue_threads :: (&Self) {
         if paused {
             return
         }
-        tds : []&RenderContext = thread_datas
+        tds : []^RenderContext = thread_datas
         for context : tds {
             thread_pool.enqueue(pathtracer_thread, context)
         }
     }
 
-    on_destroy :: (ref Self) -> bool {
+    on_destroy :: (&Self) -> bool {
         running = false
         return true
     }
 
-    on_update :: (ref Self, dt: float) -> bool {
+    on_update :: (&Self, dt: float) -> bool {
         if pge.get_key(Key.Escape).pressed {
             return false
         }
@@ -465,7 +465,7 @@ impl Game for PathTracer {
                 }
             }
 
-            tds : []&RenderContext = thread_datas
+            tds : []^RenderContext = thread_datas
             for tds {
                 if it.active {
                     size := it.max - it.min
@@ -498,7 +498,7 @@ impl Game for PathTracer {
         return true
     }
 
-    save_image :: (ref Self) {
+    save_image :: (&Self) {
         data := alloc_raw(double, width * height * 3)
         defer free(data)
 
@@ -532,17 +532,17 @@ impl Game for PathTracer {
     }
 }
 
-thread_pool_mut : &Mutex      = null
-thread_pool     : &ThreadPool = null
+thread_pool_mut : ^Mutex      = null
+thread_pool     : ^ThreadPool = null
 
 Main :: () {
     tp := ThreadPool.create(thread_count)
     m  := Mutex.new()
-    thread_pool     = &tp
-    thread_pool_mut = &m
+    thread_pool     = ^tp
+    thread_pool_mut = ^m
 
     game := PathTracer.create()
-    pge := PixelGameEngine.create(&game, width, height, 1, 1)
+    pge := PixelGameEngine.create(^game, width, height, 1, 1)
     if pge != null {
         pge.start()
     }

@@ -12,20 +12,20 @@ use import libclang.clang
 debug_print_all :: false
 
 impl Printable for CXString {
-    print :: (ref Self, str: ref String, format: string) {
+    print :: (&Self, str: &String, format: string) {
         c_str := clang_getCStringHelper(&self)
         str.appendf("{}", string(cast c_str, cast C.strlen(c_str)))
     }
 }
 
 impl CXString {
-    get_length :: (ref Self) -> int {
+    get_length :: (&Self) -> int {
         return cast C.strlen(clang_getCStringHelper(&self))
     }
 }
 
 impl Drop for CXString {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         clang_disposeStringHelper(&self)
     }
 }
@@ -47,7 +47,7 @@ GenContext :: struct {
     requires_wrapper        : bool   = false
     param_index             : int    = 0
     return_type_is_struct   := false
-    options                 : ref GenOptions
+    options                 : &GenOptions
     is_cpp_struct           := false
     has_members             := false
     longest_member_name     := 0
@@ -217,7 +217,7 @@ Main :: () {
     }
 }
 
-emit_typedef_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+emit_typedef_decl :: (ctx: &GenContext, cursor: &CXCursor) {
     elo          := clang_getTypedefDeclUnderlyingType(<<cursor)
     actual_type  := clang_Type_getNamedType(elo)
     type_decl    := clang_getTypeDeclaration(actual_type)
@@ -245,7 +245,7 @@ emit_typedef_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
     }
 }
 
-emit_struct_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
+emit_struct_decl :: (ctx: &GenContext, cursor: &CXCursor, name: CXString) {
     if ctx.options.no_structs {
         return
     }
@@ -328,7 +328,7 @@ emit_struct_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
 
 }
 
-emit_enum_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
+emit_enum_decl :: (ctx: &GenContext, cursor: &CXCursor, name: CXString) {
     if ctx.options.no_enums {
         return
     }
@@ -387,7 +387,7 @@ emit_enum_decl :: (ctx: ref GenContext, cursor: &CXCursor, name: CXString) {
     ctx.cheez_file.appendf("}`n", ())
 }
 
-emit_function_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+emit_function_decl :: (ctx: &GenContext, cursor: &CXCursor) {
     if ctx.options.no_functions {
         return
     }
@@ -508,7 +508,7 @@ emit_function_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
     }
 }
 
-emit_function_c_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
+emit_function_c_decl :: (ctx: &GenContext, cursor: &CXCursor) {
     function_type := clang_getCursorType(cursor)
     return_type   := clang_getResultType(function_type)
 
@@ -585,7 +585,7 @@ emit_function_c_decl :: (ctx: ref GenContext, cursor: &CXCursor) {
     ctx.c_file.append_string(");`n}`n")
 }
 
-check_type_struct :: (ctx: ref GenContext, typ: CXType) -> bool {
+check_type_struct :: (ctx: &GenContext, typ: CXType) -> bool {
     return match typ.kind {
         CXTypeKind.Elaborated -> {
             actual_type := clang_Type_getNamedType(typ)
@@ -616,7 +616,7 @@ check_type_struct :: (ctx: ref GenContext, typ: CXType) -> bool {
     }
 }
 
-emit_c_type :: (ctx: ref GenContext, typ: CXType, is_func_param: bool, behind_pointer: bool = false) {
+emit_c_type :: (ctx: &GenContext, typ: CXType, is_func_param: bool, behind_pointer: bool = false) {
     size := clang_Type_getSizeOf(typ)
     // io.printfln("emit_c_type({}, {})", (clang_getTypeSpelling(typ), clang_getTypeKindSpelling(typ.kind)))
 
@@ -788,7 +788,7 @@ emit_c_type :: (ctx: ref GenContext, typ: CXType, is_func_param: bool, behind_po
     }
 }
 
-emit_param_name :: (out: ref String, cursor: &CXCursor, index: int) {
+emit_param_name :: (out: &String, cursor: &CXCursor, index: int) {
     name := clang_getCursorSpelling(cursor)
     if name.get_length() == 0 {
         out.appendf("p{}", index)
@@ -805,7 +805,7 @@ visit_parameters :: (cursor: Code, ctx: Code, code: Code) #macro {
             if int(c.kind) == int(CXCursorKind.ParmDecl) {
                 // typ := clang_getCursorType(c)
                 // io.printfln("+ {}: {}", (clang_getCursorSpelling(c), clang_getTypeSpelling(typ)))
-                ctx := ref <<cast(&GenContext) client_data
+                ctx := &<<cast(&GenContext) client_data
                 @insert(code, link=[c, parent, ctx])
                 ctx.param_index += 1
             } else {
@@ -823,7 +823,7 @@ visit_struct_members :: (cursor: Code, ctx: Code, code: Code) #macro {
         (c, parent, client_data) => {
             action := CXChildVisitResult.Continue
             if int(c.kind) == int(CXCursorKind.FieldDecl) {
-                ctx := ref <<cast(&GenContext) client_data
+                ctx := &<<cast(&GenContext) client_data
                 @insert(code, link=[c, parent, ctx])
                 ctx.param_index += 1
             }
@@ -837,7 +837,7 @@ visit_enum_members :: (cursor: Code, ctx: Code, code: Code) #macro {
     clang_visitChildrenHelper(@insert(cursor),
         (c, parent, client_data) => {
             if int(c.kind) == int(CXCursorKind.EnumConstantDecl) {
-                ctx := ref <<cast(&GenContext) client_data
+                ctx := &<<cast(&GenContext) client_data
                 @insert(code, link=[c, parent, ctx])
                 ctx.param_index += 1
             }
@@ -846,7 +846,7 @@ visit_enum_members :: (cursor: Code, ctx: Code, code: Code) #macro {
         &@insert(ctx))
 }
 
-indent :: (str: ref String, amount: int) {
+indent :: (str: &String, amount: int) {
     str.reserve(str.get_length() + amount)
     for 0..amount {
         str += " "

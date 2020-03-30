@@ -28,14 +28,14 @@ EntityInspector :: struct {
 }
 
 impl EntityInspector {
-    set_entity :: (ref Self, e: Rc[Entity]) {
+    set_entity :: (&Self, e: Rc[Entity]) {
         if !e.is_null() and e.get().dead {
             e = Rc[Entity].empty()
         }
         Memory.drop(entity <- e)
     }
 
-    render :: (ref Self) {
+    render :: (&Self) {
         ImGui.Begin("Inspector")
         ImGui.End()
 
@@ -51,13 +51,13 @@ impl EntityInspector {
         }
     }
 
-    register_component_info :: (ref Self, default_value: $T) {
+    register_component_info :: (&Self, default_value: $T) {
         ptr := mem.alloc(T)
         <<ptr = default_value
         component_infos.add(ComponentInfo(@type_info(T), ptr))
     }
 
-    render_entity_inspector :: (ref Self, entity: ref Entity) {
+    render_entity_inspector :: (&Self, entity: &Entity) {
         if ImGui.Begin("Inspector") {
             {
                 id_str := fmt.format_any(entity.id)
@@ -81,9 +81,9 @@ impl EntityInspector {
             }
 
             // transform
-            ImGui.InputFloat3("Position", &entity.position.x)
-            ImGui.InputFloat3("Size", &entity.size.x)
-            ImGui.InputFloat("angle", &entity.angle, 1, 5)
+            ImGui.InputFloat3("Position", ^entity.position.x)
+            ImGui.InputFloat3("Size", ^entity.size.x)
+            ImGui.InputFloat("angle", ^entity.angle, 1, 5)
 
             ImGui.Separator()
 
@@ -139,7 +139,7 @@ impl EntityInspector {
                         ImGui.BeginChildStr("component list", list_size, true)
                         for bi : component_infos {
                             ImGui.PushIDInt(i32(it_index))
-                            type_info := cast(&TypeInfoStruct) bi.type_info
+                            type_info := cast(^TypeInfoStruct) bi.type_info
                             name := String.from_string(type_info.name)
 
                             if ImGui.Selectable(name.as_cstring(), i32(it_index) == current_selected_component, 0, list_entry_size) {
@@ -158,15 +158,15 @@ impl EntityInspector {
                         ImGui.BeginChildStr("component info", info_size, true)
 
                         if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
-                            bi := ref component_infos.access(current_selected_component)
-                            name := String.from_string(@cast(&TypeInfoStruct, bi.type_info).name)
+                            bi := &component_infos.access(current_selected_component)
+                            name := String.from_string(@cast(^TypeInfoStruct, bi.type_info).name)
                             ImGui.Text(name.as_cstring())
                             ImGui.Separator()
 
-                            for(by_ref=true) m : @cast(&TypeInfoStruct, bi.type_info).members {
+                            for(by_ref=true) m : @cast(^TypeInfoStruct, bi.type_info).members {
                                 name := String.with_capacity(m.name.bytes.length + 1)
                                 name.append_string(m.name)
-                                imgui_input_property(name, util.pointer_add(@ptr_of_trait(bi.value), m.offset), m.typ, &m)
+                                imgui_input_property(name, util.pointer_add(@ptr_of_trait(bi.value), m.offset), m.typ, ^m)
                             }
                         }
 
@@ -178,7 +178,7 @@ impl EntityInspector {
                         if ImGui.Button("Ok", button_size) {
                             if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
                                 // add component
-                                bi := ref component_infos[int(current_selected_component)]
+                                bi := &component_infos[int(current_selected_component)]
                                 component := EntityLayer.alloc_component(bi.type_info, @vtable_of_trait(bi.value))
                                 C.memcpy(@ptr_of_trait(component.get()), @ptr_of_trait(bi.value), cast bi.type_info.size)
                                 entity.add_component(component)
@@ -199,39 +199,39 @@ impl EntityInspector {
         ImGui.End()
     }
 
-    render_component_inspector :: (ref Self, component: Rc[Component]) -> bool {
+    render_component_inspector :: (&Self, component: Rc[Component]) -> bool {
         ti := component.get().get_type_info()
 
         // name of component
-        name := String.with_capacity(@cast(&TypeInfoStruct, ti).name.bytes.length + 1)
-        name.append_string(@cast(&TypeInfoStruct, ti).name)
+        name := String.with_capacity(@cast(^TypeInfoStruct, ti).name.bytes.length + 1)
+        name.append_string(@cast(^TypeInfoStruct, ti).name)
 
         open := true
         ImGui.SetNextItemOpen(true, ImGui.ImGuiCond_.Once)
-        if ImGui.CollapsingHeader_2(name.as_cstring(), &open) {
+        if ImGui.CollapsingHeader_2(name.as_cstring(), ^open) {
             {
                 rc_count_str := fmt.format_any(component.count())
                 ImGui.LabelText("RC count", rc_count_str.as_cstring())
             }
 
             // io.println("==")
-            for(by_ref=true) m : @cast(&TypeInfoStruct, ti).members {
+            for(by_ref=true) m : @cast(^TypeInfoStruct, ti).members {
                 name := String.with_capacity(m.name.bytes.length + 1)
                 name.append_string(m.name)
                 ptr := util.pointer_add(@ptr_of_trait(component.get()), m.offset)
-                imgui_input_property(name, ptr, m.typ, &m)
+                imgui_input_property(name, ptr, m.typ, ^m)
             }
         }
 
         return true
     }
 
-    imgui_input_property :: (ref Self, name: ref String, ptr: &void, typ: &TypeInfo, m: &TypeInfoStructMember) {
-        match ref <<typ {
+    imgui_input_property :: (&Self, name: &String, ptr: ^void, typ: ^TypeInfo, m: ^TypeInfoStructMember) {
+        match &<<typ {
             TypeInfoFloat(_) -> {
                 match typ.size {
                     4 -> {
-                        ptr := cast(&f32) ptr
+                        ptr := cast(^f32) ptr
                         if m.has_attribute("range") {
                             range := m.get_attribute("range")
                             min := range.get_arg(0, f32)
@@ -243,7 +243,7 @@ impl EntityInspector {
                             max := angle.get_arg(1, f32)
 
                             rad := <<ptr / 180.0f * 3.1415f
-                            ImGui.SliderAngle(name.as_cstring(), &rad, min, max)
+                            ImGui.SliderAngle(name.as_cstring(), ^rad, min, max)
                             <<ptr = rad * 180.0f / 3.1415f
                         } else if m.has_attribute("min") and m.has_attribute("max") {
                             min := m.get_attribute("min")
@@ -277,12 +277,12 @@ impl EntityInspector {
             }
 
             TypeInfoBool(_) -> {
-                ptr := cast(&bool) ptr
+                ptr := cast(^bool) ptr
                 ImGui.Checkbox(name.as_cstring(), ptr)
             }
 
             _ if typ == @type_info(vec3) -> {
-                ptr := cast(&f32) ptr
+                ptr := cast(^f32) ptr
                 if m.has_attribute("color") {
                     ImGui.ColorEdit3(name.as_cstring(), ptr)
                 } else if m.has_attribute("range") {
@@ -307,7 +307,7 @@ impl EntityInspector {
             }
 
             _ if typ == @type_info(vec2) -> {
-                ptr := cast(&f32) ptr
+                ptr := cast(^f32) ptr
                 if m.has_attribute("range") {
                     range := m.get_attribute("range")
                     min := range.get_arg(0, f32)
@@ -330,17 +330,17 @@ impl EntityInspector {
             }
 
             _ if typ == @type_info(Array[vec3]) -> {
-                arr := ref <<cast(&Array[vec3]) ptr
+                arr := &<<cast(^Array[vec3]) ptr
                 open := true
                 ImGui.Text(name.as_cstring())
                 ImGui.SameLine()
-                if ImGui.CollapsingHeader_2(name.as_cstring(), &open) {
+                if ImGui.CollapsingHeader_2(name.as_cstring(), ^open) {
                     while i := 0, i < arr.get_length(), i += 1 {
-                        v := ref arr[i]
+                        v := &arr[i]
                         str := String.empty()
                         str.appendf("{}", i)
-                        ImGui.PushIDPtr(&v)
-                        imgui_input_property(str, &v, @type_info(vec3), m)
+                        ImGui.PushIDPtr(^v)
+                        imgui_input_property(str, ^v, @type_info(vec3), m)
                         ImGui.SameLine()
 
                         if ImGui.SmallButton("-") {

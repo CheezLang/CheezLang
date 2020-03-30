@@ -15,11 +15,11 @@ S :: struct {
 }
 
 impl S {
-    foo :: (ref Self) {
+    foo :: (&Self) {
         io.printfln("foo(self): {}", a)
     }
 
-    foo1 :: (ref Self, x: int) -> int {
+    foo1 :: (&Self, x: int) -> int {
         result := a * x
         io.printfln("foo1(self, {}): {}", (x, result))
         return result

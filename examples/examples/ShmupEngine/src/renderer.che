@@ -66,33 +66,33 @@ RenderTargets :: struct {
 }
 
 Renderer :: struct {
-    single_quad_va  : &VertexArray
+    single_quad_va          : ^VertexArray
 
-    quad_va         : &VertexArray
-    quad_cache      := Array[QuadVertex].create(quad_cache_size * 4)
+    quad_va                 : ^VertexArray
+    quad_cache              := Array[QuadVertex].create(quad_cache_size * 4)
 
-    line_va         : &VertexArray
-    line_cache      := Array[LineVertex].create(line_cache_size * 2)
+    line_va                 : ^VertexArray
+    line_cache              := Array[LineVertex].create(line_cache_size * 2)
 
 
     // light stuff
-    enable_lights   := true
+    enable_lights           := true
 
-    point_light_va      : &VertexArray
-    point_light_cache   := Array[PointLightVertex].create(point_light_cache_size * 4)
-    area_light_va       : &VertexArray
-    area_light_cache    := Array[AreaLightVertex].create(area_light_cache_size * 4)
+    point_light_va          : ^VertexArray
+    point_light_cache       := Array[PointLightVertex].create(point_light_cache_size * 4)
+    area_light_va           : ^VertexArray
+    area_light_cache        := Array[AreaLightVertex].create(area_light_cache_size * 4)
 
-    white_tex       := Rc[Texture].empty()
-    texture_map     := Table[int, i32].create(int_compare)
-    used_textures   := Array[Rc[Texture]].create(max_texture_slots)
+    white_tex               := Rc[Texture].empty()
+    texture_map             := Table[int, i32].create(int_compare)
+    used_textures           := Array[Rc[Texture]].create(max_texture_slots)
 
     // shaders
-    color_shader        : &Shader = null
-    line_shader         : &Shader = null
-    apply_light_shader  : &Shader = null
-    point_light_shader  : &Shader = null
-    area_light_shader   : &Shader = null
+    color_shader            : ^Shader = null
+    line_shader             : ^Shader = null
+    apply_light_shader      : ^Shader = null
+    point_light_shader      : ^Shader = null
+    area_light_shader       : ^Shader = null
 
     //
     projection_matrix_stack := Array[mat4].create()
@@ -100,14 +100,14 @@ Renderer :: struct {
     viewport_size           := vec2()
 
     // render targets
-    max_size            := vec2i()
-    render_targets      := Array[RenderTargets].create()
-    current_target      := -1
-    tmp_target          := Rc[FrameBuffer].empty()
+    max_size                := vec2i()
+    render_targets          := Array[RenderTargets].create()
+    current_target          := -1
+    tmp_target              := Rc[FrameBuffer].empty()
 }
 
 impl Renderer {
-    create :: (max_size: vec2i) -> &Renderer {
+    create :: (max_size: vec2i) -> ^Renderer {
         // white texture
         white_tex := Texture.from_bytes(1, 1, .RGB, [255, 255, 255])
 
@@ -273,8 +273,8 @@ impl Renderer {
         return r
     }
 
-    reload_shaders :: (ref Self) {
-        reload_shader(&color_shader, "../data/test_shader.shader")
+    reload_shaders :: (&Self) {
+        reload_shader(^color_shader, "../data/test_shader.shader")
         color_shader.bind()
         uTextures : [16]i32 = default
         for i : 0..16 {
@@ -283,18 +283,18 @@ impl Renderer {
         color_shader.set_uniform_ints("uTextures", uTextures)
         color_shader.unbind()
 
-        reload_shader(&line_shader, "../data/line_shader.shader")
-        reload_shader(&point_light_shader, "../data/point_light_shader.shader")
-        reload_shader(&area_light_shader, "../data/area_light.shader")
+        reload_shader(^line_shader, "../data/line_shader.shader")
+        reload_shader(^point_light_shader, "../data/point_light_shader.shader")
+        reload_shader(^area_light_shader, "../data/area_light.shader")
 
-        reload_shader(&apply_light_shader, "../data/gyroids.shader")
+        reload_shader(^apply_light_shader, "../data/gyroids.shader")
         apply_light_shader.bind()
         apply_light_shader.set_uniform_int("uColorTex", 0)
         apply_light_shader.set_uniform_int("uLightMap", 1)
         apply_light_shader.unbind()
     }
 
-    reload_shader :: (ref Self, shader: &&Shader, file: string) {
+    reload_shader :: (&Self, shader: ^^Shader, file: string) {
         match Shader.from_file(file) {
             Ok($s) -> {
                 shader_program := mem.alloc(Shader)
@@ -314,7 +314,7 @@ impl Renderer {
         }
     }
 
-    set_projection_matrix :: (ref Self, projection_matrix: ref mat4) {
+    set_projection_matrix :: (&Self, projection_matrix: &mat4) {
         projection_inv := projection_matrix.invert_orthographic()
 
         color_shader.bind()
@@ -328,35 +328,35 @@ impl Renderer {
         area_light_shader.set_uniform_mat4("m_projection", projection_matrix)
     }
 
-    set_projection_inv :: (ref Self, projection_inv: mat4) {
+    set_projection_inv :: (&Self, projection_inv: mat4) {
         point_light_shader.bind()
         point_light_shader.set_uniform_mat4("m_projection_inv", projection_inv)
     }
 
-    push_proj   :: (ref Self, projection_matrix: ref mat4) {
+    push_proj   :: (&Self, projection_matrix: &mat4) {
         projection_matrix_stack.push(self.projection_matrix)
         set_projection_matrix(projection_matrix)
     }
 
-    pop_proj    :: (ref Self) {
+    pop_proj    :: (&Self) {
         projection_matrix = projection_matrix_stack.pop()
         set_projection_matrix(projection_matrix)
     }
 
-    begin_scene :: (ref Self, projection_matrix: ref mat4, viewport_size: vec2) {
+    begin_scene :: (&Self, projection_matrix: &mat4, viewport_size: vec2) {
         // @todo: <<& is a hack
-        self.projection_matrix = <<&projection_matrix
+        self.projection_matrix = <<^projection_matrix
         self.projection_matrix_stack.clear()
 
         set_projection_matrix(projection_matrix)
         self.viewport_size = viewport_size
     }
 
-    set_lights_enabled :: (ref Self, enabled: bool) {
+    set_lights_enabled :: (&Self, enabled: bool) {
         self.enable_lights = enabled
     }
 
-    push_render_target :: (ref Self) {
+    push_render_target :: (&Self) {
         if current_target >= 0 {
             // flush()
         }
@@ -369,21 +369,21 @@ impl Renderer {
         }
     }
 
-    pop_render_target :: (ref Self) {
+    pop_render_target :: (&Self) {
         @assert(current_target >= 0)
         current_target -= 1
     }
 
-    reset_render_targets :: (ref Self) {
+    reset_render_targets :: (&Self) {
         current_target = -1
     }
 
-    targets :: (ref Self, offset: int = 0) -> ref RenderTargets {
+    targets :: (&Self, offset: int = 0) -> &RenderTargets {
         @assert(current_target - offset >= 0)
         return render_targets[current_target - offset]
     }
 
-    clear :: (ref Self, color: vec4 = vec4(0, 0, 0, 0)) {
+    clear :: (&Self, color: vec4 = vec4(0, 0, 0, 0)) {
         targets().color_map.get().bind()
         glClearColor(color.x, color.y, color.z, color.w)
         glClear(GL_COLOR_BUFFER_BIT)
@@ -395,7 +395,7 @@ impl Renderer {
         FrameBuffer.unbind()
     }
 
-    add_point_light :: (ref Self, pos: vec2, color: vec3, radius: float, angle: float, direction: float, smoothness: float, attenuation: vec3) {
+    add_point_light :: (&Self, pos: vec2, color: vec3, radius: float, angle: float, direction: float, smoothness: float, attenuation: vec3) {
         if !enable_lights {
             return
         }
@@ -435,7 +435,7 @@ impl Renderer {
         ))
     }
 
-    flush_point_lights :: (ref Self) {
+    flush_point_lights :: (&Self) {
         targets().light_map.get().bind()
         glViewport(0, 0, i32(viewport_size.x), i32(viewport_size.y))
 
@@ -461,7 +461,7 @@ impl Renderer {
         point_light_cache.clear()
     }
 
-    add_area_light :: (ref Self, pos: vec2, size: vec2, angle: float = 0, color: vec3 = vec3(1, 1, 1), smooth: float = 0.0f) {
+    add_area_light :: (&Self, pos: vec2, size: vec2, angle: float = 0, color: vec3 = vec3(1, 1, 1), smooth: float = 0.0f) {
         if !enable_lights {
             return
         }
@@ -504,7 +504,7 @@ impl Renderer {
         ))
     }
 
-    flush_area_lights :: (ref Self) {
+    flush_area_lights :: (&Self) {
         // targets().light_map.get().bind()
         // glViewport(0, 0, i32(viewport_size.x), i32(viewport_size.y))
 
@@ -530,17 +530,17 @@ impl Renderer {
         // area_light_cache.clear()
     }
 
-    clear_lights :: (ref Self) {
+    clear_lights :: (&Self) {
         point_light_cache.clear()
         area_light_cache.clear()
     }
 
-    flush_lights :: (ref Self) {
+    flush_lights :: (&Self) {
         flush_point_lights()
         flush_area_lights()
     }
 
-    render_effect :: (ref Self, shader: &Shader) {
+    render_effect :: (&Self, shader: ^Shader) {
         flush_lights()
 
         tmp_target.get().bind()
@@ -563,7 +563,7 @@ impl Renderer {
         FrameBuffer.unbind()
     }
 
-    fill_quad :: (ref Self, pos: vec3, size: vec3,
+    fill_quad :: (&Self, pos: vec3, size: vec3,
                     angle: float = 0,
                     color: vec3 = vec3(1, 1, 1),
                     texture: Option[Rc[Texture]] = None,
@@ -575,14 +575,14 @@ impl Renderer {
 
         // calculate texture index
         tex_index : i32 = match texture {
-            Some($tex) -> match texture_map.get(int(&tex.get())) {
+            Some($tex) -> match texture_map.get(int(^tex.get())) {
                 Some($idx) -> idx
                 None -> {
                     if used_textures.get_length() >= max_texture_slots {
                         flush_quads()
                     }
                     idx := i32(used_textures.get_length())
-                    texture_map[int(&tex.get())] = idx
+                    texture_map[int(^tex.get())] = idx
                     used_textures.add(tex.clone())
                     idx
                 }
@@ -625,7 +625,7 @@ impl Renderer {
         ))
     }
 
-    draw_line :: (ref Self, pos0: vec3, pos1: vec3, color: vec3 = vec3(1, 1, 1), thickness: float = 0.0f) {
+    draw_line :: (&Self, pos0: vec3, pos1: vec3, color: vec3 = vec3(1, 1, 1), thickness: float = 0.0f) {
         if thickness == 0.0f {
             // 0 thickness means draw line 1 pixel wide
             if line_cache.get_length() + 2 >= line_cache_size {
@@ -676,7 +676,7 @@ impl Renderer {
         }
     }
 
-    draw_quad :: (ref Self, pos: vec3, size: vec3, angle: float = 0.0f, thickness: float = 0.0f, color: vec3 = vec3(1, 1, 1)) {
+    draw_quad :: (&Self, pos: vec3, size: vec3, angle: float = 0.0f, thickness: float = 0.0f, color: vec3 = vec3(1, 1, 1)) {
         offset_x, offset_y := {
             sa := sinf(angle)
             ca := cosf(angle)
@@ -689,13 +689,13 @@ impl Renderer {
         draw_line(pos - offset_x + offset_y, pos - offset_x - offset_y, color, thickness)
     }
 
-    draw_text :: (ref Self, pos: vec3, text: string, color: vec3 = vec3(1, 1, 1), size: float = 16) {
+    draw_text :: (&Self, pos: vec3, text: string, color: vec3 = vec3(1, 1, 1), size: float = 16) {
         pos : ImGui.ImVec2 = pos.into()
         font := ImGui.GetFont()
         ImGui.GetForegroundDrawList().AddText_2(font, size, pos, color.to_color32(), text)
     }
 
-    flush_quads :: (ref Self) {
+    flush_quads :: (&Self) {
         targets().color_map.get().bind()
         glViewport(0, 0, i32(viewport_size.x), i32(viewport_size.y))
 
@@ -721,13 +721,13 @@ impl Renderer {
         used_textures.clear()
 
         // set white tex as texture 0
-        texture_map[int(&white_tex.get())] = 0i32
+        texture_map[int(^white_tex.get())] = 0i32
         used_textures.add(white_tex.clone())
 
         quad_cache.clear()
     }
 
-    flush_lines :: (ref Self) {
+    flush_lines :: (&Self) {
         glViewport(0, 0, i32(viewport_size.x), i32(viewport_size.y))
 
         vb := line_va.vertex_buffers[0]
@@ -742,7 +742,7 @@ impl Renderer {
         line_cache.clear()
     }
 
-    flush :: (ref Self) {
+    flush :: (&Self) {
         flush_quads()
         flush_lines()
         flush_lights()

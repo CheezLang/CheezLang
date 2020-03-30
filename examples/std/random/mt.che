@@ -13,11 +13,11 @@ MTwister :: struct {
 }
 
 impl PseudoRandomGen for MTwister {
-    next_u32 :: (ref Self) -> u32 {
+    next_u32 :: (&Self) -> u32 {
         return self.next()
     }
 
-    next_double :: (ref Self) -> double {
+    next_double :: (&Self) -> double {
         r := double(self.next())
         m := double(u32.max)
         return r / m
@@ -42,7 +42,7 @@ impl MTwister {
         return @bin_and(x, 0x7FFFFFFF)
     }
 
-    unroll :: (ref Self, y: ref u32, i: ref u64, expr: u64) {
+    unroll :: (&Self, y: &u32, i: &u64, expr: u64) {
         y = @bin_or(m32(mt[int(i)]), l31(mt[int(i + 1)]))
         mt[int(i)] = @bin_xor(
             mt[int(expr)],
@@ -52,7 +52,7 @@ impl MTwister {
         i += 1
     }
 
-    generate_numbers :: (ref Self) {
+    generate_numbers :: (&Self) {
         i : u64 = 0
         y : u32 = 0
 
@@ -97,7 +97,7 @@ impl MTwister {
         index = 0
     }
 
-    next :: (ref Self) -> u32 {
+    next :: (&Self) -> u32 {
         if index >= STATE_VECTOR_LENGTH {
             generate_numbers()
             index = 0
@@ -107,14 +107,14 @@ impl MTwister {
         return mt_temp[int(index - 1)]
     }
 
-    next_uint :: (ref Self, min: u64 = 0, max: u64 = cast u64.max) -> u64 {
+    next_uint :: (&Self, min: u64 = 0, max: u64 = cast u64.max) -> u64 {
         a := u64(next())
         b := u64(next())
         rand := @bin_or(@bin_lsl(b, 32), a)
         return rand % (max - min) + min
     }
 
-    next_int :: (ref Self, min: int = 0, max: int = cast i64.max) -> int {
+    next_int :: (&Self, min: int = 0, max: int = cast i64.max) -> int {
         a := u64(next())
         b := u64(next())
         rand := @bin_and(@bin_or(@bin_lsl(b, 32), a), @bin_lsr(0xFFFFFFFF_FFFFFFFF, 1))

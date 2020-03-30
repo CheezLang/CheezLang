@@ -34,7 +34,7 @@ width  : int = 1600
 height : int = 960
 
 MyGame :: struct {
-    pge                 : &PixelGameEngine = null
+    pge                 : ^PixelGameEngine = null
 
     xc                  : double = 0.0
     yc                  : double = 3.0
@@ -52,7 +52,7 @@ MyGame :: struct {
     variables           : Variables
 
     // auto reload stuff
-    dir_change_thread   : &Thread = null
+    dir_change_thread   : ^Thread = null
     wait_handle         : HANDLE = null
     last_file_change    : double = -1
 }
@@ -62,7 +62,7 @@ map :: (x: double, a: double, b: double, c: double, d: double) -> double {
 }
 
 impl Game for MyGame {
-    on_create :: (ref Self, pge: &PixelGameEngine) -> bool {
+    on_create :: (&Self, pge: ^PixelGameEngine) -> bool {
         profile_function()
         self.pge = pge
 
@@ -86,7 +86,7 @@ impl Game for MyGame {
         return true
     }
 
-    dir_change_thread_func :: (ref Self) {
+    dir_change_thread_func :: (&Self) {
         while true {
             res := WaitForSingleObject(self.wait_handle, 1000)
             if res == 0 {
@@ -96,7 +96,7 @@ impl Game for MyGame {
         }
     }
 
-    on_destroy :: (ref Self) -> bool {
+    on_destroy :: (&Self) -> bool {
         profile_function()
         if dir_change_thread != null {
             dir_change_thread.terminate()
@@ -105,26 +105,26 @@ impl Game for MyGame {
         return true
     }
 
-    file_changed :: (ref Self) {
+    file_changed :: (&Self) {
         last_file_change = 0.1
     }
 
-    to_pixel :: (ref Self, wx: double, wy: double) -> (x: int, y: int) {
+    to_pixel :: (&Self, wx: double, wy: double) -> (x: int, y: int) {
         return (cast map(wx, xc - xr, xc + xr, 0, double(width)), cast map(wy, yc - yr, yc + yr, double(height), 0))
     }
 
-    to_world :: (ref Self, wx: int, wy: int) -> (x: double, y: double) {
+    to_world :: (&Self, wx: int, wy: int) -> (x: double, y: double) {
         return (map(double(wx), 0, double(width), xc - xr, xc + xr), map(double(wy), double(height), 0, yc - yr, yc + yr))
     }
 
-    draw_line :: (ref Self, x1: double, y1: double, x2: double, y2: double, col: Pixel) {
+    draw_line :: (&Self, x1: double, y1: double, x2: double, y2: double, col: Pixel) {
         px1, py1 := to_pixel(x1, y1)
         px2, py2 := to_pixel(x2, y2)
 
         pge.draw_line(px1, py1, px2, py2, col)
     }
 
-    load_function_from_file :: (ref Self) {
+    load_function_from_file :: (&Self) {
         profile_function()
         io.println("reloading...")
 
@@ -133,7 +133,7 @@ impl Game for MyGame {
         match load_file("../data/function.txt") {
             Ok($content) -> {
                 var_name_allocator.clear()
-                function = compile(content.slice(), &var_name_allocator)
+                function = compile(content.slice(), ^var_name_allocator)
             }
 
             Err($msg) -> {
@@ -141,7 +141,7 @@ impl Game for MyGame {
             }
         }
 
-        match ref function {
+        match &function {
             Some($f)    -> {
                 io.println("===================")
                 for f.slice() {
@@ -152,7 +152,7 @@ impl Game for MyGame {
         }
     }
 
-    on_update :: (ref Self, dt: float) -> bool {
+    on_update :: (&Self, dt: float) -> bool {
         profile_function()
 
         {
@@ -191,23 +191,23 @@ impl Game for MyGame {
         variables["mxw"] = Complex(mouse_pos_w.x)
         variables["myw"] = Complex(mouse_pos_w.y)
 
-        variables["t"] = <<&variables["t"] + Complex(dt)
+        variables["t"] = <<^variables["t"] + Complex(dt)
 
         draw_current_function()
 
         return true
     }
 
-    evaluate_function :: (ref Self, x: double) -> Option[Complex] {
+    evaluate_function :: (&Self, x: double) -> Option[Complex] {
         //return functions[func_index % functions.length](x)
         variables["x"] = Complex(x, 0.0)
-        return match ref function {
+        return match &function {
             Some($f)    -> evaluate(f.slice(), variables)
             None        -> None
         }
     }
 
-    draw_current_function :: (ref Self) {
+    draw_current_function :: (&Self) {
         profile_function()
         prev := Complex()
 
@@ -247,7 +247,7 @@ impl Game for MyGame {
         }
     }
 
-    draw_grid :: (ref Self) {
+    draw_grid :: (&Self) {
         profile_function()
         // grid
         {
@@ -312,7 +312,7 @@ impl Game for MyGame {
         }
     }
 
-    handle_input :: (ref Self, dt: double) {
+    handle_input :: (&Self, dt: double) {
         profile_function()
         scroll_speed := 0.001
 
@@ -378,7 +378,7 @@ Main :: () {
         var_name_allocator = ArenaAllocator.create(1024)
         variables = Variables.create(compare_strings)
     )
-    pge := PixelGameEngine.create(&myGame, width, height)
+    pge := PixelGameEngine.create(^myGame, width, height)
     if pge != null {
         pge.start()
     } else {

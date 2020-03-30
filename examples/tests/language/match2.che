@@ -107,8 +107,8 @@ print_enum :: (e: OptionInt) {
 }
 
 print_value :: (e: $T, $VT: type) {
-    ptr_raw := cast(&i8)&e
+    ptr_raw := cast(^i8)^e
     ptr_val_raw := util.pointer_add(ptr_raw, 8)
-    ptr_val := cast(&VT)ptr_val_raw
+    ptr_val := cast(^VT)ptr_val_raw
     io.println(<<ptr_val)
 }

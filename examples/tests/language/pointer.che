@@ -9,7 +9,7 @@
 
 C :: import std.c
 
-swap :: (pa: &int, pb: &int) {
+swap :: (pa: ^int, pb: ^int) {
     a := <<pa
     b := <<pb
     (<<pa, <<pb) = (b, a)
@@ -18,7 +18,7 @@ swap :: (pa: &int, pb: &int) {
 Main :: () {
     {
         a := 123
-        pa := &a
+        pa := ^a
 
         C.printf("%d`n", a)
         C.printf("%d`n", <<pa)
@@ -38,7 +38,7 @@ Main :: () {
         a := 5
         b := 9
         C.printf("%d, %d`n", a, b)
-        swap(&a, &b)
+        swap(^a, ^b)
         C.printf("%d, %d`n", a, b)
     }
 }

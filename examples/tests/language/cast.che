@@ -15,11 +15,11 @@ Main :: () {
     // uint <- uint
     test2(65)
 
-    // & <- int
+    // ^ <- int
     test3(123456)
 
-    // int <- &
-    test4(cast(&i32)456789)
+    // int <- ^
+    test4(cast(^i32)456789)
 
     // double <- double
     test5(0.5f, 3.7d)
@@ -45,12 +45,12 @@ test2 :: (a: u32) {
 }
 
 test3 :: (a: u64) {
-    b : &void = cast a
+    b : ^void = cast a
 
     C.printf("%llu, %u`n", a, b)
 }
 
-test4 :: (a: &i32) {
+test4 :: (a: ^i32) {
     b : u64 = cast a
 
     C.printf("%u, %u`n", a, b)

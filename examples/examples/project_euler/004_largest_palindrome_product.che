@@ -5,7 +5,7 @@
 io :: import std.io
 use import std.string
 
-is_palindrome :: (str: ref String) -> bool {
+is_palindrome :: (str: &String) -> bool {
     for 0..str.get_length()/2 {
         i1 := it
         i2 := str.get_length() - it - 1

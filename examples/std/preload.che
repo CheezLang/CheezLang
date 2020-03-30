@@ -62,7 +62,7 @@ try_with :: (code: Code, with: Code) #macro {
 
 // drop
 Drop :: trait {
-    drop :: (ref Self);
+    drop :: (&Self);
 }
 
 // drops a values
@@ -108,11 +108,11 @@ From :: trait(T: type) {
 }
 
 Into :: trait(T: type) {
-    into :: (ref Self) -> T;
+    into :: (&Self) -> T;
 }
 
 impl Into[()] for () {
-    into :: (ref Self) -> () {
+    into :: (&Self) -> () {
         return ()
     }
 }
@@ -123,26 +123,26 @@ impl From[()] for () {
     }
 }
 
-convert :: (T: type, c: ref $S) #macro {
+convert :: (T: type, c: &$S) #macro {
     if const T == S then c else c.into()
 }
 
 Clone :: trait {
-    clone :: (ref Self) -> Self;
+    clone :: (&Self) -> Self;
 }
 
 impl Clone for string {
-    clone :: (ref Self) -> Self {
+    clone :: (&Self) -> Self {
         return self
     }
 }
 
 Equatable :: trait(T: type) {
-    equal :: (ref Self, ref T) -> bool;
+    equal :: (&Self, &T) -> bool;
 }
 
 impl Equatable[int] for int {
-    equal :: (ref Self, other: ref int) -> bool {
+    equal :: (&Self, other: &int) -> bool {
         return self == other
     }
 }
@@ -154,7 +154,7 @@ impl Equatable[int] for int {
 // }
 
 // impl(F: type, T: type) Into[T] for F if T : From[F], #notyet {
-//     into :: (ref Self) -> T {
+//     into :: (&Self) -> T {
 //         return T.from(self)
 //     }
 // }
@@ -191,7 +191,7 @@ impl(T: type) Range[T] {
 }
 
 impl string {
-    get_index :: (Self, index: int) -> ref u8 #operator("[]") {
+    get_index :: (Self, index: int) -> &u8 #operator("[]") {
         return self.bytes[index]
     }
 
@@ -237,8 +237,8 @@ impl string {
 }
 
 impl(T: type) []T {
-    get_index :: (Self, index: int) -> ref T #operator("[]") {
-        return <<cast(&T) int(self.data) + index * @sizeof(T)
+    get_index :: (Self, index: int) -> &T #operator("[]") {
+        return <<cast(^T) int(self.data) + index * @sizeof(T)
     }
 
     get_range :: (Self, range: Range[int]) -> []T #operator("[]") {
@@ -283,39 +283,39 @@ impl(T: type) []T {
 }
 
 impl(T: type, Size: int) [Size]T {
-    get_index :: (ref Self, index: int) -> ref T #operator("[]") {
-        return <<cast(&T) int(self.data) + index * @sizeof(T)
+    get_index :: (&Self, index: int) -> &T #operator("[]") {
+        return <<cast(^T) int(self.data) + index * @sizeof(T)
     }
 
-    get_range :: (ref Self, range: Range[int]) -> []T #operator("[]") {
+    get_range :: (&Self, range: Range[int]) -> []T #operator("[]") {
         result : []T = self
         result.data = cast int(result.data) + range.start * @sizeof(T)
         result.length = range.end - range.start
         return result
     }
 
-    get_range_inclusive :: (ref Self, range: RangeInclusive[int]) -> []T #operator("[]") {
+    get_range_inclusive :: (&Self, range: RangeInclusive[int]) -> []T #operator("[]") {
         result : []T = self
         result.data = cast int(result.data) + range.start * @sizeof(T)
         result.length = range.end - range.start + 1
         return result
     }
 
-    get_range_to :: (ref Self, range: RangeTo[int]) -> []T #operator("[]") {
+    get_range_to :: (&Self, range: RangeTo[int]) -> []T #operator("[]") {
         @assert(range.end >= 0 and range.end <= self.length)
         result : []T = self
         result.length = range.end
         return result
     }
 
-    get_range_to_incl :: (ref Self, range: RangeToInclusive[int]) -> []T #operator("[]") {
+    get_range_to_incl :: (&Self, range: RangeToInclusive[int]) -> []T #operator("[]") {
         @assert(range.end >= 0 and range.end < self.length)
         result : []T = self
         result.length = range.end + 1
         return result
     }
 
-    get_range_from :: (ref Self, range: RangeFrom[int]) -> []T #operator("[]") {
+    get_range_from :: (&Self, range: RangeFrom[int]) -> []T #operator("[]") {
         @assert(range.start >= 0 and range.start <= self.length)
         result : []T = self
         result.data = cast int(result.data) + range.start * @sizeof(T)
@@ -323,7 +323,7 @@ impl(T: type, Size: int) [Size]T {
         return result
     }
 
-    get_range_full :: (ref Self, range: RangeFull) -> []T #operator("[]") {
+    get_range_full :: (&Self, range: RangeFull) -> []T #operator("[]") {
         return cast([]T) self
     }
 }
@@ -367,10 +367,10 @@ for_extension_slice :: (arr: []$T, code: Code, reverse: bool = false, by_ref: bo
     while it_index := 0, it_index < arr.length, it_index += 1 {
         if const reverse {
             it_index_rev := arr.length - it_index - 1
-            it := if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
+            it := if const by_ref then &arr[it_index_rev] else arr[it_index_rev]
             @insert(code, link=[it_index_rev], _break=break, _continue=continue)
         } else {
-            it := ref if const by_ref then ref arr[it_index] else arr[it_index]
+            it := &if const by_ref then &arr[it_index] else arr[it_index]
             @insert(code, _break=break, _continue=continue)
         }
     }
@@ -380,10 +380,10 @@ for_extension_array :: (arr: [$Size]$T, code: Code, reverse: bool = false, by_re
     while it_index := 0, it_index < arr.length, it_index += 1 {
         if const reverse {
             it_index_rev := arr.length - it_index - 1
-            it := if const by_ref then ref arr[it_index_rev] else arr[it_index_rev]
+            it := if const by_ref then &arr[it_index_rev] else arr[it_index_rev]
             @insert(code, link=[it_index_rev], _break=break, _continue=continue)
         } else {
-            it := if const by_ref then ref arr[it_index] else arr[it_index]
+            it := if const by_ref then &arr[it_index] else arr[it_index]
             @insert(code, _break=break, _continue=continue)
         }
     }
@@ -391,30 +391,30 @@ for_extension_array :: (arr: [$Size]$T, code: Code, reverse: bool = false, by_re
 
 // trait stuff
 __Trait :: struct {
-    value  : &void
-    vtable : &void
+    value  : ^void
+    vtable : ^void
 }
 
 Traits :: struct {
-    from_vtable_and_pointer :: ($T: type, vtable: &void, value: &void) -> &T {
+    from_vtable_and_pointer :: ($T: type, vtable: ^void, value: ^void) -> ^T {
         t := __Trait(value, vtable)
-        return <<cast(&&T)&t
+        return <<cast(^^T)^t
     }
 }
 __FatFunction :: struct {
-    func : &void
-    data : &void
+    func : ^void
+    data : ^void
 }
 
 FatFunctions :: struct {
 }
 impl FatFunctions {
-    from_pointers :: ($T: type, func: &void, data: &void) -> T {
+    from_pointers :: ($T: type, func: ^void, data: ^void) -> T {
         t := __FatFunction(func, data)
-        return <<cast(&T)&t
+        return <<cast(^T)^t
     }
-    destructure :: (func: $T, $FuncType: type = &void, $DataType: type = &void) -> (FuncType, DataType) {
-        fat := cast(&__FatFunction) &func
+    destructure :: (func: $T, $FuncType: type = ^void, $DataType: type = ^void) -> (FuncType, DataType) {
+        fat := cast(^__FatFunction) ^func
         return cast fat.func, cast fat.data
     }
 }
@@ -442,8 +442,8 @@ TypeInfoString :: struct TypeInfo {}
 TypeInfoAny :: struct TypeInfo {}
 
 TypeInfoFunction :: struct TypeInfo {
-    return_type : &TypeInfo
-    param_types : []&TypeInfo
+    return_type : ^TypeInfo
+    param_types : []^TypeInfo
 }
 
 TypeInfoTuple :: struct TypeInfo {
@@ -455,22 +455,22 @@ TypeInfoInt :: struct TypeInfo {
 }
 
 TypeInfoPointer :: struct TypeInfo {
-    target : &TypeInfo
+    target : ^TypeInfo
     is_fat : bool
 }
 
 TypeInfoReference :: struct TypeInfo {
-    target : &TypeInfo
+    target : ^TypeInfo
     is_fat : bool
 }
 
 TypeInfoSlice :: struct TypeInfo {
-    target : &TypeInfo
+    target : ^TypeInfo
 }
 
 TypeInfoArray :: struct TypeInfo {
     length  : int
-    target  : &TypeInfo
+    target  : ^TypeInfo
 }
 
 TypeInfoTrait :: struct TypeInfo {
@@ -489,7 +489,7 @@ TypeInfoStruct :: struct TypeInfo {
 TypeInfoEnum :: struct TypeInfo {
     name     : string
     members  : []TypeInfoEnumMember
-    tag_type : &TypeInfo
+    tag_type : ^TypeInfo
 }
 
 // 
@@ -503,39 +503,39 @@ TypeInfoStructMember :: struct #copy {
     index       : int
     offset      : int
     name        : string
-    typ         : &TypeInfo
-    value       : &any
-    initializer : fn(&void)
+    typ         : ^TypeInfo
+    value       : ^any
+    initializer : fn(^void)
     attributes  : []TypeInfoAttribute
 }
 
 TypeInfoTupleMember :: struct #copy {
     index       : int
     offset      : int
-    typ         : &TypeInfo
+    typ         : ^TypeInfo
 }
 
 TypeInfoEnumMember :: struct #copy {
     name       : string
-    typ        : &TypeInfo
+    typ        : ^TypeInfo
     tag        : int
     attributes : []TypeInfoAttribute
 }
 
 TypeInfoTraitImpl :: struct #copy {
-    trait_type : &TypeInfo
-    vtable     : &void
+    trait_type : ^TypeInfo
+    vtable     : ^void
 }
 
 TypeInfoAttribute :: struct #copy {
     name : string
-    args : []&any
+    args : []^any
 }
 
 // 
 
 impl TypeInfo {
-    get_trait_function :: (ref Self, $Trait: type, name: string, $F: type) -> F {
+    get_trait_function :: (&Self, $Trait: type, name: string, $F: type) -> F {
         return match self {
             TypeInfoStruct($s) -> s.get_trait_function(Trait, name, F)
 
@@ -548,7 +548,7 @@ impl TypeInfo {
 }
 
 impl TypeInfoStruct {
-    has_member :: (ref Self, name: string) -> bool {
+    has_member :: (&Self, name: string) -> bool {
         for(by_ref=true) members {
             if strings_equal(name, it.name) {
                 return true
@@ -557,73 +557,73 @@ impl TypeInfoStruct {
         return false
     }
 
-    get_member :: (ref Self, name: string) -> &TypeInfoStructMember {
+    get_member :: (&Self, name: string) -> ^TypeInfoStructMember {
         for(by_ref=true) members {
             if strings_equal(name, it.name) {
-                return &it
+                return ^it
             }
         }
         return null
     }
 
-    get_trait_impl :: (ref Self, $T: type) -> &TypeInfoTraitImpl {
+    get_trait_impl :: (&Self, $T: type) -> ^TypeInfoTraitImpl {
         ti := @type_info(T)
         for(by_ref=true) traits {
             if it.trait_type == ti {
-                return &it
+                return ^it
             }
         }
         return null
     }
 
-    get_trait_function :: (ref Self, $Trait : type, func_name: string, $F: type) -> F {
+    get_trait_function :: (&Self, $Trait : type, func_name: string, $F: type) -> F {
         ti_impl := self.get_trait_impl(Trait)
         if ti_impl == null {
             return null
         }
 
-        ti_trait := cast(&TypeInfoTrait) ti_impl.trait_type
+        ti_trait := cast(^TypeInfoTrait) ti_impl.trait_type
         vtable := ti_impl.vtable
         func_info := ti_trait.get_function(func_name)
         @assert(func_info != null)
-        function := cast(F) <<cast(&fn()) int(vtable) + func_info.offset
+        function := cast(F) <<cast(^fn()) int(vtable) + func_info.offset
         return function
     }
 }
 
 impl TypeInfoTraitImpl {
-    get_function :: (ref Self, func_name: string, $F: type) -> F {
-        ti_trait := cast(&TypeInfoTrait) self.trait_type
+    get_function :: (&Self, func_name: string, $F: type) -> F {
+        ti_trait := cast(^TypeInfoTrait) self.trait_type
         func_info := ti_trait.get_function(func_name)
         @assert(func_info != null)
-        function := cast(F) cast(&void) int(vtable) + func_info.offset
+        function := cast(F) cast(^void) int(vtable) + func_info.offset
         return function
     }
 }
 
 impl TypeInfoAttribute {
-    get_arg :: (ref Self, index: int, $T: type) -> T {
+    get_arg :: (&Self, index: int, $T: type) -> T {
         @assert(index >= 0 and index < self.args.length)
 
         arg := self.args[index]
         @assert(@type_info(T) == @type_info_of_any(arg))
 
-        return <<cast(&T) arg
+        return <<cast(^T) arg
     }
 }
 
 impl TypeInfoStructMember {
-    get_attribute :: (ref Self, name: string) -> &TypeInfoAttribute {
+    get_attribute :: (&Self, name: string) -> ^TypeInfoAttribute {
         for(by_ref=true) att : attributes {
             if strings_equal(att.name, name) {
-                return &att
+                return ^att
             }
         }
 
         return null
     }
 
-    has_attribute :: (ref Self, name: string) -> bool {
+    has_attribute :: (&Self, name: string) -> bool {
         for(by_ref=true) att : attributes {
             if strings_equal(att.name, name) {
                 return true
@@ -635,17 +635,17 @@ impl TypeInfoStructMember {
 }
 
 impl TypeInfoEnumMember {
-    get_attribute :: (ref Self, name: string) -> &TypeInfoAttribute {
+    get_attribute :: (&Self, name: string) -> ^TypeInfoAttribute {
         for(by_ref=true) att : attributes {
             if strings_equal(att.name, name) {
-                return &att
+                return ^att
             }
         }
 
         return null
     }
 
-    has_attribute :: (ref Self, name: string) -> bool {
+    has_attribute :: (&Self, name: string) -> bool {
         for(by_ref=true) att : attributes {
             if strings_equal(att.name, name) {
                 return true
@@ -657,10 +657,10 @@ impl TypeInfoEnumMember {
 }
 
 impl TypeInfoTrait {
-    get_function :: (ref Self, name: string) -> &TypeInfoTraitFunction {
+    get_function :: (&Self, name: string) -> ^TypeInfoTraitFunction {
         for(by_ref=true) functions {
             if strings_equal(name, it.name) {
-                return &it
+                return ^it
             }
         }
         return null

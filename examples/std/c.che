@@ -9,18 +9,18 @@ scanf     :: (format: c_string) -> i32 #varargs;
 sscanf    :: (str: c_string, format: c_string) -> i32 #varargs;
 gets      :: (string: c_string) -> c_string;
 getchar   :: () -> i32;
-strtol    :: (str: c_string, endptr: &&char8, base: i32) -> int;
-strtod    :: (str: c_string, endptr: &&char8) -> double;
+strtol    :: (str: c_string, endptr: ^^char8, base: i32) -> int;
+strtod    :: (str: c_string, endptr: ^^char8) -> double;
 rand      :: () -> i32;
 srand     :: (seed: u32);
-time      :: (timer: &void) -> u32;
-_fullpath :: (absPath: &char8, relPath: &char8, maxLength: int) -> &char8;
+time      :: (timer: ^void) -> u32;
+_fullpath :: (absPath: ^char8, relPath: ^char8, maxLength: int) -> ^char8;
 
 // memory
-alloca  :: (size: uint) -> &void;
-malloc  :: (size: uint) -> &void;
-realloc :: (mem: &void, size: uint) -> &void;
-free    :: (mem: &void);
+alloca  :: (size: uint) -> ^void;
+malloc  :: (size: uint) -> ^void;
+realloc :: (mem: ^void, size: uint) -> ^void;
+free    :: (mem: ^void);
 
-memcpy  :: (dest: &void, src: &void, size: uint);
-memset  :: (mem: &void, value: i32, num: uint) -> &void;
+memcpy  :: (dest: ^void, src: ^void, size: uint);
+memset  :: (mem: ^void, value: i32, num: uint) -> ^void;

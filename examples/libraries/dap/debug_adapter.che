@@ -25,20 +25,20 @@ CONTENT_LENGTH  :: "Content-Length: "
 #export_scope
 
 CommandHandler :: trait {
-    adapter : &DebugAdapter
+    adapter : ^DebugAdapter
 
-    initialize      :: (ref Self) -> Result[(), String];
-    launch          :: (ref Self, arguments: DapReqLaunch) -> Result[(), String];
-    pause           :: (ref Self) -> Result[(), String];
-    resume          :: (ref Self) -> Result[(), String];
-    next            :: (ref Self) -> Result[(), String];
-    step_in         :: (ref Self) -> Result[(), String];
-    step_out        :: (ref Self) -> Result[(), String];
-    threads         :: (ref Self) -> Result[Array[DapThread], String];
-    stacktrace      :: (ref Self) -> Result[Array[DapStackFrame], String];
-    set_breakpoints :: (ref Self, arguments: DapSetBreakpoints) -> Result[(), String];
-    scopes          :: (ref Self, arguments: DapReqScopes) -> Result[Array[DapScope], String];
-    variables       :: (ref Self, arguments: DapReqVariables) -> Result[Array[DapVariable], String];
+    initialize      :: (&Self) -> Result[(), String];
+    launch          :: (&Self, arguments: DapReqLaunch) -> Result[(), String];
+    pause           :: (&Self) -> Result[(), String];
+    resume          :: (&Self) -> Result[(), String];
+    next            :: (&Self) -> Result[(), String];
+    step_in         :: (&Self) -> Result[(), String];
+    step_out        :: (&Self) -> Result[(), String];
+    threads         :: (&Self) -> Result[Array[DapThread], String];
+    stacktrace      :: (&Self) -> Result[Array[DapStackFrame], String];
+    set_breakpoints :: (&Self, arguments: DapSetBreakpoints) -> Result[(), String];
+    scopes          :: (&Self, arguments: DapReqScopes) -> Result[Array[DapScope], String];
+    variables       :: (&Self, arguments: DapReqVariables) -> Result[Array[DapVariable], String];
 }
 
 DAEvent :: enum {
@@ -46,7 +46,7 @@ DAEvent :: enum {
 }
 
 DebugAdapter :: struct {
-    Func :: fn(ref CommandHandler, JsonValue) -> Result[JsonValue, String]
+    Func :: fn(&CommandHandler, JsonValue) -> Result[JsonValue, String]
 
     command_handler : Rc[CommandHandler]
     command_table   : Table[string, Func]
@@ -177,22 +177,22 @@ impl DebugAdapter {
             events              = RingQueue[DAEvent].new()
         ))
 
-        adapter.get().command_handler.get().adapter = &adapter.get()
+        adapter.get().command_handler.get().adapter = ^adapter.get()
         return adapter
     }
 
-    enqueue_event :: (ref Self, event: DAEvent) {
+    enqueue_event :: (&Self, event: DAEvent) {
         events.push(event)
     }
 
-    run :: (ref Self) {
+    run :: (&Self) {
         running = true
         command_loop()
         exit :: (i: i32);
         exit(0)
     }
 
-    handle_command :: (ref Self, handler: ref CommandHandler, command: String, arguments: JsonValue) -> Result[JsonValue, String] {
+    handle_command :: (&Self, handler: &CommandHandler, command: String, arguments: JsonValue) -> Result[JsonValue, String] {
         return match command_table.get(command.slice()) {
             Some($func) -> func(handler, arguments)
             None -> {
@@ -202,7 +202,7 @@ impl DebugAdapter {
         }
     }
 
-    command_loop :: (ref Self) {
+    command_loop :: (&Self) {
         while running {
             request_text := read_request_string()
             if request_text.get_length() == 0 then break
@@ -265,12 +265,12 @@ impl DebugAdapter {
         }
     }
 
-    read_request_string :: (ref Self) -> String {
-        read_char :: (c: &char) -> bool {
+    read_request_string :: (&Self) -> String {
+        read_char :: (c: ^char) -> bool {
             read := 0u32
 
             b := 0u8
-            ReadFile(__std_in_handle, &b, 1, &read, null)
+            ReadFile(__std_in_handle, ^b, 1, ^read, null)
             <<c = cast b
             return read > 0
         }
@@ -279,7 +279,7 @@ impl DebugAdapter {
 
         loop {
             c := char(0)
-            if !read_char(&c) {
+            if !read_char(^c) {
                 return String.empty()
             }
 
@@ -297,7 +297,7 @@ impl DebugAdapter {
 
             result := String.with_capacity(content_length + 1)
             read := 0u32
-            ReadFile(__std_in_handle, result.get_raw(), cast content_length, &read, null)
+            ReadFile(__std_in_handle, result.get_raw(), cast content_length, ^read, null)
             result.resize(content_length)
             return result
         }
@@ -305,11 +305,11 @@ impl DebugAdapter {
         @assert(false)
     }
 
-    send_message :: (ref Self, format: string, args: []&any = []) {
+    send_message :: (&Self, format: string, args: []^any = []) {
         io.formatln(format, args)
     }
     
-    emit_event :: (ref Self, name: string, body: JsonValue) {
+    emit_event :: (&Self, name: string, body: JsonValue) {
         response := Table[string, JsonValue].create(strings_equal)
         response["type"] = JsonValue.JsonString("event".to_owned())
         response["event"] = JsonValue.JsonString(name.to_owned())
@@ -324,24 +324,24 @@ impl DebugAdapter {
         send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
     }
 
-    emit_initialized_event :: (ref Self) {
+    emit_initialized_event :: (&Self) {
         body := Table[string, JsonValue].create(strings_equal)
         emit_event("initialized", JsonValue.JsonObject(body))
     }
 
-    emit_stop_event :: (ref Self, reason: string) {
+    emit_stop_event :: (&Self, reason: string) {
         body := Table[string, JsonValue].create(strings_equal)
         body["reason"] = JsonValue.JsonString(reason.to_owned())
         body["threadId"] = JsonValue.JsonNumber(0)
         emit_event("stopped", JsonValue.JsonObject(body))
     }
 
-    emit_terminated_event :: (ref Self) {
+    emit_terminated_event :: (&Self) {
         body := Table[string, JsonValue].create(strings_equal)
         emit_event("terminated", JsonValue.JsonObject(body))
     }
 
-    emit_output_event :: (ref Self, output: String, category: string = "console") {
+    emit_output_event :: (&Self, output: String, category: string = "console") {
         output += "`n"
         body := Table[string, JsonValue].create(strings_equal)
         body["output"] = JsonValue.JsonString(output)
@@ -357,8 +357,8 @@ DapReqLaunch :: struct {
 }
 
 impl Into[DapReqLaunch] for JsonValue {
-    into :: (json: ref Self) -> DapReqLaunch {
-        map := ref json.as_map()
+    into :: (json: &Self) -> DapReqLaunch {
+        map := &json.as_map()
         return DapReqLaunch(
             program = match map.get("program") {
                 Some($prog) -> prog.to_string()
@@ -377,7 +377,7 @@ DapBreakpoint :: struct {
 }
 
 impl Into[DapBreakpoint] for JsonValue {
-    into :: (json: ref Self) -> DapBreakpoint {
+    into :: (json: &Self) -> DapBreakpoint {
         return match json {
             .JsonObject($map) -> DapBreakpoint(cast(int) map.at("line").to_number())
             _ -> DapBreakpoint(-1)
@@ -391,7 +391,7 @@ DapSource :: struct {
 }
 
 impl Into[JsonValue] for DapSource {
-    into :: (ref Self) -> JsonValue {
+    into :: (&Self) -> JsonValue {
         json := Table[string, JsonValue].create(strings_equal)
         json["name"] = JsonValue.JsonString(self.name.clone())
         json["path"] = JsonValue.JsonString(self.path.clone())
@@ -400,8 +400,8 @@ impl Into[JsonValue] for DapSource {
 }
 
 impl Into[DapSource] for JsonValue {
-    into :: (ref Self) -> DapSource {
-        map := ref self.as_map()
+    into :: (&Self) -> DapSource {
+        map := &self.as_map()
         name := map.at("name").to_string()
         path := map.at("path").to_string()
         return DapSource(name, path)
@@ -414,8 +414,8 @@ DapSetBreakpoints :: struct {
 }
 
 impl Into[DapSetBreakpoints] for JsonValue {
-    into :: (ref Self) -> DapSetBreakpoints {
-        map := ref self.as_map()
+    into :: (&Self) -> DapSetBreakpoints {
+        map := &self.as_map()
         breakpoints : Array[DapBreakpoint] = match map.get("breakpoints") {
             Some($arr) -> arr.as_array().into()
             None -> Array[DapBreakpoint].create()
@@ -440,7 +440,7 @@ DapStackFrame :: struct {
 }
 
 impl Into[JsonValue] for DapStackFrame {
-    into :: (ref Self) -> JsonValue {
+    into :: (&Self) -> JsonValue {
         json := Table[string, JsonValue].create(strings_equal)
         json["id"] = JsonValue.JsonNumber(cast(double) self.id)
         json["name"] = JsonValue.JsonString(self.name.clone())
@@ -456,8 +456,8 @@ DapReqVariables :: struct {
 }
 
 impl Into[DapReqVariables] for JsonValue {
-    into :: (ref Self) -> DapReqVariables {
-        map := ref self.as_map()
+    into :: (&Self) -> DapReqVariables {
+        map := &self.as_map()
         variablesReference := map.at("variablesReference").to_number()
         return DapReqVariables(cast(int) variablesReference)
     }
@@ -468,8 +468,8 @@ DapReqScopes :: struct {
 }
 
 impl Into[DapReqScopes] for JsonValue {
-    into :: (ref Self) -> DapReqScopes {
-        map := ref self.as_map()
+    into :: (&Self) -> DapReqScopes {
+        map := &self.as_map()
         frameId := map.at("frameId").to_number()
         return DapReqScopes(cast(int) frameId)
     }
@@ -482,7 +482,7 @@ DapScope :: struct {
 }
 
 impl Into[JsonValue] for DapScope {
-    into :: (ref Self) -> JsonValue {
+    into :: (&Self) -> JsonValue {
         json := Table[string, JsonValue].create(strings_equal)
         json["name"] = JsonValue.JsonString(self.name.clone())
         json["presentationHint"] = JsonValue.JsonString(self.presentation_hint.clone())
@@ -498,7 +498,7 @@ DapVariable :: struct {
 }
 
 impl Into[JsonValue] for DapVariable {
-    into :: (ref Self) -> JsonValue {
+    into :: (&Self) -> JsonValue {
         json := Table[string, JsonValue].create(strings_equal)
         json["name"] = JsonValue.JsonString(self.name.clone())
         json["value"] = JsonValue.JsonString(self.value.clone())

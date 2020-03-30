@@ -10,14 +10,14 @@ CONSOLE_LOGGER : ConsoleLogger = ConsoleLogger()
 
 #export_scope
 
-g_logger : &Logger = &CONSOLE_LOGGER
+g_logger : ^Logger = ^CONSOLE_LOGGER
 
 Logger :: trait {
-    log :: (ref Self, format: string, args: []&any = [], prefix: string = "");
+    log :: (&Self, format: string, args: []^any = [], prefix: string = "");
 }
 
 impl Logger {
-    set_global_logger :: (logger: &Logger) {
+    set_global_logger :: (logger: ^Logger) {
         g_logger = logger
     }
 }
@@ -25,7 +25,7 @@ impl Logger {
 ConsoleLogger :: struct {}
 
 impl Logger for ConsoleLogger {
-    log :: (ref Self, format: string, args: []&any = [], prefix: string = "") {
+    log :: (&Self, format: string, args: []^any = [], prefix: string = "") {
         msg := fmt.format(format, args)
         io.formatln("[{}] {}", [prefix, msg])
     }
@@ -46,19 +46,19 @@ impl FileLogger {
         return logger.change_type(Logger)
     }
 
-    clear :: (ref Self) {
+    clear :: (&Self) {
         mutex.lock()
         fs.write_file(log_file.slice(), "")
         mutex.release()
     }
 
-    log_error :: (ref Self, format: string, args: []&any = []) {
+    log_error :: (&Self, format: string, args: []^any = []) {
         self.log(format, args, "[ERROR]")
     }
 }
 
 impl Logger for FileLogger {
-    log :: (ref Self, format: string, args: []&any = [], prefix: string = "") {
+    log :: (&Self, format: string, args: []^any = [], prefix: string = "") {
         msg := fmt.format(format, args)
         str := fmt.format("[{}] {} {}`n", [Thread.current().id, prefix, msg])
         

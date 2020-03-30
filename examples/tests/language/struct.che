@@ -25,7 +25,7 @@ impl Test {
         b = y
     }
 
-    set_ref :: (ref Self, x: int, y: double) {
+    set_ref:: (&Self, x: int, y: double) {
         a = x
         b = y
     }

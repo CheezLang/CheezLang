@@ -24,7 +24,7 @@ BufferElement :: struct #copy {
 }
 
 impl BufferElement {
-    get_component_count :: (ref Self) -> i32 {
+    get_component_count :: (&Self) -> i32 {
         return match typ {
             ShaderDataType.Float  -> 1
             ShaderDataType.Float2 -> 2
@@ -42,7 +42,7 @@ impl BufferElement {
         }
     }
 
-    get_size :: (ref Self) -> i32 {
+    get_size :: (&Self) -> i32 {
         return match typ {
             ShaderDataType.Float  -> 4
             ShaderDataType.Float2 -> 4 * 2
@@ -97,9 +97,9 @@ VertexBuffer :: struct {
 }
 
 impl VertexBuffer {
-    create :: (vertices: []f32) -> &VertexBuffer {
+    create :: (vertices: []f32) -> ^VertexBuffer {
         vbo : u32 = 0
-        GL(glGenBuffers(1, &vbo))
+        GL(glGenBuffers(1, ^vbo))
         GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
         GL(glBufferData(GL_ARRAY_BUFFER, @sizeof(f32) * vertices.length, vertices.data, GL_STATIC_DRAW))
         GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
@@ -109,9 +109,9 @@ impl VertexBuffer {
         return buff
     }
 
-    dynamic :: (size_in_bytes: int) -> &VertexBuffer {
+    dynamic :: (size_in_bytes: int) -> ^VertexBuffer {
         vbo : u32 = 0
-        GL(glGenBuffers(1, &vbo))
+        GL(glGenBuffers(1, ^vbo))
         GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
         GL(glBufferData(GL_ARRAY_BUFFER, cast size_in_bytes, null, GL_DYNAMIC_DRAW))
         GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
@@ -121,24 +121,24 @@ impl VertexBuffer {
         return buff
     }
 
-    sub_data :: (ref Self, offset: int, bytes: int, data: &void) {
+    sub_data :: (&Self, offset: int, bytes: int, data: ^void) {
         GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
         GL(glBufferSubData(GL_ARRAY_BUFFER, cast offset, cast bytes, data))
         GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
     }
 
-    bind :: (ref Self) {
+    bind :: (&Self) {
         GL(glBindBuffer(GL_ARRAY_BUFFER, vbo))
     }
 
-    unbind :: (ref Self) {
+    unbind :: (&Self) {
         GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
     }
 }
 
 impl Drop for VertexBuffer {
-    drop :: (ref Self) {
-        glDeleteBuffers(1, &vbo)
+    drop :: (&Self) {
+        glDeleteBuffers(1, ^vbo)
     }
 }
 
@@ -148,9 +148,9 @@ IndexBuffer :: struct {
 }
 
 impl IndexBuffer {
-    create :: (indices: []u32) -> &IndexBuffer {
+    create :: (indices: []u32) -> ^IndexBuffer {
         vbo : u32 = 0
-        glGenBuffers(1, &vbo)
+        glGenBuffers(1, ^vbo)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, @sizeof(u32) * indices.length, indices.data, GL_STATIC_DRAW)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
@@ -160,18 +160,18 @@ impl IndexBuffer {
         return buff
     }
 
-    bind :: (ref Self) {
+    bind :: (&Self) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo)
     }
 
-    unbind :: (ref Self) {
+    unbind :: (&Self) {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
     }
 }
 
 impl Drop for IndexBuffer {
-    drop :: (ref Self) {
-        glDeleteBuffers(1, &vbo)
+    drop :: (&Self) {
+        glDeleteBuffers(1, ^vbo)
     }
 }
 
@@ -179,36 +179,36 @@ impl Drop for IndexBuffer {
 
 VertexArray :: struct {
     vao                       : u32
-    index_buffer              : &IndexBuffer = null
-    vertex_buffers            := Array[&VertexBuffer].create()
+    index_buffer              : ^IndexBuffer = null
+    vertex_buffers            := Array[^VertexBuffer].create()
     vertex_attrib_array_index : u32 = 0
 }
 
 impl VertexArray {
-    new :: () -> &VertexArray {
+    new :: () -> ^VertexArray {
         vao : u32 = 0
-        glGenVertexArrays(1, &vao)
+        glGenVertexArrays(1, ^vao)
 
         buff := mem.alloc(VertexArray)
         <<buff = VertexArray(vao)
         return buff
     }
 
-    bind :: (ref Self) {
+    bind :: (&Self) {
         glBindVertexArray(vao)
     }
 
-    unbind :: (ref Self) {
+    unbind :: (&Self) {
         glBindVertexArray(0)
     }
 
-    set_index_buffer :: (ref Self, ib: &IndexBuffer) {
+    set_index_buffer :: (&Self, ib: ^IndexBuffer) {
         glBindVertexArray(vao)
         ib.bind()
         index_buffer = ib
     }
 
-    add_vertex_buffer :: (ref Self, vb: &VertexBuffer) {
+    add_vertex_buffer :: (&Self, vb: ^VertexBuffer) {
         glBindVertexArray(vao)
         vb.bind()
 
@@ -220,7 +220,7 @@ impl VertexArray {
                 GL_FLOAT
                 if element.normalized then GL_TRUE else GL_FALSE
                 vb.layout.stride
-                cast(&void) element.offset)
+                cast(^void) element.offset)
 
             vertex_attrib_array_index += 1
         }
@@ -230,8 +230,8 @@ impl VertexArray {
 }
 
 impl Drop for VertexArray {
-    drop :: (ref Self) {
-        glDeleteVertexArrays(1, &vao)
+    drop :: (&Self) {
+        glDeleteVertexArrays(1, ^vao)
     }
 }
 
@@ -262,10 +262,10 @@ impl Texture {
         height   : i32 = 0
         channels : i32 = 0
         stbi_set_flip_vertically_on_load(1)
-        data : &stbi_uc = null
+        data : ^stbi_uc = null
         {
             str := String.from_string(path)
-            data = stbi_load(str.as_cstring(), &width, &height, &channels, 0)
+            data = stbi_load(str.as_cstring(), ^width, ^height, ^channels, 0)
         }
 
         if data == null {
@@ -277,7 +277,7 @@ impl Texture {
         internal_format, data_format, format := channels_to_formats(if channels == 3 then .RGB else .RGBA, format)
 
         id : u32 = 0
-        GL(glGenTextures(1, &id))
+        GL(glGenTextures(1, ^id))
         GL(glBindTexture(GL_TEXTURE_2D, id))
 
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
@@ -293,7 +293,7 @@ impl Texture {
         internal_format, data_format, format := channels_to_formats(channels, format)
 
         id : u32 = 0
-        GL(glGenTextures(1, &id))
+        GL(glGenTextures(1, ^id))
         GL(glBindTexture(GL_TEXTURE_2D, id))
 
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
@@ -309,7 +309,7 @@ impl Texture {
         internal_format, data_format, format := channels_to_formats(channels, format)
 
         id : u32 = 0
-        GL(glGenTextures(1, &id))
+        GL(glGenTextures(1, ^id))
         GL(glBindTexture(GL_TEXTURE_2D, id))
 
         GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR))
@@ -338,15 +338,15 @@ impl Texture {
         }
     }
 
-    bind :: (ref Self, slot: int) {
+    bind :: (&Self, slot: int) {
         GL(glActiveTexture(cast GL_TEXTURE0 + slot))
         GL(glBindTexture(GL_TEXTURE_2D, id))
     }
 }
 
 impl Drop for Texture {
-    drop :: (ref Self) {
-        glDeleteTextures(1, &id)
+    drop :: (&Self) {
+        glDeleteTextures(1, ^id)
     }
 }
 
@@ -361,14 +361,14 @@ impl FrameBuffer {
     new :: (width: int, height: int, unclamped_color: bool = false) -> Result[Rc[FrameBuffer], ()] {
         // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
         frame_buffer := 0u32
-        GL(glGenFramebuffers(1, &frame_buffer))
+        GL(glGenFramebuffers(1, ^frame_buffer))
         GL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer))
 
         render_texture := Texture.empty(width, height, .RGB, if unclamped_color then .F32 else .U8)
         
         // The depth buffer
         depth_texture := 0u32
-        GL(glGenRenderbuffers(1, &depth_texture))
+        GL(glGenRenderbuffers(1, ^depth_texture))
         GL(glBindRenderbuffer(GL_RENDERBUFFER, depth_texture))
         GL(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, i32(width), i32(height)))
         GL(glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_texture))
@@ -397,7 +397,7 @@ impl FrameBuffer {
         )))
     }
 
-    bind :: (ref Self) {
+    bind :: (&Self) {
         GL(glBindFramebuffer(GL_FRAMEBUFFER, id))
         glViewport(0, 0, i32(size.x), i32(size.y))
     }
@@ -406,11 +406,11 @@ impl FrameBuffer {
         GL(glBindFramebuffer(GL_FRAMEBUFFER, 0))
     }
 
-    bind_read :: (ref Self) {
+    bind_read :: (&Self) {
         GL(glBindFramebuffer(GL_READ_FRAMEBUFFER, id))
     }
 
-    bind_write :: (ref Self) {
+    bind_write :: (&Self) {
         GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, id))
     }
 
@@ -422,7 +422,7 @@ impl FrameBuffer {
         GL(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0))
     }
 
-    copy_to :: (ref Self, target: ref FrameBuffer, bit: enum #flags { Color, Depth, Stencil } = .Color) {
+    copy_to :: (&Self, target: &FrameBuffer, bit: enum #flags { Color, Depth, Stencil } = .Color) {
         mask := match bit {
             .Color      -> GL_COLOR_BUFFER_BIT
             .Depth      -> GL_DEPTH_BUFFER_BIT

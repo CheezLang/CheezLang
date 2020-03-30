@@ -14,11 +14,11 @@ Map :: struct(K: type, V: type) {
     max_load  : double
     _count    : uint
     entries   : []Entry[K, V]
-    allocator : &Allocator
+    allocator : ^Allocator
 }
 
 impl(K: type, V: type) Drop for Map[K, V] {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         if entries.data != null {
             for(by_ref=true) e, _ : entries {
                 if e.filled then Memory.drop(e.value <- None)
@@ -29,7 +29,7 @@ impl(K: type, V: type) Drop for Map[K, V] {
 }
 
 impl(K: type, V: type) Map[K, V] {
-    new :: (allocator: &Allocator = &DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
+    new :: (allocator: ^Allocator = ^DEFAULT_STD_HEAP_ALLOCATOR) -> Self {
         if const !@type_has_trait(K, Equatable[K]) {
             @static_assert(false, "Key of map must implment Equatable")
         }
@@ -41,7 +41,7 @@ impl(K: type, V: type) Map[K, V] {
         )
     }
 
-    clear :: (ref Self) {
+    clear :: (&Self) {
         for(by_ref=true) entry : entries {
             entry.filled = false
             entry.is_tombstone = false
@@ -51,35 +51,35 @@ impl(K: type, V: type) Map[K, V] {
         _count = 0
     }
 
-    empty :: (ref Self) -> bool {
+    empty :: (&Self) -> bool {
         return _count == 0
     }
 
-    count :: (ref Self) -> int {
+    count :: (&Self) -> int {
         return cast _count
     }
 
-    get_entries :: (ref Self) -> []Entry[K, V] {
+    get_entries :: (&Self) -> []Entry[K, V] {
         return entries
     }
 
-    contains :: (ref Self, key: $K2) -> bool {
+    contains :: (&Self, key: $K2) -> bool {
         if _count == 0 or entries.data == null { return false }
         entry := find_entry(entries, key)
         if !entry.filled { return false }
         return true
     }
 
-    find_entry :: (ref Self, the_entries: []Entry[K, V], key: ref $K2) -> &Entry[K, V] {
+    find_entry :: (&Self, the_entries: []Entry[K, V], key: &$K2) -> ^Entry[K, V] {
         if const !@type_has_trait(K, Equatable[K2]) {
             @static_assert(false, "Key of map must implment Equatable[" + @typename(K2) + "]")
         }
 
         index := key.hash() % cast(uint) the_entries.length
-        tombstone : &Entry[K, V] = null
+        tombstone : ^Entry[K, V] = null
 
         while true {
-            entry := &the_entries[int(index)]
+            entry := ^the_entries[int(index)]
 
             if !entry.filled {
                 if !entry.is_tombstone {
@@ -104,7 +104,7 @@ impl(K: type, V: type) Map[K, V] {
         return null
     }
 
-    set :: (ref Self, key: $K2, value: V) -> bool #operator("set[]") {
+    set :: (&Self, key: $K2, value: V) -> bool #operator("set[]") {
         if entries.data == null {
             adjust_capacity(13)
         }
@@ -126,7 +126,7 @@ impl(K: type, V: type) Map[K, V] {
         return is_new_key
     }
 
-    get :: (ref Self, key: $K2) -> Option[ref V] {
+    get :: (&Self, key: $K2) -> Option[&V] {
         if entries.data == null {
             return None
         }
@@ -136,13 +136,13 @@ impl(K: type, V: type) Map[K, V] {
             return None
         }
 
-        return match ref entry.value {
+        return match &entry.value {
             Some($val)  -> Some(val)
             None        -> None
         }
     }
 
-    get_or_insert :: (ref Self, key: $K2, value: fn() -> V) -> ref V {
+    get_or_insert :: (&Self, key: $K2, value: fn() -> V) -> &V {
         if entries.data == null {
             adjust_capacity(13)
         }
@@ -156,25 +156,25 @@ impl(K: type, V: type) Map[K, V] {
             _count += 1
         }
 
-        return match ref entry.value {
+        return match &entry.value {
             Some($val)  -> val
             None        -> @assert(false)
         }
     }
 
-    get_unchecked :: (ref Self, key: $K2) -> ref V #operator("[]") {
+    get_unchecked :: (&Self, key: $K2) -> &V #operator("[]") {
         entry := find_entry(entries, key)
         @assert(entry.filled)
         return entry.value.Some
     }
 
-    at :: (ref Self, key: $K2) -> ref V {
+    at :: (&Self, key: $K2) -> &V {
         entry := find_entry(entries, key)
         @assert(entry.filled)
         return entry.value.Some
     }
 
-    delete :: (ref Self, key: $K2) -> bool {
+    delete :: (&Self, key: $K2) -> bool {
         if _count == 0 or entries.data == null { return false }
 
         entry := find_entry(entries, key)
@@ -190,7 +190,7 @@ impl(K: type, V: type) Map[K, V] {
         return true
     }
 
-    adjust_capacity :: (ref Self, cap: uint) {
+    adjust_capacity :: (&Self, cap: uint) {
         entries_new := alloc_n(Entry[K, V], cap, allocator)
 
         for i : 0..entries_new.length {
@@ -202,7 +202,7 @@ impl(K: type, V: type) Map[K, V] {
         if entries.data != null {
             _count = 0
             for i : 0..entries.length {
-                entry := &entries[i]
+                entry := ^entries[i]
                 if entry.filled {
                     dest := find_entry(entries_new, entry.key.Some)
                     dest.key = entry.key <- None
@@ -218,27 +218,27 @@ impl(K: type, V: type) Map[K, V] {
         entries = entries_new
     }
 
-    iterator :: (ref Self) -> TableIterator[K, V] {
+    iterator :: (&Self) -> TableIterator[K, V] {
         return TableIterator[K, V](self, 0)
     }
 }
 
 impl(K: type, V: type) Clone for Map[K, V] if K : Clone, V : Clone {
-    clone :: (ref Self) -> Self {
+    clone :: (&Self) -> Self {
         result := Map[K, V].new()
         result.adjust_capacity(cast self.entries.length)
-        for kv : <<&self {
+        for kv : <<^self {
             result.set(kv.name.clone(), kv.value.clone())
         }
         return result
     }
 }
 
-for_extension_table :: (r: ref Map[$K, $V], code: Code) #for {
+for_extension_table :: (r: &Map[$K, $V], code: Code) #for {
     it_index := 0
     for(by_ref=true) e, _ : r.get_entries() {
         if !e.filled then continue
-        it : (name: ref K, value: ref V) = ref e.key.Some, ref e.value.Some
+        it : (name: &K, value: &V) = &e.key.Some, &e.value.Some
         @insert(code, _break=@link(break), _continue=@link(continue))
         it_index += 1
     }
@@ -246,15 +246,15 @@ for_extension_table :: (r: ref Map[$K, $V], code: Code) #for {
 
 // iterator
 TableIterator :: struct(K: type, V: type) {
-    table: ref Map[K, V]
+    table: &Map[K, V]
     index: int
 }
 
 impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
-    next :: (ref Self) -> Option[(K, V)] {
+    next :: (&Self) -> Option[(K, V)] {
         entries := table.get_entries()
         while index < entries.length {
-            e := ref entries[index]
+            e := &entries[index]
             index += 1
 
             if e.filled {
@@ -265,8 +265,8 @@ impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
         return None
     }
 
-    dispose :: (ref Self) {
-        free(&self)
+    dispose :: (&Self) {
+        free(^self)
     }
 }
 

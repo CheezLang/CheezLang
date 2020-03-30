@@ -9,15 +9,15 @@ RcData :: struct {
 }
 
 Rc :: struct(T: type) {
-    data        : &RcData
-    value       : &T
-    drop_impl   : fn(&T)
+    data        : ^RcData
+    value       : ^T
+    drop_impl   : fn(^T)
     owns_memory : bool
 }
 
 Ref :: struct(T: type) {
-    data        : &RcData
-    value       : &T
+    data        : ^RcData
+    value       : ^T
     owns_memory : bool
 }
 
@@ -26,14 +26,14 @@ impl(T: type) Rc[T] {
         return Rc[T](null, null, null, false)
     }
 
-    from_pointer :: (ptr: &$K, owned: bool) -> Rc[T] {
+    from_pointer :: (ptr: ^$K, owned: bool) -> Rc[T] {
         data := mem.alloc(RcData)
         <<data = RcData(1, 1)
 
-        // drop :: (ptr: &K) {
+        // drop :: (ptr: ^K) {
         //     Memory.drop(<<ptr)
         // }
-        drop_impl : fn(&T) = cast if const @type_has_trait(K, Drop) then ptr.drop else null
+        drop_impl : fn(^T) = cast if const @type_has_trait(K, Drop) then ptr.drop else null
         return Rc[T](data, cast ptr, drop_impl, owned)
     }
 
@@ -43,34 +43,34 @@ impl(T: type) Rc[T] {
         ptr     := mem.alloc(K)
         <<ptr   = value
 
-        drop :: (ptr: &K) {
+        drop :: (ptr: ^K) {
             Memory.drop(<<ptr)
         }
-        drop_impl : fn(&T) = cast if const @type_has_trait(K, Drop) then drop else null
+        drop_impl : fn(^T) = cast if const @type_has_trait(K, Drop) then drop else null
         return Rc[T](data, cast ptr, drop_impl, true)
     }
 
-    borrow :: (ref Self) -> Ref[T] {
+    borrow :: (&Self) -> Ref[T] {
         data.internal_count += 1
         return Ref[T](data, value, owns_memory)
     }
 
-    count :: (ref Self) -> int {
+    count :: (&Self) -> int {
         @assert(data != null)
         return data.count
     }
 
-    is_null :: (ref Self) -> bool {
+    is_null :: (&Self) -> bool {
         return value == null
     }
 
-    try_get :: (ref Self) -> Option[ref T] {
+    try_get :: (&Self) -> Option[&T] {
         return if value == null
             then None
             else Some(<<value)
     }
 
-    get :: (ref Self) -> ref T {
+    get :: (&Self) -> &T {
         @assert(value != null)
         return <<value
     }
@@ -91,7 +91,7 @@ impl(T: type) Rc[T] {
 }
 
 impl(T: type) Clone for Rc[T] {
-    clone :: (ref Self) -> Self {
+    clone :: (&Self) -> Self {
         data.count += 1
         data.internal_count += 1
         return Self(data, value, drop_impl, owns_memory)
@@ -103,22 +103,22 @@ impl(T: type) Ref[T] {
         return Ref[T](null, null, false)
     }
 
-    count :: (ref Self) -> int {
+    count :: (&Self) -> int {
         @assert(data != null)
         return data.count
     }
 
-    is_null :: (ref Self) -> bool {
+    is_null :: (&Self) -> bool {
         return value == null
     }
 
-    try_get :: (ref Self) -> Option[ref T] {
+    try_get :: (&Self) -> Option[&T] {
         return if value == null
             then None
             else Some(<<value)
     }
 
-    get :: (ref Self) -> ref T {
+    get :: (&Self) -> &T {
         @assert(value != null)
         return <<value
     }
@@ -139,14 +139,14 @@ impl(T: type) Ref[T] {
 }
 
 impl(T: type) Clone for Ref[T] {
-    clone :: (ref Self) -> Self {
+    clone :: (&Self) -> Self {
         data.internal_count += 1
         return Self(data, value, owns_memory)
     }
 }
 
 impl(T: type) Drop for Rc[T] {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         if data == null {
             return
         }
@@ -164,7 +164,7 @@ impl(T: type) Drop for Rc[T] {
 }
 
 impl(T: type) Drop for Ref[T] {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         if data == null {
             return
         }

@@ -5,7 +5,7 @@
 #export_scope
 
 
-GLADloadproc :: fn(&char8) -> &void
+GLADloadproc :: fn(^char8) -> ^void
 GLenum :: u32
 GLboolean :: u8
 GLbitfield :: u32
@@ -22,8 +22,8 @@ GLfloat :: i32
 GLclampf :: i32
 GLdouble :: f64
 GLclampd :: f64
-GLeglClientBufferEXT :: &void
-GLeglImageOES :: &void
+GLeglClientBufferEXT :: ^void
+GLeglImageOES :: ^void
 GLchar :: char8
 GLcharARB :: char8
 GLhandleARB :: u32
@@ -38,11 +38,11 @@ GLint64 :: i32
 GLint64EXT :: i32
 GLuint64 :: i32
 GLuint64EXT :: i32
-GLsync :: &__GLsync
-GLDEBUGPROC :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, &GLchar, &void) -> void
-GLDEBUGPROCARB :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, &GLchar, &void) -> void
-GLDEBUGPROCKHR :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, &GLchar, &void) -> void
-GLDEBUGPROCAMD :: fn(GLuint, GLenum, GLenum, GLsizei, &GLchar, &void) -> void
+GLsync :: ^__GLsync
+GLDEBUGPROC :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, ^GLchar, ^void) -> void
+GLDEBUGPROCARB :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, ^GLchar, ^void) -> void
+GLDEBUGPROCKHR :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, ^GLchar, ^void) -> void
+GLDEBUGPROCAMD :: fn(GLuint, GLenum, GLenum, GLsizei, ^GLchar, ^void) -> void
 GLhalfNV :: u16
 GLvdpauSurfaceNV :: GLintptr
 GLVULKANPROCNV :: fn() -> void
@@ -54,11 +54,11 @@ PFNGLPOINTSIZEPROC :: fn(GLfloat) -> void
 PFNGLPOLYGONMODEPROC :: fn(GLenum, GLenum) -> void
 PFNGLSCISSORPROC :: fn(GLint, GLint, GLsizei, GLsizei) -> void
 PFNGLTEXPARAMETERFPROC :: fn(GLenum, GLenum, GLfloat) -> void
-PFNGLTEXPARAMETERFVPROC :: fn(GLenum, GLenum, &GLfloat) -> void
+PFNGLTEXPARAMETERFVPROC :: fn(GLenum, GLenum, ^GLfloat) -> void
 PFNGLTEXPARAMETERIPROC :: fn(GLenum, GLenum, GLint) -> void
-PFNGLTEXPARAMETERIVPROC :: fn(GLenum, GLenum, &GLint) -> void
-PFNGLTEXIMAGE1DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLint, GLenum, GLenum, &void) -> void
-PFNGLTEXIMAGE2DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, &void) -> void
+PFNGLTEXPARAMETERIVPROC :: fn(GLenum, GLenum, ^GLint) -> void
+PFNGLTEXIMAGE1DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLint, GLenum, GLenum, ^void) -> void
+PFNGLTEXIMAGE2DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, ^void) -> void
 PFNGLDRAWBUFFERPROC :: fn(GLenum) -> void
 PFNGLCLEARPROC :: fn(GLbitfield) -> void
 PFNGLCLEARCOLORPROC :: fn(GLfloat, GLfloat, GLfloat, GLfloat) -> void
@@ -79,82 +79,82 @@ PFNGLDEPTHFUNCPROC :: fn(GLenum) -> void
 PFNGLPIXELSTOREFPROC :: fn(GLenum, GLfloat) -> void
 PFNGLPIXELSTOREIPROC :: fn(GLenum, GLint) -> void
 PFNGLREADBUFFERPROC :: fn(GLenum) -> void
-PFNGLREADPIXELSPROC :: fn(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, &void) -> void
-PFNGLGETBOOLEANVPROC :: fn(GLenum, &GLboolean) -> void
-PFNGLGETDOUBLEVPROC :: fn(GLenum, &GLdouble) -> void
+PFNGLREADPIXELSPROC :: fn(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, ^void) -> void
+PFNGLGETBOOLEANVPROC :: fn(GLenum, ^GLboolean) -> void
+PFNGLGETDOUBLEVPROC :: fn(GLenum, ^GLdouble) -> void
 PFNGLGETERRORPROC :: fn() -> GLenum
-PFNGLGETFLOATVPROC :: fn(GLenum, &GLfloat) -> void
-PFNGLGETINTEGERVPROC :: fn(GLenum, &GLint) -> void
-PFNGLGETSTRINGPROC :: fn(GLenum) -> &GLubyte
-PFNGLGETTEXIMAGEPROC :: fn(GLenum, GLint, GLenum, GLenum, &void) -> void
-PFNGLGETTEXPARAMETERFVPROC :: fn(GLenum, GLenum, &GLfloat) -> void
-PFNGLGETTEXPARAMETERIVPROC :: fn(GLenum, GLenum, &GLint) -> void
-PFNGLGETTEXLEVELPARAMETERFVPROC :: fn(GLenum, GLint, GLenum, &GLfloat) -> void
-PFNGLGETTEXLEVELPARAMETERIVPROC :: fn(GLenum, GLint, GLenum, &GLint) -> void
+PFNGLGETFLOATVPROC :: fn(GLenum, ^GLfloat) -> void
+PFNGLGETINTEGERVPROC :: fn(GLenum, ^GLint) -> void
+PFNGLGETSTRINGPROC :: fn(GLenum) -> ^GLubyte
+PFNGLGETTEXIMAGEPROC :: fn(GLenum, GLint, GLenum, GLenum, ^void) -> void
+PFNGLGETTEXPARAMETERFVPROC :: fn(GLenum, GLenum, ^GLfloat) -> void
+PFNGLGETTEXPARAMETERIVPROC :: fn(GLenum, GLenum, ^GLint) -> void
+PFNGLGETTEXLEVELPARAMETERFVPROC :: fn(GLenum, GLint, GLenum, ^GLfloat) -> void
+PFNGLGETTEXLEVELPARAMETERIVPROC :: fn(GLenum, GLint, GLenum, ^GLint) -> void
 PFNGLISENABLEDPROC :: fn(GLenum) -> GLboolean
 PFNGLDEPTHRANGEPROC :: fn(GLdouble, GLdouble) -> void
 PFNGLVIEWPORTPROC :: fn(GLint, GLint, GLsizei, GLsizei) -> void
 PFNGLDRAWARRAYSPROC :: fn(GLenum, GLint, GLsizei) -> void
-PFNGLDRAWELEMENTSPROC :: fn(GLenum, GLsizei, GLenum, &void) -> void
+PFNGLDRAWELEMENTSPROC :: fn(GLenum, GLsizei, GLenum, ^void) -> void
 PFNGLPOLYGONOFFSETPROC :: fn(GLfloat, GLfloat) -> void
 PFNGLCOPYTEXIMAGE1DPROC :: fn(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLint) -> void
 PFNGLCOPYTEXIMAGE2DPROC :: fn(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint) -> void
 PFNGLCOPYTEXSUBIMAGE1DPROC :: fn(GLenum, GLint, GLint, GLint, GLint, GLsizei) -> void
 PFNGLCOPYTEXSUBIMAGE2DPROC :: fn(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei) -> void
-PFNGLTEXSUBIMAGE1DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, &void) -> void
-PFNGLTEXSUBIMAGE2DPROC :: fn(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, &void) -> void
+PFNGLTEXSUBIMAGE1DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLenum, GLenum, ^void) -> void
+PFNGLTEXSUBIMAGE2DPROC :: fn(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, ^void) -> void
 PFNGLBINDTEXTUREPROC :: fn(GLenum, GLuint) -> void
-PFNGLDELETETEXTURESPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLGENTEXTURESPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLDELETETEXTURESPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLGENTEXTURESPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLISTEXTUREPROC :: fn(GLuint) -> GLboolean
-PFNGLDRAWRANGEELEMENTSPROC :: fn(GLenum, GLuint, GLuint, GLsizei, GLenum, &void) -> void
-PFNGLTEXIMAGE3DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, &void) -> void
-PFNGLTEXSUBIMAGE3DPROC :: fn(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, &void) -> void
+PFNGLDRAWRANGEELEMENTSPROC :: fn(GLenum, GLuint, GLuint, GLsizei, GLenum, ^void) -> void
+PFNGLTEXIMAGE3DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, ^void) -> void
+PFNGLTEXSUBIMAGE3DPROC :: fn(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, ^void) -> void
 PFNGLCOPYTEXSUBIMAGE3DPROC :: fn(GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei) -> void
 PFNGLACTIVETEXTUREPROC :: fn(GLenum) -> void
 PFNGLSAMPLECOVERAGEPROC :: fn(GLfloat, GLboolean) -> void
-PFNGLCOMPRESSEDTEXIMAGE3DPROC :: fn(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, &void) -> void
-PFNGLCOMPRESSEDTEXIMAGE2DPROC :: fn(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, &void) -> void
-PFNGLCOMPRESSEDTEXIMAGE1DPROC :: fn(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, &void) -> void
-PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC :: fn(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, &void) -> void
-PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC :: fn(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, &void) -> void
-PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLenum, GLsizei, &void) -> void
-PFNGLGETCOMPRESSEDTEXIMAGEPROC :: fn(GLenum, GLint, &void) -> void
+PFNGLCOMPRESSEDTEXIMAGE3DPROC :: fn(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, ^void) -> void
+PFNGLCOMPRESSEDTEXIMAGE2DPROC :: fn(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, ^void) -> void
+PFNGLCOMPRESSEDTEXIMAGE1DPROC :: fn(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, ^void) -> void
+PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC :: fn(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, ^void) -> void
+PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC :: fn(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, ^void) -> void
+PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC :: fn(GLenum, GLint, GLint, GLsizei, GLenum, GLsizei, ^void) -> void
+PFNGLGETCOMPRESSEDTEXIMAGEPROC :: fn(GLenum, GLint, ^void) -> void
 PFNGLBLENDFUNCSEPARATEPROC :: fn(GLenum, GLenum, GLenum, GLenum) -> void
-PFNGLMULTIDRAWARRAYSPROC :: fn(GLenum, &GLint, &GLsizei, GLsizei) -> void
-PFNGLMULTIDRAWELEMENTSPROC :: fn(GLenum, &GLsizei, GLenum, &&void, GLsizei) -> void
+PFNGLMULTIDRAWARRAYSPROC :: fn(GLenum, ^GLint, ^GLsizei, GLsizei) -> void
+PFNGLMULTIDRAWELEMENTSPROC :: fn(GLenum, ^GLsizei, GLenum, ^^void, GLsizei) -> void
 PFNGLPOINTPARAMETERFPROC :: fn(GLenum, GLfloat) -> void
-PFNGLPOINTPARAMETERFVPROC :: fn(GLenum, &GLfloat) -> void
+PFNGLPOINTPARAMETERFVPROC :: fn(GLenum, ^GLfloat) -> void
 PFNGLPOINTPARAMETERIPROC :: fn(GLenum, GLint) -> void
-PFNGLPOINTPARAMETERIVPROC :: fn(GLenum, &GLint) -> void
+PFNGLPOINTPARAMETERIVPROC :: fn(GLenum, ^GLint) -> void
 PFNGLBLENDCOLORPROC :: fn(GLfloat, GLfloat, GLfloat, GLfloat) -> void
 PFNGLBLENDEQUATIONPROC :: fn(GLenum) -> void
-PFNGLGENQUERIESPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLDELETEQUERIESPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLGENQUERIESPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLDELETEQUERIESPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLISQUERYPROC :: fn(GLuint) -> GLboolean
 PFNGLBEGINQUERYPROC :: fn(GLenum, GLuint) -> void
 PFNGLENDQUERYPROC :: fn(GLenum) -> void
-PFNGLGETQUERYIVPROC :: fn(GLenum, GLenum, &GLint) -> void
-PFNGLGETQUERYOBJECTIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETQUERYOBJECTUIVPROC :: fn(GLuint, GLenum, &GLuint) -> void
+PFNGLGETQUERYIVPROC :: fn(GLenum, GLenum, ^GLint) -> void
+PFNGLGETQUERYOBJECTIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETQUERYOBJECTUIVPROC :: fn(GLuint, GLenum, ^GLuint) -> void
 PFNGLBINDBUFFERPROC :: fn(GLenum, GLuint) -> void
-PFNGLDELETEBUFFERSPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLGENBUFFERSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLDELETEBUFFERSPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLGENBUFFERSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLISBUFFERPROC :: fn(GLuint) -> GLboolean
-PFNGLBUFFERDATAPROC :: fn(GLenum, GLsizeiptr, &void, GLenum) -> void
-PFNGLBUFFERSUBDATAPROC :: fn(GLenum, GLintptr, GLsizeiptr, &void) -> void
-PFNGLGETBUFFERSUBDATAPROC :: fn(GLenum, GLintptr, GLsizeiptr, &void) -> void
-PFNGLMAPBUFFERPROC :: fn(GLenum, GLenum) -> &void
+PFNGLBUFFERDATAPROC :: fn(GLenum, GLsizeiptr, ^void, GLenum) -> void
+PFNGLBUFFERSUBDATAPROC :: fn(GLenum, GLintptr, GLsizeiptr, ^void) -> void
+PFNGLGETBUFFERSUBDATAPROC :: fn(GLenum, GLintptr, GLsizeiptr, ^void) -> void
+PFNGLMAPBUFFERPROC :: fn(GLenum, GLenum) -> ^void
 PFNGLUNMAPBUFFERPROC :: fn(GLenum) -> GLboolean
-PFNGLGETBUFFERPARAMETERIVPROC :: fn(GLenum, GLenum, &GLint) -> void
-PFNGLGETBUFFERPOINTERVPROC :: fn(GLenum, GLenum, &&void) -> void
+PFNGLGETBUFFERPARAMETERIVPROC :: fn(GLenum, GLenum, ^GLint) -> void
+PFNGLGETBUFFERPOINTERVPROC :: fn(GLenum, GLenum, ^^void) -> void
 PFNGLBLENDEQUATIONSEPARATEPROC :: fn(GLenum, GLenum) -> void
-PFNGLDRAWBUFFERSPROC :: fn(GLsizei, &GLenum) -> void
+PFNGLDRAWBUFFERSPROC :: fn(GLsizei, ^GLenum) -> void
 PFNGLSTENCILOPSEPARATEPROC :: fn(GLenum, GLenum, GLenum, GLenum) -> void
 PFNGLSTENCILFUNCSEPARATEPROC :: fn(GLenum, GLenum, GLint, GLuint) -> void
 PFNGLSTENCILMASKSEPARATEPROC :: fn(GLenum, GLuint) -> void
 PFNGLATTACHSHADERPROC :: fn(GLuint, GLuint) -> void
-PFNGLBINDATTRIBLOCATIONPROC :: fn(GLuint, GLuint, &GLchar) -> void
+PFNGLBINDATTRIBLOCATIONPROC :: fn(GLuint, GLuint, ^GLchar) -> void
 PFNGLCOMPILESHADERPROC :: fn(GLuint) -> void
 PFNGLCREATEPROGRAMPROC :: fn() -> GLuint
 PFNGLCREATESHADERPROC :: fn(GLenum) -> GLuint
@@ -163,26 +163,26 @@ PFNGLDELETESHADERPROC :: fn(GLuint) -> void
 PFNGLDETACHSHADERPROC :: fn(GLuint, GLuint) -> void
 PFNGLDISABLEVERTEXATTRIBARRAYPROC :: fn(GLuint) -> void
 PFNGLENABLEVERTEXATTRIBARRAYPROC :: fn(GLuint) -> void
-PFNGLGETACTIVEATTRIBPROC :: fn(GLuint, GLuint, GLsizei, &GLsizei, &GLint, &GLenum, &GLchar) -> void
-PFNGLGETACTIVEUNIFORMPROC :: fn(GLuint, GLuint, GLsizei, &GLsizei, &GLint, &GLenum, &GLchar) -> void
-PFNGLGETATTACHEDSHADERSPROC :: fn(GLuint, GLsizei, &GLsizei, &GLuint) -> void
-PFNGLGETATTRIBLOCATIONPROC :: fn(GLuint, &GLchar) -> GLint
-PFNGLGETPROGRAMIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETPROGRAMINFOLOGPROC :: fn(GLuint, GLsizei, &GLsizei, &GLchar) -> void
-PFNGLGETSHADERIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETSHADERINFOLOGPROC :: fn(GLuint, GLsizei, &GLsizei, &GLchar) -> void
-PFNGLGETSHADERSOURCEPROC :: fn(GLuint, GLsizei, &GLsizei, &GLchar) -> void
-PFNGLGETUNIFORMLOCATIONPROC :: fn(GLuint, &GLchar) -> GLint
-PFNGLGETUNIFORMFVPROC :: fn(GLuint, GLint, &GLfloat) -> void
-PFNGLGETUNIFORMIVPROC :: fn(GLuint, GLint, &GLint) -> void
-PFNGLGETVERTEXATTRIBDVPROC :: fn(GLuint, GLenum, &GLdouble) -> void
-PFNGLGETVERTEXATTRIBFVPROC :: fn(GLuint, GLenum, &GLfloat) -> void
-PFNGLGETVERTEXATTRIBIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETVERTEXATTRIBPOINTERVPROC :: fn(GLuint, GLenum, &&void) -> void
+PFNGLGETACTIVEATTRIBPROC :: fn(GLuint, GLuint, GLsizei, ^GLsizei, ^GLint, ^GLenum, ^GLchar) -> void
+PFNGLGETACTIVEUNIFORMPROC :: fn(GLuint, GLuint, GLsizei, ^GLsizei, ^GLint, ^GLenum, ^GLchar) -> void
+PFNGLGETATTACHEDSHADERSPROC :: fn(GLuint, GLsizei, ^GLsizei, ^GLuint) -> void
+PFNGLGETATTRIBLOCATIONPROC :: fn(GLuint, ^GLchar) -> GLint
+PFNGLGETPROGRAMIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETPROGRAMINFOLOGPROC :: fn(GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
+PFNGLGETSHADERIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETSHADERINFOLOGPROC :: fn(GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
+PFNGLGETSHADERSOURCEPROC :: fn(GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
+PFNGLGETUNIFORMLOCATIONPROC :: fn(GLuint, ^GLchar) -> GLint
+PFNGLGETUNIFORMFVPROC :: fn(GLuint, GLint, ^GLfloat) -> void
+PFNGLGETUNIFORMIVPROC :: fn(GLuint, GLint, ^GLint) -> void
+PFNGLGETVERTEXATTRIBDVPROC :: fn(GLuint, GLenum, ^GLdouble) -> void
+PFNGLGETVERTEXATTRIBFVPROC :: fn(GLuint, GLenum, ^GLfloat) -> void
+PFNGLGETVERTEXATTRIBIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETVERTEXATTRIBPOINTERVPROC :: fn(GLuint, GLenum, ^^void) -> void
 PFNGLISPROGRAMPROC :: fn(GLuint) -> GLboolean
 PFNGLISSHADERPROC :: fn(GLuint) -> GLboolean
 PFNGLLINKPROGRAMPROC :: fn(GLuint) -> void
-PFNGLSHADERSOURCEPROC :: fn(GLuint, GLsizei, &&GLchar, &GLint) -> void
+PFNGLSHADERSOURCEPROC :: fn(GLuint, GLsizei, ^^GLchar, ^GLint) -> void
 PFNGLUSEPROGRAMPROC :: fn(GLuint) -> void
 PFNGLUNIFORM1FPROC :: fn(GLint, GLfloat) -> void
 PFNGLUNIFORM2FPROC :: fn(GLint, GLfloat, GLfloat) -> void
@@ -192,64 +192,64 @@ PFNGLUNIFORM1IPROC :: fn(GLint, GLint) -> void
 PFNGLUNIFORM2IPROC :: fn(GLint, GLint, GLint) -> void
 PFNGLUNIFORM3IPROC :: fn(GLint, GLint, GLint, GLint) -> void
 PFNGLUNIFORM4IPROC :: fn(GLint, GLint, GLint, GLint, GLint) -> void
-PFNGLUNIFORM1FVPROC :: fn(GLint, GLsizei, &GLfloat) -> void
-PFNGLUNIFORM2FVPROC :: fn(GLint, GLsizei, &GLfloat) -> void
-PFNGLUNIFORM3FVPROC :: fn(GLint, GLsizei, &GLfloat) -> void
-PFNGLUNIFORM4FVPROC :: fn(GLint, GLsizei, &GLfloat) -> void
-PFNGLUNIFORM1IVPROC :: fn(GLint, GLsizei, &GLint) -> void
-PFNGLUNIFORM2IVPROC :: fn(GLint, GLsizei, &GLint) -> void
-PFNGLUNIFORM3IVPROC :: fn(GLint, GLsizei, &GLint) -> void
-PFNGLUNIFORM4IVPROC :: fn(GLint, GLsizei, &GLint) -> void
-PFNGLUNIFORMMATRIX2FVPROC :: fn(GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLUNIFORMMATRIX3FVPROC :: fn(GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLUNIFORMMATRIX4FVPROC :: fn(GLint, GLsizei, GLboolean, &GLfloat) -> void
+PFNGLUNIFORM1FVPROC :: fn(GLint, GLsizei, ^GLfloat) -> void
+PFNGLUNIFORM2FVPROC :: fn(GLint, GLsizei, ^GLfloat) -> void
+PFNGLUNIFORM3FVPROC :: fn(GLint, GLsizei, ^GLfloat) -> void
+PFNGLUNIFORM4FVPROC :: fn(GLint, GLsizei, ^GLfloat) -> void
+PFNGLUNIFORM1IVPROC :: fn(GLint, GLsizei, ^GLint) -> void
+PFNGLUNIFORM2IVPROC :: fn(GLint, GLsizei, ^GLint) -> void
+PFNGLUNIFORM3IVPROC :: fn(GLint, GLsizei, ^GLint) -> void
+PFNGLUNIFORM4IVPROC :: fn(GLint, GLsizei, ^GLint) -> void
+PFNGLUNIFORMMATRIX2FVPROC :: fn(GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLUNIFORMMATRIX3FVPROC :: fn(GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLUNIFORMMATRIX4FVPROC :: fn(GLint, GLsizei, GLboolean, ^GLfloat) -> void
 PFNGLVALIDATEPROGRAMPROC :: fn(GLuint) -> void
 PFNGLVERTEXATTRIB1DPROC :: fn(GLuint, GLdouble) -> void
-PFNGLVERTEXATTRIB1DVPROC :: fn(GLuint, &GLdouble) -> void
+PFNGLVERTEXATTRIB1DVPROC :: fn(GLuint, ^GLdouble) -> void
 PFNGLVERTEXATTRIB1FPROC :: fn(GLuint, GLfloat) -> void
-PFNGLVERTEXATTRIB1FVPROC :: fn(GLuint, &GLfloat) -> void
+PFNGLVERTEXATTRIB1FVPROC :: fn(GLuint, ^GLfloat) -> void
 PFNGLVERTEXATTRIB1SPROC :: fn(GLuint, GLshort) -> void
-PFNGLVERTEXATTRIB1SVPROC :: fn(GLuint, &GLshort) -> void
+PFNGLVERTEXATTRIB1SVPROC :: fn(GLuint, ^GLshort) -> void
 PFNGLVERTEXATTRIB2DPROC :: fn(GLuint, GLdouble, GLdouble) -> void
-PFNGLVERTEXATTRIB2DVPROC :: fn(GLuint, &GLdouble) -> void
+PFNGLVERTEXATTRIB2DVPROC :: fn(GLuint, ^GLdouble) -> void
 PFNGLVERTEXATTRIB2FPROC :: fn(GLuint, GLfloat, GLfloat) -> void
-PFNGLVERTEXATTRIB2FVPROC :: fn(GLuint, &GLfloat) -> void
+PFNGLVERTEXATTRIB2FVPROC :: fn(GLuint, ^GLfloat) -> void
 PFNGLVERTEXATTRIB2SPROC :: fn(GLuint, GLshort, GLshort) -> void
-PFNGLVERTEXATTRIB2SVPROC :: fn(GLuint, &GLshort) -> void
+PFNGLVERTEXATTRIB2SVPROC :: fn(GLuint, ^GLshort) -> void
 PFNGLVERTEXATTRIB3DPROC :: fn(GLuint, GLdouble, GLdouble, GLdouble) -> void
-PFNGLVERTEXATTRIB3DVPROC :: fn(GLuint, &GLdouble) -> void
+PFNGLVERTEXATTRIB3DVPROC :: fn(GLuint, ^GLdouble) -> void
 PFNGLVERTEXATTRIB3FPROC :: fn(GLuint, GLfloat, GLfloat, GLfloat) -> void
-PFNGLVERTEXATTRIB3FVPROC :: fn(GLuint, &GLfloat) -> void
+PFNGLVERTEXATTRIB3FVPROC :: fn(GLuint, ^GLfloat) -> void
 PFNGLVERTEXATTRIB3SPROC :: fn(GLuint, GLshort, GLshort, GLshort) -> void
-PFNGLVERTEXATTRIB3SVPROC :: fn(GLuint, &GLshort) -> void
-PFNGLVERTEXATTRIB4NBVPROC :: fn(GLuint, &GLbyte) -> void
-PFNGLVERTEXATTRIB4NIVPROC :: fn(GLuint, &GLint) -> void
-PFNGLVERTEXATTRIB4NSVPROC :: fn(GLuint, &GLshort) -> void
+PFNGLVERTEXATTRIB3SVPROC :: fn(GLuint, ^GLshort) -> void
+PFNGLVERTEXATTRIB4NBVPROC :: fn(GLuint, ^GLbyte) -> void
+PFNGLVERTEXATTRIB4NIVPROC :: fn(GLuint, ^GLint) -> void
+PFNGLVERTEXATTRIB4NSVPROC :: fn(GLuint, ^GLshort) -> void
 PFNGLVERTEXATTRIB4NUBPROC :: fn(GLuint, GLubyte, GLubyte, GLubyte, GLubyte) -> void
-PFNGLVERTEXATTRIB4NUBVPROC :: fn(GLuint, &GLubyte) -> void
-PFNGLVERTEXATTRIB4NUIVPROC :: fn(GLuint, &GLuint) -> void
-PFNGLVERTEXATTRIB4NUSVPROC :: fn(GLuint, &GLushort) -> void
-PFNGLVERTEXATTRIB4BVPROC :: fn(GLuint, &GLbyte) -> void
+PFNGLVERTEXATTRIB4NUBVPROC :: fn(GLuint, ^GLubyte) -> void
+PFNGLVERTEXATTRIB4NUIVPROC :: fn(GLuint, ^GLuint) -> void
+PFNGLVERTEXATTRIB4NUSVPROC :: fn(GLuint, ^GLushort) -> void
+PFNGLVERTEXATTRIB4BVPROC :: fn(GLuint, ^GLbyte) -> void
 PFNGLVERTEXATTRIB4DPROC :: fn(GLuint, GLdouble, GLdouble, GLdouble, GLdouble) -> void
-PFNGLVERTEXATTRIB4DVPROC :: fn(GLuint, &GLdouble) -> void
+PFNGLVERTEXATTRIB4DVPROC :: fn(GLuint, ^GLdouble) -> void
 PFNGLVERTEXATTRIB4FPROC :: fn(GLuint, GLfloat, GLfloat, GLfloat, GLfloat) -> void
-PFNGLVERTEXATTRIB4FVPROC :: fn(GLuint, &GLfloat) -> void
-PFNGLVERTEXATTRIB4IVPROC :: fn(GLuint, &GLint) -> void
+PFNGLVERTEXATTRIB4FVPROC :: fn(GLuint, ^GLfloat) -> void
+PFNGLVERTEXATTRIB4IVPROC :: fn(GLuint, ^GLint) -> void
 PFNGLVERTEXATTRIB4SPROC :: fn(GLuint, GLshort, GLshort, GLshort, GLshort) -> void
-PFNGLVERTEXATTRIB4SVPROC :: fn(GLuint, &GLshort) -> void
-PFNGLVERTEXATTRIB4UBVPROC :: fn(GLuint, &GLubyte) -> void
-PFNGLVERTEXATTRIB4UIVPROC :: fn(GLuint, &GLuint) -> void
-PFNGLVERTEXATTRIB4USVPROC :: fn(GLuint, &GLushort) -> void
-PFNGLVERTEXATTRIBPOINTERPROC :: fn(GLuint, GLint, GLenum, GLboolean, GLsizei, &void) -> void
-PFNGLUNIFORMMATRIX2X3FVPROC :: fn(GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLUNIFORMMATRIX3X2FVPROC :: fn(GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLUNIFORMMATRIX2X4FVPROC :: fn(GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLUNIFORMMATRIX4X2FVPROC :: fn(GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLUNIFORMMATRIX3X4FVPROC :: fn(GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLUNIFORMMATRIX4X3FVPROC :: fn(GLint, GLsizei, GLboolean, &GLfloat) -> void
+PFNGLVERTEXATTRIB4SVPROC :: fn(GLuint, ^GLshort) -> void
+PFNGLVERTEXATTRIB4UBVPROC :: fn(GLuint, ^GLubyte) -> void
+PFNGLVERTEXATTRIB4UIVPROC :: fn(GLuint, ^GLuint) -> void
+PFNGLVERTEXATTRIB4USVPROC :: fn(GLuint, ^GLushort) -> void
+PFNGLVERTEXATTRIBPOINTERPROC :: fn(GLuint, GLint, GLenum, GLboolean, GLsizei, ^void) -> void
+PFNGLUNIFORMMATRIX2X3FVPROC :: fn(GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLUNIFORMMATRIX3X2FVPROC :: fn(GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLUNIFORMMATRIX2X4FVPROC :: fn(GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLUNIFORMMATRIX4X2FVPROC :: fn(GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLUNIFORMMATRIX3X4FVPROC :: fn(GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLUNIFORMMATRIX4X3FVPROC :: fn(GLint, GLsizei, GLboolean, ^GLfloat) -> void
 PFNGLCOLORMASKIPROC :: fn(GLuint, GLboolean, GLboolean, GLboolean, GLboolean) -> void
-PFNGLGETBOOLEANI_VPROC :: fn(GLenum, GLuint, &GLboolean) -> void
-PFNGLGETINTEGERI_VPROC :: fn(GLenum, GLuint, &GLint) -> void
+PFNGLGETBOOLEANI_VPROC :: fn(GLenum, GLuint, ^GLboolean) -> void
+PFNGLGETINTEGERI_VPROC :: fn(GLenum, GLuint, ^GLint) -> void
 PFNGLENABLEIPROC :: fn(GLenum, GLuint) -> void
 PFNGLDISABLEIPROC :: fn(GLenum, GLuint) -> void
 PFNGLISENABLEDIPROC :: fn(GLenum, GLuint) -> GLboolean
@@ -257,14 +257,14 @@ PFNGLBEGINTRANSFORMFEEDBACKPROC :: fn(GLenum) -> void
 PFNGLENDTRANSFORMFEEDBACKPROC :: fn() -> void
 PFNGLBINDBUFFERRANGEPROC :: fn(GLenum, GLuint, GLuint, GLintptr, GLsizeiptr) -> void
 PFNGLBINDBUFFERBASEPROC :: fn(GLenum, GLuint, GLuint) -> void
-PFNGLTRANSFORMFEEDBACKVARYINGSPROC :: fn(GLuint, GLsizei, &&GLchar, GLenum) -> void
-PFNGLGETTRANSFORMFEEDBACKVARYINGPROC :: fn(GLuint, GLuint, GLsizei, &GLsizei, &GLsizei, &GLenum, &GLchar) -> void
+PFNGLTRANSFORMFEEDBACKVARYINGSPROC :: fn(GLuint, GLsizei, ^^GLchar, GLenum) -> void
+PFNGLGETTRANSFORMFEEDBACKVARYINGPROC :: fn(GLuint, GLuint, GLsizei, ^GLsizei, ^GLsizei, ^GLenum, ^GLchar) -> void
 PFNGLCLAMPCOLORPROC :: fn(GLenum, GLenum) -> void
 PFNGLBEGINCONDITIONALRENDERPROC :: fn(GLuint, GLenum) -> void
 PFNGLENDCONDITIONALRENDERPROC :: fn() -> void
-PFNGLVERTEXATTRIBIPOINTERPROC :: fn(GLuint, GLint, GLenum, GLsizei, &void) -> void
-PFNGLGETVERTEXATTRIBIIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETVERTEXATTRIBIUIVPROC :: fn(GLuint, GLenum, &GLuint) -> void
+PFNGLVERTEXATTRIBIPOINTERPROC :: fn(GLuint, GLint, GLenum, GLsizei, ^void) -> void
+PFNGLGETVERTEXATTRIBIIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETVERTEXATTRIBIUIVPROC :: fn(GLuint, GLenum, ^GLuint) -> void
 PFNGLVERTEXATTRIBI1IPROC :: fn(GLuint, GLint) -> void
 PFNGLVERTEXATTRIBI2IPROC :: fn(GLuint, GLint, GLint) -> void
 PFNGLVERTEXATTRIBI3IPROC :: fn(GLuint, GLint, GLint, GLint) -> void
@@ -273,191 +273,191 @@ PFNGLVERTEXATTRIBI1UIPROC :: fn(GLuint, GLuint) -> void
 PFNGLVERTEXATTRIBI2UIPROC :: fn(GLuint, GLuint, GLuint) -> void
 PFNGLVERTEXATTRIBI3UIPROC :: fn(GLuint, GLuint, GLuint, GLuint) -> void
 PFNGLVERTEXATTRIBI4UIPROC :: fn(GLuint, GLuint, GLuint, GLuint, GLuint) -> void
-PFNGLVERTEXATTRIBI1IVPROC :: fn(GLuint, &GLint) -> void
-PFNGLVERTEXATTRIBI2IVPROC :: fn(GLuint, &GLint) -> void
-PFNGLVERTEXATTRIBI3IVPROC :: fn(GLuint, &GLint) -> void
-PFNGLVERTEXATTRIBI4IVPROC :: fn(GLuint, &GLint) -> void
-PFNGLVERTEXATTRIBI1UIVPROC :: fn(GLuint, &GLuint) -> void
-PFNGLVERTEXATTRIBI2UIVPROC :: fn(GLuint, &GLuint) -> void
-PFNGLVERTEXATTRIBI3UIVPROC :: fn(GLuint, &GLuint) -> void
-PFNGLVERTEXATTRIBI4UIVPROC :: fn(GLuint, &GLuint) -> void
-PFNGLVERTEXATTRIBI4BVPROC :: fn(GLuint, &GLbyte) -> void
-PFNGLVERTEXATTRIBI4SVPROC :: fn(GLuint, &GLshort) -> void
-PFNGLVERTEXATTRIBI4UBVPROC :: fn(GLuint, &GLubyte) -> void
-PFNGLVERTEXATTRIBI4USVPROC :: fn(GLuint, &GLushort) -> void
-PFNGLGETUNIFORMUIVPROC :: fn(GLuint, GLint, &GLuint) -> void
-PFNGLBINDFRAGDATALOCATIONPROC :: fn(GLuint, GLuint, &GLchar) -> void
-PFNGLGETFRAGDATALOCATIONPROC :: fn(GLuint, &GLchar) -> GLint
+PFNGLVERTEXATTRIBI1IVPROC :: fn(GLuint, ^GLint) -> void
+PFNGLVERTEXATTRIBI2IVPROC :: fn(GLuint, ^GLint) -> void
+PFNGLVERTEXATTRIBI3IVPROC :: fn(GLuint, ^GLint) -> void
+PFNGLVERTEXATTRIBI4IVPROC :: fn(GLuint, ^GLint) -> void
+PFNGLVERTEXATTRIBI1UIVPROC :: fn(GLuint, ^GLuint) -> void
+PFNGLVERTEXATTRIBI2UIVPROC :: fn(GLuint, ^GLuint) -> void
+PFNGLVERTEXATTRIBI3UIVPROC :: fn(GLuint, ^GLuint) -> void
+PFNGLVERTEXATTRIBI4UIVPROC :: fn(GLuint, ^GLuint) -> void
+PFNGLVERTEXATTRIBI4BVPROC :: fn(GLuint, ^GLbyte) -> void
+PFNGLVERTEXATTRIBI4SVPROC :: fn(GLuint, ^GLshort) -> void
+PFNGLVERTEXATTRIBI4UBVPROC :: fn(GLuint, ^GLubyte) -> void
+PFNGLVERTEXATTRIBI4USVPROC :: fn(GLuint, ^GLushort) -> void
+PFNGLGETUNIFORMUIVPROC :: fn(GLuint, GLint, ^GLuint) -> void
+PFNGLBINDFRAGDATALOCATIONPROC :: fn(GLuint, GLuint, ^GLchar) -> void
+PFNGLGETFRAGDATALOCATIONPROC :: fn(GLuint, ^GLchar) -> GLint
 PFNGLUNIFORM1UIPROC :: fn(GLint, GLuint) -> void
 PFNGLUNIFORM2UIPROC :: fn(GLint, GLuint, GLuint) -> void
 PFNGLUNIFORM3UIPROC :: fn(GLint, GLuint, GLuint, GLuint) -> void
 PFNGLUNIFORM4UIPROC :: fn(GLint, GLuint, GLuint, GLuint, GLuint) -> void
-PFNGLUNIFORM1UIVPROC :: fn(GLint, GLsizei, &GLuint) -> void
-PFNGLUNIFORM2UIVPROC :: fn(GLint, GLsizei, &GLuint) -> void
-PFNGLUNIFORM3UIVPROC :: fn(GLint, GLsizei, &GLuint) -> void
-PFNGLUNIFORM4UIVPROC :: fn(GLint, GLsizei, &GLuint) -> void
-PFNGLTEXPARAMETERIIVPROC :: fn(GLenum, GLenum, &GLint) -> void
-PFNGLTEXPARAMETERIUIVPROC :: fn(GLenum, GLenum, &GLuint) -> void
-PFNGLGETTEXPARAMETERIIVPROC :: fn(GLenum, GLenum, &GLint) -> void
-PFNGLGETTEXPARAMETERIUIVPROC :: fn(GLenum, GLenum, &GLuint) -> void
-PFNGLCLEARBUFFERIVPROC :: fn(GLenum, GLint, &GLint) -> void
-PFNGLCLEARBUFFERUIVPROC :: fn(GLenum, GLint, &GLuint) -> void
-PFNGLCLEARBUFFERFVPROC :: fn(GLenum, GLint, &GLfloat) -> void
+PFNGLUNIFORM1UIVPROC :: fn(GLint, GLsizei, ^GLuint) -> void
+PFNGLUNIFORM2UIVPROC :: fn(GLint, GLsizei, ^GLuint) -> void
+PFNGLUNIFORM3UIVPROC :: fn(GLint, GLsizei, ^GLuint) -> void
+PFNGLUNIFORM4UIVPROC :: fn(GLint, GLsizei, ^GLuint) -> void
+PFNGLTEXPARAMETERIIVPROC :: fn(GLenum, GLenum, ^GLint) -> void
+PFNGLTEXPARAMETERIUIVPROC :: fn(GLenum, GLenum, ^GLuint) -> void
+PFNGLGETTEXPARAMETERIIVPROC :: fn(GLenum, GLenum, ^GLint) -> void
+PFNGLGETTEXPARAMETERIUIVPROC :: fn(GLenum, GLenum, ^GLuint) -> void
+PFNGLCLEARBUFFERIVPROC :: fn(GLenum, GLint, ^GLint) -> void
+PFNGLCLEARBUFFERUIVPROC :: fn(GLenum, GLint, ^GLuint) -> void
+PFNGLCLEARBUFFERFVPROC :: fn(GLenum, GLint, ^GLfloat) -> void
 PFNGLCLEARBUFFERFIPROC :: fn(GLenum, GLint, GLfloat, GLint) -> void
-PFNGLGETSTRINGIPROC :: fn(GLenum, GLuint) -> &GLubyte
+PFNGLGETSTRINGIPROC :: fn(GLenum, GLuint) -> ^GLubyte
 PFNGLISRENDERBUFFERPROC :: fn(GLuint) -> GLboolean
 PFNGLBINDRENDERBUFFERPROC :: fn(GLenum, GLuint) -> void
-PFNGLDELETERENDERBUFFERSPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLGENRENDERBUFFERSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLDELETERENDERBUFFERSPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLGENRENDERBUFFERSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLRENDERBUFFERSTORAGEPROC :: fn(GLenum, GLenum, GLsizei, GLsizei) -> void
-PFNGLGETRENDERBUFFERPARAMETERIVPROC :: fn(GLenum, GLenum, &GLint) -> void
+PFNGLGETRENDERBUFFERPARAMETERIVPROC :: fn(GLenum, GLenum, ^GLint) -> void
 PFNGLISFRAMEBUFFERPROC :: fn(GLuint) -> GLboolean
 PFNGLBINDFRAMEBUFFERPROC :: fn(GLenum, GLuint) -> void
-PFNGLDELETEFRAMEBUFFERSPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLGENFRAMEBUFFERSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLDELETEFRAMEBUFFERSPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLGENFRAMEBUFFERSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLCHECKFRAMEBUFFERSTATUSPROC :: fn(GLenum) -> GLenum
 PFNGLFRAMEBUFFERTEXTURE1DPROC :: fn(GLenum, GLenum, GLenum, GLuint, GLint) -> void
 PFNGLFRAMEBUFFERTEXTURE2DPROC :: fn(GLenum, GLenum, GLenum, GLuint, GLint) -> void
 PFNGLFRAMEBUFFERTEXTURE3DPROC :: fn(GLenum, GLenum, GLenum, GLuint, GLint, GLint) -> void
 PFNGLFRAMEBUFFERRENDERBUFFERPROC :: fn(GLenum, GLenum, GLenum, GLuint) -> void
-PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC :: fn(GLenum, GLenum, GLenum, &GLint) -> void
+PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVPROC :: fn(GLenum, GLenum, GLenum, ^GLint) -> void
 PFNGLGENERATEMIPMAPPROC :: fn(GLenum) -> void
 PFNGLBLITFRAMEBUFFERPROC :: fn(GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum) -> void
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC :: fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei) -> void
 PFNGLFRAMEBUFFERTEXTURELAYERPROC :: fn(GLenum, GLenum, GLuint, GLint, GLint) -> void
-PFNGLMAPBUFFERRANGEPROC :: fn(GLenum, GLintptr, GLsizeiptr, GLbitfield) -> &void
+PFNGLMAPBUFFERRANGEPROC :: fn(GLenum, GLintptr, GLsizeiptr, GLbitfield) -> ^void
 PFNGLFLUSHMAPPEDBUFFERRANGEPROC :: fn(GLenum, GLintptr, GLsizeiptr) -> void
 PFNGLBINDVERTEXARRAYPROC :: fn(GLuint) -> void
-PFNGLDELETEVERTEXARRAYSPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLGENVERTEXARRAYSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLDELETEVERTEXARRAYSPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLGENVERTEXARRAYSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLISVERTEXARRAYPROC :: fn(GLuint) -> GLboolean
 PFNGLDRAWARRAYSINSTANCEDPROC :: fn(GLenum, GLint, GLsizei, GLsizei) -> void
-PFNGLDRAWELEMENTSINSTANCEDPROC :: fn(GLenum, GLsizei, GLenum, &void, GLsizei) -> void
+PFNGLDRAWELEMENTSINSTANCEDPROC :: fn(GLenum, GLsizei, GLenum, ^void, GLsizei) -> void
 PFNGLTEXBUFFERPROC :: fn(GLenum, GLenum, GLuint) -> void
 PFNGLPRIMITIVERESTARTINDEXPROC :: fn(GLuint) -> void
 PFNGLCOPYBUFFERSUBDATAPROC :: fn(GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr) -> void
-PFNGLGETUNIFORMINDICESPROC :: fn(GLuint, GLsizei, &&GLchar, &GLuint) -> void
-PFNGLGETACTIVEUNIFORMSIVPROC :: fn(GLuint, GLsizei, &GLuint, GLenum, &GLint) -> void
-PFNGLGETACTIVEUNIFORMNAMEPROC :: fn(GLuint, GLuint, GLsizei, &GLsizei, &GLchar) -> void
-PFNGLGETUNIFORMBLOCKINDEXPROC :: fn(GLuint, &GLchar) -> GLuint
-PFNGLGETACTIVEUNIFORMBLOCKIVPROC :: fn(GLuint, GLuint, GLenum, &GLint) -> void
-PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC :: fn(GLuint, GLuint, GLsizei, &GLsizei, &GLchar) -> void
+PFNGLGETUNIFORMINDICESPROC :: fn(GLuint, GLsizei, ^^GLchar, ^GLuint) -> void
+PFNGLGETACTIVEUNIFORMSIVPROC :: fn(GLuint, GLsizei, ^GLuint, GLenum, ^GLint) -> void
+PFNGLGETACTIVEUNIFORMNAMEPROC :: fn(GLuint, GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
+PFNGLGETUNIFORMBLOCKINDEXPROC :: fn(GLuint, ^GLchar) -> GLuint
+PFNGLGETACTIVEUNIFORMBLOCKIVPROC :: fn(GLuint, GLuint, GLenum, ^GLint) -> void
+PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC :: fn(GLuint, GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
 PFNGLUNIFORMBLOCKBINDINGPROC :: fn(GLuint, GLuint, GLuint) -> void
-PFNGLDRAWELEMENTSBASEVERTEXPROC :: fn(GLenum, GLsizei, GLenum, &void, GLint) -> void
-PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC :: fn(GLenum, GLuint, GLuint, GLsizei, GLenum, &void, GLint) -> void
-PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXPROC :: fn(GLenum, GLsizei, GLenum, &void, GLsizei, GLint) -> void
-PFNGLMULTIDRAWELEMENTSBASEVERTEXPROC :: fn(GLenum, &GLsizei, GLenum, &&void, GLsizei, &GLint) -> void
+PFNGLDRAWELEMENTSBASEVERTEXPROC :: fn(GLenum, GLsizei, GLenum, ^void, GLint) -> void
+PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC :: fn(GLenum, GLuint, GLuint, GLsizei, GLenum, ^void, GLint) -> void
+PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXPROC :: fn(GLenum, GLsizei, GLenum, ^void, GLsizei, GLint) -> void
+PFNGLMULTIDRAWELEMENTSBASEVERTEXPROC :: fn(GLenum, ^GLsizei, GLenum, ^^void, GLsizei, ^GLint) -> void
 PFNGLPROVOKINGVERTEXPROC :: fn(GLenum) -> void
 PFNGLFENCESYNCPROC :: fn(GLenum, GLbitfield) -> GLsync
 PFNGLISSYNCPROC :: fn(GLsync) -> GLboolean
 PFNGLDELETESYNCPROC :: fn(GLsync) -> void
 PFNGLCLIENTWAITSYNCPROC :: fn(GLsync, GLbitfield, GLuint64) -> GLenum
 PFNGLWAITSYNCPROC :: fn(GLsync, GLbitfield, GLuint64) -> void
-PFNGLGETINTEGER64VPROC :: fn(GLenum, &GLint64) -> void
-PFNGLGETSYNCIVPROC :: fn(GLsync, GLenum, GLsizei, &GLsizei, &GLint) -> void
-PFNGLGETINTEGER64I_VPROC :: fn(GLenum, GLuint, &GLint64) -> void
-PFNGLGETBUFFERPARAMETERI64VPROC :: fn(GLenum, GLenum, &GLint64) -> void
+PFNGLGETINTEGER64VPROC :: fn(GLenum, ^GLint64) -> void
+PFNGLGETSYNCIVPROC :: fn(GLsync, GLenum, GLsizei, ^GLsizei, ^GLint) -> void
+PFNGLGETINTEGER64I_VPROC :: fn(GLenum, GLuint, ^GLint64) -> void
+PFNGLGETBUFFERPARAMETERI64VPROC :: fn(GLenum, GLenum, ^GLint64) -> void
 PFNGLFRAMEBUFFERTEXTUREPROC :: fn(GLenum, GLenum, GLuint, GLint) -> void
 PFNGLTEXIMAGE2DMULTISAMPLEPROC :: fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLboolean) -> void
 PFNGLTEXIMAGE3DMULTISAMPLEPROC :: fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLsizei, GLboolean) -> void
-PFNGLGETMULTISAMPLEFVPROC :: fn(GLenum, GLuint, &GLfloat) -> void
+PFNGLGETMULTISAMPLEFVPROC :: fn(GLenum, GLuint, ^GLfloat) -> void
 PFNGLSAMPLEMASKIPROC :: fn(GLuint, GLbitfield) -> void
-PFNGLBINDFRAGDATALOCATIONINDEXEDPROC :: fn(GLuint, GLuint, GLuint, &GLchar) -> void
-PFNGLGETFRAGDATAINDEXPROC :: fn(GLuint, &GLchar) -> GLint
-PFNGLGENSAMPLERSPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLDELETESAMPLERSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLBINDFRAGDATALOCATIONINDEXEDPROC :: fn(GLuint, GLuint, GLuint, ^GLchar) -> void
+PFNGLGETFRAGDATAINDEXPROC :: fn(GLuint, ^GLchar) -> GLint
+PFNGLGENSAMPLERSPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLDELETESAMPLERSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLISSAMPLERPROC :: fn(GLuint) -> GLboolean
 PFNGLBINDSAMPLERPROC :: fn(GLuint, GLuint) -> void
 PFNGLSAMPLERPARAMETERIPROC :: fn(GLuint, GLenum, GLint) -> void
-PFNGLSAMPLERPARAMETERIVPROC :: fn(GLuint, GLenum, &GLint) -> void
+PFNGLSAMPLERPARAMETERIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
 PFNGLSAMPLERPARAMETERFPROC :: fn(GLuint, GLenum, GLfloat) -> void
-PFNGLSAMPLERPARAMETERFVPROC :: fn(GLuint, GLenum, &GLfloat) -> void
-PFNGLSAMPLERPARAMETERIIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLSAMPLERPARAMETERIUIVPROC :: fn(GLuint, GLenum, &GLuint) -> void
-PFNGLGETSAMPLERPARAMETERIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETSAMPLERPARAMETERIIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETSAMPLERPARAMETERFVPROC :: fn(GLuint, GLenum, &GLfloat) -> void
-PFNGLGETSAMPLERPARAMETERIUIVPROC :: fn(GLuint, GLenum, &GLuint) -> void
+PFNGLSAMPLERPARAMETERFVPROC :: fn(GLuint, GLenum, ^GLfloat) -> void
+PFNGLSAMPLERPARAMETERIIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLSAMPLERPARAMETERIUIVPROC :: fn(GLuint, GLenum, ^GLuint) -> void
+PFNGLGETSAMPLERPARAMETERIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETSAMPLERPARAMETERIIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETSAMPLERPARAMETERFVPROC :: fn(GLuint, GLenum, ^GLfloat) -> void
+PFNGLGETSAMPLERPARAMETERIUIVPROC :: fn(GLuint, GLenum, ^GLuint) -> void
 PFNGLQUERYCOUNTERPROC :: fn(GLuint, GLenum) -> void
-PFNGLGETQUERYOBJECTI64VPROC :: fn(GLuint, GLenum, &GLint64) -> void
-PFNGLGETQUERYOBJECTUI64VPROC :: fn(GLuint, GLenum, &GLuint64) -> void
+PFNGLGETQUERYOBJECTI64VPROC :: fn(GLuint, GLenum, ^GLint64) -> void
+PFNGLGETQUERYOBJECTUI64VPROC :: fn(GLuint, GLenum, ^GLuint64) -> void
 PFNGLVERTEXATTRIBDIVISORPROC :: fn(GLuint, GLuint) -> void
 PFNGLVERTEXATTRIBP1UIPROC :: fn(GLuint, GLenum, GLboolean, GLuint) -> void
-PFNGLVERTEXATTRIBP1UIVPROC :: fn(GLuint, GLenum, GLboolean, &GLuint) -> void
+PFNGLVERTEXATTRIBP1UIVPROC :: fn(GLuint, GLenum, GLboolean, ^GLuint) -> void
 PFNGLVERTEXATTRIBP2UIPROC :: fn(GLuint, GLenum, GLboolean, GLuint) -> void
-PFNGLVERTEXATTRIBP2UIVPROC :: fn(GLuint, GLenum, GLboolean, &GLuint) -> void
+PFNGLVERTEXATTRIBP2UIVPROC :: fn(GLuint, GLenum, GLboolean, ^GLuint) -> void
 PFNGLVERTEXATTRIBP3UIPROC :: fn(GLuint, GLenum, GLboolean, GLuint) -> void
-PFNGLVERTEXATTRIBP3UIVPROC :: fn(GLuint, GLenum, GLboolean, &GLuint) -> void
+PFNGLVERTEXATTRIBP3UIVPROC :: fn(GLuint, GLenum, GLboolean, ^GLuint) -> void
 PFNGLVERTEXATTRIBP4UIPROC :: fn(GLuint, GLenum, GLboolean, GLuint) -> void
-PFNGLVERTEXATTRIBP4UIVPROC :: fn(GLuint, GLenum, GLboolean, &GLuint) -> void
+PFNGLVERTEXATTRIBP4UIVPROC :: fn(GLuint, GLenum, GLboolean, ^GLuint) -> void
 PFNGLVERTEXP2UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLVERTEXP2UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLVERTEXP2UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLVERTEXP3UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLVERTEXP3UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLVERTEXP3UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLVERTEXP4UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLVERTEXP4UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLVERTEXP4UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLTEXCOORDP1UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLTEXCOORDP1UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLTEXCOORDP1UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLTEXCOORDP2UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLTEXCOORDP2UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLTEXCOORDP2UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLTEXCOORDP3UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLTEXCOORDP3UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLTEXCOORDP3UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLTEXCOORDP4UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLTEXCOORDP4UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLTEXCOORDP4UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLMULTITEXCOORDP1UIPROC :: fn(GLenum, GLenum, GLuint) -> void
-PFNGLMULTITEXCOORDP1UIVPROC :: fn(GLenum, GLenum, &GLuint) -> void
+PFNGLMULTITEXCOORDP1UIVPROC :: fn(GLenum, GLenum, ^GLuint) -> void
 PFNGLMULTITEXCOORDP2UIPROC :: fn(GLenum, GLenum, GLuint) -> void
-PFNGLMULTITEXCOORDP2UIVPROC :: fn(GLenum, GLenum, &GLuint) -> void
+PFNGLMULTITEXCOORDP2UIVPROC :: fn(GLenum, GLenum, ^GLuint) -> void
 PFNGLMULTITEXCOORDP3UIPROC :: fn(GLenum, GLenum, GLuint) -> void
-PFNGLMULTITEXCOORDP3UIVPROC :: fn(GLenum, GLenum, &GLuint) -> void
+PFNGLMULTITEXCOORDP3UIVPROC :: fn(GLenum, GLenum, ^GLuint) -> void
 PFNGLMULTITEXCOORDP4UIPROC :: fn(GLenum, GLenum, GLuint) -> void
-PFNGLMULTITEXCOORDP4UIVPROC :: fn(GLenum, GLenum, &GLuint) -> void
+PFNGLMULTITEXCOORDP4UIVPROC :: fn(GLenum, GLenum, ^GLuint) -> void
 PFNGLNORMALP3UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLNORMALP3UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLNORMALP3UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLCOLORP3UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLCOLORP3UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLCOLORP3UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLCOLORP4UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLCOLORP4UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLCOLORP4UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLSECONDARYCOLORP3UIPROC :: fn(GLenum, GLuint) -> void
-PFNGLSECONDARYCOLORP3UIVPROC :: fn(GLenum, &GLuint) -> void
+PFNGLSECONDARYCOLORP3UIVPROC :: fn(GLenum, ^GLuint) -> void
 PFNGLMINSAMPLESHADINGPROC :: fn(GLfloat) -> void
 PFNGLBLENDEQUATIONIPROC :: fn(GLuint, GLenum) -> void
 PFNGLBLENDEQUATIONSEPARATEIPROC :: fn(GLuint, GLenum, GLenum) -> void
 PFNGLBLENDFUNCIPROC :: fn(GLuint, GLenum, GLenum) -> void
 PFNGLBLENDFUNCSEPARATEIPROC :: fn(GLuint, GLenum, GLenum, GLenum, GLenum) -> void
-PFNGLDRAWARRAYSINDIRECTPROC :: fn(GLenum, &void) -> void
-PFNGLDRAWELEMENTSINDIRECTPROC :: fn(GLenum, GLenum, &void) -> void
+PFNGLDRAWARRAYSINDIRECTPROC :: fn(GLenum, ^void) -> void
+PFNGLDRAWELEMENTSINDIRECTPROC :: fn(GLenum, GLenum, ^void) -> void
 PFNGLUNIFORM1DPROC :: fn(GLint, GLdouble) -> void
 PFNGLUNIFORM2DPROC :: fn(GLint, GLdouble, GLdouble) -> void
 PFNGLUNIFORM3DPROC :: fn(GLint, GLdouble, GLdouble, GLdouble) -> void
 PFNGLUNIFORM4DPROC :: fn(GLint, GLdouble, GLdouble, GLdouble, GLdouble) -> void
-PFNGLUNIFORM1DVPROC :: fn(GLint, GLsizei, &GLdouble) -> void
-PFNGLUNIFORM2DVPROC :: fn(GLint, GLsizei, &GLdouble) -> void
-PFNGLUNIFORM3DVPROC :: fn(GLint, GLsizei, &GLdouble) -> void
-PFNGLUNIFORM4DVPROC :: fn(GLint, GLsizei, &GLdouble) -> void
-PFNGLUNIFORMMATRIX2DVPROC :: fn(GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLUNIFORMMATRIX3DVPROC :: fn(GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLUNIFORMMATRIX4DVPROC :: fn(GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLUNIFORMMATRIX2X3DVPROC :: fn(GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLUNIFORMMATRIX2X4DVPROC :: fn(GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLUNIFORMMATRIX3X2DVPROC :: fn(GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLUNIFORMMATRIX3X4DVPROC :: fn(GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLUNIFORMMATRIX4X2DVPROC :: fn(GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLUNIFORMMATRIX4X3DVPROC :: fn(GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLGETUNIFORMDVPROC :: fn(GLuint, GLint, &GLdouble) -> void
-PFNGLGETSUBROUTINEUNIFORMLOCATIONPROC :: fn(GLuint, GLenum, &GLchar) -> GLint
-PFNGLGETSUBROUTINEINDEXPROC :: fn(GLuint, GLenum, &GLchar) -> GLuint
-PFNGLGETACTIVESUBROUTINEUNIFORMIVPROC :: fn(GLuint, GLenum, GLuint, GLenum, &GLint) -> void
-PFNGLGETACTIVESUBROUTINEUNIFORMNAMEPROC :: fn(GLuint, GLenum, GLuint, GLsizei, &GLsizei, &GLchar) -> void
-PFNGLGETACTIVESUBROUTINENAMEPROC :: fn(GLuint, GLenum, GLuint, GLsizei, &GLsizei, &GLchar) -> void
-PFNGLUNIFORMSUBROUTINESUIVPROC :: fn(GLenum, GLsizei, &GLuint) -> void
-PFNGLGETUNIFORMSUBROUTINEUIVPROC :: fn(GLenum, GLint, &GLuint) -> void
-PFNGLGETPROGRAMSTAGEIVPROC :: fn(GLuint, GLenum, GLenum, &GLint) -> void
+PFNGLUNIFORM1DVPROC :: fn(GLint, GLsizei, ^GLdouble) -> void
+PFNGLUNIFORM2DVPROC :: fn(GLint, GLsizei, ^GLdouble) -> void
+PFNGLUNIFORM3DVPROC :: fn(GLint, GLsizei, ^GLdouble) -> void
+PFNGLUNIFORM4DVPROC :: fn(GLint, GLsizei, ^GLdouble) -> void
+PFNGLUNIFORMMATRIX2DVPROC :: fn(GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLUNIFORMMATRIX3DVPROC :: fn(GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLUNIFORMMATRIX4DVPROC :: fn(GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLUNIFORMMATRIX2X3DVPROC :: fn(GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLUNIFORMMATRIX2X4DVPROC :: fn(GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLUNIFORMMATRIX3X2DVPROC :: fn(GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLUNIFORMMATRIX3X4DVPROC :: fn(GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLUNIFORMMATRIX4X2DVPROC :: fn(GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLUNIFORMMATRIX4X3DVPROC :: fn(GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLGETUNIFORMDVPROC :: fn(GLuint, GLint, ^GLdouble) -> void
+PFNGLGETSUBROUTINEUNIFORMLOCATIONPROC :: fn(GLuint, GLenum, ^GLchar) -> GLint
+PFNGLGETSUBROUTINEINDEXPROC :: fn(GLuint, GLenum, ^GLchar) -> GLuint
+PFNGLGETACTIVESUBROUTINEUNIFORMIVPROC :: fn(GLuint, GLenum, GLuint, GLenum, ^GLint) -> void
+PFNGLGETACTIVESUBROUTINEUNIFORMNAMEPROC :: fn(GLuint, GLenum, GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
+PFNGLGETACTIVESUBROUTINENAMEPROC :: fn(GLuint, GLenum, GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
+PFNGLUNIFORMSUBROUTINESUIVPROC :: fn(GLenum, GLsizei, ^GLuint) -> void
+PFNGLGETUNIFORMSUBROUTINEUIVPROC :: fn(GLenum, GLint, ^GLuint) -> void
+PFNGLGETPROGRAMSTAGEIVPROC :: fn(GLuint, GLenum, GLenum, ^GLint) -> void
 PFNGLPATCHPARAMETERIPROC :: fn(GLenum, GLint) -> void
-PFNGLPATCHPARAMETERFVPROC :: fn(GLenum, &GLfloat) -> void
+PFNGLPATCHPARAMETERFVPROC :: fn(GLenum, ^GLfloat) -> void
 PFNGLBINDTRANSFORMFEEDBACKPROC :: fn(GLenum, GLuint) -> void
-PFNGLDELETETRANSFORMFEEDBACKSPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLGENTRANSFORMFEEDBACKSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLDELETETRANSFORMFEEDBACKSPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLGENTRANSFORMFEEDBACKSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLISTRANSFORMFEEDBACKPROC :: fn(GLuint) -> GLboolean
 PFNGLPAUSETRANSFORMFEEDBACKPROC :: fn() -> void
 PFNGLRESUMETRANSFORMFEEDBACKPROC :: fn() -> void
@@ -465,100 +465,100 @@ PFNGLDRAWTRANSFORMFEEDBACKPROC :: fn(GLenum, GLuint) -> void
 PFNGLDRAWTRANSFORMFEEDBACKSTREAMPROC :: fn(GLenum, GLuint, GLuint) -> void
 PFNGLBEGINQUERYINDEXEDPROC :: fn(GLenum, GLuint, GLuint) -> void
 PFNGLENDQUERYINDEXEDPROC :: fn(GLenum, GLuint) -> void
-PFNGLGETQUERYINDEXEDIVPROC :: fn(GLenum, GLuint, GLenum, &GLint) -> void
+PFNGLGETQUERYINDEXEDIVPROC :: fn(GLenum, GLuint, GLenum, ^GLint) -> void
 PFNGLRELEASESHADERCOMPILERPROC :: fn() -> void
-PFNGLSHADERBINARYPROC :: fn(GLsizei, &GLuint, GLenum, &void, GLsizei) -> void
-PFNGLGETSHADERPRECISIONFORMATPROC :: fn(GLenum, GLenum, &GLint, &GLint) -> void
+PFNGLSHADERBINARYPROC :: fn(GLsizei, ^GLuint, GLenum, ^void, GLsizei) -> void
+PFNGLGETSHADERPRECISIONFORMATPROC :: fn(GLenum, GLenum, ^GLint, ^GLint) -> void
 PFNGLDEPTHRANGEFPROC :: fn(GLfloat, GLfloat) -> void
 PFNGLCLEARDEPTHFPROC :: fn(GLfloat) -> void
-PFNGLGETPROGRAMBINARYPROC :: fn(GLuint, GLsizei, &GLsizei, &GLenum, &void) -> void
-PFNGLPROGRAMBINARYPROC :: fn(GLuint, GLenum, &void, GLsizei) -> void
+PFNGLGETPROGRAMBINARYPROC :: fn(GLuint, GLsizei, ^GLsizei, ^GLenum, ^void) -> void
+PFNGLPROGRAMBINARYPROC :: fn(GLuint, GLenum, ^void, GLsizei) -> void
 PFNGLPROGRAMPARAMETERIPROC :: fn(GLuint, GLenum, GLint) -> void
 PFNGLUSEPROGRAMSTAGESPROC :: fn(GLuint, GLbitfield, GLuint) -> void
 PFNGLACTIVESHADERPROGRAMPROC :: fn(GLuint, GLuint) -> void
-PFNGLCREATESHADERPROGRAMVPROC :: fn(GLenum, GLsizei, &&GLchar) -> GLuint
+PFNGLCREATESHADERPROGRAMVPROC :: fn(GLenum, GLsizei, ^^GLchar) -> GLuint
 PFNGLBINDPROGRAMPIPELINEPROC :: fn(GLuint) -> void
-PFNGLDELETEPROGRAMPIPELINESPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLGENPROGRAMPIPELINESPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLDELETEPROGRAMPIPELINESPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLGENPROGRAMPIPELINESPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLISPROGRAMPIPELINEPROC :: fn(GLuint) -> GLboolean
-PFNGLGETPROGRAMPIPELINEIVPROC :: fn(GLuint, GLenum, &GLint) -> void
+PFNGLGETPROGRAMPIPELINEIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
 PFNGLPROGRAMUNIFORM1IPROC :: fn(GLuint, GLint, GLint) -> void
-PFNGLPROGRAMUNIFORM1IVPROC :: fn(GLuint, GLint, GLsizei, &GLint) -> void
+PFNGLPROGRAMUNIFORM1IVPROC :: fn(GLuint, GLint, GLsizei, ^GLint) -> void
 PFNGLPROGRAMUNIFORM1FPROC :: fn(GLuint, GLint, GLfloat) -> void
-PFNGLPROGRAMUNIFORM1FVPROC :: fn(GLuint, GLint, GLsizei, &GLfloat) -> void
+PFNGLPROGRAMUNIFORM1FVPROC :: fn(GLuint, GLint, GLsizei, ^GLfloat) -> void
 PFNGLPROGRAMUNIFORM1DPROC :: fn(GLuint, GLint, GLdouble) -> void
-PFNGLPROGRAMUNIFORM1DVPROC :: fn(GLuint, GLint, GLsizei, &GLdouble) -> void
+PFNGLPROGRAMUNIFORM1DVPROC :: fn(GLuint, GLint, GLsizei, ^GLdouble) -> void
 PFNGLPROGRAMUNIFORM1UIPROC :: fn(GLuint, GLint, GLuint) -> void
-PFNGLPROGRAMUNIFORM1UIVPROC :: fn(GLuint, GLint, GLsizei, &GLuint) -> void
+PFNGLPROGRAMUNIFORM1UIVPROC :: fn(GLuint, GLint, GLsizei, ^GLuint) -> void
 PFNGLPROGRAMUNIFORM2IPROC :: fn(GLuint, GLint, GLint, GLint) -> void
-PFNGLPROGRAMUNIFORM2IVPROC :: fn(GLuint, GLint, GLsizei, &GLint) -> void
+PFNGLPROGRAMUNIFORM2IVPROC :: fn(GLuint, GLint, GLsizei, ^GLint) -> void
 PFNGLPROGRAMUNIFORM2FPROC :: fn(GLuint, GLint, GLfloat, GLfloat) -> void
-PFNGLPROGRAMUNIFORM2FVPROC :: fn(GLuint, GLint, GLsizei, &GLfloat) -> void
+PFNGLPROGRAMUNIFORM2FVPROC :: fn(GLuint, GLint, GLsizei, ^GLfloat) -> void
 PFNGLPROGRAMUNIFORM2DPROC :: fn(GLuint, GLint, GLdouble, GLdouble) -> void
-PFNGLPROGRAMUNIFORM2DVPROC :: fn(GLuint, GLint, GLsizei, &GLdouble) -> void
+PFNGLPROGRAMUNIFORM2DVPROC :: fn(GLuint, GLint, GLsizei, ^GLdouble) -> void
 PFNGLPROGRAMUNIFORM2UIPROC :: fn(GLuint, GLint, GLuint, GLuint) -> void
-PFNGLPROGRAMUNIFORM2UIVPROC :: fn(GLuint, GLint, GLsizei, &GLuint) -> void
+PFNGLPROGRAMUNIFORM2UIVPROC :: fn(GLuint, GLint, GLsizei, ^GLuint) -> void
 PFNGLPROGRAMUNIFORM3IPROC :: fn(GLuint, GLint, GLint, GLint, GLint) -> void
-PFNGLPROGRAMUNIFORM3IVPROC :: fn(GLuint, GLint, GLsizei, &GLint) -> void
+PFNGLPROGRAMUNIFORM3IVPROC :: fn(GLuint, GLint, GLsizei, ^GLint) -> void
 PFNGLPROGRAMUNIFORM3FPROC :: fn(GLuint, GLint, GLfloat, GLfloat, GLfloat) -> void
-PFNGLPROGRAMUNIFORM3FVPROC :: fn(GLuint, GLint, GLsizei, &GLfloat) -> void
+PFNGLPROGRAMUNIFORM3FVPROC :: fn(GLuint, GLint, GLsizei, ^GLfloat) -> void
 PFNGLPROGRAMUNIFORM3DPROC :: fn(GLuint, GLint, GLdouble, GLdouble, GLdouble) -> void
-PFNGLPROGRAMUNIFORM3DVPROC :: fn(GLuint, GLint, GLsizei, &GLdouble) -> void
+PFNGLPROGRAMUNIFORM3DVPROC :: fn(GLuint, GLint, GLsizei, ^GLdouble) -> void
 PFNGLPROGRAMUNIFORM3UIPROC :: fn(GLuint, GLint, GLuint, GLuint, GLuint) -> void
-PFNGLPROGRAMUNIFORM3UIVPROC :: fn(GLuint, GLint, GLsizei, &GLuint) -> void
+PFNGLPROGRAMUNIFORM3UIVPROC :: fn(GLuint, GLint, GLsizei, ^GLuint) -> void
 PFNGLPROGRAMUNIFORM4IPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLint) -> void
-PFNGLPROGRAMUNIFORM4IVPROC :: fn(GLuint, GLint, GLsizei, &GLint) -> void
+PFNGLPROGRAMUNIFORM4IVPROC :: fn(GLuint, GLint, GLsizei, ^GLint) -> void
 PFNGLPROGRAMUNIFORM4FPROC :: fn(GLuint, GLint, GLfloat, GLfloat, GLfloat, GLfloat) -> void
-PFNGLPROGRAMUNIFORM4FVPROC :: fn(GLuint, GLint, GLsizei, &GLfloat) -> void
+PFNGLPROGRAMUNIFORM4FVPROC :: fn(GLuint, GLint, GLsizei, ^GLfloat) -> void
 PFNGLPROGRAMUNIFORM4DPROC :: fn(GLuint, GLint, GLdouble, GLdouble, GLdouble, GLdouble) -> void
-PFNGLPROGRAMUNIFORM4DVPROC :: fn(GLuint, GLint, GLsizei, &GLdouble) -> void
+PFNGLPROGRAMUNIFORM4DVPROC :: fn(GLuint, GLint, GLsizei, ^GLdouble) -> void
 PFNGLPROGRAMUNIFORM4UIPROC :: fn(GLuint, GLint, GLuint, GLuint, GLuint, GLuint) -> void
-PFNGLPROGRAMUNIFORM4UIVPROC :: fn(GLuint, GLint, GLsizei, &GLuint) -> void
-PFNGLPROGRAMUNIFORMMATRIX2FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLPROGRAMUNIFORMMATRIX3FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLPROGRAMUNIFORMMATRIX4FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLPROGRAMUNIFORMMATRIX2DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLPROGRAMUNIFORMMATRIX3DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLPROGRAMUNIFORMMATRIX4DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLPROGRAMUNIFORMMATRIX2X3FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLPROGRAMUNIFORMMATRIX3X2FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLPROGRAMUNIFORMMATRIX2X4FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLPROGRAMUNIFORMMATRIX4X2FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLPROGRAMUNIFORMMATRIX3X4FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLPROGRAMUNIFORMMATRIX4X3FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLfloat) -> void
-PFNGLPROGRAMUNIFORMMATRIX2X3DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLPROGRAMUNIFORMMATRIX3X2DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLPROGRAMUNIFORMMATRIX2X4DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLPROGRAMUNIFORMMATRIX4X2DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLPROGRAMUNIFORMMATRIX3X4DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLdouble) -> void
-PFNGLPROGRAMUNIFORMMATRIX4X3DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, &GLdouble) -> void
+PFNGLPROGRAMUNIFORM4UIVPROC :: fn(GLuint, GLint, GLsizei, ^GLuint) -> void
+PFNGLPROGRAMUNIFORMMATRIX2FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLPROGRAMUNIFORMMATRIX3FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLPROGRAMUNIFORMMATRIX4FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLPROGRAMUNIFORMMATRIX2DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLPROGRAMUNIFORMMATRIX3DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLPROGRAMUNIFORMMATRIX4DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLPROGRAMUNIFORMMATRIX2X3FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLPROGRAMUNIFORMMATRIX3X2FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLPROGRAMUNIFORMMATRIX2X4FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLPROGRAMUNIFORMMATRIX4X2FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLPROGRAMUNIFORMMATRIX3X4FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLPROGRAMUNIFORMMATRIX4X3FVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLfloat) -> void
+PFNGLPROGRAMUNIFORMMATRIX2X3DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLPROGRAMUNIFORMMATRIX3X2DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLPROGRAMUNIFORMMATRIX2X4DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLPROGRAMUNIFORMMATRIX4X2DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLPROGRAMUNIFORMMATRIX3X4DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLdouble) -> void
+PFNGLPROGRAMUNIFORMMATRIX4X3DVPROC :: fn(GLuint, GLint, GLsizei, GLboolean, ^GLdouble) -> void
 PFNGLVALIDATEPROGRAMPIPELINEPROC :: fn(GLuint) -> void
-PFNGLGETPROGRAMPIPELINEINFOLOGPROC :: fn(GLuint, GLsizei, &GLsizei, &GLchar) -> void
+PFNGLGETPROGRAMPIPELINEINFOLOGPROC :: fn(GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
 PFNGLVERTEXATTRIBL1DPROC :: fn(GLuint, GLdouble) -> void
 PFNGLVERTEXATTRIBL2DPROC :: fn(GLuint, GLdouble, GLdouble) -> void
 PFNGLVERTEXATTRIBL3DPROC :: fn(GLuint, GLdouble, GLdouble, GLdouble) -> void
 PFNGLVERTEXATTRIBL4DPROC :: fn(GLuint, GLdouble, GLdouble, GLdouble, GLdouble) -> void
-PFNGLVERTEXATTRIBL1DVPROC :: fn(GLuint, &GLdouble) -> void
-PFNGLVERTEXATTRIBL2DVPROC :: fn(GLuint, &GLdouble) -> void
-PFNGLVERTEXATTRIBL3DVPROC :: fn(GLuint, &GLdouble) -> void
-PFNGLVERTEXATTRIBL4DVPROC :: fn(GLuint, &GLdouble) -> void
-PFNGLVERTEXATTRIBLPOINTERPROC :: fn(GLuint, GLint, GLenum, GLsizei, &void) -> void
-PFNGLGETVERTEXATTRIBLDVPROC :: fn(GLuint, GLenum, &GLdouble) -> void
-PFNGLVIEWPORTARRAYVPROC :: fn(GLuint, GLsizei, &GLfloat) -> void
+PFNGLVERTEXATTRIBL1DVPROC :: fn(GLuint, ^GLdouble) -> void
+PFNGLVERTEXATTRIBL2DVPROC :: fn(GLuint, ^GLdouble) -> void
+PFNGLVERTEXATTRIBL3DVPROC :: fn(GLuint, ^GLdouble) -> void
+PFNGLVERTEXATTRIBL4DVPROC :: fn(GLuint, ^GLdouble) -> void
+PFNGLVERTEXATTRIBLPOINTERPROC :: fn(GLuint, GLint, GLenum, GLsizei, ^void) -> void
+PFNGLGETVERTEXATTRIBLDVPROC :: fn(GLuint, GLenum, ^GLdouble) -> void
+PFNGLVIEWPORTARRAYVPROC :: fn(GLuint, GLsizei, ^GLfloat) -> void
 PFNGLVIEWPORTINDEXEDFPROC :: fn(GLuint, GLfloat, GLfloat, GLfloat, GLfloat) -> void
-PFNGLVIEWPORTINDEXEDFVPROC :: fn(GLuint, &GLfloat) -> void
-PFNGLSCISSORARRAYVPROC :: fn(GLuint, GLsizei, &GLint) -> void
+PFNGLVIEWPORTINDEXEDFVPROC :: fn(GLuint, ^GLfloat) -> void
+PFNGLSCISSORARRAYVPROC :: fn(GLuint, GLsizei, ^GLint) -> void
 PFNGLSCISSORINDEXEDPROC :: fn(GLuint, GLint, GLint, GLsizei, GLsizei) -> void
-PFNGLSCISSORINDEXEDVPROC :: fn(GLuint, &GLint) -> void
-PFNGLDEPTHRANGEARRAYVPROC :: fn(GLuint, GLsizei, &GLdouble) -> void
+PFNGLSCISSORINDEXEDVPROC :: fn(GLuint, ^GLint) -> void
+PFNGLDEPTHRANGEARRAYVPROC :: fn(GLuint, GLsizei, ^GLdouble) -> void
 PFNGLDEPTHRANGEINDEXEDPROC :: fn(GLuint, GLdouble, GLdouble) -> void
-PFNGLGETFLOATI_VPROC :: fn(GLenum, GLuint, &GLfloat) -> void
-PFNGLGETDOUBLEI_VPROC :: fn(GLenum, GLuint, &GLdouble) -> void
+PFNGLGETFLOATI_VPROC :: fn(GLenum, GLuint, ^GLfloat) -> void
+PFNGLGETDOUBLEI_VPROC :: fn(GLenum, GLuint, ^GLdouble) -> void
 PFNGLDRAWARRAYSINSTANCEDBASEINSTANCEPROC :: fn(GLenum, GLint, GLsizei, GLsizei, GLuint) -> void
-PFNGLDRAWELEMENTSINSTANCEDBASEINSTANCEPROC :: fn(GLenum, GLsizei, GLenum, &void, GLsizei, GLuint) -> void
-PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXBASEINSTANCEPROC :: fn(GLenum, GLsizei, GLenum, &void, GLsizei, GLint, GLuint) -> void
-PFNGLGETINTERNALFORMATIVPROC :: fn(GLenum, GLenum, GLenum, GLsizei, &GLint) -> void
-PFNGLGETACTIVEATOMICCOUNTERBUFFERIVPROC :: fn(GLuint, GLuint, GLenum, &GLint) -> void
+PFNGLDRAWELEMENTSINSTANCEDBASEINSTANCEPROC :: fn(GLenum, GLsizei, GLenum, ^void, GLsizei, GLuint) -> void
+PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXBASEINSTANCEPROC :: fn(GLenum, GLsizei, GLenum, ^void, GLsizei, GLint, GLuint) -> void
+PFNGLGETINTERNALFORMATIVPROC :: fn(GLenum, GLenum, GLenum, GLsizei, ^GLint) -> void
+PFNGLGETACTIVEATOMICCOUNTERBUFFERIVPROC :: fn(GLuint, GLuint, GLenum, ^GLint) -> void
 PFNGLBINDIMAGETEXTUREPROC :: fn(GLuint, GLuint, GLint, GLboolean, GLint, GLenum, GLenum) -> void
 PFNGLMEMORYBARRIERPROC :: fn(GLbitfield) -> void
 PFNGLTEXSTORAGE1DPROC :: fn(GLenum, GLsizei, GLenum, GLsizei) -> void
@@ -566,28 +566,28 @@ PFNGLTEXSTORAGE2DPROC :: fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei) -> void
 PFNGLTEXSTORAGE3DPROC :: fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLsizei) -> void
 PFNGLDRAWTRANSFORMFEEDBACKINSTANCEDPROC :: fn(GLenum, GLuint, GLsizei) -> void
 PFNGLDRAWTRANSFORMFEEDBACKSTREAMINSTANCEDPROC :: fn(GLenum, GLuint, GLuint, GLsizei) -> void
-PFNGLCLEARBUFFERDATAPROC :: fn(GLenum, GLenum, GLenum, GLenum, &void) -> void
-PFNGLCLEARBUFFERSUBDATAPROC :: fn(GLenum, GLenum, GLintptr, GLsizeiptr, GLenum, GLenum, &void) -> void
+PFNGLCLEARBUFFERDATAPROC :: fn(GLenum, GLenum, GLenum, GLenum, ^void) -> void
+PFNGLCLEARBUFFERSUBDATAPROC :: fn(GLenum, GLenum, GLintptr, GLsizeiptr, GLenum, GLenum, ^void) -> void
 PFNGLDISPATCHCOMPUTEPROC :: fn(GLuint, GLuint, GLuint) -> void
 PFNGLDISPATCHCOMPUTEINDIRECTPROC :: fn(GLintptr) -> void
 PFNGLCOPYIMAGESUBDATAPROC :: fn(GLuint, GLenum, GLint, GLint, GLint, GLint, GLuint, GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei) -> void
 PFNGLFRAMEBUFFERPARAMETERIPROC :: fn(GLenum, GLenum, GLint) -> void
-PFNGLGETFRAMEBUFFERPARAMETERIVPROC :: fn(GLenum, GLenum, &GLint) -> void
-PFNGLGETINTERNALFORMATI64VPROC :: fn(GLenum, GLenum, GLenum, GLsizei, &GLint64) -> void
+PFNGLGETFRAMEBUFFERPARAMETERIVPROC :: fn(GLenum, GLenum, ^GLint) -> void
+PFNGLGETINTERNALFORMATI64VPROC :: fn(GLenum, GLenum, GLenum, GLsizei, ^GLint64) -> void
 PFNGLINVALIDATETEXSUBIMAGEPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei) -> void
 PFNGLINVALIDATETEXIMAGEPROC :: fn(GLuint, GLint) -> void
 PFNGLINVALIDATEBUFFERSUBDATAPROC :: fn(GLuint, GLintptr, GLsizeiptr) -> void
 PFNGLINVALIDATEBUFFERDATAPROC :: fn(GLuint) -> void
-PFNGLINVALIDATEFRAMEBUFFERPROC :: fn(GLenum, GLsizei, &GLenum) -> void
-PFNGLINVALIDATESUBFRAMEBUFFERPROC :: fn(GLenum, GLsizei, &GLenum, GLint, GLint, GLsizei, GLsizei) -> void
-PFNGLMULTIDRAWARRAYSINDIRECTPROC :: fn(GLenum, &void, GLsizei, GLsizei) -> void
-PFNGLMULTIDRAWELEMENTSINDIRECTPROC :: fn(GLenum, GLenum, &void, GLsizei, GLsizei) -> void
-PFNGLGETPROGRAMINTERFACEIVPROC :: fn(GLuint, GLenum, GLenum, &GLint) -> void
-PFNGLGETPROGRAMRESOURCEINDEXPROC :: fn(GLuint, GLenum, &GLchar) -> GLuint
-PFNGLGETPROGRAMRESOURCENAMEPROC :: fn(GLuint, GLenum, GLuint, GLsizei, &GLsizei, &GLchar) -> void
-PFNGLGETPROGRAMRESOURCEIVPROC :: fn(GLuint, GLenum, GLuint, GLsizei, &GLenum, GLsizei, &GLsizei, &GLint) -> void
-PFNGLGETPROGRAMRESOURCELOCATIONPROC :: fn(GLuint, GLenum, &GLchar) -> GLint
-PFNGLGETPROGRAMRESOURCELOCATIONINDEXPROC :: fn(GLuint, GLenum, &GLchar) -> GLint
+PFNGLINVALIDATEFRAMEBUFFERPROC :: fn(GLenum, GLsizei, ^GLenum) -> void
+PFNGLINVALIDATESUBFRAMEBUFFERPROC :: fn(GLenum, GLsizei, ^GLenum, GLint, GLint, GLsizei, GLsizei) -> void
+PFNGLMULTIDRAWARRAYSINDIRECTPROC :: fn(GLenum, ^void, GLsizei, GLsizei) -> void
+PFNGLMULTIDRAWELEMENTSINDIRECTPROC :: fn(GLenum, GLenum, ^void, GLsizei, GLsizei) -> void
+PFNGLGETPROGRAMINTERFACEIVPROC :: fn(GLuint, GLenum, GLenum, ^GLint) -> void
+PFNGLGETPROGRAMRESOURCEINDEXPROC :: fn(GLuint, GLenum, ^GLchar) -> GLuint
+PFNGLGETPROGRAMRESOURCENAMEPROC :: fn(GLuint, GLenum, GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
+PFNGLGETPROGRAMRESOURCEIVPROC :: fn(GLuint, GLenum, GLuint, GLsizei, ^GLenum, GLsizei, ^GLsizei, ^GLint) -> void
+PFNGLGETPROGRAMRESOURCELOCATIONPROC :: fn(GLuint, GLenum, ^GLchar) -> GLint
+PFNGLGETPROGRAMRESOURCELOCATIONINDEXPROC :: fn(GLuint, GLenum, ^GLchar) -> GLint
 PFNGLSHADERSTORAGEBLOCKBINDINGPROC :: fn(GLuint, GLuint, GLuint) -> void
 PFNGLTEXBUFFERRANGEPROC :: fn(GLenum, GLenum, GLuint, GLintptr, GLsizeiptr) -> void
 PFNGLTEXSTORAGE2DMULTISAMPLEPROC :: fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLboolean) -> void
@@ -599,71 +599,71 @@ PFNGLVERTEXATTRIBIFORMATPROC :: fn(GLuint, GLint, GLenum, GLuint) -> void
 PFNGLVERTEXATTRIBLFORMATPROC :: fn(GLuint, GLint, GLenum, GLuint) -> void
 PFNGLVERTEXATTRIBBINDINGPROC :: fn(GLuint, GLuint) -> void
 PFNGLVERTEXBINDINGDIVISORPROC :: fn(GLuint, GLuint) -> void
-PFNGLDEBUGMESSAGECONTROLPROC :: fn(GLenum, GLenum, GLenum, GLsizei, &GLuint, GLboolean) -> void
-PFNGLDEBUGMESSAGEINSERTPROC :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, &GLchar) -> void
-PFNGLDEBUGMESSAGECALLBACKPROC :: fn(GLDEBUGPROC, &void) -> void
-PFNGLGETDEBUGMESSAGELOGPROC :: fn(GLuint, GLsizei, &GLenum, &GLenum, &GLuint, &GLenum, &GLsizei, &GLchar) -> GLuint
-PFNGLPUSHDEBUGGROUPPROC :: fn(GLenum, GLuint, GLsizei, &GLchar) -> void
+PFNGLDEBUGMESSAGECONTROLPROC :: fn(GLenum, GLenum, GLenum, GLsizei, ^GLuint, GLboolean) -> void
+PFNGLDEBUGMESSAGEINSERTPROC :: fn(GLenum, GLenum, GLuint, GLenum, GLsizei, ^GLchar) -> void
+PFNGLDEBUGMESSAGECALLBACKPROC :: fn(GLDEBUGPROC, ^void) -> void
+PFNGLGETDEBUGMESSAGELOGPROC :: fn(GLuint, GLsizei, ^GLenum, ^GLenum, ^GLuint, ^GLenum, ^GLsizei, ^GLchar) -> GLuint
+PFNGLPUSHDEBUGGROUPPROC :: fn(GLenum, GLuint, GLsizei, ^GLchar) -> void
 PFNGLPOPDEBUGGROUPPROC :: fn() -> void
-PFNGLOBJECTLABELPROC :: fn(GLenum, GLuint, GLsizei, &GLchar) -> void
-PFNGLGETOBJECTLABELPROC :: fn(GLenum, GLuint, GLsizei, &GLsizei, &GLchar) -> void
-PFNGLOBJECTPTRLABELPROC :: fn(&void, GLsizei, &GLchar) -> void
-PFNGLGETOBJECTPTRLABELPROC :: fn(&void, GLsizei, &GLsizei, &GLchar) -> void
-PFNGLGETPOINTERVPROC :: fn(GLenum, &&void) -> void
-PFNGLBUFFERSTORAGEPROC :: fn(GLenum, GLsizeiptr, &void, GLbitfield) -> void
-PFNGLCLEARTEXIMAGEPROC :: fn(GLuint, GLint, GLenum, GLenum, &void) -> void
-PFNGLCLEARTEXSUBIMAGEPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, &void) -> void
-PFNGLBINDBUFFERSBASEPROC :: fn(GLenum, GLuint, GLsizei, &GLuint) -> void
-PFNGLBINDBUFFERSRANGEPROC :: fn(GLenum, GLuint, GLsizei, &GLuint, &GLintptr, &GLsizeiptr) -> void
-PFNGLBINDTEXTURESPROC :: fn(GLuint, GLsizei, &GLuint) -> void
-PFNGLBINDSAMPLERSPROC :: fn(GLuint, GLsizei, &GLuint) -> void
-PFNGLBINDIMAGETEXTURESPROC :: fn(GLuint, GLsizei, &GLuint) -> void
-PFNGLBINDVERTEXBUFFERSPROC :: fn(GLuint, GLsizei, &GLuint, &GLintptr, &GLsizei) -> void
+PFNGLOBJECTLABELPROC :: fn(GLenum, GLuint, GLsizei, ^GLchar) -> void
+PFNGLGETOBJECTLABELPROC :: fn(GLenum, GLuint, GLsizei, ^GLsizei, ^GLchar) -> void
+PFNGLOBJECTPTRLABELPROC :: fn(^void, GLsizei, ^GLchar) -> void
+PFNGLGETOBJECTPTRLABELPROC :: fn(^void, GLsizei, ^GLsizei, ^GLchar) -> void
+PFNGLGETPOINTERVPROC :: fn(GLenum, ^^void) -> void
+PFNGLBUFFERSTORAGEPROC :: fn(GLenum, GLsizeiptr, ^void, GLbitfield) -> void
+PFNGLCLEARTEXIMAGEPROC :: fn(GLuint, GLint, GLenum, GLenum, ^void) -> void
+PFNGLCLEARTEXSUBIMAGEPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, ^void) -> void
+PFNGLBINDBUFFERSBASEPROC :: fn(GLenum, GLuint, GLsizei, ^GLuint) -> void
+PFNGLBINDBUFFERSRANGEPROC :: fn(GLenum, GLuint, GLsizei, ^GLuint, ^GLintptr, ^GLsizeiptr) -> void
+PFNGLBINDTEXTURESPROC :: fn(GLuint, GLsizei, ^GLuint) -> void
+PFNGLBINDSAMPLERSPROC :: fn(GLuint, GLsizei, ^GLuint) -> void
+PFNGLBINDIMAGETEXTURESPROC :: fn(GLuint, GLsizei, ^GLuint) -> void
+PFNGLBINDVERTEXBUFFERSPROC :: fn(GLuint, GLsizei, ^GLuint, ^GLintptr, ^GLsizei) -> void
 PFNGLCLIPCONTROLPROC :: fn(GLenum, GLenum) -> void
-PFNGLCREATETRANSFORMFEEDBACKSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLCREATETRANSFORMFEEDBACKSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLTRANSFORMFEEDBACKBUFFERBASEPROC :: fn(GLuint, GLuint, GLuint) -> void
 PFNGLTRANSFORMFEEDBACKBUFFERRANGEPROC :: fn(GLuint, GLuint, GLuint, GLintptr, GLsizeiptr) -> void
-PFNGLGETTRANSFORMFEEDBACKIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETTRANSFORMFEEDBACKI_VPROC :: fn(GLuint, GLenum, GLuint, &GLint) -> void
-PFNGLGETTRANSFORMFEEDBACKI64_VPROC :: fn(GLuint, GLenum, GLuint, &GLint64) -> void
-PFNGLCREATEBUFFERSPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLNAMEDBUFFERSTORAGEPROC :: fn(GLuint, GLsizeiptr, &void, GLbitfield) -> void
-PFNGLNAMEDBUFFERDATAPROC :: fn(GLuint, GLsizeiptr, &void, GLenum) -> void
-PFNGLNAMEDBUFFERSUBDATAPROC :: fn(GLuint, GLintptr, GLsizeiptr, &void) -> void
+PFNGLGETTRANSFORMFEEDBACKIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETTRANSFORMFEEDBACKI_VPROC :: fn(GLuint, GLenum, GLuint, ^GLint) -> void
+PFNGLGETTRANSFORMFEEDBACKI64_VPROC :: fn(GLuint, GLenum, GLuint, ^GLint64) -> void
+PFNGLCREATEBUFFERSPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLNAMEDBUFFERSTORAGEPROC :: fn(GLuint, GLsizeiptr, ^void, GLbitfield) -> void
+PFNGLNAMEDBUFFERDATAPROC :: fn(GLuint, GLsizeiptr, ^void, GLenum) -> void
+PFNGLNAMEDBUFFERSUBDATAPROC :: fn(GLuint, GLintptr, GLsizeiptr, ^void) -> void
 PFNGLCOPYNAMEDBUFFERSUBDATAPROC :: fn(GLuint, GLuint, GLintptr, GLintptr, GLsizeiptr) -> void
-PFNGLCLEARNAMEDBUFFERDATAPROC :: fn(GLuint, GLenum, GLenum, GLenum, &void) -> void
-PFNGLCLEARNAMEDBUFFERSUBDATAPROC :: fn(GLuint, GLenum, GLintptr, GLsizeiptr, GLenum, GLenum, &void) -> void
-PFNGLMAPNAMEDBUFFERPROC :: fn(GLuint, GLenum) -> &void
-PFNGLMAPNAMEDBUFFERRANGEPROC :: fn(GLuint, GLintptr, GLsizeiptr, GLbitfield) -> &void
+PFNGLCLEARNAMEDBUFFERDATAPROC :: fn(GLuint, GLenum, GLenum, GLenum, ^void) -> void
+PFNGLCLEARNAMEDBUFFERSUBDATAPROC :: fn(GLuint, GLenum, GLintptr, GLsizeiptr, GLenum, GLenum, ^void) -> void
+PFNGLMAPNAMEDBUFFERPROC :: fn(GLuint, GLenum) -> ^void
+PFNGLMAPNAMEDBUFFERRANGEPROC :: fn(GLuint, GLintptr, GLsizeiptr, GLbitfield) -> ^void
 PFNGLUNMAPNAMEDBUFFERPROC :: fn(GLuint) -> GLboolean
 PFNGLFLUSHMAPPEDNAMEDBUFFERRANGEPROC :: fn(GLuint, GLintptr, GLsizeiptr) -> void
-PFNGLGETNAMEDBUFFERPARAMETERIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETNAMEDBUFFERPARAMETERI64VPROC :: fn(GLuint, GLenum, &GLint64) -> void
-PFNGLGETNAMEDBUFFERPOINTERVPROC :: fn(GLuint, GLenum, &&void) -> void
-PFNGLGETNAMEDBUFFERSUBDATAPROC :: fn(GLuint, GLintptr, GLsizeiptr, &void) -> void
-PFNGLCREATEFRAMEBUFFERSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLGETNAMEDBUFFERPARAMETERIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETNAMEDBUFFERPARAMETERI64VPROC :: fn(GLuint, GLenum, ^GLint64) -> void
+PFNGLGETNAMEDBUFFERPOINTERVPROC :: fn(GLuint, GLenum, ^^void) -> void
+PFNGLGETNAMEDBUFFERSUBDATAPROC :: fn(GLuint, GLintptr, GLsizeiptr, ^void) -> void
+PFNGLCREATEFRAMEBUFFERSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLNAMEDFRAMEBUFFERRENDERBUFFERPROC :: fn(GLuint, GLenum, GLenum, GLuint) -> void
 PFNGLNAMEDFRAMEBUFFERPARAMETERIPROC :: fn(GLuint, GLenum, GLint) -> void
 PFNGLNAMEDFRAMEBUFFERTEXTUREPROC :: fn(GLuint, GLenum, GLuint, GLint) -> void
 PFNGLNAMEDFRAMEBUFFERTEXTURELAYERPROC :: fn(GLuint, GLenum, GLuint, GLint, GLint) -> void
 PFNGLNAMEDFRAMEBUFFERDRAWBUFFERPROC :: fn(GLuint, GLenum) -> void
-PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC :: fn(GLuint, GLsizei, &GLenum) -> void
+PFNGLNAMEDFRAMEBUFFERDRAWBUFFERSPROC :: fn(GLuint, GLsizei, ^GLenum) -> void
 PFNGLNAMEDFRAMEBUFFERREADBUFFERPROC :: fn(GLuint, GLenum) -> void
-PFNGLINVALIDATENAMEDFRAMEBUFFERDATAPROC :: fn(GLuint, GLsizei, &GLenum) -> void
-PFNGLINVALIDATENAMEDFRAMEBUFFERSUBDATAPROC :: fn(GLuint, GLsizei, &GLenum, GLint, GLint, GLsizei, GLsizei) -> void
-PFNGLCLEARNAMEDFRAMEBUFFERIVPROC :: fn(GLuint, GLenum, GLint, &GLint) -> void
-PFNGLCLEARNAMEDFRAMEBUFFERUIVPROC :: fn(GLuint, GLenum, GLint, &GLuint) -> void
-PFNGLCLEARNAMEDFRAMEBUFFERFVPROC :: fn(GLuint, GLenum, GLint, &GLfloat) -> void
+PFNGLINVALIDATENAMEDFRAMEBUFFERDATAPROC :: fn(GLuint, GLsizei, ^GLenum) -> void
+PFNGLINVALIDATENAMEDFRAMEBUFFERSUBDATAPROC :: fn(GLuint, GLsizei, ^GLenum, GLint, GLint, GLsizei, GLsizei) -> void
+PFNGLCLEARNAMEDFRAMEBUFFERIVPROC :: fn(GLuint, GLenum, GLint, ^GLint) -> void
+PFNGLCLEARNAMEDFRAMEBUFFERUIVPROC :: fn(GLuint, GLenum, GLint, ^GLuint) -> void
+PFNGLCLEARNAMEDFRAMEBUFFERFVPROC :: fn(GLuint, GLenum, GLint, ^GLfloat) -> void
 PFNGLCLEARNAMEDFRAMEBUFFERFIPROC :: fn(GLuint, GLenum, GLint, GLfloat, GLint) -> void
 PFNGLBLITNAMEDFRAMEBUFFERPROC :: fn(GLuint, GLuint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLint, GLbitfield, GLenum) -> void
 PFNGLCHECKNAMEDFRAMEBUFFERSTATUSPROC :: fn(GLuint, GLenum) -> GLenum
-PFNGLGETNAMEDFRAMEBUFFERPARAMETERIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETNAMEDFRAMEBUFFERATTACHMENTPARAMETERIVPROC :: fn(GLuint, GLenum, GLenum, &GLint) -> void
-PFNGLCREATERENDERBUFFERSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLGETNAMEDFRAMEBUFFERPARAMETERIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETNAMEDFRAMEBUFFERATTACHMENTPARAMETERIVPROC :: fn(GLuint, GLenum, GLenum, ^GLint) -> void
+PFNGLCREATERENDERBUFFERSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLNAMEDRENDERBUFFERSTORAGEPROC :: fn(GLuint, GLenum, GLsizei, GLsizei) -> void
 PFNGLNAMEDRENDERBUFFERSTORAGEMULTISAMPLEPROC :: fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei) -> void
-PFNGLGETNAMEDRENDERBUFFERPARAMETERIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLCREATETEXTURESPROC :: fn(GLenum, GLsizei, &GLuint) -> void
+PFNGLGETNAMEDRENDERBUFFERPARAMETERIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLCREATETEXTURESPROC :: fn(GLenum, GLsizei, ^GLuint) -> void
 PFNGLTEXTUREBUFFERPROC :: fn(GLuint, GLenum, GLuint) -> void
 PFNGLTEXTUREBUFFERRANGEPROC :: fn(GLuint, GLenum, GLuint, GLintptr, GLsizeiptr) -> void
 PFNGLTEXTURESTORAGE1DPROC :: fn(GLuint, GLsizei, GLenum, GLsizei) -> void
@@ -671,79 +671,79 @@ PFNGLTEXTURESTORAGE2DPROC :: fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei) -> vo
 PFNGLTEXTURESTORAGE3DPROC :: fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei, GLsizei) -> void
 PFNGLTEXTURESTORAGE2DMULTISAMPLEPROC :: fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei, GLboolean) -> void
 PFNGLTEXTURESTORAGE3DMULTISAMPLEPROC :: fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei, GLsizei, GLboolean) -> void
-PFNGLTEXTURESUBIMAGE1DPROC :: fn(GLuint, GLint, GLint, GLsizei, GLenum, GLenum, &void) -> void
-PFNGLTEXTURESUBIMAGE2DPROC :: fn(GLuint, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, &void) -> void
-PFNGLTEXTURESUBIMAGE3DPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, &void) -> void
-PFNGLCOMPRESSEDTEXTURESUBIMAGE1DPROC :: fn(GLuint, GLint, GLint, GLsizei, GLenum, GLsizei, &void) -> void
-PFNGLCOMPRESSEDTEXTURESUBIMAGE2DPROC :: fn(GLuint, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, &void) -> void
-PFNGLCOMPRESSEDTEXTURESUBIMAGE3DPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, &void) -> void
+PFNGLTEXTURESUBIMAGE1DPROC :: fn(GLuint, GLint, GLint, GLsizei, GLenum, GLenum, ^void) -> void
+PFNGLTEXTURESUBIMAGE2DPROC :: fn(GLuint, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, ^void) -> void
+PFNGLTEXTURESUBIMAGE3DPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, ^void) -> void
+PFNGLCOMPRESSEDTEXTURESUBIMAGE1DPROC :: fn(GLuint, GLint, GLint, GLsizei, GLenum, GLsizei, ^void) -> void
+PFNGLCOMPRESSEDTEXTURESUBIMAGE2DPROC :: fn(GLuint, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, ^void) -> void
+PFNGLCOMPRESSEDTEXTURESUBIMAGE3DPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, ^void) -> void
 PFNGLCOPYTEXTURESUBIMAGE1DPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei) -> void
 PFNGLCOPYTEXTURESUBIMAGE2DPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei) -> void
 PFNGLCOPYTEXTURESUBIMAGE3DPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei) -> void
 PFNGLTEXTUREPARAMETERFPROC :: fn(GLuint, GLenum, GLfloat) -> void
-PFNGLTEXTUREPARAMETERFVPROC :: fn(GLuint, GLenum, &GLfloat) -> void
+PFNGLTEXTUREPARAMETERFVPROC :: fn(GLuint, GLenum, ^GLfloat) -> void
 PFNGLTEXTUREPARAMETERIPROC :: fn(GLuint, GLenum, GLint) -> void
-PFNGLTEXTUREPARAMETERIIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLTEXTUREPARAMETERIUIVPROC :: fn(GLuint, GLenum, &GLuint) -> void
-PFNGLTEXTUREPARAMETERIVPROC :: fn(GLuint, GLenum, &GLint) -> void
+PFNGLTEXTUREPARAMETERIIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLTEXTUREPARAMETERIUIVPROC :: fn(GLuint, GLenum, ^GLuint) -> void
+PFNGLTEXTUREPARAMETERIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
 PFNGLGENERATETEXTUREMIPMAPPROC :: fn(GLuint) -> void
 PFNGLBINDTEXTUREUNITPROC :: fn(GLuint, GLuint) -> void
-PFNGLGETTEXTUREIMAGEPROC :: fn(GLuint, GLint, GLenum, GLenum, GLsizei, &void) -> void
-PFNGLGETCOMPRESSEDTEXTUREIMAGEPROC :: fn(GLuint, GLint, GLsizei, &void) -> void
-PFNGLGETTEXTURELEVELPARAMETERFVPROC :: fn(GLuint, GLint, GLenum, &GLfloat) -> void
-PFNGLGETTEXTURELEVELPARAMETERIVPROC :: fn(GLuint, GLint, GLenum, &GLint) -> void
-PFNGLGETTEXTUREPARAMETERFVPROC :: fn(GLuint, GLenum, &GLfloat) -> void
-PFNGLGETTEXTUREPARAMETERIIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETTEXTUREPARAMETERIUIVPROC :: fn(GLuint, GLenum, &GLuint) -> void
-PFNGLGETTEXTUREPARAMETERIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLCREATEVERTEXARRAYSPROC :: fn(GLsizei, &GLuint) -> void
+PFNGLGETTEXTUREIMAGEPROC :: fn(GLuint, GLint, GLenum, GLenum, GLsizei, ^void) -> void
+PFNGLGETCOMPRESSEDTEXTUREIMAGEPROC :: fn(GLuint, GLint, GLsizei, ^void) -> void
+PFNGLGETTEXTURELEVELPARAMETERFVPROC :: fn(GLuint, GLint, GLenum, ^GLfloat) -> void
+PFNGLGETTEXTURELEVELPARAMETERIVPROC :: fn(GLuint, GLint, GLenum, ^GLint) -> void
+PFNGLGETTEXTUREPARAMETERFVPROC :: fn(GLuint, GLenum, ^GLfloat) -> void
+PFNGLGETTEXTUREPARAMETERIIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETTEXTUREPARAMETERIUIVPROC :: fn(GLuint, GLenum, ^GLuint) -> void
+PFNGLGETTEXTUREPARAMETERIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLCREATEVERTEXARRAYSPROC :: fn(GLsizei, ^GLuint) -> void
 PFNGLDISABLEVERTEXARRAYATTRIBPROC :: fn(GLuint, GLuint) -> void
 PFNGLENABLEVERTEXARRAYATTRIBPROC :: fn(GLuint, GLuint) -> void
 PFNGLVERTEXARRAYELEMENTBUFFERPROC :: fn(GLuint, GLuint) -> void
 PFNGLVERTEXARRAYVERTEXBUFFERPROC :: fn(GLuint, GLuint, GLuint, GLintptr, GLsizei) -> void
-PFNGLVERTEXARRAYVERTEXBUFFERSPROC :: fn(GLuint, GLuint, GLsizei, &GLuint, &GLintptr, &GLsizei) -> void
+PFNGLVERTEXARRAYVERTEXBUFFERSPROC :: fn(GLuint, GLuint, GLsizei, ^GLuint, ^GLintptr, ^GLsizei) -> void
 PFNGLVERTEXARRAYATTRIBBINDINGPROC :: fn(GLuint, GLuint, GLuint) -> void
 PFNGLVERTEXARRAYATTRIBFORMATPROC :: fn(GLuint, GLuint, GLint, GLenum, GLboolean, GLuint) -> void
 PFNGLVERTEXARRAYATTRIBIFORMATPROC :: fn(GLuint, GLuint, GLint, GLenum, GLuint) -> void
 PFNGLVERTEXARRAYATTRIBLFORMATPROC :: fn(GLuint, GLuint, GLint, GLenum, GLuint) -> void
 PFNGLVERTEXARRAYBINDINGDIVISORPROC :: fn(GLuint, GLuint, GLuint) -> void
-PFNGLGETVERTEXARRAYIVPROC :: fn(GLuint, GLenum, &GLint) -> void
-PFNGLGETVERTEXARRAYINDEXEDIVPROC :: fn(GLuint, GLuint, GLenum, &GLint) -> void
-PFNGLGETVERTEXARRAYINDEXED64IVPROC :: fn(GLuint, GLuint, GLenum, &GLint64) -> void
-PFNGLCREATESAMPLERSPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLCREATEPROGRAMPIPELINESPROC :: fn(GLsizei, &GLuint) -> void
-PFNGLCREATEQUERIESPROC :: fn(GLenum, GLsizei, &GLuint) -> void
+PFNGLGETVERTEXARRAYIVPROC :: fn(GLuint, GLenum, ^GLint) -> void
+PFNGLGETVERTEXARRAYINDEXEDIVPROC :: fn(GLuint, GLuint, GLenum, ^GLint) -> void
+PFNGLGETVERTEXARRAYINDEXED64IVPROC :: fn(GLuint, GLuint, GLenum, ^GLint64) -> void
+PFNGLCREATESAMPLERSPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLCREATEPROGRAMPIPELINESPROC :: fn(GLsizei, ^GLuint) -> void
+PFNGLCREATEQUERIESPROC :: fn(GLenum, GLsizei, ^GLuint) -> void
 PFNGLGETQUERYBUFFEROBJECTI64VPROC :: fn(GLuint, GLuint, GLenum, GLintptr) -> void
 PFNGLGETQUERYBUFFEROBJECTIVPROC :: fn(GLuint, GLuint, GLenum, GLintptr) -> void
 PFNGLGETQUERYBUFFEROBJECTUI64VPROC :: fn(GLuint, GLuint, GLenum, GLintptr) -> void
 PFNGLGETQUERYBUFFEROBJECTUIVPROC :: fn(GLuint, GLuint, GLenum, GLintptr) -> void
 PFNGLMEMORYBARRIERBYREGIONPROC :: fn(GLbitfield) -> void
-PFNGLGETTEXTURESUBIMAGEPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, GLsizei, &void) -> void
-PFNGLGETCOMPRESSEDTEXTURESUBIMAGEPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, &void) -> void
+PFNGLGETTEXTURESUBIMAGEPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, GLsizei, ^void) -> void
+PFNGLGETCOMPRESSEDTEXTURESUBIMAGEPROC :: fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLsizei, ^void) -> void
 PFNGLGETGRAPHICSRESETSTATUSPROC :: fn() -> GLenum
-PFNGLGETNCOMPRESSEDTEXIMAGEPROC :: fn(GLenum, GLint, GLsizei, &void) -> void
-PFNGLGETNTEXIMAGEPROC :: fn(GLenum, GLint, GLenum, GLenum, GLsizei, &void) -> void
-PFNGLGETNUNIFORMDVPROC :: fn(GLuint, GLint, GLsizei, &GLdouble) -> void
-PFNGLGETNUNIFORMFVPROC :: fn(GLuint, GLint, GLsizei, &GLfloat) -> void
-PFNGLGETNUNIFORMIVPROC :: fn(GLuint, GLint, GLsizei, &GLint) -> void
-PFNGLGETNUNIFORMUIVPROC :: fn(GLuint, GLint, GLsizei, &GLuint) -> void
-PFNGLREADNPIXELSPROC :: fn(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLsizei, &void) -> void
-PFNGLGETNMAPDVPROC :: fn(GLenum, GLenum, GLsizei, &GLdouble) -> void
-PFNGLGETNMAPFVPROC :: fn(GLenum, GLenum, GLsizei, &GLfloat) -> void
-PFNGLGETNMAPIVPROC :: fn(GLenum, GLenum, GLsizei, &GLint) -> void
-PFNGLGETNPIXELMAPFVPROC :: fn(GLenum, GLsizei, &GLfloat) -> void
-PFNGLGETNPIXELMAPUIVPROC :: fn(GLenum, GLsizei, &GLuint) -> void
-PFNGLGETNPIXELMAPUSVPROC :: fn(GLenum, GLsizei, &GLushort) -> void
-PFNGLGETNPOLYGONSTIPPLEPROC :: fn(GLsizei, &GLubyte) -> void
-PFNGLGETNCOLORTABLEPROC :: fn(GLenum, GLenum, GLenum, GLsizei, &void) -> void
-PFNGLGETNCONVOLUTIONFILTERPROC :: fn(GLenum, GLenum, GLenum, GLsizei, &void) -> void
-PFNGLGETNSEPARABLEFILTERPROC :: fn(GLenum, GLenum, GLenum, GLsizei, &void, GLsizei, &void, &void) -> void
-PFNGLGETNHISTOGRAMPROC :: fn(GLenum, GLboolean, GLenum, GLenum, GLsizei, &void) -> void
-PFNGLGETNMINMAXPROC :: fn(GLenum, GLboolean, GLenum, GLenum, GLsizei, &void) -> void
+PFNGLGETNCOMPRESSEDTEXIMAGEPROC :: fn(GLenum, GLint, GLsizei, ^void) -> void
+PFNGLGETNTEXIMAGEPROC :: fn(GLenum, GLint, GLenum, GLenum, GLsizei, ^void) -> void
+PFNGLGETNUNIFORMDVPROC :: fn(GLuint, GLint, GLsizei, ^GLdouble) -> void
+PFNGLGETNUNIFORMFVPROC :: fn(GLuint, GLint, GLsizei, ^GLfloat) -> void
+PFNGLGETNUNIFORMIVPROC :: fn(GLuint, GLint, GLsizei, ^GLint) -> void
+PFNGLGETNUNIFORMUIVPROC :: fn(GLuint, GLint, GLsizei, ^GLuint) -> void
+PFNGLREADNPIXELSPROC :: fn(GLint, GLint, GLsizei, GLsizei, GLenum, GLenum, GLsizei, ^void) -> void
+PFNGLGETNMAPDVPROC :: fn(GLenum, GLenum, GLsizei, ^GLdouble) -> void
+PFNGLGETNMAPFVPROC :: fn(GLenum, GLenum, GLsizei, ^GLfloat) -> void
+PFNGLGETNMAPIVPROC :: fn(GLenum, GLenum, GLsizei, ^GLint) -> void
+PFNGLGETNPIXELMAPFVPROC :: fn(GLenum, GLsizei, ^GLfloat) -> void
+PFNGLGETNPIXELMAPUIVPROC :: fn(GLenum, GLsizei, ^GLuint) -> void
+PFNGLGETNPIXELMAPUSVPROC :: fn(GLenum, GLsizei, ^GLushort) -> void
+PFNGLGETNPOLYGONSTIPPLEPROC :: fn(GLsizei, ^GLubyte) -> void
+PFNGLGETNCOLORTABLEPROC :: fn(GLenum, GLenum, GLenum, GLsizei, ^void) -> void
+PFNGLGETNCONVOLUTIONFILTERPROC :: fn(GLenum, GLenum, GLenum, GLsizei, ^void) -> void
+PFNGLGETNSEPARABLEFILTERPROC :: fn(GLenum, GLenum, GLenum, GLsizei, ^void, GLsizei, ^void, ^void) -> void
+PFNGLGETNHISTOGRAMPROC :: fn(GLenum, GLboolean, GLenum, GLenum, GLsizei, ^void) -> void
+PFNGLGETNMINMAXPROC :: fn(GLenum, GLboolean, GLenum, GLenum, GLsizei, ^void) -> void
 PFNGLTEXTUREBARRIERPROC :: fn() -> void
-PFNGLSPECIALIZESHADERPROC :: fn(GLuint, &GLchar, GLuint, &GLuint, &GLuint) -> void
-PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC :: fn(GLenum, &void, GLintptr, GLsizei, GLsizei) -> void
-PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC :: fn(GLenum, GLenum, &void, GLintptr, GLsizei, GLsizei) -> void
+PFNGLSPECIALIZESHADERPROC :: fn(GLuint, ^GLchar, GLuint, ^GLuint, ^GLuint) -> void
+PFNGLMULTIDRAWARRAYSINDIRECTCOUNTPROC :: fn(GLenum, ^void, GLintptr, GLsizei, GLsizei) -> void
+PFNGLMULTIDRAWELEMENTSINDIRECTCOUNTPROC :: fn(GLenum, GLenum, ^void, GLintptr, GLsizei, GLsizei) -> void
 PFNGLPOLYGONOFFSETCLAMPPROC :: fn(GLfloat, GLfloat, GLfloat) -> void
 PFNGLCLAMPCOLORARBPROC :: fn(GLenum, GLenum) -> void
 APIENTRY :: __stdcall
@@ -821,7 +821,7 @@ GL_STENCIL_VALUE_MASK :: 0x0B93
 GL_STENCIL_FAIL :: 0x0B94
 GL_STENCIL_PASS_DEPTH_FAIL :: 0x0B95
 GL_STENCIL_PASS_DEPTH_PASS :: 0x0B96
-GL_STENCIL_REF :: 0x0B97
+GL_STENCIL_&:: 0x0B97
 GL_STENCIL_WRITEMASK :: 0x0B98
 GL_VIEWPORT :: 0x0BA2
 GL_DITHER :: 0x0BD0
@@ -1176,7 +1176,7 @@ GL_CURRENT_PROGRAM :: 0x8B8D
 GL_POINT_SPRITE_COORD_ORIGIN :: 0x8CA0
 GL_LOWER_LEFT :: 0x8CA1
 GL_UPPER_LEFT :: 0x8CA2
-GL_STENCIL_BACK_REF :: 0x8CA3
+GL_STENCIL_BACK_&:: 0x8CA3
 GL_STENCIL_BACK_VALUE_MASK :: 0x8CA4
 GL_STENCIL_BACK_WRITEMASK :: 0x8CA5
 GL_PIXEL_PACK_BUFFER :: 0x88EB
@@ -2148,12 +2148,12 @@ gladGLversionStruct :: struct #copy {
 }
 gladLoadGL :: () -> i32 {
     result : i32 = default
-    __c__gladLoadGL(&result)
+    __c__gladLoadGL(^result)
     return result
 }
 gladLoadGLLoader :: (_0: GLADloadproc) -> i32 {
     result : i32 = default
-    __c__gladLoadGLLoader(&result, _0)
+    __c__gladLoadGLLoader(^result, _0)
     return result
 }
 GLVersion : gladGLversionStruct #extern
@@ -2188,7 +2188,7 @@ glLogicOp : PFNGLLOGICOPPROC #extern #linkname("glad_glLogicOp")
 glStencilFunc : PFNGLSTENCILFUNCPROC #extern #linkname("glad_glStencilFunc")
 glStencilOp : PFNGLSTENCILOPPROC #extern #linkname("glad_glStencilOp")
 glDepthFunc : PFNGLDEPTHFUNCPROC #extern #linkname("glad_glDepthFunc")
-glPixelStoref : PFNGLPIXELSTOREFPROC #extern #linkname("glad_glPixelStoref")
+glPixelSto&: PFNGLPIXELSTOREFPROC #extern #linkname("glad_glPixelStoref")
 glPixelStorei : PFNGLPIXELSTOREIPROC #extern #linkname("glad_glPixelStorei")
 glReadBuffer : PFNGLREADBUFFERPROC #extern #linkname("glad_glReadBuffer")
 glReadPixels : PFNGLREADPIXELSPROC #extern #linkname("glad_glReadPixels")
@@ -2884,5 +2884,5 @@ glClampColorARB : PFNGLCLAMPCOLORARBPROC #extern #linkname("glad_glClampColorARB
 
 #file_scope
 
-__c__gladLoadGL :: (ret: &i32);
-__c__gladLoadGLLoader :: (ret: &i32, _0: GLADloadproc);
+__c__gladLoadGL :: (ret: ^i32);
+__c__gladLoadGLLoader :: (ret: ^i32, _0: GLADloadproc);

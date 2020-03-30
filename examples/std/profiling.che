@@ -42,19 +42,19 @@ ProfileResult :: struct {
 
 Instrumentor :: struct {
     current_session : string
-    output_file     : &FILE
+    output_file     : ^FILE
     profile_count   : int
-    mutex           : &Mutex
+    mutex           : ^Mutex
 }
 
-global_instrumantor : &Instrumentor = null
+global_instrumantor : ^Instrumentor = null
 
 impl Instrumentor {
     init :: (thread_safe: bool) {
         @assert(global_instrumantor == null)
 
 
-        m : &Mutex = if thread_safe {
+        m : ^Mutex = if thread_safe {
             m := alloc(Mutex)
             <<m = Mutex.new()
             m
@@ -65,16 +65,16 @@ impl Instrumentor {
         <<global_instrumantor = Instrumentor("null", null, 0, m)
     }
 
-    get :: () -> &Instrumentor {
+    get :: () -> ^Instrumentor {
         @assert(global_instrumantor != null)
         return global_instrumantor
     }
 
-    begin_session :: (ref Self, name: string, filepath: string = "results.json") {
+    begin_session :: (&Self, name: string, filepath: string = "results.json") {
         current_session = name
         filepath_c := filepath.to_cstring()
         defer free(filepath_c)
-        err := fopen_s(&output_file, filepath_c, "w")
+        err := fopen_s(^output_file, filepath_c, "w")
         if err != 0 {
             io.println("failed to open file")
             output_file = null
@@ -84,7 +84,7 @@ impl Instrumentor {
         write_header()
     }
 
-    end_session :: (ref Self) {
+    end_session :: (&Self) {
         write_footer()
         fclose(output_file)
 
@@ -93,17 +93,17 @@ impl Instrumentor {
         profile_count   = 0
     }
 
-    write_header :: (ref Self) {
+    write_header :: (&Self) {
         fprintf(output_file, "{`"otherData`":{},`"traceEvents`":[")
         fflush(output_file)
     }
 
-    write_footer :: (ref Self) {
+    write_footer :: (&Self) {
         fprintf(output_file, "]}")
         fflush(output_file)
     }
 
-    write_profile :: (ref Self, result: ProfileResult) {
+    write_profile :: (&Self, result: ProfileResult) {
         if mutex != null then mutex.lock()
         defer if mutex != null then mutex.release() else {}
         profile_count += 1
@@ -123,7 +123,7 @@ impl Instrumentor {
         fflush(output_file)
     }
 
-    write_profile_async :: (ref Self, name: string, id: int, time: int, ph: string, thread_id: int) {
+    write_profile_async :: (&Self, name: string, id: int, time: int, ph: string, thread_id: int) {
         if mutex != null then mutex.lock()
         defer if mutex != null then mutex.release() else {}
         profile_count += 1
@@ -157,12 +157,12 @@ impl Timer {
         return Timer(name, get_time_microseconds())
     }
 
-    restart :: (ref Self) {
+    restart :: (&Self) {
         start = get_time_microseconds()
         stopped = false
     }
 
-    stop :: (ref Self) {
+    stop :: (&Self) {
         end := get_time_microseconds()
         dur := end - start
 
@@ -175,7 +175,7 @@ impl Timer {
 }
 
 impl Drop for Timer {
-    drop :: (ref Self) {
+    drop :: (&Self) {
         if !stopped then self.stop()
     }
 }

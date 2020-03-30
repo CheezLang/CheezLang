@@ -17,26 +17,26 @@ vec2 :: Vector2[float]
 vec3 :: Vector3[float]
 vec4 :: Vector4[float]
 
-for_extension_vec4 :: (vec: ref vec4, code: Code) #for {
+for_extension_vec4 :: (vec: &vec4, code: Code) #for {
     { #label _block_all
         { #label _block_x
             it_index := 0
-            it := ref vec.x
+            it := &vec.x
             @insert(code, _continue={break _block_x}, _break={break _block_all})
         }
         { #label _block_y
             it_index := 1
-            it := ref vec.y
+            it := &vec.y
             @insert(code, _continue={break _block_y}, _break={break _block_all})
         }
         { #label _block_z
             it_index := 2
-            it := ref vec.z
+            it := &vec.z
             @insert(code, _continue={break _block_z}, _break={break _block_all})
         }
         { #label _block_w
             it_index := 3
-            it := ref vec.w
+            it := &vec.w
             @insert(code, _continue={break _block_w}, _break={break _block_all})
         }
     }
@@ -44,10 +44,10 @@ for_extension_vec4 :: (vec: ref vec4, code: Code) #for {
 
 gladLoadGL :: () -> i32;
 
-onKeyDown :: (window: &GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
+onKeyDown :: (window: ^GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
 }
 
-on_framebuffer_resize :: (window: &GLFWwindow, w: i32, h: i32) {
+on_framebuffer_resize :: (window: ^GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
 
     width  = cast w
@@ -66,9 +66,9 @@ gl_check_errors :: () {
     }
 }
 
-igListBoxStringArray :: (label: c_string, current_index: &i32, arr: ref Array[String]) -> bool {
-    array_string_getter :: (data: &void, idx: i32, out_text: &c_string) -> bool {
-        arr := ref <<cast(&Array[String]) data
+igListBoxStringArray :: (label: c_string, current_index: ^i32, arr: &Array[String]) -> bool {
+    array_string_getter :: (data: ^void, idx: i32, out_text: ^c_string) -> bool {
+        arr := &<<cast(^Array[String]) data
         if idx < 0 or int(idx) >= arr.get_length() {
             return false
         }
@@ -82,7 +82,7 @@ igListBoxStringArray :: (label: c_string, current_index: &i32, arr: ref Array[St
         return false
     }
 
-    return ImGui.ListBoxFnPtr(label, current_index, array_string_getter, cast &arr, cast arr.get_length())
+    return ImGui.ListBoxFnPtr(label, current_index, array_string_getter, cast ^arr, cast arr.get_length())
 }
 
 width  := 0
@@ -123,7 +123,7 @@ Main :: () {
     {
         w := 0i32
         h := 0i32
-        glfwGetFramebufferSize(window, &w, &h)
+        glfwGetFramebufferSize(window, ^w, ^h)
         width = cast w
         height = cast h
     }
@@ -205,7 +205,7 @@ Main :: () {
         {
             open := true
 
-            ImGui.Begin("Settings", &open, ImGui.ImGuiWindowFlags_.None)
+            ImGui.Begin("Settings", ^open, ImGui.ImGuiWindowFlags_.None)
 
             {
                 delta_time_str := fmt.format_any(delta_time)
@@ -216,12 +216,12 @@ Main :: () {
                 ImGui.LabelText("Fps", fps_counted_str.as_cstring())
             }
 
-            ImGui.ColorPicker3("clear color", cast(&float)&clear_color, 0)
+            ImGui.ColorPicker3("clear color", cast(^float)^clear_color, 0)
             ImGui.Separator()
             
             for component : clear_color {
                 ImGui.PushIDInt(i32(it_index))
-                ImGui.InputFloat("##", &component)
+                ImGui.InputFloat("##", ^component)
                 ImGui.PopID()
             }
 
@@ -233,12 +233,12 @@ Main :: () {
             }
             ImGui.Separator()
 
-            igListBoxStringArray("strings", &strings_selected, strings)
+            igListBoxStringArray("strings", ^strings_selected, strings)
             ImGui.End()
         }
 
         // if show_demo_window then
-        //     ImGui.ShowDemoWindow(&show_demo_window)
+        //     ImGui.ShowDemoWindow(^show_demo_window)
 
         end_frame()
 
@@ -290,13 +290,13 @@ create_dock_space :: () {
     ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.WindowPadding, window_padding)
 
     open := true
-    ImGui.Begin("DockSpace Demo", &open, window_flags)
+    ImGui.Begin("DockSpace Demo", ^open, window_flags)
     ImGui.PopStyleVar()
 
     if opt_fullscreen then ImGui.PopStyleVar(2)
 
     // DockSpace
-    io := ref ImGui.GetIO()
+    io := &ImGui.GetIO()
     if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.DockingEnable)) != 0 {
         dockspace_id := ImGui.GetID("MyDockSpace")
         size := ImGui.ImVec2(0.0f, 0.0f)
@@ -312,13 +312,13 @@ create_dock_space :: () {
         {
             // Disabling fullscreen would allow the window to be moved to the front of other windows,
             // which we can't undo at the moment without finer window depth/z control.
-            //ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
+            //ImGui::MenuItem("Fullscreen", NULL, ^opt_fullscreen_persistant);
 
-            if (ImGui::MenuItem("Flag: NoSplit",                "", (dockspace_flags & ImGuiDockNodeFlags_NoSplit) != 0))                 dockspace_flags ^= ImGuiDockNodeFlags_NoSplit;
-            if (ImGui::MenuItem("Flag: NoResize",               "", (dockspace_flags & ImGuiDockNodeFlags_NoResize) != 0))                dockspace_flags ^= ImGuiDockNodeFlags_NoResize;
-            if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (dockspace_flags & ImGuiDockNodeFlags_NoDockingInCentralNode) != 0))  dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode;
-            if (ImGui::MenuItem("Flag: PassthruCentralNode",    "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0))     dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode;
-            if (ImGui::MenuItem("Flag: AutoHideTabBar",         "", (dockspace_flags & ImGuiDockNodeFlags_AutoHideTabBar) != 0))          dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar;
+            if (ImGui::MenuItem("Flag: NoSplit",                "", (dockspace_flags ^ ImGuiDockNodeFlags_NoSplit) != 0))                 dockspace_flags ^= ImGuiDockNodeFlags_NoSplit;
+            if (ImGui::MenuItem("Flag: NoResize",               "", (dockspace_flags ^ ImGuiDockNodeFlags_NoResize) != 0))                dockspace_flags ^= ImGuiDockNodeFlags_NoResize;
+            if (ImGui::MenuItem("Flag: NoDockingInCentralNode", "", (dockspace_flags ^ ImGuiDockNodeFlags_NoDockingInCentralNode) != 0))  dockspace_flags ^= ImGuiDockNodeFlags_NoDockingInCentralNode;
+            if (ImGui::MenuItem("Flag: PassthruCentralNode",    "", (dockspace_flags ^ ImGuiDockNodeFlags_PassthruCentralNode) != 0))     dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode;
+            if (ImGui::MenuItem("Flag: AutoHideTabBar",         "", (dockspace_flags ^ ImGuiDockNodeFlags_AutoHideTabBar) != 0))          dockspace_flags ^= ImGuiDockNodeFlags_AutoHideTabBar;
             ImGui::Separator();
             if (ImGui::MenuItem("Close DockSpace", NULL, false, p_open != NULL))
                 *p_open = false;
@@ -367,7 +367,7 @@ ShowExampleMenuFile :: () {
     ImGui.Separator()
     if ImGui.BeginMenu("Options") {
         enabled := true #static
-        ImGui.MenuItem_2("Enabled", "", &enabled)
+        ImGui.MenuItem_2("Enabled", "", ^enabled)
 
         size := ImGui.ImVec2(0, 60)
         ImGui.BeginChildStr("child", size, true)
@@ -380,10 +380,10 @@ ShowExampleMenuFile :: () {
         f := 0.5f #static
         n := 0i32 #static
         b := true #static
-        ImGui.SliderFloat("Value", &f, 0.0f, 1.0f)
-        ImGui.InputFloat("Input", &f, 0.1f)
-        ImGui.Combo_2("Combo", &n, "Yes\0No\0Maybe\0\0")
-        ImGui.Checkbox("Check", &b)
+        ImGui.SliderFloat("Value", ^f, 0.0f, 1.0f)
+        ImGui.InputFloat("Input", ^f, 0.1f)
+        ImGui.Combo_2("Combo", ^n, "Yes\0No\0Maybe\0\0")
+        ImGui.Checkbox("Check", ^b)
         ImGui.EndMenu()
     }
     if (ImGui.BeginMenu("Colors"))
@@ -430,7 +430,7 @@ end_frame :: () {
     }
 }
 
-init_imgui :: (window: &GLFWwindow) -> bool {
+init_imgui :: (window: ^GLFWwindow) -> bool {
     context := ImGui.CreateContext(null)
 
     if context == null {
@@ -438,7 +438,7 @@ init_imgui :: (window: &GLFWwindow) -> bool {
         return false
     }
 
-    imgui_io := ref ImGui.GetIO()
+    imgui_io := &ImGui.GetIO()
     imgui_io.ConfigFlags = @bin_or(
         imgui_io.ConfigFlags,
         i32(ImGui.ImGuiConfigFlags_.DockingEnable),
@@ -447,7 +447,7 @@ init_imgui :: (window: &GLFWwindow) -> bool {
     ImGui.StyleColorsDark(null)
 
     // change corners so they are right angles instead of rounded
-    style := ref ImGui.GetStyle()	
+    style := &ImGui.GetStyle()	
     style.WindowRounding = 0.0	
 
     //
