@@ -236,7 +236,7 @@ impl Compiler {
             new_fiber := mem.alloc(FiberContext)
             <<new_fiber = FiberContext(
                 fiber   = Fiber.new(cast(Fn(^FiberContext)) self.fiber_func, new_fiber)
-                interp  = Interpreter.new()
+                interp  = Interpreter.new(error_handler)
             )
             fibers.add(new_fiber)
             return new_fiber

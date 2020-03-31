@@ -78,7 +78,11 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         }
 
         AstDecl($decl) -> {
-            pretty_print_ast_helper(result, decl.pattern)
+            if decl.pattern != null {
+                pretty_print_ast_helper(result, <<decl.pattern)
+            } else {
+                result += "_"
+            }
             result += " :"
             if decl.type_expr != null then {
                 result += " "
@@ -211,6 +215,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         }
 
         AstFor($forr) -> {
+            result += "for "
             if forr.it_name != null then
                 pretty_print_ast_helper(result, <<forr.it_name)
             if forr.index_name != null {
@@ -220,7 +225,9 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
                 pretty_print_ast_helper(result, <<forr.index_name)
             }
 
-            result += " : "
+            if forr.it_name != null or forr.index_name != null {
+                result += " : "
+            }
             pretty_print_ast_helper(result, forr.collection)
             result += " do "
             pretty_print_ast_helper(result, forr.body)

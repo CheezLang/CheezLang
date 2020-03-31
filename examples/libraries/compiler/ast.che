@@ -27,7 +27,7 @@ AstConstDecl :: struct AstNode {
 impl AstNode for AstConstDecl {}
 
 AstDecl :: struct AstNode {
-    pattern     : &AstNode
+    pattern     : ^AstNode
     type_expr   : ^AstNode
     value_expr  : ^AstNode
 }
@@ -123,7 +123,7 @@ AstUnary :: struct AstNode {
     operator    : UnOp
     sub         : &AstNode
 
-    UnOp :: enum #copy { Neg, Not }
+    UnOp :: enum #copy { Neg, Not, Ref, RefMut, Ptr }
 }
 impl AstNode for AstUnary {}
 
@@ -246,9 +246,12 @@ impl AstBinary.BinOp {
 impl AstUnary.UnOp {
     lexeme :: (Self) -> string {
         return match self {
-            .Neg -> "-"
-            .Not -> "!"
-            _ -> @assert(false)
+            .Neg    -> "-"
+            .Not    -> "!"
+            .Ref    -> "&"
+            .RefMut -> "&mut "
+            .Ptr    -> "^"
+            _       -> @assert(false)
         }
     }
 }

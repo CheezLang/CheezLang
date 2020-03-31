@@ -306,7 +306,7 @@ impl CompilationJob for CompileGlobalNodeJob {
     compile_const_decl :: (&Self, decl: &AstConstDecl) -> &AstNode {
         decl.value_expr.scope = decl.scope
 
-        name := match &decl.pattern {
+        name := match decl.pattern {
             AstIdentifier($id) -> id.name
             _ -> {
                 compiler.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
@@ -372,9 +372,9 @@ impl CompilationJob for LoadFileJob {
 
                         if const DEBUG_JOBS {
                             dump := dump_ast(<<decl)
-                            io.println(dump)
+                            g_logger.log("{}", [dump])
                             dump = pretty_print_ast(<<decl)
-                            io.println(dump)
+                            g_logger.log("{}", [dump])
                         }
 
                         compiler.add_job(CompileGlobalNodeJob.new(decl))

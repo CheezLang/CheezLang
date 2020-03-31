@@ -69,7 +69,8 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         AstDecl($decl) -> {
             fmt.format_into(result, "AstDecl #{} ({})`n", [decl.id, decl.location])
             if recurse {
-                dump_ast_helper(result, decl.pattern, recurse, indent + 1)
+                if decl.pattern != null then
+                    dump_ast_helper(result, <<decl.pattern, recurse, indent + 1)
                 if decl.type_expr != null then
                     dump_ast_helper(result, <<decl.type_expr, recurse, indent + 1)
                 if decl.value_expr != null then

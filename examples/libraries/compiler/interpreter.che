@@ -139,11 +139,11 @@ Interpreter :: struct {
     frames          : [1024 * 8]StackFrame
     stack           : [1024 * 1024]int
     strings         : StringDatabase
-    error_handler   : ^ErrorHandler = null
+    error_handler   : ^ErrorHandler
 }
 
 impl Interpreter {
-    new :: () -> ^Interpreter {
+    new :: (error_handler: ^ErrorHandler) -> ^Interpreter {
         interp := mem.alloc(Interpreter)
         <<interp = Interpreter(
             sp          = 0
@@ -151,6 +151,7 @@ impl Interpreter {
             frames      = default
             stack       = default
             strings     = StringDatabase.new()
+            error_handler = error_handler
         )
         return interp
     }
@@ -189,12 +190,29 @@ impl Interpreter {
         }
 
         _fp, _sp := fp, sp
-        defer { if const DEBUG_INTERPRETER then g_logger.log("push_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp]) }
 
         if fp >= 0 {
             sp += frames[fp].sp - frames[fp].bp
         }
         fp += 1
+
+        if sp - arg_count < 0 {
+            g_logger.log("[INTERP] Trying to call function with {} arguments but not enough arguments are on the stack (sp = {})", [arg_count, sp])
+            // frame := &frames[fp]
+            // g_logger.log("[INTERP] {}:{}:{}: Trying to call function with {} arguments but not enough arguments are on the stack at (fp={}, sp={}, ip={}) {}           {}", [
+            //     arg_count
+            //     frame.func.debug_info.path.slice()
+            //     frame.func.debug_info.get_line_for_ip(frame.ip_prev)
+            //     5 // @todo: this is the column, read from debug info
+            //     fp
+            //     frame.sp
+            //     frame.ip_prev
+            //     Instruction.pretty_print(frame.code[frame.ip_prev..])
+            //     frame.dump_stack()
+            // ], "stdout")
+            return
+        }
+
         frames[fp] = StackFrame(
             ip = 0
             sp = arg_count
@@ -203,6 +221,10 @@ impl Interpreter {
             stack = stack[sp-arg_count .. ]
             func = func
         )
+
+        if const DEBUG_INTERPRETER {
+            g_logger.log("push_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp])
+        }
     }
 
     push_native_frame :: (&Self, arg_count: int) {
@@ -422,11 +444,11 @@ impl Interpreter {
                 wait_until(func.bytecode != null, {
                     error_handler.report_error("Failed to execute bytecode")
                     error_handler.report_error("Failed to execute bytecode: {}{}{}{}{}{}{}{}{}{}{}{}", [
-                        fmt.align(30), frame.func.debug_info.get_line_for_ip(frame.ip)
+                        fmt.align(30), frame.func.debug_info.get_line_for_ip(frame.ip_prev)
                         fmt.align(35), fp
                         fmt.align(40), frame.sp
-                        fmt.align(46), frame.ip
-                        fmt.align(54), Instruction.pretty_print(frame.code[frame.ip..])
+                        fmt.align(46), frame.ip_prev
+                        fmt.align(54), Instruction.pretty_print(frame.code[frame.ip_prev..])
                         fmt.align(74), frame.dump_stack()
                     ])
                     return .Done

@@ -119,6 +119,13 @@ impl Lexer {
         return Ok(l)
     }
 
+    current_location :: (&Self) -> Location {
+        return match &peek {
+            Some($tok) -> tok.location
+            None -> location
+        }
+    }
+
     expect_token :: (&Self, typ: TokenType) -> bool, Token {
         token := next_token()
         if int(token.typ) == int(typ) {
