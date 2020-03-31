@@ -269,17 +269,18 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_identifier :: (&Self, id: &AstIdentifier) {
         builder.set_current_line(id.location.line)
-        match function.get_parameter(id.name) {
-            Some($param) -> {
-                builder.build_load_local(-1)
-            }
+        builder.build_const(0)
+        // match function.get_parameter(id.name) {
+        //     Some($param) -> {
+        //         builder.build_load_local(-1)
+        //     }
 
-            None -> {
-                msg := fmt.format("Unknown identifier '{}'", [id.name])
-                error_handler.report_error_at(id.location, msg.slice())
-                builder.build_panic(msg.slice())
-            }
-        }
+        //     None -> {
+        //         msg := fmt.format("Unknown identifier '{}'", [id.name])
+        //         error_handler.report_error_at(id.location, msg.slice())
+        //         builder.build_panic(msg.slice())
+        //     }
+        // }
     }
 }
 

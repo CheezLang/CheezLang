@@ -85,22 +85,6 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             }
         }
 
-        AstMove($move) -> {
-            fmt.format_into(result, "AstMove #{} ({})`n", [move.id, move.location])
-            if recurse {
-                dump_ast_helper(result, move.target, recurse, indent + 1)
-                dump_ast_helper(result, move.source, recurse, indent + 1)
-            }
-        }
-
-        AstPipe($pipe) -> {
-            fmt.format_into(result, "AstPipe #{} ({})`n", [pipe.id, pipe.location])
-            if recurse {
-                dump_ast_helper(result, pipe.left, recurse, indent + 1)
-                dump_ast_helper(result, pipe.right, recurse, indent + 1)
-            }
-        }
-
         AstBlock($block) -> {
             fmt.format_into(result, "AstBlock #{} ({})`n", [block.id, block.location])
             if recurse {
@@ -154,16 +138,16 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             }
         }
 
-        AstParameter($param) -> {
-            fmt.format_into(result, "AstParameter #{} ({})`n", [param.id, param.location])
-            if recurse {
-                dump_ast_helper(result, param.name, recurse, indent + 1)
-                dump_ast_helper(result, <<param.type_expr, recurse, indent + 1)
+        // AstParameter($param) -> {
+        //     fmt.format_into(result, "AstParameter #{} ({})`n", [param.id, param.location])
+        //     if recurse {
+        //         dump_ast_helper(result, param.name, recurse, indent + 1)
+        //         dump_ast_helper(result, <<param.type_expr, recurse, indent + 1)
 
-                if param.default_value != null then
-                    dump_ast_helper(result, <<param.default_value, recurse, indent + 1)
-            }
-        }
+        //         if param.default_value != null then
+        //             dump_ast_helper(result, <<param.default_value, recurse, indent + 1)
+        //     }
+        // }
 
         AstCall($call) -> {
             fmt.format_into(result, "AstCall #{} ({})`n", [call.id, call.location])
@@ -237,8 +221,62 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             }
         }
 
+        AstImport($imp) -> {
+            fmt.format_into(result, "AstImport #{} ({})`n", [imp.id, imp.location])
+            if recurse {
+                dump_ast_helper(result, imp.path, recurse, indent + 1)
+            }
+        }
+
+        AstMatch($mat) -> {
+            fmt.format_into(result, "AstMatch #{} ({})`n", [mat.id, mat.location])
+            if recurse {
+                dump_ast_helper(result, mat.value_expr, recurse, indent + 1)
+                // @todo
+            }
+        }
+
+        AstTuple($tuple) -> {
+            fmt.format_into(result, "AstTuple #{} ({})`n", [tuple.id, tuple.location])
+            if recurse {
+                for val : tuple.values {
+                    dump_ast_helper(result, <<val, recurse, indent + 1)
+                }
+            }
+        }
+
+        AstArray($array) -> {
+            fmt.format_into(result, "AstArray #{} ({})`n", [array.id, array.location])
+            if recurse {
+                for val : array.values {
+                    dump_ast_helper(result, <<val, recurse, indent + 1)
+                }
+            }
+        }
+
+        AstDot($dot) -> {
+            fmt.format_into(result, "AstDot #{} ({})`n", [dot.id, dot.location])
+            if recurse {
+                if dot.sub != null then
+                    dump_ast_helper(result, <<dot.sub, recurse, indent + 1)
+                dump_ast_helper(result, dot.name, recurse, indent + 1)
+            }
+        }
+
+        AstIndex($index) -> {
+            fmt.format_into(result, "AstIndex #{} ({})`n", [index.id, index.location])
+            if recurse {
+                dump_ast_helper(result, index.sub, recurse, indent + 1)
+                dump_ast_helper(result, index.index, recurse, indent + 1)
+            }
+        }
+
         $node -> {
-            result += "<ERROR> not implemented`n"
+            // if ^node == null {
+            //     @assert(false)
+            // }
+            // fmt.format_into(result, "[ERROR] {}: node type not implemented: {}`n", [0, ^node])
+            fmt.format_into(result, "[ERROR] {}: node type not implemented`n", [0])
         }
     }
 }

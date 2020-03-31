@@ -59,7 +59,7 @@ AstFunction :: struct AstNode {
     param_scope : ^Scope
     name        := "#anonymous"
 
-    params      : Array[^AstParameter]
+    params      : Array[^AstDecl]
     body        : ^AstNode
 
     bytecode    : ^CBCFunction = null
@@ -71,13 +71,6 @@ AstArgument :: struct AstNode {
     value_expr  : &AstNode
 }
 impl AstNode for AstArgument {}
-
-AstParameter :: struct AstNode {
-    name            : &AstIdentifier
-    type_expr       : ^AstNode
-    default_value   : ^AstNode
-}
-impl AstNode for AstParameter {}
 
 AstBlock :: struct AstNode {
     sub_scope   : ^Scope
@@ -140,18 +133,6 @@ AstAssignment :: struct AstNode {
 }
 impl AstNode for AstAssignment {}
 
-AstMove :: struct AstNode {
-    target : &AstNode
-    source : &AstNode
-}
-impl AstNode for AstMove {}
-
-AstPipe :: struct AstNode {
-    left  : &AstNode
-    right : &AstNode
-}
-impl AstNode for AstPipe {}
-
 AstIf :: struct AstNode {
     condition   : &AstNode
     true_case   : &AstNode
@@ -210,33 +191,30 @@ AstArray :: struct AstNode {
 impl AstNode for AstArray {}
 
 AstDot :: struct AstNode {
-    name    : &AstIdentifier
     sub     : ^AstNode
+    name    : &AstIdentifier
 }
 impl AstNode for AstDot {}
 
 AstIndex :: struct AstNode {
     sub     : &AstNode
-    name    : &AstNode
+    index   : &AstNode
 }
 impl AstNode for AstIndex {}
 
-AstRange :: struct AstNode {
-    from    : ^AstNode
-    to      : ^AstNode
-}
-impl AstNode for AstRange {}
-
-impl AstFunction {
-    get_parameter :: (&Self, name: string) -> Option[&AstParameter] {
-        for p : params {
-            if p.name.name == name {
-                return Some(<<p)
-            }
-        }
-        return None
-    }
-}
+// impl AstFunction {
+//     get_parameter :: (&Self, name: string) -> Option[&AstDecl] {
+//         for p : params {
+//             match p.name {
+//                 AstIdentifier($)
+//             }
+//             if p.name.name == name {
+//                 return Some(<<p)
+//             }
+//         }
+//         return None
+//     }
+// }
 
 impl AstBinary.BinOp {
     lexeme :: (Self) -> string {
@@ -274,44 +252,3 @@ impl AstUnary.UnOp {
         }
     }
 }
-
-// impl Printable for AstNode {
-//     print :: (&Self, str: &String, format: string) {
-//         match self {
-//             AstIdentifier($expr)     -> str.appendf("{}", expr.name)
-//             AstNumberLiteral($expr) -> str.appendf("{}", expr.value)
-//             BinaryExpr($expr) -> str.append_printables("({} {} {})", [^expr.left, ^expr.op, ^expr.right])
-//             UnaryExpr($expr)  -> str.append_printables("{}{}", [^expr.op, ^expr.sub])
-//             MoveExpr($expr)   -> str.append_printables("({} <- {})", [^expr.target, ^expr.source])
-//             PipeExpr($expr)   -> str.append_printables("{} | {}", [^expr.left, ^expr.right])
-//         }
-//     }
-// }
-
-// impl Printable for Stmt {
-//     print :: (&Self, str: &String, format: string) {
-//         match self {
-//             DeclStmt($stmt) -> {
-//                 str.append_printables("{} :", [^stmt.pattern])
-
-//                 match &stmt.typ {
-//                     Some($expr) -> {
-//                         str.append_printables(" {} ", [^expr])
-//                     }
-//                 }
-
-//                 str.append_char(if stmt.is_const then ':' else '=')
-
-//                 match &stmt.init {
-//                     Some($expr) -> {
-//                         str.append_printables(" {}", [^expr])
-//                     }
-//                 }
-//             }
-
-//             UseStmt($stmt) -> {
-//                 str.append_printables("use {}", [^stmt.expr])
-//             }
-//         }
-//     }
-// }

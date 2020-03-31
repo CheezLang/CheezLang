@@ -193,6 +193,23 @@ impl(T: type) Array[T] {
     iterator :: (&Self) -> ArrayIterator[T] {
         return ArrayIterator[T](self, 0)
     }
+
+    // change_type :: (Self, $T2: type) -> Array[T2] {
+    //     @static_assert(@sizeof(T) == @sizeof(T2))
+    //     result := Array[T2](
+    //         data        = cast data
+    //         capacity    = capacity
+    //         length      = length
+    //         allocator   = allocator
+    //     )
+
+    //     self.data = null
+    //     self.capacity = 0
+    //     self.length = 0
+    //     self.allocator = null
+
+    //     return result
+    // }
 }
 
 // @todo: only apply this impl if T is default constructable, e.g.:

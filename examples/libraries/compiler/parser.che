@@ -45,6 +45,7 @@ impl Parser {
     }
 
     parse_node :: (&Self) -> ^AstNode {
+        lexer.skip_whitespace()
         if check_token(.EOF) {
             return null
         }
@@ -141,43 +142,47 @@ impl Parser {
         return expr
     }
 
-    parse_binary :: (&Self, allow_comma: bool, precedence: int = int.min) -> ^AstNode {
+    parse_binary :: (&Self, allow_comma: bool, precedence: int = int.min, left_associative: bool = true) -> ^AstNode {
         expr := parse_unary(allow_comma)
 
         loop {
             next := lexer.peek_token()
 
-            op, pre := match next.typ {
-                .ReverseArrow   -> AstBinary.BinOp.Move,         2
+            op, pre, left_asso := match next.typ {
+                .ReverseArrow   -> AstBinary.BinOp.Move,         3, false
+                .Pipe           -> AstBinary.BinOp.Pipe,         3, true
 
-                .Pipe           -> AstBinary.BinOp.Pipe,         3
+                .KwAnd          -> AstBinary.BinOp.And,          4, true
+                .KwOr           -> AstBinary.BinOp.Or,           4, true
 
-                .KwAnd          -> AstBinary.BinOp.And,          4
-                .KwOr           -> AstBinary.BinOp.Or,           4
+                .Less           -> AstBinary.BinOp.Less,         5, true
+                .LessEqual      -> AstBinary.BinOp.LessEq,       5, true
+                .Greater        -> AstBinary.BinOp.Greater,      5, true
+                .GreaterEqual   -> AstBinary.BinOp.GreaterEq,    5, true
+                .DoubleEqual    -> AstBinary.BinOp.Equal,        5, true
+                .NotEqual       -> AstBinary.BinOp.NotEqual,     5, true
 
-                .Less           -> AstBinary.BinOp.Less,         5
-                .LessEqual      -> AstBinary.BinOp.LessEq,       5
-                .Greater        -> AstBinary.BinOp.Greater,      5
-                .GreaterEqual   -> AstBinary.BinOp.GreaterEq,    5
-                .DoubleEqual    -> AstBinary.BinOp.Equal,        5
-                .NotEqual       -> AstBinary.BinOp.NotEqual,     5
+                .PeriodPeriod   -> AstBinary.BinOp.Range,        6, true
+                .PeriodPeriodEq -> AstBinary.BinOp.RangeIncl,    6, true
 
-                .PeriodPeriod   -> AstBinary.BinOp.Range,        6
-                .PeriodPeriodEq -> AstBinary.BinOp.RangeIncl,    6
+                .Plus           -> AstBinary.BinOp.Add,          7, true
+                .Minus          -> AstBinary.BinOp.Sub,          7, true
 
-                .Plus           -> AstBinary.BinOp.Add,          7
-                .Minus          -> AstBinary.BinOp.Sub,          7
-
-                .Asterisk       -> AstBinary.BinOp.Mul,          8
-                .ForwardSlash   -> AstBinary.BinOp.Div,          8
-                .Percent        -> AstBinary.BinOp.Mod,          8
+                .Asterisk       -> AstBinary.BinOp.Mul,          8, true
+                .ForwardSlash   -> AstBinary.BinOp.Div,          8, true
+                .Percent        -> AstBinary.BinOp.Mod,          8, true
 
                 _ -> {
                     return expr
                 }
             }
 
-            if pre <= precedence {
+            if pre == precedence and left_asso != left_associative {
+                error_handler.report_error_at(next.location, "Ambigious operator precedence. Use parenthesis to disambiguate")
+                return expr
+            }
+
+            if (left_asso and pre <= precedence) or (!left_asso and pre < precedence) {
                 return expr
             }
 
@@ -185,7 +190,7 @@ impl Parser {
             lexer.skip_whitespace()
 
             id := next_id()
-            right := parse_binary(allow_comma, pre)
+            right := parse_binary(allow_comma, pre, left_asso)
             location := expr.location.to(right.location)
             expr = allocate(AstBinary(
                 id          = id
@@ -211,14 +216,23 @@ impl Parser {
             match lexer.peek_token().typ {
                 .OpenParen -> {
                     id := next_id()
-                    args, beg, end := parse_argument_list(allow_comma)
-                    location := expr.location
-                    location.end_line = end.end_line
+                    args, beg, end := parse_argument_list()
                     expr = allocate(AstCall(
                         id          = id
-                        location    = location
+                        location    = expr.location.to(end)
                         function    = <<expr
                         arguments   = args
+                    ))
+                }
+
+                .Period -> {
+                    lexer.next_token()
+                    name := try(parse_identifier())
+                    expr = allocate(AstDot(
+                        id          = next_id()
+                        location    = expr.location.to(name.location)
+                        sub         = expr
+                        name        = <<name
                     ))
                 }
 
@@ -266,24 +280,6 @@ impl Parser {
             location    = location
             sub_scope   = null
             children    = children
-        ))
-    }
-
-    parse_function :: (&Self, allow_comma: bool) -> ^AstNode {
-        id := next_id()
-
-        params, location, _ := parse_parameter_list(allow_comma)
-
-        body := try(parse_block())
-
-        location.end_line = body.location.end_line
-
-        return allocate(AstFunction(
-            id          = id
-            location    = location
-            param_scope = null
-            params      = params
-            body        = body
         ))
     }
 
@@ -339,6 +335,8 @@ impl Parser {
 
         location := consume(.KwFor).location
 
+        // @todo: parse names
+
         collection := parse_expression(false)
         body := parse_block()
 
@@ -358,6 +356,8 @@ impl Parser {
 
         location := consume(.KwBreak).location
 
+        // @todo: parse optional label and expression
+
         // location.end_line = body.location.end_line
         return allocate(AstBreak(
             id          = id
@@ -371,6 +371,8 @@ impl Parser {
         id := next_id()
 
         location := consume(.KwContinue).location
+
+        // @todo: parse optional label
 
         // location.end_line = body.location.end_line
         return allocate(AstContinue(
@@ -397,6 +399,8 @@ impl Parser {
 
         location := consume(.KwReturn).location
 
+        // @todo: parse optional expression
+
         // location.end_line = body.location.end_line
         return allocate(AstReturn(
             id          = id
@@ -405,9 +409,11 @@ impl Parser {
         ))
     }
 
-    parse_tuple :: (&Self) -> ^AstNode {
+    parse_parenthesized :: (&Self) -> ^AstNode {
         beg := consume(.OpenParen).location
 
+        decl_count := 0
+        ends_in_comma := false
         values := Array[^AstNode].create()
         loop {
             next := lexer.peek_token()
@@ -416,9 +422,16 @@ impl Parser {
             }
 
             expr := parse_expression(false)
+            ends_in_comma = false
 
             if expr != null {
                 values.add(expr)
+
+                match &<<expr {
+                    AstDecl($decl) -> {
+                        decl_count += 1
+                    }
+                }
             }
 
             next = lexer.peek_token()
@@ -427,12 +440,39 @@ impl Parser {
             }
 
             consume(.Comma)
+            ends_in_comma = true
             lexer.skip_whitespace()
         }
 
         end := consume(.ClosingParen).location
 
-        // @todo: parse function here?
+        // @todo: parse function if return type '->'
+
+        // parse as function if followed by {
+        if check_token(.OpenBrace) {
+            if decl_count == values.count() {
+                io.println("all params are decls, parsing body")
+
+                params := Array[^AstDecl].create()
+                for e : values {
+                    params.add(cast(^AstDecl) e)
+                }
+
+                body := parse_block()
+
+                return allocate(AstFunction(
+                    id          = next_id()
+                    location    = beg.to(body.location)
+                    param_scope = null
+                    params      = params
+                    body        = body
+                ))
+            }
+        }
+
+        if values.count() == 1 and !ends_in_comma {
+            return values[0]
+        }
 
         return allocate(AstTuple(
             id          = next_id()
@@ -450,7 +490,7 @@ impl Parser {
             .KwTrue         -> parse_bool()
             .KwFalse        -> parse_bool()
             .StringLiteral  -> parse_string()
-            .OpenParen      -> parse_tuple()
+            .OpenParen      -> parse_parenthesized()
             .KwIf           -> parse_if(allow_comma)
             .KwLoop         -> parse_loop(allow_comma)
             .KwFor          -> parse_for(allow_comma)
@@ -528,55 +568,27 @@ impl Parser {
         ))
     }
 
-    parse_parameter :: (&Self, allow_comma: bool) -> ^AstParameter {
+    parse_argument :: (&Self) -> ^AstArgument {
         id := next_id()
 
-        name            : ^AstIdentifier = null
-        type_expr       : ^AstNode       = null
-        default_vaule   : ^AstNode       = null
+        name : ^AstIdentifier = null
+        expr := try(parse_expression(false))
 
-        expr := try(parse_expression(allow_comma))
-        location := expr.location
-
-        if check_token(.Colon) {
+        if check_token(.Equal) {
             match &<<expr {
                 AstIdentifier($id) -> {
                     name = ^id
                 }
+
                 _ -> {
-                    error_handler.report_error_at(expr.location, "Name of parameter must be an identifier", [])
-                    return null
+                    error_handler.report_error_at(expr.location, "Name of argument must be an identifier")
                 }
             }
 
-            consume(.Colon)
+            lexer.next_token()
             lexer.skip_whitespace()
-            type_expr = parse_expression(allow_comma)
-        } else {
-            type_expr = expr
+            expr = try(parse_expression(false))
         }
-
-        end := type_expr.location
-
-        if name == null {
-            error_handler.report_error_at(location, "Parameter has no name", [])
-            return null
-        }
-
-        return allocate(AstParameter(
-            id              = id
-            location        = location.to(end)
-            name            = <<name
-            type_expr       = type_expr
-            default_value   = default_vaule
-        ))
-    }
-
-    parse_argument :: (&Self, allow_comma: bool) -> ^AstArgument {
-        id := next_id()
-
-        name : ^AstIdentifier = null
-        expr := try(parse_expression(allow_comma))
 
         return allocate(AstArgument(
             id              = id
@@ -586,39 +598,7 @@ impl Parser {
         ))
     }
 
-    parse_parameter_list :: (&Self, allow_comma: bool) -> Array[^AstParameter], Location, Location {
-        params := Array[^AstParameter].create()
-
-        beg := consume(.OpenParen).location
-        lexer.skip_whitespace()
-
-        loop {
-            next := lexer.peek_token()
-            if next.typ == .ClosingParen or next.typ == .EOF {
-                break
-            }
-
-            param := parse_parameter(allow_comma)
-
-            if param != null{
-                params.add(param)
-            }
-
-            next = lexer.peek_token()
-            if next.typ == .ClosingParen or next.typ == .EOF {
-                break
-            }
-
-            consume(.Comma)
-            lexer.skip_whitespace()
-        }
-
-        end := consume(.ClosingParen).location
-
-        return params, beg, end
-    }
-
-    parse_argument_list :: (&Self, allow_comma: bool) -> Array[^AstArgument], Location, Location {
+    parse_argument_list :: (&Self) -> Array[^AstArgument], Location, Location {
         args := Array[^AstArgument].create()
 
         beg := consume(.OpenParen).location
@@ -630,7 +610,7 @@ impl Parser {
                 break
             }
 
-            arg := parse_argument(allow_comma)
+            arg := parse_argument()
             if arg == null {
                 return args, beg, beg
             }
