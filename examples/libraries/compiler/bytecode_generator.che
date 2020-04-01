@@ -121,8 +121,6 @@ impl CodeGenerator for ByteCodeGenerator {
         index := builder.add_local(decl.id, decl.name, decl.var_type.size)
         variables[decl.id] = index
 
-        g_logger.log("type_size: {}", [decl.var_type.size])
-
         if decl.value_expr != null {
             generate_expression(<<decl.value_expr)
             builder.build_store_local(index)

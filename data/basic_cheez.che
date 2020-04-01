@@ -50,4 +50,13 @@ Main :: () {
     y := 5
 
     print(x, y)
+
+    foo()
+}
+
+foo :: () {
+    x := "lol"
+    b := 69
+
+    print(x, b)
 }

@@ -63,12 +63,12 @@ impl Scope {
         return Ok()
     }
 
-    define_native_function :: (&Self, name: string, func: NativeFunction) -> Result[(), ()] {
+    define_native_function :: (&Self, name: string, typ: ^TypeInfo, func: NativeFunction) -> Result[(), ()] {
         if symbols.contains(name) {
             return Err()
         }
 
-        symbols[name] = Symbol.NativeFunc(func)
+        symbols[name] = Symbol.NativeFunc(typ, func)
 
         return Ok()
     }
@@ -94,7 +94,7 @@ Symbol :: enum #copy {
     ConstDecl   : ^AstConstDecl
     Val         : (typ: ^TypeInfo, value: Value)
     Func        : ^AstFunction
-    NativeFunc  : NativeFunction
+    NativeFunc  : (typ: ^TypeInfo, func: NativeFunction)
 }
 
 #file_scope

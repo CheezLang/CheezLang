@@ -323,8 +323,8 @@ impl CheezDebugAdapter {
 
     compile_cheez_program :: (&Self, path: string) {
         compiler = Compiler.new(1, ^self)
-        compiler.get().global_scope.define_native_function("print", cast(NativeFunction) self.print)
-        compiler.get().global_scope.define_native_function("debugbreak", cast(NativeFunction) self.debug_break)
+        compiler.get().global_scope.define_native_function("print", @type_info(void), cast(NativeFunction) self.print)
+        compiler.get().global_scope.define_native_function("debugbreak", @type_info(void), cast(NativeFunction) self.debug_break)
         compiler.get().code_runner = debugger.clone().change_type(CodeRunner)
         compiler.get().add_job(LoadFileJob.new(path.to_owned()))
         compiler.get().start_compilation()

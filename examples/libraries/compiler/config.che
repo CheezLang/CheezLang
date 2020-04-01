@@ -5,4 +5,4 @@ DEBUG_INTERPRETER   :: true
 DEBUG_JOBS          :: true
 DEBUG_PARSER        :: false
 DEBUG_WAIT          :: false
-VALIDATE_AST        :: false
+VALIDATE_AST        :: true

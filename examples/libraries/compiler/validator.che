@@ -23,19 +23,113 @@ use import value
 
 #export_scope
 
-validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) {
+validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
     match node {
-        // AstConstDecl($node) -> {
+        AstConstDecl($node) -> {
+            assert("AstConstDecl", node.typ == @type_info(void))
+            assert("AstConstDecl", node.var_type != null)
 
-        // }
+            if node.type_expr != null and !validate_node(<<node.type_expr, error_handler) {
+                return false
+            }
+
+            if !validate_node(node.value_expr, error_handler) {
+                return false
+            }
+        }
+
+        AstDecl($node) -> {
+            assert("AstDecl", node.typ == @type_info(void))
+            assert("AstDecl", node.var_type != null)
+
+            if node.type_expr != null and !validate_node(<<node.type_expr, error_handler) {
+                return false
+            }
+
+            if node.value_expr != null and !validate_node(<<node.value_expr, error_handler) {
+                return false
+            }
+        }
+
+        AstFunction($node) -> {
+            // assert("AstFunction", node.typ != null) // @todo
+            // @todo: parameters
+            // @todo: return type
+
+            // @todo: type of node is function type
+
+            if node.body != null and !validate_node(<<node.body, error_handler) {
+                return false
+            }
+        }
+
+        AstBlock($node) -> {
+            assert("AstBlock", node.typ != null)
+
+            for child : node.children {
+                if !validate_node(<<child, error_handler) {
+                    return false
+                }
+            }
+        }
+
+        AstCall($node) -> {
+            assert("AstCall", node.typ != null)
+
+            if !validate_node(node.function, error_handler) {
+                return false
+            }
+
+            for arg : node.arguments {
+                if !validate_node(<<arg, error_handler) {
+                    return false
+                }
+            }
+        }
+
+        AstArgument($node) -> {
+            assert("AstArgument", node.typ != null)
+            assert("AstArgument", node.typ == node.value_expr.typ)
+            if !validate_node(node.value_expr, error_handler) {
+                return false
+            }
+        }
+
+        AstIdentifier($node) -> {
+            assert("AstIdentifier", node.typ != null)
+        }
+
+        AstString($node) -> {
+            assert("AstString", node.typ != null)
+        }
+
+        AstNumberLiteral($node) -> {
+            assert("AstNumberLiteral", node.typ != null)
+        }
+
+        AstBool($node) -> {
+            assert("AstBool", node.typ != null)
+        }
 
         _ -> {
             error_handler.report_error_at(node.location, "Validation for node not implemented")
+            return false
         }
     }
+
+    return true
 }
 
 #file_scope
+
+assert :: (name: string, cond: Code) #macro #transparent {
+    if !@insert(cond) {
+        error_handler.report_error_at(
+            node.location, 
+            "Validation failed for {}: {}", [name, @expr_to_string(@insert(cond))])
+        return false
+    }
+}
 
 validate_const_decl :: (decl: ^AstConstDecl) {
 

@@ -64,14 +64,14 @@ compile_files :: (files: []String) {
     console_error_handler := ConsoleErrorHandler.new(null)
 
     compiler := Compiler.new(1, ^console_error_handler)
-    compiler.get().global_scope.define_native_function("print", cast(NativeFunction) (interp, arg_count) => {
+    compiler.get().global_scope.define_native_function("print", @type_info(void), cast(NativeFunction) (interp, arg_count) => {
         frame := interp.top_frame()
         for i : 0..arg_count {
             val := frame.get_arg(i)
             g_logger.log("native print: {}", [val])
         }
     })
-    compiler.get().global_scope.define_native_function("debugbreak", cast(NativeFunction) (interp, arg_count) => {})
+    compiler.get().global_scope.define_native_function("debugbreak", @type_info(void), cast(NativeFunction) (interp, arg_count) => {})
 
     for(by_ref=true) file : files {
         compiler.get().add_job(LoadFileJob.new(file.clone()))

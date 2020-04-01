@@ -50,6 +50,20 @@ impl LoadFileJob {
     }
 }
 
+RunCodeJob :: struct CompilationJob {
+    name        : String
+    function    : ^AstFunction
+}
+
+impl RunCodeJob {
+    new :: (function: ^AstFunction) -> RunCodeJob {
+        return RunCodeJob(
+            name        = fmt.format("RunCodeJob '{}'", [function.name])
+            function    = function
+        )
+    }
+}
+
 CompileGlobalNodeJob :: struct CompilationJob {
     name        : String
     node        : ^AstNode
@@ -93,6 +107,11 @@ impl CompilationJob for CompileGlobalNodeJob {
 
         node.scope = compiler.global_scope
         compile_node(<<node, CNContext())
+
+        if const VALIDATE_AST {
+            debug_log("Validate node", [])
+            validate_node(<<node, compiler.error_handler)
+        }
 
         debug_log("Done")
     }
@@ -201,6 +220,7 @@ impl CompilationJob for CompileGlobalNodeJob {
 
 
     compile_string :: (&Self, str: &AstString, ctx: CNContext) -> &AstNode {
+        str.typ = @type_info(string) // @todo: string_literal type
         str.value = .String(str.string_value)
         return str
     }
@@ -218,24 +238,24 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_identifier :: (&Self, id: &AstIdentifier, ctx: CNContext) -> &AstNode {
-        debug_log("compile_identifier '{}'", [id.name])
         id.symbol = id.scope.get_symbol(id.name)
         match id.symbol {
-            .Val(($typ, $value)) -> match value {
-                .Function($func) -> {
-                    // id.typ = cast typ
-                    id.value = value
-                }
+            // .Val(($typ, $value)) -> match value {
+            //     .Function($func) -> {
+            //         // id.typ = cast typ
+            //         id.value = value
+            //     }
                 
-                $val -> {
-                    compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [val])
-                }
-            }
+            //     $val -> {
+            //         compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [val])
+            //     }
+            // }
 
             .ConstDecl($decl) -> {
                 wait_until(decl.value_expr.value != .None, {
                     compiler.error_handler.report_error_at(id.location, "Failed to get value of constant declaration")
                 })
+                id.typ = decl.var_type
                 id.value = decl.value_expr.value
             }
 
@@ -247,7 +267,8 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
 
             .NativeFunc($func) -> {
-                id.value = .NativeFunc(func)
+                id.typ = func.typ
+                id.value = .NativeFunc(func.func)
             }
 
             .NotFound -> {
@@ -266,6 +287,7 @@ impl CompilationJob for CompileGlobalNodeJob {
     compile_argument :: (&Self, arg: &AstArgument, ctx: CNContext) -> &AstNode {
         arg.value_expr.scope = arg.scope
         arg.value_expr <- compile_node(arg.value_expr, ctx)
+        arg.typ = arg.value_expr.typ
         return arg
     }
 
@@ -299,6 +321,9 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
         }
 
+        // @todo: this is temporary
+        call.typ = @type_info(void)
+
         return call
     }
 
@@ -310,6 +335,13 @@ impl CompilationJob for CompileGlobalNodeJob {
 
             expected : ^TypeInfo = if it_index == block.children.count() - 1 then ctx.expected else null
             child = ^compile_node(<<child, ctx.with_expected(expected))
+        }
+
+        // calc type of block
+        if block.children.count() > 0 {
+            block.typ = block.children.peek_last().typ
+        } else {
+            block.typ = @type_info(void)
         }
 
         return block
@@ -325,13 +357,11 @@ impl CompilationJob for CompileGlobalNodeJob {
         func.body.scope = func.param_scope
         func.value = Value.Function(^func)
 
+        // @todo: actually compute type from arguments and return type
+        func.typ = @type_info(void)
+
         debug_log("compile_function '{}': Compile Body", [func.name])
         func.body = ^compile_node(<<func.body, ctx.with_expected(null)) // @todo: use return type as expected?
-
-        if const VALIDATE_AST {
-            debug_log("compile_function '{}': Validate function", [func.name])
-            validate_node(func, compiler.error_handler)
-        }
 
         debug_log("compile_function '{}': Generate Bytecode", [func.name])
         code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
@@ -339,16 +369,10 @@ impl CompilationJob for CompileGlobalNodeJob {
 
         // @temp
         if func.name == "Main" {
-            if compiler.error_handler.has_errors() {
-                return func
-            }
-            debug_log("compile_function '{}': Call Main", [func.name])
-            context := Fiber.user_data(FiberContext)
-            context.interp.comp_call(func)
-            compiler.code_runner.get().run(<<context.interp)
+            compiler.add_job(RunCodeJob.new(^func))
         }
-        debug_log("compile_function '{}': End", [func.name])
 
+        debug_log("compile_function '{}': End", [func.name])
         return func
     }
 
@@ -449,6 +473,30 @@ impl CompilationJob for CompileGlobalNodeJob {
         // @todo: create cast if necessary
 
         return decl
+    }
+}
+
+impl CompilationJob for RunCodeJob {
+    get_name :: (&Self) -> string {
+        return name.slice()
+    }
+
+    debug_log :: (&Self, msg: string, args: []^any = []) {
+        if const DEBUG_JOBS {
+            str := fmt.format(msg, args)
+            g_logger.log("[{}] [RunCodeJob '{}'] {}", [Fiber.user_data(FiberContext).thread, function.name, str])
+        } 
+    }
+
+    execute :: (&Self, compiler: &Compiler) {
+        if compiler.error_handler.has_errors() {
+            return
+        }
+        debug_log("execute", [function.name])
+        context := Fiber.user_data(FiberContext)
+        context.interp.comp_call(<<function)
+        compiler.code_runner.get().run(<<context.interp)
+        debug_log("done", [function.name])
     }
 }
 
