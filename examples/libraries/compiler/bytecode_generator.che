@@ -1,15 +1,18 @@
 use import std.array
-use import std.string
+use import std.map
 use import std.rc
+use import std.string
 
 mem :: import std.mem.allocator
 io  :: import std.io
 fmt :: import std.fmt
 
+use import logging.logger
+
 use import ast
 use import ast_dumper
 use import error_handler
-use import type
+use import types
 use import interpreter
 use import string_database
 use import value
@@ -25,6 +28,8 @@ ByteCodeGenerator :: struct {
     error_handler   : &ErrorHandler
     allocator       : ^mem.Allocator
     builder         : InstructionBuilder
+
+    variables       := Map[int, int].new()
 
     function        : ^AstFunction = null
 }
@@ -83,21 +88,22 @@ impl CodeGenerator for ByteCodeGenerator {
     generate_expression :: (&Self, node: &AstNode) {
         builder.set_current_line(node.location.line)
         match node {
-            AstBlock($block)        -> generate_block(block)
-            AstCall($call)          -> generate_call(call)
             AstArgument($arg)       -> generate_argument(arg)
-            AstIdentifier($id)      -> generate_identifier(id)
-            AstNumberLiteral($num)  -> generate_number_literal(num)
+            AstBinary($bin)         -> generate_binary(bin)
+            AstBlock($block)        -> generate_block(block)
             AstBool($bol)           -> generate_bool(bol)
-            AstString($str)         -> generate_string(str)
+            AstBreak($brake)        -> generate_break(brake)
+            AstCall($call)          -> generate_call(call)
+            AstContinue($cont)      -> generate_continue(cont)
+            AstDecl($decl)          -> generate_decl(decl)
+            AstDefer($def)          -> generate_defer(def)
+            AstFor($forr)           -> generate_for(forr)
+            AstIdentifier($id)      -> generate_identifier(id)
             AstIf($iff)             -> generate_if(iff)
             AstLoop($lop)           -> generate_loop(lop)
-            AstFor($forr)           -> generate_for(forr)
-            AstBreak($brake)        -> generate_break(brake)
-            AstContinue($cont)      -> generate_continue(cont)
+            AstNumberLiteral($num)  -> generate_number_literal(num)
             AstReturn($ret)         -> generate_return(ret)
-            AstDefer($def)          -> generate_defer(def)
-            AstBinary($bin)         -> generate_binary(bin)
+            AstString($str)         -> generate_string(str)
 
             _ -> {
                 dump := dump_ast(node, recurse = false)
@@ -105,6 +111,21 @@ impl CodeGenerator for ByteCodeGenerator {
                     "generate_expression: not implemented: {}",
                     [dump])
             }
+        }
+    }
+
+    generate_decl :: (&Self, decl: &AstDecl) {
+        builder.set_current_line(decl.location.line)
+        builder.build_noop()
+
+        index := builder.add_local(decl.id, decl.name, decl.var_type.size)
+        variables[decl.id] = index
+
+        g_logger.log("type_size: {}", [decl.var_type.size])
+
+        if decl.value_expr != null {
+            generate_expression(<<decl.value_expr)
+            builder.build_store_local(index)
         }
     }
 
@@ -204,7 +225,8 @@ impl CodeGenerator for ByteCodeGenerator {
         for child : block.children {
             generate_expression(<<child)
 
-            if it_index < block.children.count() - 1 {
+            // pop value if not last and type is not void
+            if it_index < block.children.count() - 1 and child.typ != @type_info(void) {
                 builder.build_pop()
             }
         }
@@ -324,6 +346,19 @@ impl InstructionBuilder {
             function.debug_info.lines.add(LineInfo(line, 0))
         }
         current_line = line
+    }
+
+    add_local :: (&Self, id: int, name: string, size: int) -> int {
+        // size is in bytes, but the index is in stack slots, which are 8 bytes, so add 7 and divide by 8
+        slots := (size + 7) / 8
+
+        // debug info
+        function.debug_info.locals.add(VariableInfo(id, name, function.local_slots))
+
+        //
+        current_size := function.local_slots
+        function.local_slots += slots
+        return current_size
     }
 
     next :: (&Self) -> int {

@@ -11,14 +11,16 @@ fmt :: import std.fmt
 use import logging.logger
 
 use import ast
-use import lexer
-use import parser
 use import ast_dumper
 use import ast_pretty_printer
-use import compiler
 use import bytecode_generator
-use import scope
+use import compiler
 use import config
+use import lexer
+use import parser
+use import scope
+use import types
+use import validator
 use import value
 
 
@@ -49,8 +51,9 @@ impl LoadFileJob {
 }
 
 CompileGlobalNodeJob :: struct CompilationJob {
-    name : String
-    node : ^AstNode
+    name        : String
+    node        : ^AstNode
+    function    : ^AstFunction = null
 }
 
 impl CompileGlobalNodeJob {
@@ -59,6 +62,17 @@ impl CompileGlobalNodeJob {
             name = fmt.format("CompileGlobalNodeJob #{}", [node.id])
             node = node
         )
+    }
+}
+
+CNContext :: struct #copy {
+    expected : ^TypeInfo = null
+}
+
+impl CNContext {
+    with_expected :: (Self, typ: ^TypeInfo) -> CNContext {
+        expected = typ
+        return self
     }
 }
 
@@ -78,30 +92,31 @@ impl CompilationJob for CompileGlobalNodeJob {
         debug_log("Begin compilation")
 
         node.scope = compiler.global_scope
-        compile_node(<<node)
+        compile_node(<<node, CNContext())
 
         debug_log("Done")
     }
 
-    compile_node :: (&Self, node: &AstNode) -> &AstNode {
+    compile_node :: (&Self, node: &AstNode, ctx: CNContext) -> &AstNode {
         return match node {
-            AstConstDecl($decl)     -> compile_const_decl(decl)
-            AstFunction($func)      -> compile_function(func)
-            AstBlock($block)        -> compile_block(block)
-            AstArgument($arg)       -> compile_argument(arg)
-            AstCall($call)          -> compile_call(call)
-            AstIdentifier($id)      -> compile_identifier(id)
-            AstString($str)         -> compile_string(str)
-            AstBool($bol)           -> compile_bool(bol)
-            AstNumberLiteral($num)  -> compile_number(num)
-            AstIf($iff)             -> compile_if(iff)
-            AstLoop($lop)           -> compile_loop(lop)
-            AstFor($forr)           -> compile_for(forr)
-            AstBreak($brake)        -> compile_break(brake)
-            AstContinue($cont)      -> compile_continue(cont)
-            AstReturn($ret)         -> compile_return(ret)
-            AstDefer($def)          -> compile_defer(def)
-            AstBinary($bin)         -> compile_binary(bin)
+            AstArgument($arg)       -> compile_argument(arg, ctx)
+            AstBinary($bin)         -> compile_binary(bin, ctx)
+            AstBlock($block)        -> compile_block(block, ctx)
+            AstBool($bol)           -> compile_bool(bol, ctx)
+            AstBreak($brake)        -> compile_break(brake, ctx)
+            AstCall($call)          -> compile_call(call, ctx)
+            AstConstDecl($decl)     -> compile_const_decl(decl, ctx)
+            AstContinue($cont)      -> compile_continue(cont, ctx)
+            AstDecl($decl)          -> compile_decl(decl, ctx)
+            AstDefer($def)          -> compile_defer(def, ctx)
+            AstFor($forr)           -> compile_for(forr, ctx)
+            AstFunction($func)      -> compile_function(func, ctx)
+            AstIdentifier($id)      -> compile_identifier(id, ctx)
+            AstIf($iff)             -> compile_if(iff, ctx)
+            AstLoop($lop)           -> compile_loop(lop, ctx)
+            AstNumberLiteral($num)  -> compile_number(num, ctx)
+            AstReturn($ret)         -> compile_return(ret, ctx)
+            AstString($str)         -> compile_string(str, ctx)
 
             _ -> {
                 dump := dump_ast(node, recurse = false)
@@ -113,84 +128,96 @@ impl CompilationJob for CompileGlobalNodeJob {
         return node
     }
 
-    compile_binary :: (&Self, bin: &AstBinary) -> &AstNode {
+    compile_binary :: (&Self, bin: &AstBinary, ctx: CNContext) -> &AstNode {
         // @todo
         return bin
     }
 
-    compile_if :: (&Self, iff: &AstIf) -> &AstNode {
+    compile_if :: (&Self, iff: &AstIf, ctx: CNContext) -> &AstNode {
         iff.condition.scope = iff.scope
-        compile_node(iff.condition)
+        compile_node(iff.condition, ctx.with_expected(@type_info(bool)))
 
         iff.true_case.scope = iff.scope
-        compile_node(iff.true_case)
+        compile_node(iff.true_case, ctx)
 
         if iff.false_case != null {
             iff.false_case.scope = iff.scope
-            compile_node(<<iff.false_case)
+            compile_node(<<iff.false_case, ctx)
         }
         return iff
     }
 
-    compile_loop :: (&Self, lop: &AstLoop) -> &AstNode {
+    compile_loop :: (&Self, lop: &AstLoop, ctx: CNContext) -> &AstNode {
+        lop.typ = @type_info(void)
         lop.body.scope = lop.scope
-        compile_node(lop.body)
+        compile_node(lop.body, ctx)
         return lop
     }
 
-    compile_for :: (&Self, forr: &AstFor) -> &AstNode {
+    compile_for :: (&Self, forr: &AstFor, ctx: CNContext) -> &AstNode {
+        forr.typ = @type_info(void)
         forr.collection.scope = forr.scope
-        compile_node(forr.collection)
+        compile_node(forr.collection, ctx.with_expected(null))
         forr.body.scope = forr.scope
-        compile_node(forr.body)
+        compile_node(forr.body, ctx)
         return forr
     }
 
-    compile_break :: (&Self, brake: &AstBreak) -> &AstNode {
+    compile_break :: (&Self, brake: &AstBreak, ctx: CNContext) -> &AstNode {
+        brake.typ = @type_info(void)
         if brake.value_expr != null {
             brake.value_expr.scope = brake.scope
-            compile_node(<<brake.value_expr)
+            compile_node(<<brake.value_expr, ctx)
         }
         return brake
     }
 
-    compile_continue :: (&Self, cont: &AstContinue) -> &AstNode {
-
+    compile_continue :: (&Self, cont: &AstContinue, ctx: CNContext) -> &AstNode {
+        cont.typ = @type_info(void)
         return cont
     }
 
-    compile_return :: (&Self, ret: &AstReturn) -> &AstNode {
+    compile_return :: (&Self, ret: &AstReturn, ctx: CNContext) -> &AstNode {
+        if self.function == null {
+            compiler.error_handler.report_error_at(ret.location, "Can't use return outside of a function")
+            return ret
+        }
+
+        ret.typ = @type_info(void)
         if ret.value_expr != null {
             ret.value_expr.scope = ret.scope
-            compile_node(<<ret.value_expr)
+            compile_node(<<ret.value_expr, ctx.with_expected(self.function.return_type))
         }
 
         return ret
     }
 
-    compile_defer :: (&Self, def: &AstDefer) -> &AstNode {
+    compile_defer :: (&Self, def: &AstDefer, ctx: CNContext) -> &AstNode {
+        def.typ = @type_info(void)
         def.sub.scope = def.scope
-        compile_node(def.sub)
+        compile_node(def.sub, ctx.with_expected(null))
         return def
     }
 
 
-    compile_string :: (&Self, str: &AstString) -> &AstNode {
+    compile_string :: (&Self, str: &AstString, ctx: CNContext) -> &AstNode {
         str.value = .String(str.string_value)
         return str
     }
 
-    compile_bool :: (&Self, bol: &AstBool) -> &AstNode {
+    compile_bool :: (&Self, bol: &AstBool, ctx: CNContext) -> &AstNode {
+        bol.typ = @type_info(bool)
         bol.value = .Bool(bol.bool_value)
         return bol
     }
 
-    compile_number :: (&Self, num: &AstNumberLiteral) -> &AstNode {
+    compile_number :: (&Self, num: &AstNumberLiteral, ctx: CNContext) -> &AstNode {
+        num.typ = @type_info(int) // @todo: fix this
         num.value = .Int(num.int_value)
         return num
     }
 
-    compile_identifier :: (&Self, id: &AstIdentifier) -> &AstNode {
+    compile_identifier :: (&Self, id: &AstIdentifier, ctx: CNContext) -> &AstNode {
         sym := id.scope.get_symbol(id.name)
         match sym {
             .Val(($typ, $value)) -> match value {
@@ -228,14 +255,14 @@ impl CompilationJob for CompileGlobalNodeJob {
         return id
     }
 
-    compile_argument :: (&Self, arg: &AstArgument) -> &AstNode {
-        arg.value_expr <- compile_node(arg.value_expr)
+    compile_argument :: (&Self, arg: &AstArgument, ctx: CNContext) -> &AstNode {
+        arg.value_expr <- compile_node(arg.value_expr, ctx)
         return arg
     }
 
-    compile_call :: (&Self, call: &AstCall) -> &AstNode {
+    compile_call :: (&Self, call: &AstCall, ctx: CNContext) -> &AstNode {
         call.function.scope = call.scope
-        call.function <- compile_node(call.function)
+        call.function <- compile_node(call.function, ctx.with_expected(null))
         
         match call.function.value {
             .Function($func) -> {
@@ -244,7 +271,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 call.ast_function = func
 
                 for arg : call.arguments {
-                    arg = cast ^compile_node(<<arg)
+                    arg = cast ^compile_node(<<arg, ctx.with_expected(null))
                 }
             }
 
@@ -252,7 +279,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 // call.typ = cast typ
                 // call.value = value
                 for arg : call.arguments {
-                    arg = cast ^compile_node(<<arg)
+                    arg = cast ^compile_node(<<arg, ctx.with_expected(null))
                 }
             }
 
@@ -264,25 +291,36 @@ impl CompilationJob for CompileGlobalNodeJob {
         return call
     }
 
-    compile_block :: (&Self, block: &AstBlock) -> &AstNode {
+    compile_block :: (&Self, block: &AstBlock, ctx: CNContext) -> &AstNode {
         block.sub_scope = compiler.new_scope(block.scope)
 
         for child : block.children {
             child.scope = block.sub_scope
-            child = ^compile_node(<<child)
+
+            expected : ^TypeInfo = if it_index == block.children.count() - 1 then ctx.expected else null
+            child = ^compile_node(<<child, ctx.with_expected(expected))
         }
 
         return block
     }
 
-    compile_function :: (&Self, func: &AstFunction) -> &AstNode {
+    compile_function :: (&Self, func: &AstFunction, ctx: CNContext) -> &AstNode {
+        _prev_func := self.function
+        self.function = ^func
+        defer self.function = _prev_func
+
         debug_log("compile_function '{}': Begin", [func.name])
         func.param_scope = compiler.new_scope(func.scope)
         func.body.scope = func.param_scope
         func.value = Value.Function(^func)
 
         debug_log("compile_function '{}': Compile Body", [func.name])
-        func.body = ^compile_node(<<func.body)
+        func.body = ^compile_node(<<func.body, ctx.with_expected(null)) // @todo: use return type as expected?
+
+        if const VALIDATE_AST {
+            debug_log("compile_function '{}': Validate function", [func.name])
+            validate_node(func, compiler.error_handler)
+        }
 
         debug_log("compile_function '{}': Generate Bytecode", [func.name])
         code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
@@ -303,7 +341,54 @@ impl CompilationJob for CompileGlobalNodeJob {
         return func
     }
 
-    compile_const_decl :: (&Self, decl: &AstConstDecl) -> &AstNode {
+    compile_decl :: (&Self, decl: &AstDecl, ctx: CNContext) -> &AstNode {
+        decl.typ = @type_info(void)
+        decl.value_expr.scope = decl.scope
+
+        decl.name = match &<<decl.pattern {
+            AstIdentifier($id) -> id.name
+            _ -> {
+                compiler.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
+                return decl
+            }
+        }
+
+        // define symbol but only if not _
+        if decl.name != "_" {
+            match decl.scope.define_decl(decl.name, decl) {
+                Err() -> {
+                    compiler.error_handler.report_error_at(decl.pattern.location, "A symbol with this name already exists in this scope")
+                }
+            }
+        }
+
+        // compile type expression
+        if decl.type_expr != null {
+            decl.type_expr.scope = decl.scope
+            decl.type_expr = ^compile_node(<<decl.type_expr, ctx.with_expected(@type_info(type)))
+            
+            if decl.type_expr.typ != @type_info(type) {
+                compiler.error_handler.report_error_at(decl.type_expr.location, "Expected type, got {}", ["TODO"])
+            } else {
+                @assert(decl.type_expr.value == .Type)
+                decl.var_type = decl.type_expr.value.Type
+            }
+        }
+
+        decl.value_expr = ^compile_node(<<decl.value_expr, ctx.with_expected(decl.var_type))
+        decl.value = decl.value_expr.value
+
+        if decl.var_type == null {
+            decl.var_type = decl.value_expr.typ
+        }
+
+        // @todo: create cast if necessary
+
+        return decl
+    }
+
+    compile_const_decl :: (&Self, decl: &AstConstDecl, ctx: CNContext) -> &AstNode {
+        decl.typ = @type_info(void)
         decl.value_expr.scope = decl.scope
 
         name := match decl.pattern {
@@ -314,6 +399,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
         }
 
+        // set name of value expr if its a function or struct/trait/enum
         match decl.value_expr {
             AstFunction($func) -> {
                 func.name = name
@@ -329,8 +415,27 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
         }
 
-        decl.value_expr <- compile_node(decl.value_expr)
+        // compile type expression
+        if decl.type_expr != null {
+            decl.type_expr.scope = decl.scope
+            decl.type_expr = ^compile_node(<<decl.type_expr, ctx.with_expected(@type_info(type)))
+            
+            if decl.type_expr.typ != @type_info(type) {
+                compiler.error_handler.report_error_at(decl.type_expr.location, "Expected type, got {}", ["TODO"])
+            } else {
+                @assert(decl.type_expr.value == .Type)
+                decl.var_type = decl.type_expr.value.Type
+            }
+        }
+
+        decl.value_expr <- compile_node(decl.value_expr, ctx.with_expected(decl.var_type))
         decl.value = decl.value_expr.value
+
+        if decl.var_type == null {
+            decl.var_type = decl.value_expr.typ
+        }
+
+        // @todo: create cast if necessary
 
         return decl
     }

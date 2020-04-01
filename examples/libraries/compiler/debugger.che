@@ -571,9 +571,9 @@ impl VariableRef for LocalsScope {
     get_variables :: (&Self) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
-        for name : stackframe.func.debug_info.locals {
-            value := stackframe.stack[stackframe.bp + it_index]
-            var := Variable.new(interp, frame, name.clone(), fmt.format("{}", [value]))
+        for local : stackframe.func.debug_info.locals {
+            value := stackframe.stack[stackframe.bp + local.index]
+            var := Variable.new(interp, frame, local.name.to_owned(), fmt.format("{}", [value]))
             result.add(var.clone().change_type(VariableRef))
         }
         return result

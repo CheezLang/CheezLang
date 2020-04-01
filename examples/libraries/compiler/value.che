@@ -12,6 +12,7 @@ Value :: enum #copy {
     Float       : f64
     String      : string
     NativeFunc  : NativeFunction
+    Type        : ^TypeInfo
 }
 
 NativeFunction :: Fn(^Interpreter, int)

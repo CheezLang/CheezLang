@@ -117,10 +117,11 @@ Compiler :: struct {
     sources         := Map[string, String].new()
 
     // allocators
-    scope_allocator : ^mem.Allocator
     ast_allocator   : ^mem.Allocator
     bc_allocator    : ^mem.Allocator
     job_allocator   : ^mem.Allocator
+    scope_allocator : ^mem.Allocator
+    type_allocator  : ^mem.Allocator
 }
 
 impl Drop for Compiler {
@@ -146,14 +147,18 @@ impl TextProvider for Compiler {
 impl Compiler {
     new :: (thread_count: int, error_handler: ^ErrorHandler) -> Rc[Compiler] {
         AllocatorType :: BumpAllocator
-        scope_allocator     := mem.alloc(AllocatorType)
         ast_allocator       := mem.alloc(AllocatorType)
         bc_allocator        := mem.alloc(AllocatorType)
         job_allocator       := mem.alloc(AllocatorType)
-        <<scope_allocator   = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
+        scope_allocator     := mem.alloc(AllocatorType)
+        type_allocator      := mem.alloc(AllocatorType)
+
         <<ast_allocator     = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
         <<bc_allocator      = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
-        <<job_allocator     = AllocatorType.new(1024 * 1024 * 1)    // 1 Mb
+        <<job_allocator     = AllocatorType.new(1024 * 1024 * 1)    //  1 Mb
+        <<scope_allocator   = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
+        <<type_allocator    = AllocatorType.new(1024 * 1024 * 1)    //  1 Mb
+
         comp := Rc[Compiler].new(Compiler(
             mutex           = Mutex.new()
             threads         = Array[Thread].create()
@@ -165,8 +170,9 @@ impl Compiler {
 
             ast_allocator   = ast_allocator
             bc_allocator    = bc_allocator
-            scope_allocator = scope_allocator
             job_allocator   = job_allocator
+            scope_allocator = scope_allocator
+            type_allocator  = type_allocator
         ))
         comp.get().error_handler.text_provider = ^comp.get()
         comp.get().global_scope = comp.get().new_scope()
@@ -201,6 +207,12 @@ impl Compiler {
             parent = parent
         )
         return scope
+    }
+
+    new_type :: (&Self, type_info: $T) -> ^T {
+        result := mem.alloc(T, type_allocator)
+        <<result = value
+        return result
     }
 }
 

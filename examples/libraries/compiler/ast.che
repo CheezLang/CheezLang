@@ -3,7 +3,7 @@ use import std.string
 use import std.array
 
 use import lexer
-use import type
+use import types
 use import interpreter
 use import scope
 use import value
@@ -23,6 +23,8 @@ AstConstDecl :: struct AstNode {
     pattern     : &AstNode
     type_expr   : ^AstNode
     value_expr  : &AstNode
+
+    var_type    : ^TypeInfo = null
 }
 impl AstNode for AstConstDecl {}
 
@@ -30,6 +32,9 @@ AstDecl :: struct AstNode {
     pattern     : ^AstNode
     type_expr   : ^AstNode
     value_expr  : ^AstNode
+
+    name        : string = ""
+    var_type    : ^TypeInfo = null
 }
 impl AstNode for AstDecl {}
 
@@ -56,11 +61,12 @@ AstEnum :: struct AstNode {
 impl AstNode for AstEnum {}
 
 AstFunction :: struct AstNode {
-    param_scope : ^Scope
-    name        := "#anonymous"
-
     params      : Array[^AstDecl]
     body        : ^AstNode
+
+    param_scope : ^Scope
+    name        := "#anonymous"
+    return_type : ^TypeInfo = null
 
     bytecode    : ^CBCFunction = null
 }
@@ -123,7 +129,7 @@ AstUnary :: struct AstNode {
     operator    : UnOp
     sub         : &AstNode
 
-    UnOp :: enum #copy { Neg, Not, Ref, RefMut, Ptr }
+    UnOp :: enum #copy { Neg, Not, Ref, RefMut, Ptr, Deref }
 }
 impl AstNode for AstUnary {}
 
@@ -189,6 +195,11 @@ AstArray :: struct AstNode {
     values : Array[^AstNode]
 }
 impl AstNode for AstArray {}
+
+AstArrayType :: struct AstNode {
+    size : ^AstNode
+}
+impl AstNode for AstArrayType {}
 
 AstDot :: struct AstNode {
     sub     : ^AstNode

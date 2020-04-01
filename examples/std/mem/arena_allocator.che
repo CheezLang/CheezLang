@@ -13,7 +13,7 @@ ArenaAllocator :: struct {
     parent      : ^Allocator
 
     bucket_size : uint
-    buckets     : Array[BumpBucket]
+    buckets     : Array[Bucket]
 }
 
 impl Drop for ArenaAllocator {
@@ -29,7 +29,7 @@ impl ArenaAllocator {
         a := ArenaAllocator(
             parent      = alloc,
             bucket_size = size,
-            buckets     = Array[BumpBucket].create()
+            buckets     = Array[Bucket].create()
         )
         return a
     }
@@ -43,9 +43,9 @@ impl ArenaAllocator {
     dump :: (&Self, dump_buckets: bool = false) {
         io.printfln("ArenaAllocator ({} buckets)", buckets.length)
         for i : 0..buckets.length {
-            bucket : &BumpBucket = buckets[i]
+            bucket : &Bucket = buckets[i]
 
-            io.printfln("  BumpBucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
+            io.printfln("  Bucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
             if dump_buckets {
                 current : uint = 0
 
@@ -75,9 +75,9 @@ impl Allocator for ArenaAllocator {
         }
 
         // find bucket with enough room for required size
-        free_bucket : ^BumpBucket = null
+        free_bucket : ^Bucket = null
         for i : 0..buckets.length {
-            bucket : &BumpBucket = buckets[i]
+            bucket : &Bucket = buckets[i]
             if bucket.can_store(required_size, alignment) {
                 free_bucket = ^bucket
                 break
@@ -93,7 +93,7 @@ impl Allocator for ArenaAllocator {
 
             new_mem : []u8 = cast(^u8) parent.allocate(new_bucket_size, @sizeof(u8), alignment)
             new_mem.length = cast new_bucket_size
-            buckets.add(BumpBucket(memory = new_mem, filled = 0))
+            buckets.add(Bucket(memory = new_mem, filled = 0))
 
             free_bucket = ^buckets[buckets.length - 1]
         }
@@ -135,12 +135,12 @@ align :: (add: uint, align: uint) -> uint {
 }
 
 
-BumpBucket :: struct {
+Bucket :: struct {
     memory  : []u8
     filled  : uint
 }
 
-impl BumpBucket {
+impl Bucket {
     can_store :: (&Self, size: uint, align: uint) -> bool {
         next_address := util.next_aligned(util.pointer_add(memory.data, cast(int)filled), align)
         next_offset := (cast(uint)next_address) - (cast(uint)memory.data)

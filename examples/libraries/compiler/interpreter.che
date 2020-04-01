@@ -41,10 +41,16 @@ LineInfo :: struct #copy {
     count : int
 }
 
+VariableInfo :: struct #copy {
+    id      : int
+    name    : string
+    index   : int
+}
+
 CBCDebugInfo :: struct {
     path        := String.empty()
     lines       := Array[LineInfo].create()
-    locals      := Array[String].create()
+    locals      := Array[VariableInfo].create()
     parameters  := Array[String].create()
 }
 
@@ -72,6 +78,7 @@ impl CBCDebugInfo {
 CBCFunction :: struct {
     ast_function    : ^AstFunction = null
     instructions    := Array[u64].create()
+    local_slots     := 0
     debug_info      := CBCDebugInfo()
 }
 
@@ -215,7 +222,7 @@ impl Interpreter {
 
         frames[fp] = StackFrame(
             ip = 0
-            sp = arg_count
+            sp = arg_count + func.local_slots
             bp = arg_count
             code = func.instructions.slice()
             stack = stack[sp-arg_count .. ]
@@ -223,7 +230,7 @@ impl Interpreter {
         )
 
         if const DEBUG_INTERPRETER {
-            g_logger.log("push_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp])
+            g_logger.log("push_frame {} (fp = {} -> {}, sp = {} -> {}, local_slots = {})", [arg_count, _fp, fp, _sp, sp, func.local_slots])
         }
     }
 

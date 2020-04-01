@@ -435,6 +435,7 @@ TypeInfo :: trait {
 }
 
 TypeInfoVoid :: struct TypeInfo {}
+TypeInfoType :: struct TypeInfo {}
 TypeInfoFloat :: struct TypeInfo {}
 TypeInfoBool :: struct TypeInfo {}
 TypeInfoChar :: struct TypeInfo {}

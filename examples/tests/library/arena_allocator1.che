@@ -31,7 +31,7 @@ io :: import std.io
 util :: import std.util
 
 Main :: () {
-    a := ArenaAllocator.create(32)
+    a := ArenaAllocator.new(32)
 
     a.dump(true)
 

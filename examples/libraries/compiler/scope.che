@@ -4,7 +4,7 @@ fmt :: import std.fmt
 io  :: import std.io
 
 use import ast
-use import type
+use import types
 use import value
 use import compiler
 
@@ -39,6 +39,16 @@ impl Scope {
         }
 
         symbols[name] = Symbol.Func(^func)
+
+        return Ok()
+    }
+
+    define_decl :: (&Self, name: string, decl: &AstDecl) -> Result[(), ()] {
+        if symbols.contains(name) {
+            return Err()
+        }
+
+        symbols[name] = Symbol.Decl(^decl)
 
         return Ok()
     }
@@ -80,6 +90,7 @@ impl Scope {
 
 Symbol :: enum #copy {
     NotFound
+    Decl        : ^AstDecl
     ConstDecl   : ^AstConstDecl
     Val         : (typ: ^TypeInfo, value: Value)
     Func        : ^AstFunction

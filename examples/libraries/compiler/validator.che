@@ -1,0 +1,42 @@
+use import std.array
+use import std.fiber
+use import std.mem.std_heap_allocator
+use import std.string
+
+fmt :: import std.fmt
+fs  :: import std.io.fs
+io  :: import std.io
+
+use import logging.logger
+
+use import ast
+use import ast_dumper
+use import ast_pretty_printer
+use import bytecode_generator
+use import compiler
+use import config
+use import error_handler
+use import lexer
+use import parser
+use import scope
+use import value
+
+#export_scope
+
+validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) {
+    match node {
+        // AstConstDecl($node) -> {
+
+        // }
+
+        _ -> {
+            error_handler.report_error_at(node.location, "Validation for node not implemented")
+        }
+    }
+}
+
+#file_scope
+
+validate_const_decl :: (decl: ^AstConstDecl) {
+
+}
