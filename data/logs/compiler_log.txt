@@ -1,5 +1,0 @@
-[16188]  compile files: [../data/basic_cheez.che]
-[17812]  1
-[17812]  2
-[16188]  [compiler] finished compilation with 2 fibers
-[16188]  Compilation took 8 ms

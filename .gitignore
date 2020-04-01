@@ -239,3 +239,4 @@ examples/libraries/libcurl/curl-7.64.1-win64-mingw
 examples/libraries/libhttp/libhttp-1.8
 libucrtd.exe
 Tools/Benchmarks/out
+data/logs/
