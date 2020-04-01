@@ -2358,6 +2358,7 @@ namespace Cheez
                     case FloatType _:
                     case AnyType _:
                     case VoidType _:
+                    case CheezTypeType _:
                         break;
 
 

@@ -993,6 +993,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             sTypeInfoTrait              = workspace.GlobalScope.GetStruct("TypeInfoTrait").StructType;
             sTypeInfoTraitFunction      = workspace.GlobalScope.GetStruct("TypeInfoTraitFunction").StructType;
             sTypeInfoTraitImpl          = workspace.GlobalScope.GetStruct("TypeInfoTraitImpl").StructType;
+            sTypeInfoType               = workspace.GlobalScope.GetStruct("TypeInfoType").StructType;
 
             rttiTypeInfoPtr             = CheezTypeToLLVMType(PointerType.GetPointerType(sTypeInfo));
             rttiTypeInfoRef             = CheezTypeToLLVMType(ReferenceType.GetRefType(sTypeInfo));
@@ -1018,6 +1019,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             rttiTypeInfoTraitFunction   = CheezTypeToLLVMType(sTypeInfoTraitFunction);
             rttiTypeInfoTraitImpl       = CheezTypeToLLVMType(sTypeInfoTraitImpl);
             rttiTypeInfoAttribute       = CheezTypeToLLVMType(sTypeInfoAttribute);
+            rttiTypeInfoType            = CheezTypeToLLVMType(sTypeInfoType);
 
             rttiTypeInfoStructMemberInitializer = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { voidPointerType }, false);
         }
@@ -1093,6 +1095,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     TupleType t     => (sTypeInfoTuple,     rttiTypeInfoTuple),
                     FunctionType t  => (sTypeInfoFunction,  rttiTypeInfoFunction),
                     AnyType t       => (sTypeInfoAny,       rttiTypeInfoAny),
+                    CheezTypeType t => (sTypeInfoType,      rttiTypeInfoType),
                     _ => throw new NotImplementedException(),
                 };
                 var global = module.AddGlobal(rttiType, $"ti.{type}");
@@ -1141,6 +1144,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     case StringType _:
                     case CharType _:
                     case AnyType _:
+                    case CheezTypeType _:
                         break;
                     
                     // @todo
