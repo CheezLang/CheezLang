@@ -48,4 +48,6 @@
 Main :: () {
     x := true
     y := 5
+
+    print(x, y)
 }

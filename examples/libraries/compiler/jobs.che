@@ -218,8 +218,9 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_identifier :: (&Self, id: &AstIdentifier, ctx: CNContext) -> &AstNode {
-        sym := id.scope.get_symbol(id.name)
-        match sym {
+        debug_log("compile_identifier '{}'", [id.name])
+        id.symbol = id.scope.get_symbol(id.name)
+        match id.symbol {
             .Val(($typ, $value)) -> match value {
                 .Function($func) -> {
                     // id.typ = cast typ
@@ -236,6 +237,13 @@ impl CompilationJob for CompileGlobalNodeJob {
                     compiler.error_handler.report_error_at(id.location, "Failed to get value of constant declaration")
                 })
                 id.value = decl.value_expr.value
+            }
+
+            .Decl($decl) -> {
+                wait_until(decl.var_type != null, {
+                    compiler.error_handler.report_error_at(id.location, "Failed to get type of declaration")
+                })
+                id.typ = decl.var_type
             }
 
             .NativeFunc($func) -> {
@@ -256,6 +264,7 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_argument :: (&Self, arg: &AstArgument, ctx: CNContext) -> &AstNode {
+        arg.value_expr.scope = arg.scope
         arg.value_expr <- compile_node(arg.value_expr, ctx)
         return arg
     }
@@ -271,6 +280,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 call.ast_function = func
 
                 for arg : call.arguments {
+                    arg.scope = call.scope
                     arg = cast ^compile_node(<<arg, ctx.with_expected(null))
                 }
             }
@@ -279,6 +289,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 // call.typ = cast typ
                 // call.value = value
                 for arg : call.arguments {
+                    arg.scope = call.scope
                     arg = cast ^compile_node(<<arg, ctx.with_expected(null))
                 }
             }

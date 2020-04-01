@@ -2,10 +2,10 @@ use import std.printable
 use import std.string
 use import std.array
 
-use import lexer
-use import types
 use import interpreter
+use import lexer
 use import scope
+use import types
 use import value
 
 #export_scope
@@ -92,7 +92,8 @@ AstCall :: struct AstNode {
 impl AstNode for AstCall {}
 
 AstIdentifier :: struct AstNode {
-    name : string
+    name    : string
+    symbol  := Symbol.NotFound
 }
 impl AstNode for AstIdentifier {}
 

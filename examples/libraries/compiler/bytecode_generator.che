@@ -291,7 +291,18 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_identifier :: (&Self, id: &AstIdentifier) {
         builder.set_current_line(id.location.line)
-        builder.build_const(0)
+        match id.symbol {
+            .Decl($decl) -> match self.variables.get(decl.id) {
+                Some($index) -> {
+                    builder.build_load_local(index)
+                }
+                None -> {
+                    msg :: "[FATAL] Failed to get index of declaration"
+                    builder.build_panic(msg)
+                    error_handler.report_error_at(id.location, msg)
+                }
+            }
+        }
         // match function.get_parameter(id.name) {
         //     Some($param) -> {
         //         builder.build_load_local(-1)
