@@ -68,7 +68,10 @@ compile_files :: (files: []String) {
         frame := interp.top_frame()
         for i : 0..arg_count {
             val := frame.get_arg(i)
-            g_logger.log("native print: {}", [val])
+
+            io.set_console_color(.Green, .Black)
+            io.formatln("{}", [val])
+            io.set_console_color(.White, .Black)
         }
     })
     compiler.get().global_scope.define_native_function("debugbreak", @type_info(void), cast(NativeFunction) (interp, arg_count) => {})

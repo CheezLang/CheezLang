@@ -287,16 +287,29 @@ impl Interpreter {
             val
         }
 
-        push :: (val: int) #macro {
-            frame.stack[frame.sp] = val
+        push :: (val: $T) #macro {
+            frame.stack[frame.sp] = <<cast(^int)^val
             frame.sp += 1
         }
 
-        pop :: () #macro {
+        pop :: (T: type) #macro {
             @assert(frame.sp > 0)
             frame.sp -= 1
-            frame.stack[frame.sp]
+            <<cast(^T)^frame.stack[frame.sp]
         }
+
+        peek :: (T: type, offset: int) #macro {
+            @assert(frame.sp > 0)
+            @assert(offset <= 0)
+            <<cast(^T)^frame.stack[frame.sp + offset - 1]
+        }
+
+        set :: ($T: type, offset: int, val: T) #macro {
+            @assert(frame.sp > 0)
+            @assert(offset <= 0)
+            <<cast(^T)^frame.stack[frame.sp + offset - 1] = val
+        }
+
 
         // fetch
         frame.ip_prev = frame.ip
@@ -328,7 +341,7 @@ impl Interpreter {
             .Noop -> {}
             
             .Pop -> {
-                pop()
+                pop(int)
             }
 
             .Const -> {
@@ -341,12 +354,12 @@ impl Interpreter {
                 push(address)
             }
             .Load -> {
-                address := cast(^int) pop()
+                address := pop(^int)
                 push(<<address)
             }
             .Store -> {
-                address := cast(^int) pop()
-                value := pop()
+                address := pop(^int)
+                value   := pop(int)
                 <<address = value
             }
             .LoadLocal -> {
@@ -355,56 +368,214 @@ impl Interpreter {
             }
             .StoreLocal -> {
                 index := arg(int)
-                frame.stack[frame.bp + index] = pop()
+                frame.stack[frame.bp + index] = pop(int)
             }
 
             .Add -> {
-                b, a := pop(), pop()
-                push(a + b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(f32, -1, peek(f32, -1) + peek(f32, 0))
+                    .F64 -> set(f64, -1, peek(f64, -1) + peek(f64, 0))
+                    .I8  -> set(i8,  -1, peek(i8,  -1) + peek(i8,  0))
+                    .I16 -> set(i16, -1, peek(i16, -1) + peek(i16, 0))
+                    .I32 -> set(i32, -1, peek(i32, -1) + peek(i32, 0))
+                    .I64 -> set(i64, -1, peek(i64, -1) + peek(i64, 0))
+                    .U8  -> set(u8,  -1, peek(u8,  -1) + peek(u8,  0))
+                    .U16 -> set(u16, -1, peek(u16, -1) + peek(u16, 0))
+                    .U32 -> set(u32, -1, peek(u32, -1) + peek(u32, 0))
+                    .U64 -> set(u64, -1, peek(u64, -1) + peek(u64, 0))
+                }
+                frame.sp -= 1
             }
             .Sub -> {
-                b, a := pop(), pop()
-                push(a - b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(f32, -1, peek(f32, -1) - peek(f32, 0))
+                    .F64 -> set(f64, -1, peek(f64, -1) - peek(f64, 0))
+                    .I8  -> set(i8,  -1, peek(i8,  -1) - peek(i8,  0))
+                    .I16 -> set(i16, -1, peek(i16, -1) - peek(i16, 0))
+                    .I32 -> set(i32, -1, peek(i32, -1) - peek(i32, 0))
+                    .I64 -> set(i64, -1, peek(i64, -1) - peek(i64, 0))
+                    .U8  -> set(u8,  -1, peek(u8,  -1) - peek(u8,  0))
+                    .U16 -> set(u16, -1, peek(u16, -1) - peek(u16, 0))
+                    .U32 -> set(u32, -1, peek(u32, -1) - peek(u32, 0))
+                    .U64 -> set(u64, -1, peek(u64, -1) - peek(u64, 0))
+                }
+                frame.sp -= 1
             }
             .Mul -> {
-                b, a := pop(), pop()
-                push(a * b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(f32, -1, peek(f32, -1) * peek(f32, 0))
+                    .F64 -> set(f64, -1, peek(f64, -1) * peek(f64, 0))
+                    .I8  -> set(i8,  -1, peek(i8,  -1) * peek(i8,  0))
+                    .I16 -> set(i16, -1, peek(i16, -1) * peek(i16, 0))
+                    .I32 -> set(i32, -1, peek(i32, -1) * peek(i32, 0))
+                    .I64 -> set(i64, -1, peek(i64, -1) * peek(i64, 0))
+                    .U8  -> set(u8,  -1, peek(u8,  -1) * peek(u8,  0))
+                    .U16 -> set(u16, -1, peek(u16, -1) * peek(u16, 0))
+                    .U32 -> set(u32, -1, peek(u32, -1) * peek(u32, 0))
+                    .U64 -> set(u64, -1, peek(u64, -1) * peek(u64, 0))
+                }
+                frame.sp -= 1
             }
             .Div -> {
-                b, a := pop(), pop()
-                push(a / b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(f32, -1, peek(f32, -1) / peek(f32, 0))
+                    .F64 -> set(f64, -1, peek(f64, -1) / peek(f64, 0))
+                    .I8  -> set(i8,  -1, peek(i8,  -1) / peek(i8,  0))
+                    .I16 -> set(i16, -1, peek(i16, -1) / peek(i16, 0))
+                    .I32 -> set(i32, -1, peek(i32, -1) / peek(i32, 0))
+                    .I64 -> set(i64, -1, peek(i64, -1) / peek(i64, 0))
+                    .U8  -> set(u8,  -1, peek(u8,  -1) / peek(u8,  0))
+                    .U16 -> set(u16, -1, peek(u16, -1) / peek(u16, 0))
+                    .U32 -> set(u32, -1, peek(u32, -1) / peek(u32, 0))
+                    .U64 -> set(u64, -1, peek(u64, -1) / peek(u64, 0))
+                }
+                frame.sp -= 1
             }
             .Mod -> {
-                b, a := pop(), pop()
-                push(a % b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(f32, -1, peek(f32, -1) % peek(f32, 0))
+                    .F64 -> set(f64, -1, peek(f64, -1) % peek(f64, 0))
+                    .I8  -> set(i8,  -1, peek(i8,  -1) % peek(i8,  0))
+                    .I16 -> set(i16, -1, peek(i16, -1) % peek(i16, 0))
+                    .I32 -> set(i32, -1, peek(i32, -1) % peek(i32, 0))
+                    .I64 -> set(i64, -1, peek(i64, -1) % peek(i64, 0))
+                    .U8  -> set(u8,  -1, peek(u8,  -1) % peek(u8,  0))
+                    .U16 -> set(u16, -1, peek(u16, -1) % peek(u16, 0))
+                    .U32 -> set(u32, -1, peek(u32, -1) % peek(u32, 0))
+                    .U64 -> set(u64, -1, peek(u64, -1) % peek(u64, 0))
+                }
+                frame.sp -= 1
             }
-            .And -> {
-                b, a := pop() != 0, pop() != 0
-                push(cast a and b)
+
+            .Not -> {
+                v := pop(bool)
+                push(!v)
             }
-            .Or -> {
-                b, a := pop() != 0, pop() != 0
-                push(cast a or b)
+            .Neg -> {
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(f32, 0, -peek(f32, 0))
+                    .F64 -> set(f64, 0, -peek(f64, 0))
+                    .I8  -> set(i8,  0, -peek(i8,  0))
+                    .I16 -> set(i16, 0, -peek(i16, 0))
+                    .I32 -> set(i32, 0, -peek(i32, 0))
+                    .I64 -> set(i64, 0, -peek(i64, 0))
+                    .U8  -> set(u8,  0, -peek(u8,  0))
+                    .U16 -> set(u16, 0, -peek(u16, 0))
+                    .U32 -> set(u32, 0, -peek(u32, 0))
+                    .U64 -> set(u64, 0, -peek(u64, 0))
+                }
             }
+
             .Ieq -> {
-                b, a := pop(), pop()
-                push(cast a == b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(bool, -1, peek(f32, -1) == peek(f32, 0))
+                    .F64 -> set(bool, -1, peek(f64, -1) == peek(f64, 0))
+                    .I8  -> set(bool, -1, peek(i8,  -1) == peek(i8,  0))
+                    .I16 -> set(bool, -1, peek(i16, -1) == peek(i16, 0))
+                    .I32 -> set(bool, -1, peek(i32, -1) == peek(i32, 0))
+                    .I64 -> set(bool, -1, peek(i64, -1) == peek(i64, 0))
+                    .U8  -> set(bool, -1, peek(u8,  -1) == peek(u8,  0))
+                    .U16 -> set(bool, -1, peek(u16, -1) == peek(u16, 0))
+                    .U32 -> set(bool, -1, peek(u32, -1) == peek(u32, 0))
+                    .U64 -> set(bool, -1, peek(u64, -1) == peek(u64, 0))
+                }
+                frame.sp -= 1
+            }
+            .Ine -> {
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(bool, -1, peek(f32, -1) != peek(f32, 0))
+                    .F64 -> set(bool, -1, peek(f64, -1) != peek(f64, 0))
+                    .I8  -> set(bool, -1, peek(i8,  -1) != peek(i8,  0))
+                    .I16 -> set(bool, -1, peek(i16, -1) != peek(i16, 0))
+                    .I32 -> set(bool, -1, peek(i32, -1) != peek(i32, 0))
+                    .I64 -> set(bool, -1, peek(i64, -1) != peek(i64, 0))
+                    .U8  -> set(bool, -1, peek(u8,  -1) != peek(u8,  0))
+                    .U16 -> set(bool, -1, peek(u16, -1) != peek(u16, 0))
+                    .U32 -> set(bool, -1, peek(u32, -1) != peek(u32, 0))
+                    .U64 -> set(bool, -1, peek(u64, -1) != peek(u64, 0))
+                }
+                frame.sp -= 1
             }
             .Ilt -> {
-                b, a := pop(), pop()
-                push(cast a < b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(bool, -1, peek(f32, -1) < peek(f32, 0))
+                    .F64 -> set(bool, -1, peek(f64, -1) < peek(f64, 0))
+                    .I8  -> set(bool, -1, peek(i8,  -1) < peek(i8,  0))
+                    .I16 -> set(bool, -1, peek(i16, -1) < peek(i16, 0))
+                    .I32 -> set(bool, -1, peek(i32, -1) < peek(i32, 0))
+                    .I64 -> set(bool, -1, peek(i64, -1) < peek(i64, 0))
+                    .U8  -> set(bool, -1, peek(u8,  -1) < peek(u8,  0))
+                    .U16 -> set(bool, -1, peek(u16, -1) < peek(u16, 0))
+                    .U32 -> set(bool, -1, peek(u32, -1) < peek(u32, 0))
+                    .U64 -> set(bool, -1, peek(u64, -1) < peek(u64, 0))
+                }
+                frame.sp -= 1
             }
             .Ile -> {
-                b, a := pop(), pop()
-                push(cast a <= b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(bool, -1, peek(f32, -1) <= peek(f32, 0))
+                    .F64 -> set(bool, -1, peek(f64, -1) <= peek(f64, 0))
+                    .I8  -> set(bool, -1, peek(i8,  -1) <= peek(i8,  0))
+                    .I16 -> set(bool, -1, peek(i16, -1) <= peek(i16, 0))
+                    .I32 -> set(bool, -1, peek(i32, -1) <= peek(i32, 0))
+                    .I64 -> set(bool, -1, peek(i64, -1) <= peek(i64, 0))
+                    .U8  -> set(bool, -1, peek(u8,  -1) <= peek(u8,  0))
+                    .U16 -> set(bool, -1, peek(u16, -1) <= peek(u16, 0))
+                    .U32 -> set(bool, -1, peek(u32, -1) <= peek(u32, 0))
+                    .U64 -> set(bool, -1, peek(u64, -1) <= peek(u64, 0))
+                }
+                frame.sp -= 1
             }
             .Igt -> {
-                b, a := pop(), pop()
-                push(cast a > b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(bool, -1, peek(f32, -1) > peek(f32, 0))
+                    .F64 -> set(bool, -1, peek(f64, -1) > peek(f64, 0))
+                    .I8  -> set(bool, -1, peek(i8,  -1) > peek(i8,  0))
+                    .I16 -> set(bool, -1, peek(i16, -1) > peek(i16, 0))
+                    .I32 -> set(bool, -1, peek(i32, -1) > peek(i32, 0))
+                    .I64 -> set(bool, -1, peek(i64, -1) > peek(i64, 0))
+                    .U8  -> set(bool, -1, peek(u8,  -1) > peek(u8,  0))
+                    .U16 -> set(bool, -1, peek(u16, -1) > peek(u16, 0))
+                    .U32 -> set(bool, -1, peek(u32, -1) > peek(u32, 0))
+                    .U64 -> set(bool, -1, peek(u64, -1) > peek(u64, 0))
+                }
+                frame.sp -= 1
             }
             .Ige -> {
-                b, a := pop(), pop()
-                push(cast a >= b)
+                typ := arg(InstNumTyp)
+                match typ {
+                    .F32 -> set(bool, -1, peek(f32, -1) >= peek(f32, 0))
+                    .F64 -> set(bool, -1, peek(f64, -1) >= peek(f64, 0))
+                    .I8  -> set(bool, -1, peek(i8,  -1) >= peek(i8,  0))
+                    .I16 -> set(bool, -1, peek(i16, -1) >= peek(i16, 0))
+                    .I32 -> set(bool, -1, peek(i32, -1) >= peek(i32, 0))
+                    .I64 -> set(bool, -1, peek(i64, -1) >= peek(i64, 0))
+                    .U8  -> set(bool, -1, peek(u8,  -1) >= peek(u8,  0))
+                    .U16 -> set(bool, -1, peek(u16, -1) >= peek(u16, 0))
+                    .U32 -> set(bool, -1, peek(u32, -1) >= peek(u32, 0))
+                    .U64 -> set(bool, -1, peek(u64, -1) >= peek(u64, 0))
+                }
+                frame.sp -= 1
+            }
+
+            .And -> {
+                b, a := pop(bool), pop(bool)
+                push(a and b)
+            }
+            .Or -> {
+                b, a := pop(bool), pop(bool)
+                push(a or b)
             }
 
             .Branch -> {
@@ -412,7 +583,7 @@ impl Interpreter {
             }
             .BranchIf -> {
                 address := arg(int)
-                if pop() != 0 {
+                if pop(int) != 0 {
                     frame.ip = address
                 }
             }
@@ -528,6 +699,12 @@ impl Interpreter {
     }
 }
 
+InstNumTyp :: enum {
+    F32, F64
+    I8, I16, I32, I64
+    U8, U16, U32, U64
+}
+
 Instruction :: enum #repr("C") #tag_type(u64) {
     Noop
 
@@ -538,8 +715,11 @@ Instruction :: enum #repr("C") #tag_type(u64) {
     LoadLocal, StoreLocal
 
     Add, Sub, Mul, Div, Mod
+    Ieq, Ine, Ilt, Ile, Igt, Ige
+    Neg
+
+    Not
     And, Or
-    Ieq, Ilt, Ile, Igt, Ige
 
     Branch, BranchIf
 
@@ -569,20 +749,25 @@ impl Instruction {
             .LoadLocal      -> fmt.format("LoadLocal {}", [arg(int, 0)])
             .StoreLocal     -> fmt.format("StoreLocal {}", [arg(int, 0)])
 
-            .Add            -> fmt.format("Add")
-            .Sub            -> fmt.format("Sub")
-            .Mul            -> fmt.format("Mul")
-            .Div            -> fmt.format("Div")
-            .Mod            -> fmt.format("Mod")
+            .Add            -> fmt.format("Add {}", [arg(InstNumTyp, 0)])
+            .Sub            -> fmt.format("Sub {}", [arg(InstNumTyp, 0)])
+            .Mul            -> fmt.format("Mul {}", [arg(InstNumTyp, 0)])
+            .Div            -> fmt.format("Div {}", [arg(InstNumTyp, 0)])
+            .Mod            -> fmt.format("Mod {}", [arg(InstNumTyp, 0)])
+
+            .Not            -> fmt.format("Not")
+            .Neg            -> fmt.format("Neg {}", [arg(InstNumTyp, 0)])
+
+            .Ieq            -> fmt.format("Ieq {}", [arg(InstNumTyp, 0)])
+            .Ine            -> fmt.format("Ine {}", [arg(InstNumTyp, 0)])
+            .Ilt            -> fmt.format("Ilt {}", [arg(InstNumTyp, 0)])
+            .Ile            -> fmt.format("Ile {}", [arg(InstNumTyp, 0)])
+            .Igt            -> fmt.format("Igt {}", [arg(InstNumTyp, 0)])
+            .Ige            -> fmt.format("Ige {}", [arg(InstNumTyp, 0)])
 
             .And            -> fmt.format("And")
             .Or             -> fmt.format("Or")
-            .Ieq            -> fmt.format("Ieq")
-            .Ilt            -> fmt.format("Ilt")
-            .Ile            -> fmt.format("Ile")
-            .Igt            -> fmt.format("Igt")
-            .Ige            -> fmt.format("Ige")
-
+            
             .Branch         -> fmt.format("Branch {}", [arg(int, 0)])
             .BranchIf       -> fmt.format("BranchIf {}", [arg(int, 0)])
 

@@ -108,7 +108,37 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
         }
 
         AstBool($node) -> {
-            assert("AstBool", node.typ != null)
+            assert("AstBool", node.typ == @type_info(bool))
+        }
+
+        AstBinary($node) -> {
+            assert("AstBinary", node.typ != null)
+            if !validate_node(node.left, error_handler) {
+                return false
+            }
+            if !validate_node(node.right, error_handler) {
+                return false
+            }
+        }
+
+        AstUnary($node) -> {
+            assert("AstUnary", node.typ != null)
+            if !validate_node(node.sub, error_handler) {
+                return false
+            }
+        }
+
+        AstIf($node) -> {
+            assert("AstIf", node.typ != null)
+            if !validate_node(node.condition, error_handler) {
+                return false
+            }
+            if !validate_node(node.true_case, error_handler) {
+                return false
+            }
+            if node.false_case != null and !validate_node(<<node.false_case, error_handler) {
+                return false
+            }
         }
 
         _ -> {

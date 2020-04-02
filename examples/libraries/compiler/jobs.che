@@ -110,7 +110,9 @@ impl CompilationJob for CompileGlobalNodeJob {
 
         if const VALIDATE_AST {
             debug_log("Validate node", [])
-            validate_node(<<node, compiler.error_handler)
+            if !validate_node(<<node, compiler.error_handler) {
+                // @todo
+            }
         }
 
         debug_log("Done")
@@ -120,6 +122,7 @@ impl CompilationJob for CompileGlobalNodeJob {
         return match node {
             AstArgument($arg)       -> compile_argument(arg, ctx)
             AstBinary($bin)         -> compile_binary(bin, ctx)
+            AstUnary($un)           -> compile_unary(un, ctx)
             AstBlock($block)        -> compile_block(block, ctx)
             AstBool($bol)           -> compile_bool(bol, ctx)
             AstBreak($brake)        -> compile_break(brake, ctx)
@@ -147,7 +150,168 @@ impl CompilationJob for CompileGlobalNodeJob {
         return node
     }
 
+    compile_unary :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        un.sub.scope = un.scope
+        return match un.operator {
+            .Neg    -> compile_unary_neg(un, ctx)
+            .Not    -> compile_unary_not(un, ctx)
+            .Ref    -> compile_unary_ref(un, ctx)
+            .RefMut -> compile_unary_ref_mut(un, ctx)
+            .Ptr    -> compile_unary_ptr(un, ctx)
+            .Deref  -> compile_unary_deref(un, ctx)
+        }
+    }
+
+    compile_unary_neg :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        
+        return un
+    }
+
+    compile_unary_not :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        un.sub <- compile_node(un.sub, ctx.with_expected(@type_info(bool)))
+
+        // check types
+        if un.sub.typ == null { return un }
+        if un.sub.typ != @type_info(bool) {
+            compiler.error_handler.report_error_at(
+                un.sub.location,
+                "Expected type bool, got {}",
+                ["TODO"])
+            return un
+        }
+
+        un.typ = @type_info(bool)
+
+        // set value if known at compile time
+        match un.value {
+            .Bool($b) -> {
+                un.value = .Bool(!b)
+            }
+        }
+        return un
+    }
+
+    compile_unary_ref :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        return un
+    }
+
+    compile_unary_ref_mut :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        return un
+    }
+
+    compile_unary_ptr :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        return un
+    }
+
+    compile_unary_deref :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        return un
+    }
+
     compile_binary :: (&Self, bin: &AstBinary, ctx: CNContext) -> &AstNode {
+        bin.left.scope = bin.scope
+        bin.right.scope = bin.scope
+
+        bin.left <- compile_node(bin.left, ctx)
+        bin.right <- compile_node(bin.right, ctx)
+
+        if bin.left.typ == null or bin.right.typ == null {
+            return bin
+        }
+
+        // find matching operator
+        match bin.operator {
+            .Add -> {
+                if bin.left.typ != bin.right.typ {
+                    compiler.error_handler.report_error_at(
+                        bin.location, 
+                        "Types of left and right sub expressions don't match. Left: {}, Right: {}",
+                        ["TODO", "TODO"])
+                }
+                bin.typ = bin.left.typ
+            }
+            .Sub -> {
+                if bin.left.typ != bin.right.typ {
+                    compiler.error_handler.report_error_at(
+                        bin.location, 
+                        "Types of left and right sub expressions don't match. Left: {}, Right: {}",
+                        ["TODO", "TODO"])
+                }
+                bin.typ = bin.left.typ
+            }
+            .Mul -> {
+                if bin.left.typ != bin.right.typ {
+                    compiler.error_handler.report_error_at(
+                        bin.location, 
+                        "Types of left and right sub expressions don't match. Left: {}, Right: {}",
+                        ["TODO", "TODO"])
+                }
+                bin.typ = bin.left.typ
+            }
+            .Div -> {
+                if bin.left.typ != bin.right.typ {
+                    compiler.error_handler.report_error_at(
+                        bin.location, 
+                        "Types of left and right sub expressions don't match. Left: {}, Right: {}",
+                        ["TODO", "TODO"])
+                }
+                bin.typ = bin.left.typ
+            }
+            .Mod -> {
+                if bin.left.typ != bin.right.typ {
+                    compiler.error_handler.report_error_at(
+                        bin.location, 
+                        "Types of left and right sub expressions don't match. Left: {}, Right: {}",
+                        ["TODO", "TODO"])
+                }
+                bin.typ = bin.left.typ
+            }
+
+            .Equal      -> {
+                bin.typ = @type_info(bool)
+            }
+            .NotEqual   -> {
+                bin.typ = @type_info(bool)
+            }
+            .Less       -> {
+                bin.typ = @type_info(bool)
+            }
+            .LessEq     -> {
+                bin.typ = @type_info(bool)
+            }
+            .Greater    -> {
+                bin.typ = @type_info(bool)
+            }
+            .GreaterEq  -> {
+                bin.typ = @type_info(bool)
+            }
+
+            .And        -> {
+                bin.typ = @type_info(bool)
+            }
+            .Or         -> {
+                bin.typ = @type_info(bool)
+            }
+
+            .Assign     -> {
+                bin.typ = @type_info(void)
+            }
+
+            .Move       -> {
+                bin.typ = bin.left.typ
+            }
+
+            .Pipe       -> {
+                compiler.error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
+            }
+
+            .Range      -> {
+                compiler.error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
+            }
+            .RangeIncl  -> {
+                compiler.error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
+            }
+        }
+
         // @todo
         return bin
     }
@@ -155,14 +319,41 @@ impl CompilationJob for CompileGlobalNodeJob {
     compile_if :: (&Self, iff: &AstIf, ctx: CNContext) -> &AstNode {
         iff.condition.scope = iff.scope
         compile_node(iff.condition, ctx.with_expected(@type_info(bool)))
+        if iff.condition.typ == null {
+            return iff
+        }
+
+        match &<<iff.condition.typ {
+            TypeInfoBool(_) -> {}
+            TypeInfoPointer(_) -> {}
+
+            _ -> {
+                compiler.error_handler.report_error_at(
+                    iff.condition.location,
+                    "Type of condition must be bool or pointer, but is {}",
+                    ["TODO"])
+            }
+        }
 
         iff.true_case.scope = iff.scope
         compile_node(iff.true_case, ctx)
 
         if iff.false_case != null {
+            // compile else
             iff.false_case.scope = iff.scope
             compile_node(<<iff.false_case, ctx)
+
+            // cal type of iff
+            if iff.true_case.typ == iff.false_case.typ {
+                iff.typ = iff.true_case.typ
+            } else {
+                // @todo: maybe we can do something better here
+                iff.typ = @type_info(void)
+            }
+        } else {
+            iff.typ = @type_info(void)
         }
+
         return iff
     }
 
@@ -240,17 +431,6 @@ impl CompilationJob for CompileGlobalNodeJob {
     compile_identifier :: (&Self, id: &AstIdentifier, ctx: CNContext) -> &AstNode {
         id.symbol = id.scope.get_symbol(id.name)
         match id.symbol {
-            // .Val(($typ, $value)) -> match value {
-            //     .Function($func) -> {
-            //         // id.typ = cast typ
-            //         id.value = value
-            //     }
-                
-            //     $val -> {
-            //         compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [val])
-            //     }
-            // }
-
             .ConstDecl($decl) -> {
                 wait_until(decl.value_expr.value != .None, {
                     compiler.error_handler.report_error_at(id.location, "Failed to get value of constant declaration")
@@ -534,10 +714,12 @@ impl CompilationJob for LoadFileJob {
                         decl := parser.parse_node()
                         if decl == null then break
 
-                        if const DEBUG_JOBS {
+                        if const DUMP_AST {
                             dump := dump_ast(<<decl)
                             g_logger.log("{}", [dump])
-                            dump = pretty_print_ast(<<decl)
+                        }
+                        if const PRINT_AST {
+                            dump := pretty_print_ast(<<decl)
                             g_logger.log("{}", [dump])
                         }
 

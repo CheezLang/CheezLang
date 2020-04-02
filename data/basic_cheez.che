@@ -42,16 +42,24 @@
 
 // foo :: (a : int, b := 3, d := true) {
 
-// }
+// 
 // ((a), (b := c), (d))
 
 Main :: () {
-    x := true
-    y := 5
+    print(1 + 2 * 3)
+    print((1 + 2) * 3)
+    // x := true
+    // y := !x
 
-    print(x, y)
+    // if x {
+    //     print(1)
+    // } else {
+    //     print(0)
+    // }
 
-    foo()
+    // print(x, y)
+
+    // foo()
 }
 
 foo :: () {

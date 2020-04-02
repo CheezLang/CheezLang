@@ -90,6 +90,7 @@ impl CodeGenerator for ByteCodeGenerator {
         match node {
             AstArgument($arg)       -> generate_argument(arg)
             AstBinary($bin)         -> generate_binary(bin)
+            AstUnary($un)           -> generate_unary(un)
             AstBlock($block)        -> generate_block(block)
             AstBool($bol)           -> generate_bool(bol)
             AstBreak($brake)        -> generate_break(brake)
@@ -127,10 +128,79 @@ impl CodeGenerator for ByteCodeGenerator {
         }
     }
 
+    generate_unary :: (&Self, un: &AstUnary) {
+        builder.set_current_line(un.location.line)
+        generate_expression(un.sub)
+        match un.operator {
+            .Not -> builder.build_not()
+
+            _ -> error_handler.report_error_at(un.location, "Code gen for unary not implemented")
+        }
+    }
+
+    type_info_to_inst_number_type :: (&Self, type_info: ^TypeInfo) -> InstNumTyp {
+        return match &<<type_info {
+            TypeInfoInt($ti) -> match ti.size, ti.signed {
+                (1, true)   -> .I8
+                (2, true)   -> .I16
+                (4, true)   -> .I32
+                (8, true)   -> .I64
+                (1, false)  -> .U8
+                (2, false)  -> .U16
+                (4, false)  -> .U32
+                (8, false)  -> .U64
+                _ -> @assert(false)
+            }
+            TypeInfoFloat($ti) -> match ti.size {
+                4 -> .F32
+                8 -> .F64
+                _ -> @assert(false)
+            }
+            _ -> @assert(false)
+        }
+    }
+
     generate_binary :: (&Self, bin: &AstBinary) {
+        generate_expression(bin.left)
+        generate_expression(bin.right)
         builder.set_current_line(bin.location.line)
-        builder.build_const(0)
-        // @todo
+        match bin.operator {
+            .Add        -> builder.build_add(type_info_to_inst_number_type(bin.typ))
+            .Sub        -> builder.build_sub(type_info_to_inst_number_type(bin.typ))
+            .Mul        -> builder.build_mul(type_info_to_inst_number_type(bin.typ))
+            .Div        -> builder.build_div(type_info_to_inst_number_type(bin.typ))
+            .Mod        -> builder.build_mod(type_info_to_inst_number_type(bin.typ))
+            
+            .Equal      -> builder.build_ieq(type_info_to_inst_number_type(bin.typ))
+            .NotEqual   -> builder.build_ine(type_info_to_inst_number_type(bin.typ))
+            .Less       -> builder.build_ilt(type_info_to_inst_number_type(bin.typ))
+            .LessEq     -> builder.build_ile(type_info_to_inst_number_type(bin.typ))
+            .Greater    -> builder.build_igt(type_info_to_inst_number_type(bin.typ))
+            .GreaterEq  -> builder.build_ige(type_info_to_inst_number_type(bin.typ))
+
+            .And        -> builder.build_and()
+            .Or         -> builder.build_or()
+
+            .Assign     -> {
+                error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
+            }
+
+            .Move       -> {
+                error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
+            }
+
+            .Pipe       -> {
+                error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
+            }
+
+            .Range      -> {
+                error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
+            }
+
+            .RangeIncl  -> {
+                error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
+            }
+        }
     }
 
     generate_if :: (&Self, iff: &AstIf) {
@@ -241,7 +311,6 @@ impl CodeGenerator for ByteCodeGenerator {
                 }
                 builder.set_current_line(call.location.line)
                 builder.build_comp_call(call.ast_function)
-                builder.build_const(0) // @temp
             }
 
             .NativeFunc($func) -> {
@@ -250,7 +319,6 @@ impl CodeGenerator for ByteCodeGenerator {
                 }
                 builder.set_current_line(call.location.line)
                 builder.build_native_call(func, call.arguments.count())
-                builder.build_const(0) // @temp
             }
 
             _ -> {
@@ -427,29 +495,34 @@ impl InstructionBuilder {
         function.instructions.add(<<cast(^u64)^index)
     }
 
-    build_add :: (&Self) {
+    build_add :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Add)
+        function.instructions.add(cast typ)
     }
 
-    build_sub :: (&Self) {
+    build_sub :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Sub)
+        function.instructions.add(cast typ)
     }
 
-    build_mul :: (&Self) {
+    build_mul :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Mul)
+        function.instructions.add(cast typ)
     }
 
-    build_div :: (&Self) {
+    build_div :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Div)
+        function.instructions.add(cast typ)
     }
 
-    build_mod :: (&Self) {
+    build_mod :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Mod)
+        function.instructions.add(cast typ)
     }
 
     build_and :: (&Self) {
@@ -462,29 +535,45 @@ impl InstructionBuilder {
         function.instructions.add(cast Instruction.Or)
     }
 
-    build_ieq :: (&Self) {
+    build_not :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Not)
+    }
+
+    build_ieq :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Ieq)
+        function.instructions.add(cast typ)
     }
 
-    build_ilt :: (&Self) {
+    build_ine :: (&Self, typ: InstNumTyp) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Ine)
+        function.instructions.add(cast typ)
+    }
+
+    build_ilt :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Ilt)
+        function.instructions.add(cast typ)
     }
 
-    build_ile :: (&Self) {
+    build_ile :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Ile)
+        function.instructions.add(cast typ)
     }
 
-    build_igt :: (&Self) {
+    build_igt :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Igt)
+        function.instructions.add(cast typ)
     }
 
-    build_ige :: (&Self) {
+    build_ige :: (&Self, typ: InstNumTyp) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Ige)
+        function.instructions.add(cast typ)
     }
 
     build_branch :: (&Self, address: int) -> int {
