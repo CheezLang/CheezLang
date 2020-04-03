@@ -141,6 +141,37 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
+        AstReturn($node) -> {
+            assert("AstReturn", node.typ != null)
+            if node.value_expr != null and !validate_node(<<node.value_expr, error_handler) {
+                return false
+            }
+        }
+
+        AstBreak($node) -> {
+            assert("AstBreak", node.typ != null)
+            if node.label != null and !validate_node(<<node.label, error_handler) {
+                return false
+            }
+            if node.value_expr != null and !validate_node(<<node.value_expr, error_handler) {
+                return false
+            }
+        }
+
+        AstContinue($node) -> {
+            assert("AstContinue", node.typ != null)
+            if node.label != null and !validate_node(<<node.label, error_handler) {
+                return false
+            }
+        }
+
+        AstDefer($node) -> {
+            assert("AstDefer", node.typ != null)
+            if !validate_node(node.sub, error_handler) {
+                return false
+            }
+        }
+
         _ -> {
             error_handler.report_error_at(node.location, "Validation for node not implemented")
             return false

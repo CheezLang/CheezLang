@@ -33,7 +33,7 @@ AstDecl :: struct AstNode {
     type_expr   : ^AstNode
     value_expr  : ^AstNode
 
-    name        : string = ""
+    name        : string = "_"
     var_type    : ^TypeInfo = null
 }
 impl AstNode for AstDecl {}
@@ -61,14 +61,15 @@ AstEnum :: struct AstNode {
 impl AstNode for AstEnum {}
 
 AstFunction :: struct AstNode {
-    params      : Array[^AstDecl]
-    body        : ^AstNode
+    params              : Array[^AstDecl]
+    body                : ^AstNode
+    return_type_expr    : ^AstNode
 
-    param_scope : ^Scope
-    name        := "#anonymous"
-    return_type : ^TypeInfo = null
+    param_scope         : ^Scope
+    name                := "#anonymous"
+    return_type         : ^TypeInfo = null
 
-    bytecode    : ^CBCFunction = null
+    bytecode            : ^CBCFunction = null
 }
 impl AstNode for AstFunction {}
 

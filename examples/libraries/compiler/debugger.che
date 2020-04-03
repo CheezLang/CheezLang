@@ -548,9 +548,9 @@ impl VariableRef for ArgumentsScope {
     get_variables :: (&Self) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
-        for name : stackframe.func.debug_info.parameters {
-            value := stackframe.stack[stackframe.bp - it_index - 1]
-            var := Variable.new(interp, frame, name.clone(), fmt.format("{}", [value]))
+        for param : stackframe.func.debug_info.params {
+            value := stackframe.stack[stackframe.bp + param.index]
+            var := Variable.new(interp, frame, param.name.to_owned(), fmt.format("{}", [value]))
             result.add(var.clone().change_type(VariableRef))
         }
         return result

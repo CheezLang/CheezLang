@@ -45,20 +45,46 @@
 // 
 // ((a), (b := c), (d))
 
-foo :: (n: int) {
+countdown :: (n: int) {
+    print(fib(n))
+    if n > 0 {
+        countdown(n - 1)
+    }
+}
+
+fac :: (n: int) -> int {
+    return if n <= 1 then 1 else n * fac(n - 1)
+    // if n <= 1 {
+    //     return 1
+    // } else {
+    //     return n * fac(n - 1)
+    // }
+}
+
+fib :: (n: int) -> int {
+    return if n <= 1 then 1 else fib(n - 1) + fib(n - 2)
+    // if n <= 1 {
+    //     return 1
+    // } else {
+    //     return fib(n - 1) + fib(n - 2)
+    // }
 }
 
 Main :: () {
-    a := 3
-    b := 2
+    countdown(10)
+    // print(fac(10))
+    // print(fib(5))
 
-    // foo(n)
-    // foo(3, 3)
-    // foo(4, 5)
+//     a := 3
+//     b := 2
+
+//     // foo(n)
+//     // foo(3, 3)
+//     // foo(4, 5)
     
-    if a == b {
-        print(1)
-    } else {
-        print(0)
-    }
+//     if a == b {
+//         print(1)
+//     } else {
+//         print(0)
+//     }
 }

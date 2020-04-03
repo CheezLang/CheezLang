@@ -51,8 +51,14 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
                 for param : func.params {
                     dump_ast_helper(result, <<param, recurse, indent + 2)
                 }
-                print("body:`n", indent + 1)
-                dump_ast_helper(result, <<func.body, recurse, indent + 2)
+                if func.return_type_expr != null {
+                    print("return_type_expr:`n", indent + 1)
+                    dump_ast_helper(result, <<func.return_type_expr, recurse, indent + 2)
+                }
+                if func.body != null {
+                    print("body:`n", indent + 1)
+                    dump_ast_helper(result, <<func.body, recurse, indent + 2)
+                }
             }
         }
 

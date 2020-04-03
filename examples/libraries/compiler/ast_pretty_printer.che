@@ -58,8 +58,12 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
                 pretty_print_ast_helper(result, <<param)
             }
             result += ") "
-            // @todo return type
-            pretty_print_ast_helper(result, <<func.body)
+            if func.return_type_expr != null {
+                pretty_print_ast_helper(result, <<func.return_type_expr)
+            }
+            if func.body != null {
+                pretty_print_ast_helper(result, <<func.body)
+            }
         }
 
         AstTuple($tuple) -> {
@@ -325,7 +329,9 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
                 pretty_print_typed_ast_helper(result, <<param)
             }
             result += ") "
-            // @todo return type
+            if func.return_type != null {
+                fmt.format_into(result, "-> {} ", [func.return_type])
+            }
             pretty_print_typed_ast_helper(result, <<func.body)
         }
 

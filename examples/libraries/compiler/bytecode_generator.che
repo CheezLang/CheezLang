@@ -44,13 +44,12 @@ impl ByteCodeGenerator {
         ))
     }
 
-    allocate_function :: (&Self, name: string, path: string, params: Array[String]) -> ^CBCFunction {
+    allocate_function :: (&Self, name: string, path: string) -> ^CBCFunction {
         func := mem.alloc(CBCFunction, allocator)
         <<func = CBCFunction(
             ast_function = function
             debug_info = CBCDebugInfo(
                 path       = path.to_owned()
-                parameters = params
             )
         )
         return func
@@ -71,10 +70,16 @@ impl CodeGenerator for ByteCodeGenerator {
         defer function <- null
 
         file_path := func.location.file
-        params := Array[String].create()
-
-        cbc_func := self.allocate_function(func.name, file_path, params)
+        cbc_func := self.allocate_function(func.name, file_path)
         builder.begin_function(cbc_func)
+
+        slot_index := 0
+        for(reverse=true) param : func.params {
+            slot_index -= (param.var_type.size + 7) / 8
+            variables[param.id] = slot_index
+            cbc_func.debug_info.params.add(VariableInfo(param.id, param.name, slot_index))
+        }
+        cbc_func.parameter_slots = -slot_index
 
         generate_expression(<<func.body)
         builder.set_current_line(func.body.location.end_line)

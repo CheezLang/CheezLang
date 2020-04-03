@@ -48,10 +48,10 @@ VariableInfo :: struct #copy {
 }
 
 CBCDebugInfo :: struct {
-    path        := String.empty()
-    lines       := Array[LineInfo].create()
-    locals      := Array[VariableInfo].create()
-    parameters  := Array[String].create()
+    path    := String.empty()
+    lines   := Array[LineInfo].create()
+    locals  := Array[VariableInfo].create()
+    params  := Array[VariableInfo].create()
 }
 
 impl CBCDebugInfo {
@@ -77,6 +77,7 @@ impl CBCDebugInfo {
 
 CBCFunction :: struct {
     ast_function    : ^AstFunction = null
+    parameter_slots := 0
     instructions    := Array[u64].create()
     local_slots     := 0
     debug_info      := CBCDebugInfo()
@@ -177,10 +178,10 @@ impl Interpreter {
     }
 
     comp_call :: (&Self, function: &AstFunction) {
-        push_frame(function.bytecode, function.params.count())
+        push_frame(function.bytecode)
     }
 
-    push_frame :: (&Self, func: ^CBCFunction, arg_count: int = 0) {
+    push_frame :: (&Self, func: ^CBCFunction) {
         if fp + 1 >= frames.length {
             frame := &frames[fp]
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
@@ -203,11 +204,11 @@ impl Interpreter {
         }
         fp += 1
 
-        if sp - arg_count < 0 {
-            g_logger.log("[INTERP] Trying to call function with {} arguments but not enough arguments are on the stack (sp = {})", [arg_count, sp])
+        if sp - func.parameter_slots < 0 {
+            g_logger.log("[INTERP] Trying to call function with {} arguments but not enough arguments are on the stack (sp = {})", [func.parameter_slots, sp])
             // frame := &frames[fp]
             // g_logger.log("[INTERP] {}:{}:{}: Trying to call function with {} arguments but not enough arguments are on the stack at (fp={}, sp={}, ip={}) {}           {}", [
-            //     arg_count
+            //     func.parameter_slots
             //     frame.func.debug_info.path.slice()
             //     frame.func.debug_info.get_line_for_ip(frame.ip_prev)
             //     5 // @todo: this is the column, read from debug info
@@ -222,15 +223,15 @@ impl Interpreter {
 
         frames[fp] = StackFrame(
             ip = 0
-            sp = arg_count + func.local_slots
-            bp = arg_count
+            sp = func.parameter_slots + func.local_slots
+            bp = func.parameter_slots
             code = func.instructions.slice()
-            stack = stack[sp-arg_count .. ]
+            stack = stack[sp-func.parameter_slots .. ]
             func = func
         )
 
         if const DEBUG_INTERPRETER {
-            g_logger.log("push_frame {} (fp = {} -> {}, sp = {} -> {}, local_slots = {})", [arg_count, _fp, fp, _sp, sp, func.local_slots])
+            g_logger.log("push_frame {} (fp = {} -> {}, sp = {} -> {}, local_slots = {})", [func.parameter_slots, _fp, fp, _sp, sp, func.local_slots])
         }
     }
 
@@ -631,7 +632,7 @@ impl Interpreter {
                     ])
                     return .Done
                 })
-                push_frame(func.bytecode, func.params.count())
+                push_frame(func.bytecode)
             }
 
             .Return -> {
@@ -773,7 +774,10 @@ impl Instruction {
 
             .Call           -> fmt.format("Call {} {}", [string(arg(^u8, 0), arg(int, 1)), arg(int, 2)])
             .NativeCall     -> fmt.format("NativeCall {2}", [arg(^void, 0), arg(^void, 1), arg(int, 2)])
-            .CompCall       -> fmt.format("CompCall #{}", [arg(^AstFunction, 0).id])
+            .CompCall       -> {
+                func := arg(^AstFunction, 0)
+                fmt.format("CompCall {}#{}", [func.name, func.id])
+            }
             .Return         -> fmt.format("Return")
             .ReturnVoid     -> fmt.format("ReturnVoid")
 

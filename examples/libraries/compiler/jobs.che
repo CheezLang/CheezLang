@@ -403,6 +403,13 @@ impl CompilationJob for CompileGlobalNodeJob {
         if ret.value_expr != null {
             ret.value_expr.scope = ret.scope
             compile_node(<<ret.value_expr, ctx.with_expected(self.function.return_type))
+
+            if ret.value_expr.typ != self.function.return_type {
+                compiler.error_handler.report_error_at(
+                    ret.value_expr.location,
+                    "Type of return value ({}) does not match return type of containing function ({}).",
+                    [ret.value_expr.typ, self.function.return_type])
+            }
         }
 
         return ret
@@ -446,7 +453,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 wait_until(decl.value_expr.value != .None, {
                     compiler.error_handler.report_error_at(id.location, "Failed to get value of constant declaration")
                 })
-                id.typ = decl.var_type
+                id.typ = decl.value_expr.typ // @todo: get type of type expr if available
                 id.value = decl.value_expr.value
             }
 
@@ -480,6 +487,7 @@ impl CompilationJob for CompileGlobalNodeJob {
         arg.value_expr.scope = arg.scope
         arg.value_expr <- compile_node(arg.value_expr, ctx)
         arg.typ = arg.value_expr.typ
+        arg.value = arg.value_expr.value
         return arg
     }
 
@@ -487,6 +495,8 @@ impl CompilationJob for CompileGlobalNodeJob {
         call.function.scope = call.scope
         call.function <- compile_node(call.function, ctx.with_expected(null))
         
+        call.typ = @type_info(void)
+
         match call.function.value {
             .Function($func) -> {
                 // call.typ = cast typ
@@ -494,9 +504,20 @@ impl CompilationJob for CompileGlobalNodeJob {
                 call.ast_function = func
 
                 for arg : call.arguments {
+                    param := &func.params[it_index]
+
                     arg.scope = call.scope
                     arg = cast ^compile_node(<<arg, ctx.with_expected(null))
+
+                    if arg.typ != param.var_type {
+                        compiler.error_handler.report_error_at(
+                            arg.location,
+                            "Type of argument ({}) does not match type of parameter '{}' ({}).",
+                            [arg.typ, param.name, param.var_type])
+                    }
                 }
+
+                call.typ = func.return_type
             }
 
             .NativeFunc($func) -> {
@@ -512,9 +533,6 @@ impl CompilationJob for CompileGlobalNodeJob {
                 compiler.error_handler.report_error_at(call.location, "[compile_call] not implemented: {}", [val])
             }
         }
-
-        // @todo: this is temporary
-        call.typ = @type_info(void)
 
         return call
     }
@@ -551,11 +569,19 @@ impl CompilationJob for CompileGlobalNodeJob {
         func.body.scope = func.param_scope
         func.value = Value.Function(^func)
 
-        // @todo: actually compute type from arguments and return type
         // infer types of parameters
         param_types := mem.alloc_n(^TypeInfo, cast func.params.count(), compiler.type_allocator)
         for param : func.params {
             param.scope = func.param_scope
+
+            param.name = match &<<param.pattern {
+                AstIdentifier($id) -> id.name
+                _ -> {
+                    compiler.error_handler.report_error_at(param.location, "Non-identifier patterns not implemented yet")
+                    return func
+                }
+            }
+
             // compile type expression
             if param.type_expr != null {
                 param.type_expr.scope = param.scope
@@ -592,18 +618,36 @@ impl CompilationJob for CompileGlobalNodeJob {
 
             param_types[it_index] = param.var_type
         }
+
+        // handle return type
+        func.return_type = @type_info(void)
+        if func.return_type_expr != null {
+            func.return_type_expr.scope = func.param_scope
+            func.return_type_expr = ^compile_node(<<func.return_type_expr, ctx.with_expected(@type_info(type)))
+
+            if func.return_type_expr.typ != @type_info(type) {
+                compiler.error_handler.report_error_at(func.return_type_expr.location, "Expected type, got {}", [func.return_type_expr.typ])
+                return func
+            } else {
+                @assert(func.return_type_expr.value == .Type)
+                func.return_type = func.return_type_expr.value.Type
+            }
+        }
+
+        // set function type
         func.typ = compiler.new_type(TypeInfoFunction(
             size        = 8
             alignment   = 8
             traits      = []
             param_types = param_types
-            return_type = @type_info(void)
+            return_type = func.return_type
         ))
-        g_logger.log("{}", [func.typ])
 
+        // compile body
         debug_log("compile_function '{}': Compile Body", [func.name])
         func.body = ^compile_node(<<func.body, ctx.with_expected(null)) // @todo: use return type as expected?
 
+        // generate byte code
         debug_log("compile_function '{}': Generate Bytecode", [func.name])
         code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
         code_gen.get().generate_code_for_function(^func)

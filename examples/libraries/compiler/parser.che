@@ -467,13 +467,16 @@ impl Parser {
 
         location := consume(.KwReturn).location
 
-        // @todo: parse optional expression
+        value_expr : ^AstNode = null
+        if is_expr_token() {
+            value_expr = parse_expression(allow_comma, true)
+        }
 
         // location.end_line = body.location.end_line
         return allocate(AstReturn(
             id          = id
             location    = location
-            value_expr  = null
+            value_expr  = value_expr
         ))
     }
 
@@ -509,9 +512,15 @@ impl Parser {
 
         if allow_function {
             // @todo: parse function if return type '->'
+            return_type_expr : ^AstNode = null
 
-            // parse as function if followed by {
-            if  check_token(.OpenBrace) {
+            if check_token(.Arrow) {
+                lexer.next_token()
+                lexer.skip_whitespace()
+                return_type_expr = try(parse_expression(true, false))
+            }
+
+            if return_type_expr != null or check_token(.OpenBrace) {
                 params := Array[^AstDecl].create()
                 for e : values {
                     match &<<e {
@@ -529,14 +538,19 @@ impl Parser {
                     }
                 }
 
-                body := parse_block()
+                // parse as function if followed by {
+                body : ^AstNode = null
+                if check_token(.OpenBrace) {
+                    body = parse_block()
+                }
 
                 return allocate(AstFunction(
-                    id          = next_id()
-                    location    = beg.to(body.location)
-                    param_scope = null
-                    params      = params
-                    body        = body
+                    id                  = next_id()
+                    location            = beg.to(body.location)
+                    param_scope         = null
+                    params              = params
+                    return_type_expr    = return_type_expr
+                    body                = body
                 ))
             }
         }
@@ -703,6 +717,36 @@ impl Parser {
     }
 
     // helpers
+    is_expr_token :: (&Self) -> bool {
+        token := lexer.peek_token()
+        return match token.typ {
+            .Identifier         -> true
+            .DollarIdentifier   -> true
+            .AtSignIdentifier   -> true
+            .HashIdentifier     -> true
+            .NumberLiteral      -> true
+            .StringLiteral      -> true
+            .KwTrue             -> true
+            .KwFalse            -> true
+            .KwIf               -> true
+            .KwLoop             -> true
+            .KwMatch            -> true
+            .KwNull             -> true
+            .OpenParen          -> true
+            .OpenBrace          -> true
+            .OpenBracket        -> true
+            .Ampersand          -> true
+            .Minus              -> true
+            .Asterisk           -> true
+            .LessLess           -> true
+            .Hat                -> true
+            .Bang               -> true
+            .Period             -> true
+
+            _                   -> false
+        }
+    }
+
     check_token :: (&Self, typ: TokenType) -> bool {
         token := lexer.peek_token()
         return token.typ == typ

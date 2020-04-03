@@ -240,13 +240,11 @@ impl Printable for TypeInfoFunction {
     print :: (&Self, str: &String, format: string) {
         str += "fn ("
         for param_type : self.param_types {
-            // str += "aaaaa"
             if it_index > 0 { str += ", " }
-            // param_type.print(str, "")
-            @type_info(void).print(str, "")
+            fmt.format_into(str, "{}", [param_type])
         }
         str += ") -> "
-        self.return_type.print(str, "")
+        fmt.format_into(str, "{}", [self.return_type])
     }
 }
 impl Printable for TypeInfoTuple {
@@ -272,25 +270,25 @@ impl Printable for TypeInfoInt {
 impl Printable for TypeInfoPointer {
     print :: (&Self, str: &String, format: string) {
         str += "^" // @todo: mut
-        target.print(str, "")
+        fmt.format_into(str, "{}", [target])
     }
 }
 impl Printable for TypeInfoReference {
     print :: (&Self, str: &String, format: string) {
         str += "&" // @todo: mut
-        target.print(str, "")
+        fmt.format_into(str, "{}", [target])
     }
 }
 impl Printable for TypeInfoSlice {
     print :: (&Self, str: &String, format: string) {
         str += "[]"
-        target.print(str, "")
+        fmt.format_into(str, "{}", [target])
     }
 }
 impl Printable for TypeInfoArray {
     print :: (&Self, str: &String, format: string) {
         str.appendf("[{}]", length)
-        target.print(str, "")
+        fmt.format_into(str, "{}", [target])
     }
 }
 impl Printable for TypeInfoTrait {
