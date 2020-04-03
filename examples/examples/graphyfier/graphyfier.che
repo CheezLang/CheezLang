@@ -375,7 +375,7 @@ Main :: () {
     Instrumentor.init(false)
     Instrumentor.get().begin_session("graphyfier", "graphyfier_profile.json")
     myGame := MyGame(
-        var_name_allocator = ArenaAllocator.create(1024)
+        var_name_allocator = ArenaAllocator.new(1024)
         variables = Variables.create(compare_strings)
     )
     pge := PixelGameEngine.create(^myGame, width, height)

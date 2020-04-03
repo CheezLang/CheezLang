@@ -182,6 +182,133 @@ impl Printable for Complex {
     }
 }
 
+impl Printable for TypeInfo {
+    print :: (&Self, str: &String, format: string) {
+        print_func := self.get_trait_function(Printable, "print", fn(^void, &String, string))
+        if print_func != null {
+            print_func(Traits.destructure(^self).ptr, str, "")
+        } else {
+            str += "TypeInfo<unknown>"
+        }
+    }
+}
+impl Printable for TypeInfoVoid {
+    print :: (&Self, str: &String, format: string) {
+        str += "void"
+    }
+}
+impl Printable for TypeInfoType {
+    print :: (&Self, str: &String, format: string) {
+        str += "type"
+    }
+}
+impl Printable for TypeInfoFloat {
+    print :: (&Self, str: &String, format: string) {
+        str.append_string(match self.size {
+            4 -> "f32"
+            8 -> "f64"
+            _ -> @assert(false)
+        })
+    }
+}
+impl Printable for TypeInfoBool {
+    print :: (&Self, str: &String, format: string) {
+        str += "bool"
+    }
+}
+impl Printable for TypeInfoChar {
+    print :: (&Self, str: &String, format: string) {
+        str.append_string(match self.size {
+            1 -> "char8"
+            2 -> "char16"
+            4 -> "char32"
+            _ -> @assert(false)
+        })
+    }
+}
+impl Printable for TypeInfoString {
+    print :: (&Self, str: &String, format: string) {
+        str += "string"
+    }
+}
+impl Printable for TypeInfoAny {
+    print :: (&Self, str: &String, format: string) {
+        str += "any"
+    }
+}
+impl Printable for TypeInfoFunction {
+    print :: (&Self, str: &String, format: string) {
+        str += "fn ("
+        for param_type : self.param_types {
+            // str += "aaaaa"
+            if it_index > 0 { str += ", " }
+            // param_type.print(str, "")
+            @type_info(void).print(str, "")
+        }
+        str += ") -> "
+        self.return_type.print(str, "")
+    }
+}
+impl Printable for TypeInfoTuple {
+    print :: (&Self, str: &String, format: string) {
+        str += "TODO: printable for TypeInfoTuple"
+    }
+}
+impl Printable for TypeInfoInt {
+    print :: (&Self, str: &String, format: string) {
+        str.append_string(match (self.size, self.signed) {
+            (1, true)  -> "i8"
+            (2, true)  -> "i16"
+            (4, true)  -> "i32"
+            (8, true)  -> "i64"
+            (1, false) -> "u8"
+            (2, false) -> "u16"
+            (4, false) -> "u32"
+            (8, false) -> "u64"
+            _ -> @assert(false)
+        })
+    }
+}
+impl Printable for TypeInfoPointer {
+    print :: (&Self, str: &String, format: string) {
+        str += "^" // @todo: mut
+        target.print(str, "")
+    }
+}
+impl Printable for TypeInfoReference {
+    print :: (&Self, str: &String, format: string) {
+        str += "&" // @todo: mut
+        target.print(str, "")
+    }
+}
+impl Printable for TypeInfoSlice {
+    print :: (&Self, str: &String, format: string) {
+        str += "[]"
+        target.print(str, "")
+    }
+}
+impl Printable for TypeInfoArray {
+    print :: (&Self, str: &String, format: string) {
+        str.appendf("[{}]", length)
+        target.print(str, "")
+    }
+}
+impl Printable for TypeInfoTrait {
+    print :: (&Self, str: &String, format: string) {
+        str += "TODO: printable for TypeInfoTrait"
+    }
+}
+impl Printable for TypeInfoStruct {
+    print :: (&Self, str: &String, format: string) {
+        str += "TODO: printable for TypeInfoStruct"
+    }
+}
+impl Printable for TypeInfoEnum {
+    print :: (&Self, str: &String, format: string) {
+        str += "TODO: printable for TypeInfoEnum"
+    }
+}
+
 #file_scope
 printf_int_to_string :: (str: &String, i: $T, format: string) {
     base := if streq("b", format) then 2

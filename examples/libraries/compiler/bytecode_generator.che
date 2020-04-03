@@ -171,12 +171,12 @@ impl CodeGenerator for ByteCodeGenerator {
             .Div        -> builder.build_div(type_info_to_inst_number_type(bin.typ))
             .Mod        -> builder.build_mod(type_info_to_inst_number_type(bin.typ))
             
-            .Equal      -> builder.build_ieq(type_info_to_inst_number_type(bin.typ))
-            .NotEqual   -> builder.build_ine(type_info_to_inst_number_type(bin.typ))
-            .Less       -> builder.build_ilt(type_info_to_inst_number_type(bin.typ))
-            .LessEq     -> builder.build_ile(type_info_to_inst_number_type(bin.typ))
-            .Greater    -> builder.build_igt(type_info_to_inst_number_type(bin.typ))
-            .GreaterEq  -> builder.build_ige(type_info_to_inst_number_type(bin.typ))
+            .Equal      -> builder.build_ieq(type_info_to_inst_number_type(bin.left.typ))
+            .NotEqual   -> builder.build_ine(type_info_to_inst_number_type(bin.left.typ))
+            .Less       -> builder.build_ilt(type_info_to_inst_number_type(bin.left.typ))
+            .LessEq     -> builder.build_ile(type_info_to_inst_number_type(bin.left.typ))
+            .Greater    -> builder.build_igt(type_info_to_inst_number_type(bin.left.typ))
+            .GreaterEq  -> builder.build_ige(type_info_to_inst_number_type(bin.left.typ))
 
             .And        -> builder.build_and()
             .Or         -> builder.build_or()

@@ -163,6 +163,7 @@ format :: (text: string, args: []^any = []) -> String {
 #file_scope
 
 format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format: string, recursive: bool) {
+    @assert(typ != null)
     if !recursive {
         trait_func := typ.get_trait_function(Printable, "print", fn(^void, &String, string))
         if trait_func != null {
@@ -172,13 +173,13 @@ format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format:
     }
 
     match &<<typ {
-        TypeInfoStruct($str) if str.get_trait_function(Printable, "print", fn(^void, &String, string)) != null -> {
-            trait_func := str.get_trait_function(Printable, "print", fn(^void, &String, string))
-            if trait_func != null {
-                trait_func(data, result, "")
-                return
-            }
-        }
+        // TypeInfoStruct($str) if str.get_trait_function(Printable, "print", fn(^void, &String, string)) != null -> {
+        //     trait_func := str.get_trait_function(Printable, "print", fn(^void, &String, string))
+        //     if trait_func != null {
+        //         trait_func(data, result, "")
+        //         return
+        //     }
+        // }
 
         TypeInfoString(_) -> {
             ptr := cast(^string) data

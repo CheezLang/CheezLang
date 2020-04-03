@@ -3,6 +3,7 @@
 
 DUMP_AST            :: false
 PRINT_AST           :: true
+PRINT_TYPED_AST     :: true
 DEBUG_INTERPRETER   :: true
 DEBUG_JOBS          :: true
 DEBUG_PARSER        :: false

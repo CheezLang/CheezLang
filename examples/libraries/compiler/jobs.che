@@ -1,12 +1,13 @@
-
-use import std.fiber
-use import std.string
 use import std.array
+use import std.fiber
 use import std.mem.std_heap_allocator
+use import std.printable
+use import std.string
 
+fmt :: import std.fmt
 fs  :: import std.io.fs
 io  :: import std.io
-fmt :: import std.fmt
+mem :: import std.mem.allocator
 
 use import logging.logger
 
@@ -115,6 +116,11 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
         }
 
+        if const PRINT_TYPED_AST {
+            dump := pretty_print_typed_ast(<<node)
+            g_logger.log("{}", [dump])
+        }
+
         debug_log("Done")
     }
 
@@ -176,7 +182,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             compiler.error_handler.report_error_at(
                 un.sub.location,
                 "Expected type bool, got {}",
-                ["TODO"])
+                [un.sub.typ])
             return un
         }
 
@@ -225,7 +231,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
-                        ["TODO", "TODO"])
+                        [bin.left.typ, bin.right.typ])
                 }
                 bin.typ = bin.left.typ
             }
@@ -234,7 +240,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
-                        ["TODO", "TODO"])
+                        [bin.left.typ, bin.right.typ])
                 }
                 bin.typ = bin.left.typ
             }
@@ -243,7 +249,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
-                        ["TODO", "TODO"])
+                        [bin.left.typ, bin.right.typ])
                 }
                 bin.typ = bin.left.typ
             }
@@ -252,7 +258,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
-                        ["TODO", "TODO"])
+                        [bin.left.typ, bin.right.typ])
                 }
                 bin.typ = bin.left.typ
             }
@@ -261,7 +267,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
-                        ["TODO", "TODO"])
+                        [bin.left.typ, bin.right.typ])
                 }
                 bin.typ = bin.left.typ
             }
@@ -331,7 +337,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 compiler.error_handler.report_error_at(
                     iff.condition.location,
                     "Type of condition must be bool or pointer, but is {}",
-                    ["TODO"])
+                    [iff.condition.typ])
             }
         }
 
@@ -431,6 +437,11 @@ impl CompilationJob for CompileGlobalNodeJob {
     compile_identifier :: (&Self, id: &AstIdentifier, ctx: CNContext) -> &AstNode {
         id.symbol = id.scope.get_symbol(id.name)
         match id.symbol {
+            .Val($value) -> {
+                id.typ = value.typ
+                id.value = value.value
+            }
+
             .ConstDecl($decl) -> {
                 wait_until(decl.value_expr.value != .None, {
                     compiler.error_handler.report_error_at(id.location, "Failed to get value of constant declaration")
@@ -457,6 +468,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
 
             $sym -> {
+                id.typ = @type_info(void)
                 compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [sym])
             }
         }
@@ -528,6 +540,8 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_function :: (&Self, func: &AstFunction, ctx: CNContext) -> &AstNode {
+        // @todo: polymorphic functions
+
         _prev_func := self.function
         self.function = ^func
         defer self.function = _prev_func
@@ -538,7 +552,54 @@ impl CompilationJob for CompileGlobalNodeJob {
         func.value = Value.Function(^func)
 
         // @todo: actually compute type from arguments and return type
-        func.typ = @type_info(void)
+        // infer types of parameters
+        param_types := mem.alloc_n(^TypeInfo, cast func.params.count(), compiler.type_allocator)
+        for param : func.params {
+            param.scope = func.param_scope
+            // compile type expression
+            if param.type_expr != null {
+                param.type_expr.scope = param.scope
+                param.type_expr = ^compile_node(<<param.type_expr, ctx.with_expected(@type_info(type)))
+                
+                if param.type_expr.typ != @type_info(type) {
+                    compiler.error_handler.report_error_at(param.type_expr.location, "Expected type, got {}", [param.type_expr.typ])
+                    return func
+                } else {
+                    @assert(param.type_expr.value == .Type)
+                    param.var_type = param.type_expr.value.Type
+                }
+            }
+
+            // default value
+            if param.value_expr != null {
+                param.value_expr = ^compile_node(<<param.value_expr, ctx.with_expected(param.var_type))
+                if param.value_expr.typ == null { return func }
+                param.value = param.value_expr.value
+
+                if param.var_type == null {
+                    param.var_type = param.value_expr.typ
+                }
+            }
+
+            // define param
+            if param.name != "_" {
+                match param.scope.define_decl(param.name, <<param) {
+                    Err() -> {
+                        compiler.error_handler.report_error_at(param.pattern.location, "A parameter with this name already exists")
+                    }
+                }
+            }
+
+            param_types[it_index] = param.var_type
+        }
+        func.typ = compiler.new_type(TypeInfoFunction(
+            size        = 8
+            alignment   = 8
+            traits      = []
+            param_types = param_types
+            return_type = @type_info(void)
+        ))
+        g_logger.log("{}", [func.typ])
 
         debug_log("compile_function '{}': Compile Body", [func.name])
         func.body = ^compile_node(<<func.body, ctx.with_expected(null)) // @todo: use return type as expected?
@@ -583,23 +644,42 @@ impl CompilationJob for CompileGlobalNodeJob {
             decl.type_expr = ^compile_node(<<decl.type_expr, ctx.with_expected(@type_info(type)))
             
             if decl.type_expr.typ != @type_info(type) {
-                compiler.error_handler.report_error_at(decl.type_expr.location, "Expected type, got {}", ["TODO"])
+                compiler.error_handler.report_error_at(decl.type_expr.location, "Expected type, got {}", [decl.type_expr.typ])
+                return decl
             } else {
                 @assert(decl.type_expr.value == .Type)
                 decl.var_type = decl.type_expr.value.Type
             }
         }
 
-        decl.value_expr = ^compile_node(<<decl.value_expr, ctx.with_expected(decl.var_type))
-        decl.value = decl.value_expr.value
+        if decl.value_expr != null {
+            decl.value_expr = ^compile_node(<<decl.value_expr, ctx.with_expected(decl.var_type))
+            if decl.value_expr.typ == null { return decl }
+            decl.value = decl.value_expr.value
 
-        if decl.var_type == null {
-            decl.var_type = decl.value_expr.typ
+            if decl.var_type == null {
+                decl.var_type = decl.value_expr.typ
+            }
+        }
+
+        // check if var_type is valid
+        if !validate_variable_type(decl.var_type, decl.pattern.location) {
+            return decl
         }
 
         // @todo: create cast if necessary
 
         return decl
+    }
+
+    validate_variable_type :: (&Self, typ: ^TypeInfo, location: Location) -> bool {
+        @assert(typ != null)
+        if typ == @type_info(void) {
+            compiler.error_handler.report_error_at(location, "Variable can't have type {}", [typ])
+            return false
+        }
+
+        return true
     }
 
     compile_const_decl :: (&Self, decl: &AstConstDecl, ctx: CNContext) -> &AstNode {
@@ -636,7 +716,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             decl.type_expr = ^compile_node(<<decl.type_expr, ctx.with_expected(@type_info(type)))
             
             if decl.type_expr.typ != @type_info(type) {
-                compiler.error_handler.report_error_at(decl.type_expr.location, "Expected type, got {}", ["TODO"])
+                compiler.error_handler.report_error_at(decl.type_expr.location, "Expected type, got {}", [decl.type_expr.typ])
             } else {
                 @assert(decl.type_expr.value == .Type)
                 decl.var_type = decl.type_expr.value.Type
@@ -672,11 +752,11 @@ impl CompilationJob for RunCodeJob {
         if compiler.error_handler.has_errors() {
             return
         }
-        debug_log("execute", [function.name])
+        debug_log("Start", [function.name])
         context := Fiber.user_data(FiberContext)
         context.interp.comp_call(<<function)
         compiler.code_runner.get().run(<<context.interp)
-        debug_log("done", [function.name])
+        debug_log("Done", [function.name])
     }
 }
 

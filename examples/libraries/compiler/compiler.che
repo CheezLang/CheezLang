@@ -1,12 +1,13 @@
 use import std.array
 use import std.fiber
 use import std.map
-use import std.mem.std_heap_allocator
 use import std.mem.arena_allocator
 use import std.mem.bump_allocator
+use import std.mem.std_heap_allocator
 use import std.os.windows_constants
 use import std.os.windows_functions
 use import std.os.windows_types
+use import std.printable
 use import std.rc
 use import std.ring_queue
 use import std.string
@@ -59,6 +60,23 @@ wait_until :: (cond: Code, on_error: Code) #macro {
 }
 
 compile_files :: (files: []String) {
+    // ti_printable := @type_info(Printable)
+    // ti_string := @type_info(String)
+
+    // ti_printable_val, ti_printable_vtable := Traits.destructure(ti_printable)
+    // ti_string_val, ti_string_vtable := Traits.destructure(ti_string)
+
+    // C.printf("ti_printable: 0x%llx, 0x%llx`n", ti_printable_val, ti_printable_vtable)
+    // C.printf("ti_string: 0x%llx, 0x%llx`n", ti_string_val, ti_string_vtable)
+
+    // for(by_ref=true) imp : ti_string.traits {
+    //     C.puts("===")
+    //     ti_trait_val, ti_trait_vtable := Traits.destructure(imp.trait_type)
+    //     C.printf("ti_trait: 0x%llx, 0x%llx`n", ti_trait_val, ti_trait_vtable)
+    //     C.printf("vtable: 0x%llx`n", imp.vtable)
+    // }
+    // return 
+
     g_logger.log("compile files: {}", [files])
 
     console_error_handler := ConsoleErrorHandler.new(null)
@@ -179,10 +197,43 @@ impl Compiler {
         ))
         comp.get().error_handler.text_provider = ^comp.get()
         comp.get().global_scope = comp.get().new_scope()
+        comp.get().define_builtin_types(<<comp.get().global_scope)
         for 0..thread_count {
             comp.get().threads.add(Thread.new(cast comp.get().thread_func))
         }
         return comp
+    }
+
+    define_builtin_types :: (&Self, scope: &Scope) {
+        // ints
+        scope.define_value("u8",  @type_info(type), .Type(@type_info(u8)))
+        scope.define_value("u16", @type_info(type), .Type(@type_info(u16)))
+        scope.define_value("u32", @type_info(type), .Type(@type_info(u32)))
+        scope.define_value("u64", @type_info(type), .Type(@type_info(u64)))
+        scope.define_value("i8",  @type_info(type), .Type(@type_info(i8)))
+        scope.define_value("i16", @type_info(type), .Type(@type_info(i16)))
+        scope.define_value("i32", @type_info(type), .Type(@type_info(i32)))
+        scope.define_value("i64", @type_info(type), .Type(@type_info(i64)))
+
+        // floats
+        scope.define_value("f32", @type_info(type), .Type(@type_info(f32)))
+        scope.define_value("f64", @type_info(type), .Type(@type_info(f64)))
+
+        // chars
+        scope.define_value("char8",  @type_info(type), .Type(@type_info(char8)))
+        scope.define_value("char16", @type_info(type), .Type(@type_info(char16)))
+        scope.define_value("char32", @type_info(type), .Type(@type_info(char32)))
+
+        // other
+        scope.define_value("bool", @type_info(type), .Type(@type_info(bool)))
+        scope.define_value("string", @type_info(type), .Type(@type_info(string)))
+        scope.define_value("void", @type_info(type), .Type(@type_info(void)))
+        scope.define_value("type", @type_info(type), .Type(@type_info(type)))
+
+        // defaults
+        scope.define_value("int", @type_info(type), .Type(@type_info(int)))
+        scope.define_value("float", @type_info(type), .Type(@type_info(float)))
+        scope.define_value("char", @type_info(type), .Type(@type_info(char)))
     }
 
     lock :: (&Self) {
@@ -214,7 +265,7 @@ impl Compiler {
 
     new_type :: (&Self, type_info: $T) -> ^T {
         result := mem.alloc(T, type_allocator)
-        <<result = value
+        <<result = type_info
         return result
     }
 }

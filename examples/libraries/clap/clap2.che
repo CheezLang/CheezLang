@@ -290,7 +290,7 @@ parse_args_help :: (ti: ^TypeInfo, args: []ClapToken, loc: Location) -> Option[B
     return match &<<ti {
         TypeInfoEnum($info)    -> parse_args_enum(^info, args, loc)
         TypeInfoStruct($info)  -> {
-            custom_parser := info.get_trait_impl(CustomParser)
+            custom_parser := TypeInfo.get_trait_impl(info, CustomParser)
             if custom_parser != null {
                 func := custom_parser.get_function("parse", fn([]ClapToken, Location) -> (Option[Box[Expr]], []ClapToken))
                 @assert(func != null)
@@ -402,7 +402,7 @@ get_value_help :: (result: ^void, expr: &Expr) {
 
         CustomExpr($v) -> {
             type_info := cast(^TypeInfoStruct) v.typ
-            custom_parser := type_info.get_trait_impl(CustomParser)
+            custom_parser := TypeInfo.get_trait_impl(<<type_info, CustomParser)
             @assert(custom_parser != null)
             get_value_func := custom_parser.get_function("get_value", fn(^void, &CustomExpr))
             @assert(get_value_func != null)
@@ -502,7 +502,7 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
 
         CustomExpr($v) -> {
             type_info := cast(^TypeInfoStruct) v.typ
-            custom_parser := type_info.get_trait_impl(CustomParser)
+            custom_parser := TypeInfo.get_trait_impl(<<type_info, CustomParser)
             @assert(custom_parser != null)
             validate_func := custom_parser.get_function("validate", fn(&CustomExpr) -> Result[(), ClapError])
             @assert(validate_func != null)

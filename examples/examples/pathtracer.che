@@ -25,7 +25,7 @@ block_count_x       :: (width  - 1) / block_size + 1
 block_count_y       :: (height - 1) / block_size + 1
 block_count         :: block_count_x * block_count_y
 samples_per_block   :: 5
-thread_count        :: 2
+thread_count        :: 4
 
 scale               :: 5
 width               :: 192 * scale
@@ -147,7 +147,7 @@ impl Drop for PathTracer {
 impl PathTracer {
     create :: () -> Self {
         return PathTracer(
-            allocator   = ArenaAllocator.create(1024)
+            allocator   = ArenaAllocator.new(1024)
             objects     = Array[^Object].create()
             buffer      = {
                 b := alloc_n(Vec3, u64(width * height))

@@ -45,26 +45,20 @@
 // 
 // ((a), (b := c), (d))
 
-Main :: () {
-    print(1 + 2 * 3)
-    print((1 + 2) * 3)
-    // x := true
-    // y := !x
-
-    // if x {
-    //     print(1)
-    // } else {
-    //     print(0)
-    // }
-
-    // print(x, y)
-
-    // foo()
+foo :: (n: int) {
 }
 
-foo :: () {
-    x := "lol"
-    b := 69
+Main :: () {
+    a := 3
+    b := 2
 
-    print(x, b)
+    // foo(n)
+    // foo(3, 3)
+    // foo(4, 5)
+    
+    if a == b {
+        print(1)
+    } else {
+        print(0)
+    }
 }
