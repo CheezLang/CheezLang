@@ -70,8 +70,13 @@ fib :: (n: int) -> int {
     // }
 }
 
+max :: (a: int, b: int) -> int {
+    return if a > b then a else b
+}
+
 Main :: () {
-    countdown(10)
+    print(max(8, 7))
+    // countdown(10)
     // print(fac(10))
     // print(fib(5))
 

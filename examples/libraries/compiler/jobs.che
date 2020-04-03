@@ -169,11 +169,40 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_unary_neg :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
-        
+        un.sub.scope = un.scope
+        un.sub <- compile_node(un.sub, ctx)
+
+        // check types
+        if un.sub.typ == null { return un }
+
+        match &<<un.sub.typ {
+            TypeInfoInt(_) -> {}
+            TypeInfoFloat(_) -> {}
+
+            $ti -> {
+                compiler.error_handler.report_error_at(
+                    un.sub.location,
+                    "Expected type bool, got {}",
+                    [un.sub.typ])
+                return un
+            }
+        }
+        un.typ = un.sub.typ
+
+        // set value if known at compile time
+        match un.value {
+            .Int($b) -> {
+                un.value = .Int(-b)
+            }
+            .Float($b) -> {
+                un.value = .Float(-b)
+            }
+        }
         return un
     }
 
     compile_unary_not :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        un.sub.scope = un.scope
         un.sub <- compile_node(un.sub, ctx.with_expected(@type_info(bool)))
 
         // check types
@@ -198,18 +227,22 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_unary_ref :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        compiler.error_handler.report_error_at(un.location, "compile_unary_ref: not implemented")
         return un
     }
 
     compile_unary_ref_mut :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        compiler.error_handler.report_error_at(un.location, "compile_unary_ref_mut: not implemented")
         return un
     }
 
     compile_unary_ptr :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        compiler.error_handler.report_error_at(un.location, "compile_unary_ptr: not implemented")
         return un
     }
 
     compile_unary_deref :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        compiler.error_handler.report_error_at(un.location, "compile_unary_deref: not implemented")
         return un
     }
 

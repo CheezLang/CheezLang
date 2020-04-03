@@ -91,6 +91,7 @@ StackFrame :: struct {
     code    : []u64 = default
     stack   : []int = default
     func    : ^CBCFunction = null
+    return_value_size := 0
 }
 
 impl StackFrame {
@@ -228,6 +229,7 @@ impl Interpreter {
             code = func.instructions.slice()
             stack = stack[sp-func.parameter_slots .. ]
             func = func
+            return_value_size = (func.ast_function.return_type.size + 7) / 8
         )
 
         if const DEBUG_INTERPRETER {
@@ -584,7 +586,7 @@ impl Interpreter {
             }
             .BranchIf -> {
                 address := arg(int)
-                if pop(int) != 0 {
+                if pop(bool) {
                     frame.ip = address
                 }
             }
@@ -643,7 +645,7 @@ impl Interpreter {
                     // increment sp by one for return value
                     // @todo: needs to work with return values bigger than 8 bytes (1 stack slot)
                     // @fixme frames[fp].sp += 1 // fails to compile
-                    (^frames[fp]).sp += 1
+                    (^frames[fp]).sp += frame.return_value_size
                 } else {
                     return .Done
                 }
