@@ -884,6 +884,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var typeInfoPtr = builder.CreateStructGEP(vtablePtr, 0, "type_info_ptr.ptr");
                         typeInfoPtr = builder.CreateLoad(typeInfoPtr, "type_info_ptr");
 
+                        {
+                            CheckPointerNull(GetTraitPtr(typeInfoPtr), cast, $"Cast from trait pointer to any pointer resulted in null type pointer (cast({t}) {f})");
+                            CheckPointerNull(GetTraitVtable(typeInfoPtr), cast, $"Cast from trait pointer to any pointer resulted in null type pointer (cast({t}) {f})");
+                        }
+
                         var result = LLVM.GetUndef(toLLVM);
                         result = builder.CreateInsertValue(result, valuePtr, 0, "");
                         result = builder.CreateInsertValue(result, typeInfoPtr, 1, "");

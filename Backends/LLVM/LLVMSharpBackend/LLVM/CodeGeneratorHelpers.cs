@@ -1133,8 +1133,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             {
                 var (global, _) = typeInfoTable[type];
 
+                // create trait impl array
+                var traitImplSlice = CreateSlice(
+                    sTypeInfoTraitImpl,
+                    $"ti.{type}.trait_impls",
+                    workspace.TypeTraitMap.GetValueOrDefault(type)?.Select(impl => GenerateRTTIForTraitImpl(type, impl))
+                );
+
                 builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)type.GetSize(), true), builder.CreateStructGEP(global, 0, "ti.size.ptr"));
                 builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)type.GetAlignment(), true), builder.CreateStructGEP(global, 1, "ti.align.ptr"));
+                builder.CreateStore(traitImplSlice, builder.CreateStructGEP(global, 2, "ti.traits.ptr"));
                 
                 switch (type)
                 {
@@ -1326,13 +1334,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 s.Declaration.Members.Select(m => GenerateRTTIForStructMember(s, m))
             );
 
-            // create trait impl array
-            var traitImplSlice = CreateSlice(
-               sTypeInfoTraitImpl,
-               $"ti.{s.Name}.trait_impls",
-               s.Declaration.Traits.Select(t => GenerateRTTIForTraitImpl(s, t))
-            );
-
             // create type info
             // name
             builder.CreateStore(
@@ -1342,10 +1343,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateStore(
                memberSlice,
                builder.CreateStructGEP(ptr, offset + 1, ""));
-            // [] impls
-            builder.CreateStore(
-               traitImplSlice,
-               builder.CreateStructGEP(ptr, offset + 2, ""));
         }
 
         private LLVMValueRef GenerateRTTIForStructMember(StructType s, AstStructMemberNew m)
@@ -1393,14 +1390,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             });
         }
 
-        private LLVMValueRef GenerateRTTIForTraitImpl(StructType s, TraitType t)
+        private LLVMValueRef GenerateRTTIForTraitImpl(CheezType type, AstImplBlock impl)
         {
-            var impl = t.Declaration.Implementations[s];
             var vtablePtr = vtableMap[impl];
 
             return LLVM.ConstNamedStruct(rttiTypeInfoTraitImpl, new LLVMValueRef[]
             {
-                RTTITypeInfoAsPtr(t),
+                RTTITypeInfoAsPtr(impl.Trait),
                 LLVM.ConstPointerCast(vtablePtr, LLVM.Int8Type().GetPointerTo()),
             });
         }
