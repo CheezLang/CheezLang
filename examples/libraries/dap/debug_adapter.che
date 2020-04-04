@@ -336,6 +336,13 @@ impl DebugAdapter {
         emit_event("stopped", JsonValue.JsonObject(body))
     }
 
+    emit_continued_event :: (&Self) {
+        body := Table[string, JsonValue].create(strings_equal)
+        body["threadId"] = JsonValue.JsonNumber(0)
+        body["allThreadsContinued"] = JsonValue.JsonBool(true)
+        emit_event("continued", JsonValue.JsonObject(body))
+    }
+
     emit_terminated_event :: (&Self) {
         body := Table[string, JsonValue].create(strings_equal)
         emit_event("terminated", JsonValue.JsonObject(body))

@@ -90,10 +90,14 @@ get_string :: () -> string {
 }
 
 Main :: () {
-    x := 3.1415
-    print_bool(true)
-    print_bool(false)
-    print_string(get_string())
+    // a := 5
+    b :: fac(5)
+    print_int(b)
+
+    // x := 3.1415
+    // print_bool(true)
+    // print_bool(false)
+    // print_string(get_string())
     // print_string("lol")
     // print_int(5)
     // print_float(1.123)

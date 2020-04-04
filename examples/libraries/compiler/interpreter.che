@@ -110,9 +110,12 @@ impl StackFrame {
         return stack[sp]
     }
 
+    get_local :: (&Self, index: int, $T: type) -> T {
+        return <<cast(^T)^stack[bp + index]
+    }
+
     get_arg :: (&Self, index: int, $T: type) -> T {
         @assert(index >= 0 and index < parameter_indices.length)
-        // g_logger.log("indices: {}", [parameter_indices])
         return <<cast(^T)^stack[bp + parameter_indices[index]]
     }
 
@@ -231,15 +234,20 @@ impl Interpreter {
             return
         }
 
-        frames[fp] = StackFrame(
-            ip = 0
-            sp = func.parameter_slots + func.local_slots
-            bp = func.parameter_slots
-            code = func.instructions.slice()
-            stack = stack[sp-func.parameter_slots .. ]
-            func = func
+        return_value_slots := 0
+        if func.ast_function != null {
             return_value_slots = (func.ast_function.return_type.size + 7) / 8
-            parameter_indices = func.parameter_indices.slice()
+        }
+
+        frames[fp] = StackFrame(
+            ip                  = 0
+            sp                  = func.parameter_slots + func.local_slots
+            bp                  = func.parameter_slots
+            code                = func.instructions.slice()
+            stack               = stack[sp-func.parameter_slots .. ]
+            func                = func
+            return_value_slots  = return_value_slots
+            parameter_indices   = func.parameter_indices.slice()
         )
 
         if const DEBUG_INTERPRETER {
@@ -644,7 +652,6 @@ impl Interpreter {
                 _ := arg(int)
                 _ := arg(int)
                 wait_until(func.bytecode != null, {
-                    error_handler.report_error("Failed to execute bytecode")
                     error_handler.report_error("Failed to execute bytecode: {}{}{}{}{}{}{}{}{}{}{}{}", [
                         fmt.align(30), frame.func.debug_info.get_line_for_ip(frame.ip_prev)
                         fmt.align(35), fp
@@ -698,24 +705,12 @@ impl Interpreter {
             }
         }
 
-        // frame = ^frames[fp]
-        // line := frame.func.debug_info.get_line_for_ip(frame.ip)
-        // g_logger.log("{}{}{}{}{}{}{}{}{}{}{}", [
-        //     line
-        //     fmt.align(6), fp
-        //     fmt.align(11), frame.sp
-        //     fmt.align(17), frame.ip
-        //     fmt.align(25), Instruction.pretty_print(frame.code[frame.ip..])
-        //     fmt.align(45), frame.dump_stack()
-        // ], "stdout")
-
         return .Continue
     }
 
     run :: (&Self) {
         @assert(fp >= 0)
-        frame := ^frames[fp]
-        while frame.ip >= 0 and frame.ip < frame.code.length {
+        loop {
             if step() == .Done {
                 return
             }

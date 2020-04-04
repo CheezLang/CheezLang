@@ -89,21 +89,6 @@
     },
     "debuggers": [
       {
-        "type": "cheezbc",
-        "label": "Cheez Bytecode",
-        "program": "D:/Programming/CheezLang/gen/cheezdb.exe",
-        "languages": ["cheezbc"],
-        "initialConfigurations": [
-          {
-            "type": "cheezbc",
-            "request": "launch",
-            "name": "TODO",
-            "program": "${workspaceFolder}/TODO"
-          }
-        ],
-        "args": [ "cbc" ]
-      },
-      {
         "type": "cheez",
         "label": "Cheez",
         "program": "D:/Programming/CheezLang/gen/cheezdb.exe",
@@ -120,9 +105,6 @@
       }
     ],
     "breakpoints": [
-      {
-        "language": "cheezbc"
-      },
       {
         "language": "cheezlang"
       }

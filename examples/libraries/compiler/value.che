@@ -8,6 +8,7 @@ use import interpreter
 
 Value :: enum #copy {
     None
+    Poison
     Function    : ^AstFunction
     Bool        : bool
     Int         : int

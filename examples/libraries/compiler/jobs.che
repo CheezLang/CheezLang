@@ -54,6 +54,7 @@ impl LoadFileJob {
 RunCodeJob :: struct CompilationJob {
     name        : String
     function    : ^AstFunction
+    // constant    : 
 }
 
 impl RunCodeJob {
@@ -74,7 +75,7 @@ CompileGlobalNodeJob :: struct CompilationJob {
 impl CompileGlobalNodeJob {
     new :: (node: ^AstNode) -> CompileGlobalNodeJob {
         return CompileGlobalNodeJob(
-            name = fmt.format("CompileGlobalNodeJob #{}", [node.id])
+            name = fmt.format("CompileGlobalNode #{}", [node.id])
             node = node
         )
     }
@@ -561,7 +562,6 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
 
             .NativeFunc($func) -> {
-                g_logger.log("Native call: ", [call.function.typ])
                 func_type := cast(^TypeInfoFunction) call.function.typ
 
                 call.typ = func_type.return_type
@@ -831,6 +831,34 @@ impl CompilationJob for CompileGlobalNodeJob {
         if decl.var_type == null {
             decl.var_type = decl.value_expr.typ
         }
+
+        if decl.value == .None {
+            debug_log("Evaluate initializer")
+            
+            // value is not known, so compile code and execute it
+            code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
+            code := code_gen.get().generate_code_for_expression(decl.value_expr)
+            context := Fiber.user_data(FiberContext)
+            context.interp.push_frame(code)
+            defer context.interp.pop_frame()
+            compiler.code_runner.get().run(<<context.interp)
+            frame := context.interp.top_frame()
+
+            decl.value_expr.value = match &<<decl.var_type {
+                TypeInfoInt(_)      -> .Int(frame.get_local(0, int))
+                TypeInfoFloat(_)    -> .Float(frame.get_local(0, f64))
+                TypeInfoBool(_)     -> .Bool(frame.get_local(0, bool))
+                TypeInfoString(_)   -> .String(frame.get_local(0, string))
+
+                _ -> .None
+            }
+            decl.value = decl.value_expr.value
+
+            if decl.value == .None {
+                compiler.error_handler.report_error_at(decl.value_expr.location, "Value is not constant")
+            }
+        }
+
 
         // @todo: create cast if necessary
 

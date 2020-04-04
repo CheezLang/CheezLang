@@ -2,9 +2,9 @@
 #export_scope
 
 DEBUG_INTERPRETER   :: true
-DEBUG_JOBS          :: false
+DEBUG_JOBS          :: true
 DEBUG_PARSER        :: false
-DEBUG_WAIT          :: false
+DEBUG_WAIT          :: true
 DUMP_AST            :: false
 PRINT_AST           :: false
 PRINT_TYPED_AST     :: false

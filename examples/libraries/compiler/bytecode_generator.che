@@ -90,6 +90,16 @@ impl CodeGenerator for ByteCodeGenerator {
         func.bytecode = cbc_func
     }
 
+    generate_code_for_expression :: (&Self, node: &AstNode) -> ^CBCFunction {
+        file_path := node.location.file
+        cbc_func := self.allocate_function("$expr", file_path)
+        builder.begin_function(cbc_func)
+        generate_expression(node)
+        builder.build_halt()
+        builder.end_function()
+        return cbc_func
+    }
+
     generate_expression :: (&Self, node: &AstNode) {
         builder.set_current_line(node.location.line)
         match node {
@@ -101,6 +111,7 @@ impl CodeGenerator for ByteCodeGenerator {
             AstBreak($brake)        -> generate_break(brake)
             AstCall($call)          -> generate_call(call)
             AstContinue($cont)      -> generate_continue(cont)
+            AstConstDecl($decl)     -> generate_const_decl(decl)
             AstDecl($decl)          -> generate_decl(decl)
             AstDefer($def)          -> generate_defer(def)
             AstFor($forr)           -> generate_for(forr)
@@ -118,6 +129,10 @@ impl CodeGenerator for ByteCodeGenerator {
                     [dump])
             }
         }
+    }
+
+    generate_const_decl :: (&Self, decl: &AstConstDecl) {
+        // do nothing
     }
 
     generate_decl :: (&Self, decl: &AstDecl) {
@@ -379,6 +394,20 @@ impl CodeGenerator for ByteCodeGenerator {
                     builder.build_panic(msg)
                     error_handler.report_error_at(id.location, msg)
                 }
+            }
+
+            .ConstDecl($decl) -> match decl.value {
+                .Int($i) -> builder.build_const_int(i)
+                .Float($f) -> builder.build_const_float(f)
+                .Bool($b) -> builder.build_const_int(if b then 1 else 0)
+                .String($s) -> {
+                    builder.build_const_int(cast s.bytes.length)
+                    builder.build_const_int(cast s.bytes.data)
+                }
+            }
+
+            _ -> {
+                error_handler.report_error_at(id.location, "generate_identifier: not implemented: {}", [id.symbol])
             }
         }
         // match function.get_parameter(id.name) {

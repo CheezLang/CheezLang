@@ -289,6 +289,36 @@ impl Compiler {
         }
     }
 
+    on_done :: (&Self, callback: Fn()) {
+        Data :: struct {
+            thread      : Thread
+            callback    : Fn()
+            threads     : []Thread
+        }
+        thread_func :: (data: ^Data) {
+            handles := mem.alloc_raw(HANDLE, cast data.threads.length)
+
+            for(by_ref=true) data.threads {
+                handles[it_index] = it.data.handle
+            }
+            WaitForMultipleObjects(cast data.threads.length, handles, 1, INFINITE)
+
+            data.callback()
+
+            Memory.drop(<<data)
+            mem.free(data)
+        }
+
+        data := mem.alloc(Data)
+        t := Thread.create(cast(Fn(^Data)) thread_func, data)
+        <<data = Data(
+            thread      = t
+            callback    = callback
+            threads     = self.threads.slice()
+        )
+        data.thread.start()
+    }
+
     wait_until_done :: (&Self) {
         handles := mem.alloc_raw(HANDLE, cast threads.get_length())
 

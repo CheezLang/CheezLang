@@ -30,8 +30,7 @@ use import parser
 use import ast_dumper
 use import value
 
-LOG_PATH :: "P:/dev/CheezLang/data/logs/debugger_log.txt"
-CBC_FILE :: "p:/dev/debug_adapter_test/fac.cbc"
+LOG_PATH :: "D:/dev/CheezLang/data/logs/debugger_log.txt"
 
 Main :: () {
     logger := FileLogger.new(LOG_PATH)
@@ -51,6 +50,7 @@ DebuggerCallbacks :: trait {
     hit_breakpoint :: (&Self);
     step_done :: (&Self);
     terminated :: (&Self);
+    continued :: (&Self);
     output_generated :: (&Self, format: string, args: []^any = [], category: string = "console");
 }
 
@@ -236,8 +236,8 @@ impl CodeRunner for Debugger {
 
                 match interp.step() {
                     .Done -> {
-                        running = false
-                        if callbacks != null then callbacks.terminated()
+                        // running = false
+                        if callbacks != null then callbacks.continued()
                         return
                     }
                 }
@@ -328,6 +328,10 @@ impl CheezDebugAdapter {
         debugger.get().pause()
     }
 
+    on_done :: (&Self) {
+        self.adapter.emit_terminated_event()
+    }
+
     compile_cheez_program :: (&Self, path: string) {
         compiler = Compiler.new(1, ^self)
 
@@ -349,6 +353,8 @@ impl CheezDebugAdapter {
         compiler.get().code_runner = debugger.clone().change_type(CodeRunner)
         compiler.get().add_job(LoadFileJob.new(path.to_owned()))
         compiler.get().start_compilation()
+
+        compiler.get().on_done(cast self.on_done)
     }
 }
 
@@ -380,6 +386,10 @@ impl DebuggerCallbacks for CheezDebugAdapter {
 
     terminated :: (&Self) {
         self.adapter.emit_terminated_event()
+    }
+
+    continued :: (&Self) {
+        self.adapter.emit_continued_event()
     }
 
     output_generated :: (&Self, format: string, args: []^any = [], category: string = "console") {
@@ -440,13 +450,17 @@ impl CommandHandler for CheezDebugAdapter {
             ip := if use_prev_ip then frame.ip_prev else frame.ip
             line := frame.func.debug_info.get_line_for_ip(ip)
 
-            g_logger.log("stackframe: line: {}, func: '{}', path: '{}'", [line, frame.func.ast_function.name, frame.func.debug_info.path])
+            name := if frame.func.ast_function != null {
+                frame.func.ast_function.name
+            } else {
+                "$expr"
+            }
 
             stack_frames.add(DapStackFrame(
                 id     = frames.length - it_index - 1
-                name   = frame.func.ast_function.name.to_owned()
+                name   = name.to_owned()
                 source = DapSource(
-                    name = "fac.cbc".to_owned()
+                    name = name.to_owned() // @todo
                     path = frame.func.debug_info.path.clone()
                 )
                 line   = line
