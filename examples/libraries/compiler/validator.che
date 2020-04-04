@@ -172,6 +172,21 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
+        AstArray($node) -> {
+            assert("AstArray", node.typ != null)
+            // @todo
+        }
+
+        AstArrayType($node) -> {
+            assert("AstArray", node.typ != null)
+            if node.count != null and !validate_node(<<node.count, error_handler) {
+                return false
+            }
+            if !validate_node(node.target, error_handler) {
+                return false
+            }
+        }
+
         _ -> {
             error_handler.report_error_at(node.location, "Validation for node not implemented")
             return false

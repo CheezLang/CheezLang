@@ -273,9 +273,21 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         AstArray($array) -> {
             result += "["
             for v : array.values {
+                if it_index > 0 {
+                    result += ", "
+                }
                 pretty_print_ast_helper(result, <<v)
             }
             result += "]"
+        }
+
+        AstArrayType($array_type) -> {
+            result += "["
+            if array_type.count != null {
+                pretty_print_ast_helper(result, <<array_type.count)
+            }
+            result += "]"
+            pretty_print_ast_helper(result, array_type.target)
         }
 
         AstDot($dot) -> {
@@ -346,8 +358,15 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
 
         AstConstDecl($decl) -> {
             pretty_print_typed_ast_helper(result, decl.pattern)
+
             fmt.format_into(result, " : {} : ", [decl.var_type])
-            pretty_print_typed_ast_helper(result, decl.value_expr)
+            match decl.value {
+                .Int($i)    -> fmt.format_into(result, "{}", [i])
+                .Float($f)  -> fmt.format_into(result, "{}", [f])
+                .Bool($b)   -> fmt.format_into(result, "{}", [b])
+                .String($s) -> fmt.format_into(result, "{}", [s])
+                _ -> pretty_print_typed_ast_helper(result, decl.value_expr)
+            }
         }
 
         AstDecl($decl) -> {
@@ -531,6 +550,10 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
                 pretty_print_typed_ast_helper(result, <<v)
             }
             result += "]"
+        }
+
+        AstArrayType($array_type) -> {
+            fmt.format_into(result, "{}", [array_type.value.Type])
         }
 
         AstDot($dot) -> {

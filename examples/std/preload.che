@@ -510,7 +510,7 @@ TypeInfoSlice :: struct TypeInfo {
 __ti_TypeInfoSlice := @type_info(TypeInfoSlice)
 
 TypeInfoArray :: struct TypeInfo {
-    length  : int
+    count   : int
     target  : ^TypeInfo
 }
 __ti_TypeInfoArray := @type_info(TypeInfoArray)

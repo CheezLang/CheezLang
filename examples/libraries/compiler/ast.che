@@ -198,7 +198,8 @@ AstArray :: struct AstNode {
 impl AstNode for AstArray {}
 
 AstArrayType :: struct AstNode {
-    size : ^AstNode
+    count   : ^AstNode
+    target  : &AstNode
 }
 impl AstNode for AstArrayType {}
 

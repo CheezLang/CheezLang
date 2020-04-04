@@ -287,7 +287,7 @@ impl Printable for TypeInfoSlice {
 }
 impl Printable for TypeInfoArray {
     print :: (&Self, str: &String, format: string) {
-        str.appendf("[{}]", length)
+        str.appendf("[{}]", count)
         fmt.format_into(str, "{}", [target])
     }
 }

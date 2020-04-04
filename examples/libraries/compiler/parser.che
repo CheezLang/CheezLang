@@ -315,6 +315,61 @@ impl Parser {
         return null
     }
 
+    parse_bracketed :: (&Self) -> ^AstNode {
+        beg := consume(.OpenBracket).location
+
+        values := Array[^AstNode].create()
+        loop {
+            next := lexer.peek_token()
+            if next.typ == .ClosingBracket or next.typ == .EOF {
+                break
+            }
+
+            expr := parse_expression(false, true)
+
+            if expr != null {
+                values.add(expr)
+            }
+
+            next = lexer.peek_token()
+            if next.typ == .ClosingBracket or next.typ == .EOF {
+                break
+            }
+
+            consume(.Comma)
+            lexer.skip_whitespace()
+        }
+
+        end := consume(.ClosingBracket).location
+
+        if is_expr_token() {
+            if values.count() > 1 {
+                error_handler.report_error_at(beg.to(end), "Too many values in array type expression")
+            }
+
+            target := try(parse_expression(false, false))
+
+            count : ^AstNode = null
+            if values.count() > 0 {
+                count = values[0]
+            }
+            return allocate(AstArrayType(
+                id          = next_id()
+                location    = beg.to(target.location)
+                count       = count
+                target      = <<target
+            ))
+        }
+
+
+        return allocate(AstArray(
+            id          = next_id()
+            location    = beg.to(end)
+            values      = values
+        ))
+    }
+
+
     parse_block :: (&Self) -> ^AstNode {
         id := next_id()
 
@@ -570,13 +625,14 @@ impl Parser {
     parse_atomic_expression :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
         token := lexer.peek_token()
         return match token.typ {
+            .OpenParen      -> parse_parenthesized(allow_function)
+            .OpenBracket    -> parse_bracketed()
             .OpenBrace      -> parse_block()
             .Identifier     -> parse_identifier()
             .NumberLiteral  -> parse_number()
             .KwTrue         -> parse_bool()
             .KwFalse        -> parse_bool()
             .StringLiteral  -> parse_string()
-            .OpenParen      -> parse_parenthesized(allow_function)
             .KwIf           -> parse_if(allow_comma)
             .KwLoop         -> parse_loop(allow_comma)
             .KwFor          -> parse_for(allow_comma)

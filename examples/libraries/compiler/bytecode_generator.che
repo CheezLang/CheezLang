@@ -95,6 +95,7 @@ impl CodeGenerator for ByteCodeGenerator {
         cbc_func := self.allocate_function("$expr", file_path)
         builder.begin_function(cbc_func)
         generate_expression(node)
+        builder.build_store_stack(0, slots_for_size(node.typ.size))
         builder.build_halt()
         builder.end_function()
         return cbc_func
@@ -121,6 +122,7 @@ impl CodeGenerator for ByteCodeGenerator {
             AstNumberLiteral($num)  -> generate_number_literal(num)
             AstReturn($ret)         -> generate_return(ret)
             AstString($str)         -> generate_string(str)
+            AstArray($arr)          -> generate_array(arr)
 
             _ -> {
                 dump := dump_ast(node, recurse = false)
@@ -133,6 +135,26 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_const_decl :: (&Self, decl: &AstConstDecl) {
         // do nothing
+    }
+
+    generate_array :: (&Self, arr: &AstArray) {
+        builder.set_current_line(arr.location.line)
+
+        // pushes the array and then the index
+        builder.build_push(slots_for_size(arr.typ.size))
+        builder.build_load_address()
+
+        for val : arr.values {
+            builder.build_dup(1)
+            generate_expression(<<val)
+            builder.build_store(slots_for_size(val.typ.size))
+
+            // increment pointer
+            builder.build_const_int(slots_for_size(val.typ.size) * @sizeof(u64))
+            builder.build_add(.U64)
+        }
+        // pop index
+        builder.build_pop(1)
     }
 
     generate_decl :: (&Self, decl: &AstDecl) {
@@ -258,7 +280,7 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.set_current_line(lop.location.line)
         loop_start := builder.next()
         generate_expression(lop.body)
-        builder.build_pop()
+        builder.build_pop(slots_for_size(lop.body.typ.size))
         builder.build_branch(loop_start)
     }
 
@@ -318,7 +340,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
             // pop value if not last and type is not void
             if it_index < block.children.count() - 1 and child.typ != @type_info(void) {
-                builder.build_pop()
+                builder.build_pop(slots_for_size(child.typ.size))
             }
         }
     }
@@ -494,9 +516,22 @@ impl InstructionBuilder {
         function.instructions.add(cast Instruction.Noop)
     }
 
-    build_pop :: (&Self) {
+    build_push :: (&Self, slots: int) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Push)
+        function.instructions.add(cast slots)
+    }
+
+    build_pop :: (&Self, slots: int) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Pop)
+        function.instructions.add(cast slots)
+    }
+
+    build_dup :: (&Self, slots: int) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.Dup)
+        function.instructions.add(cast slots)
     }
 
     build_const_int :: (&Self, value: int) {
@@ -509,6 +544,11 @@ impl InstructionBuilder {
         add_debug_info_line()
         function.instructions.add(cast Instruction.ConstFloat)
         function.instructions.add(<<cast(^u64)^value)
+    }
+
+    build_load_address :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.LoadAddress)
     }
 
     build_address_of :: (&Self, index: int) {
@@ -540,6 +580,13 @@ impl InstructionBuilder {
         add_debug_info_line()
         function.instructions.add(cast Instruction.StoreLocal)
         function.instructions.add(<<cast(^u64)^index)
+        function.instructions.add(cast slots)
+    }
+
+    build_store_stack :: (&Self, index: int, slots: int) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.StoreStack)
+        function.instructions.add(cast index)
         function.instructions.add(cast slots)
     }
 

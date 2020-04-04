@@ -363,7 +363,7 @@ impl ErrorHandler for CheezDebugAdapter {
         return false
     }
 
-    report_error_at :: (&Self, location: &Location, message: string, args: []^any) {
+    report_error_at :: (&Self, location: Location, message: string, args: []^any) {
         msg := fmt.format(message, args)
         g_logger.log("[Code Gen] {}: {}", [location, msg])
     }

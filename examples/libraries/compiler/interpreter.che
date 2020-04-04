@@ -110,6 +110,10 @@ impl StackFrame {
         return stack[sp]
     }
 
+    get :: (&Self, index: int, $T: type) -> T {
+        return <<cast(^T)^stack[index]
+    }
+
     get_local :: (&Self, index: int, $T: type) -> T {
         return <<cast(^T)^stack[bp + index]
     }
@@ -135,12 +139,12 @@ impl StackFrame {
         // locals
         str += " | "
 
-        if sp - bp > 5 {
+        if sp - bp > 10 {
             str += "... "
         }
 
         if sp >= bp {
-            for i : max(bp, sp - 5) .. sp {
+            for i : max(bp, sp - 10) .. sp {
                 str.appendf("{}", stack[i])
                 if i < sp - 1 {
                     str += ", "
@@ -361,9 +365,21 @@ impl Interpreter {
         // decode and execute
         match Instruction(opcode) {
             .Noop -> {}
-            
+
+            .Push -> {
+                slots := arg(int)
+                index := frame.sp - frame.bp
+                frame.sp += slots
+                push(index)
+            }
             .Pop -> {
-                pop(int)
+                slots := arg(int)
+                frame.sp -= slots
+            }
+            .Dup -> {
+                slots := arg(int)
+                C.memcpy(^frame.stack[frame.sp], ^frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
+                frame.sp += slots
             }
 
             .ConstInt -> {
@@ -375,6 +391,11 @@ impl Interpreter {
                 push(val)
             }
 
+            .LoadAddress -> {
+                index := pop(int)
+                address := cast(int) ^frame.stack[frame.bp + index]
+                push(address)
+            }
             .AddressOf -> {
                 index := arg(int)
                 address := cast(int) ^frame.stack[frame.bp + index]
@@ -386,10 +407,13 @@ impl Interpreter {
                 push(<<address)
             }
             .Store -> {
-                slots  := arg(int)
-                address := pop(^int)
-                value   := pop(int)
-                <<address = value
+                slots := arg(int)
+                frame.sp -= slots
+                address := pop(^void)
+
+                g_logger.log("store: {}, {}, sp = {}, top = {}", [int(address), slots, frame.sp, frame.stack[frame.sp + 1]])
+
+                C.memcpy(address, ^frame.stack[frame.sp + 1], cast slots * @sizeof(u64))
             }
             .LoadLocal -> {
                 index := arg(int)
@@ -401,6 +425,12 @@ impl Interpreter {
                 index := arg(int)
                 slots  := arg(int)
                 C.memmove(^frame.stack[frame.bp + index], ^frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
+                frame.sp -= slots
+            }
+            .StoreStack -> {
+                index := arg(int)
+                slots  := arg(int)
+                C.memmove(^frame.stack[index], ^frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
                 frame.sp -= slots
             }
 
@@ -727,11 +757,12 @@ InstNumTyp :: enum {
 Instruction :: enum #repr("C") #tag_type(u64) {
     Noop
 
-    Pop
+    Pop, Push, Dup
     ConstInt, ConstFloat
-    AddressOf
+    LoadAddress, AddressOf
     Load, Store
     LoadLocal, StoreLocal
+    StoreStack
 
     Add, Sub, Mul, Div, Mod
     Ieq, Ine, Ilt, Ile, Igt, Ige
@@ -760,14 +791,18 @@ impl Instruction {
         return match Instruction(code[0]) {
             .Noop           -> fmt.format("Noop")
 
-            .Pop            -> fmt.format("Pop")
+            .Push           -> fmt.format("Push {}", [arg(int, 0)])
+            .Pop            -> fmt.format("Pop {}", [arg(int, 0)])
+            .Dup            -> fmt.format("Dup {}", [arg(int, 0)])
             .ConstInt       -> fmt.format("ConstInt {}", [arg(int, 0)])
             .ConstFloat     -> fmt.format("ConstFloat {}", [arg(f64, 0)])
+            .LoadAddress    -> fmt.format("LoadAddress")
             .AddressOf      -> fmt.format("AddressOf {}", [arg(int, 0)])
             .Load           -> fmt.format("Load {}", [arg(int, 0)])
             .Store          -> fmt.format("Store {}", [arg(int, 0)])
             .LoadLocal      -> fmt.format("LoadLocal {} {}", [arg(int, 0), arg(int, 1)])
             .StoreLocal     -> fmt.format("StoreLocal {} {}", [arg(int, 0), arg(int, 1)])
+            .StoreStack     -> fmt.format("StoreStack {} {}", [arg(int, 0), arg(int, 1)])
 
             .Add            -> fmt.format("Add {}", [arg(InstNumTyp, 0)])
             .Sub            -> fmt.format("Sub {}", [arg(InstNumTyp, 0)])

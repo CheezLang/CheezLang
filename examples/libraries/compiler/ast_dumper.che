@@ -261,6 +261,15 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             }
         }
 
+        AstArrayType($array) -> {
+            fmt.format_into(result, "AstArrayType #{} ({})`n", [array.id, array.location])
+            if recurse {
+                if array.count != null then
+                    dump_ast_helper(result, <<array.count, recurse, indent + 1)
+                dump_ast_helper(result, array.target, recurse, indent + 1)
+            }
+        }
+
         AstDot($dot) -> {
             fmt.format_into(result, "AstDot #{} ({})`n", [dot.id, dot.location])
             if recurse {

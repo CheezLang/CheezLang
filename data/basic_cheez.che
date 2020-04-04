@@ -45,54 +45,69 @@
 // 
 // ((a), (b := c), (d))
 
-countdown :: (n: int) {
-    // print(fac(n))
-    if n > 0 {
-        countdown(n - 1)
-    }
-}
+// countdown :: (n: int) {
+//     // print(fac(n))
+//     if n > 0 {
+//         countdown(n - 1)
+//     }
+// }
 
-fac :: (n: int) -> int {
-    return if n <= 1 then 1 else n * fac(n - 1)
-    // if n <= 1 {
-    //     return 1
-    // } else {
-    //     return n * fac(n - 1)
-    // }
-}
+// fac :: (n: int) -> int {
+//     return if n <= 1 then 1 else n * fac(n - 1)
+//     // if n <= 1 {
+//     //     return 1
+//     // } else {
+//     //     return n * fac(n - 1)
+//     // }
+// }
 
-fib :: (n: int) -> int {
-    return if n <= 1 then 1 else fib(n - 1) + fib(n - 2)
-    // if n <= 1 {
-    //     return 1
-    // } else {
-    //     return fib(n - 1) + fib(n - 2)
-    // }
-}
+// fib :: (n: int) -> int {
+//     return if n <= 1 then 1 else fib(n - 1) + fib(n - 2)
+//     // if n <= 1 {
+//     //     return 1
+//     // } else {
+//     //     return fib(n - 1) + fib(n - 2)
+//     // }
+// }
 
-max :: (a: int, b: int) -> int {
-    return if a > b then a else b
-}
+// max :: (a: int, b: int) -> int {
+//     return if a > b then a else b
+// }
 
-bool_to_string :: (b: bool) -> string {
-    true_string := "true"
-    false_string := "false"
-    return if b then true_string else false_string
-}
+// bool_to_string :: (b: bool) -> string {
+//     true_string := "true"
+//     false_string := "false"
+//     return if b then true_string else false_string
+// }
 
-print_bool :: (b: bool) {
-    print_string(bool_to_string(b))
-}
+// print_bool :: (b: bool) {
+//     print_string(bool_to_string(b))
+// }
 
-get_string :: () -> string {
-    str := "hello world"
-    return str
-}
+// get_string :: () -> string {
+//     str := "hello world"
+//     return str
+// }
 
 Main :: () {
-    // a := 5
-    b :: fac(5)
-    print_int(b)
+    // x :: [3]string
+    arr := [1, 2, 3]
+    print_array(arr)
+    // print_array([9, 8, 7])
+    // arr := [1]
+    // arr := [1, 2]
+
+    // x :: {
+    //     a := 1
+    //     b := 2
+    //     c := 3
+    //     fac(a + b * c)
+    // }
+
+    // s :: get_string()
+
+    // print_int(x)
+    // print_string(s)
 
     // x := 3.1415
     // print_bool(true)

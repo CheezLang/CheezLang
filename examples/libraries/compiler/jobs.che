@@ -54,7 +54,6 @@ impl LoadFileJob {
 RunCodeJob :: struct CompilationJob {
     name        : String
     function    : ^AstFunction
-    // constant    : 
 }
 
 impl RunCodeJob {
@@ -108,7 +107,11 @@ impl CompilationJob for CompileGlobalNodeJob {
         debug_log("Begin compilation")
 
         node.scope = compiler.global_scope
-        compile_node(<<node, CNContext())
+        node = ^compile_node(<<node, CNContext())
+        if node.value == .Poison {
+            debug_log("Failed. Got poison")
+            return
+        }
 
         if const VALIDATE_AST {
             debug_log("Validate node", [])
@@ -123,6 +126,32 @@ impl CompilationJob for CompileGlobalNodeJob {
         }
 
         debug_log("Done")
+    }
+
+    evaluate_node :: (&Self, node: &AstNode, ctx: CNContext) -> &AstNode {
+        node.scope = compiler.new_scope(node.scope, constant = true)
+        node <- compile_node(node, ctx)
+
+        if node.value == .None {
+            code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
+            code := code_gen.get().generate_code_for_expression(node)
+            context := Fiber.user_data(FiberContext)
+            context.interp.push_frame(code)
+            defer context.interp.pop_frame()
+            compiler.code_runner.get().run(<<context.interp)
+            frame := context.interp.top_frame()
+
+            node.value = match &<<node.typ {
+                TypeInfoInt(_)      -> .Int(frame.get_local(0, int))
+                TypeInfoFloat(_)    -> .Float(frame.get_local(0, f64))
+                TypeInfoBool(_)     -> .Bool(frame.get_local(0, bool))
+                TypeInfoString(_)   -> .String(frame.get_local(0, string))
+
+                _ -> .None
+            }
+        }
+
+        return node
     }
 
     compile_node :: (&Self, node: &AstNode, ctx: CNContext) -> &AstNode {
@@ -146,6 +175,8 @@ impl CompilationJob for CompileGlobalNodeJob {
             AstNumberLiteral($num)  -> compile_number(num, ctx)
             AstReturn($ret)         -> compile_return(ret, ctx)
             AstString($str)         -> compile_string(str, ctx)
+            AstArray($arr)          -> compile_array(arr, ctx)
+            AstArrayType($arr)      -> compile_array_type(arr, ctx)
 
             _ -> {
                 dump := dump_ast(node, recurse = false)
@@ -155,6 +186,106 @@ impl CompilationJob for CompileGlobalNodeJob {
         }
 
         return node
+    }
+
+    compile_array :: (&Self, arr: &AstArray, ctx: CNContext) -> &AstNode {
+        arr.typ = @type_info(void)
+
+        expected : ^TypeInfo = null
+        if ctx.expected != null then match &<<ctx.expected {
+            TypeInfoArray($arr_type) -> { expected = arr_type.target }
+        }
+
+        for(by_ref=true) val : arr.values {
+            val.scope = arr.scope
+            val = ^compile_node(<<val, ctx.with_expected(expected))
+            
+            if val.value == .Poison {
+                arr.typ = @type_info(void)
+                arr.value = .Poison
+                return arr
+            }
+
+            if expected == null {
+                expected = val.typ
+            }
+
+            if val.typ != expected {
+                compiler.error_handler.report_error_at(val.location, "Type of value ({}) does not match expected type {}", [val.typ, expected])
+                arr.typ = @type_info(void)
+                arr.value = .Poison
+                return arr
+            }
+        }
+
+        if expected == null {
+            compiler.error_handler.report_error_at(arr.location, "Failed to infer type of array expression")
+            arr.typ = @type_info(void)
+            arr.value = .Poison
+            return arr
+        }
+
+        arr.typ = compiler.new_type(TypeInfoArray(
+            size        = arr.values.count() * expected.size
+            alignment   = expected.alignment
+            traits      = []
+            count       = arr.values.count()
+            target      = expected
+        ))
+
+        return arr
+    }
+
+    compile_array_type :: (&Self, arr: &AstArrayType, ctx: CNContext) -> &AstNode {
+        arr.typ = @type_info(type)
+
+        count : Option[int] = if arr.count == null {
+            None
+        } else {
+            arr.count.scope = arr.scope
+            arr.count = ^evaluate_node(<<arr.count, ctx.with_expected(@type_info(int)))
+
+            if arr.count.value == .Poison or arr.count.typ != @type_info(int) {
+                arr.typ = @type_info(void)
+                arr.value = .Poison
+                return arr
+            }
+
+            @assert(arr.count.value == .Int)
+            count := arr.count.value.Int
+
+            Some(count)
+        }
+
+        arr.target.scope = arr.scope
+        arr.target <- evaluate_node(arr.target, ctx.with_expected(@type_info(type)))
+        if arr.target.value == .Poison or arr.target.typ != @type_info(type) {
+            arr.typ = @type_info(void)
+            arr.value = .Poison
+            return arr
+        }
+
+        @assert(arr.target.value == .Type)
+        target := arr.target.value.Type
+
+        arr.value = match count {
+            Some($count) -> .Type(compiler.new_type(TypeInfoArray(
+                size        = count * target.size
+                alignment   = target.alignment
+                traits      = []
+                count       = count
+                target      = target
+            )))
+
+            None -> .Type(compiler.new_type(TypeInfoSlice(
+                size        = 2 * @sizeof(^void)
+                alignment   = target.alignment
+                traits      = []
+                target      = target
+            )))
+        }
+
+        return arr
     }
 
     compile_unary :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
@@ -456,7 +587,6 @@ impl CompilationJob for CompileGlobalNodeJob {
         return def
     }
 
-
     compile_string :: (&Self, str: &AstString, ctx: CNContext) -> &AstNode {
         str.typ = @type_info(string) // @todo: string_literal type
         str.value = .String(str.string_value)
@@ -508,7 +638,15 @@ impl CompilationJob for CompileGlobalNodeJob {
 
             .NotFound -> {
                 compiler.error_handler.report_error_at(id.location, "Unknown symbol '{}'", [id.name])
+                id.typ = @type_info(void)
+                id.value = .Poison
                 Fiber.yield()
+            }
+
+            .Poison -> {
+                compiler.error_handler.report_error_at(id.location, "Can't use variable '{}' in constant context", [id.name])
+                id.typ = @type_info(void)
+                id.value = .Poison
             }
 
             $sym -> {
@@ -531,6 +669,11 @@ impl CompilationJob for CompileGlobalNodeJob {
     compile_call :: (&Self, call: &AstCall, ctx: CNContext) -> &AstNode {
         call.function.scope = call.scope
         call.function <- compile_node(call.function, ctx.with_expected(null))
+
+        if call.function.value == .Poison {
+            call.value = .Poison
+            return call
+        }
         
         call.typ = @type_info(void)
 
@@ -549,6 +692,10 @@ impl CompilationJob for CompileGlobalNodeJob {
                         arg.scope = call.scope
                         arg = cast ^compile_node(<<arg, ctx.with_expected(param.var_type))
 
+                        if arg.value == .Poison {
+                            call.value = .Poison
+                            return call
+                        }
                         if arg.typ != param.var_type {
                             compiler.error_handler.report_error_at(
                                 arg.location,
@@ -577,6 +724,10 @@ impl CompilationJob for CompileGlobalNodeJob {
                         arg.scope = call.scope
                         arg = cast ^compile_node(<<arg, ctx.with_expected(param_type))
 
+                        if arg.value == .Poison {
+                            call.value = .Poison
+                            return call
+                        }
                         if arg.typ != param_type {
                             compiler.error_handler.report_error_at(
                                 arg.location,
@@ -603,6 +754,12 @@ impl CompilationJob for CompileGlobalNodeJob {
 
             expected : ^TypeInfo = if it_index == block.children.count() - 1 then ctx.expected else null
             child = ^compile_node(<<child, ctx.with_expected(expected))
+
+            if child.value == .Poison {
+                block.typ = @type_info(void)
+                block.value = .Poison
+                return block
+            }
         }
 
         // calc type of block
@@ -683,8 +840,14 @@ impl CompilationJob for CompileGlobalNodeJob {
             func.return_type_expr.scope = func.param_scope
             func.return_type_expr = ^compile_node(<<func.return_type_expr, ctx.with_expected(@type_info(type)))
 
-            if func.return_type_expr.typ != @type_info(type) {
+            if func.return_type_expr.value == .Poison {
+                func.typ = @type_info(void)
+                func.value = .Poison
+                return func
+            } else if func.return_type_expr.typ != @type_info(type) {
                 compiler.error_handler.report_error_at(func.return_type_expr.location, "Expected type, got {}", [func.return_type_expr.typ])
+                func.typ = @type_info(void)
+                func.value = .Poison
                 return func
             } else {
                 @assert(func.return_type_expr.value == .Type)
@@ -704,6 +867,11 @@ impl CompilationJob for CompileGlobalNodeJob {
         // compile body
         debug_log("compile_function '{}': Compile Body", [func.name])
         func.body = ^compile_node(<<func.body, ctx.with_expected(null)) // @todo: use return type as expected?
+        if func.body.value == .Poison {
+            func.typ = @type_info(void)
+            func.value = .Poison
+            return func
+        }
 
         // generate byte code
         debug_log("compile_function '{}': Generate Bytecode", [func.name])
@@ -745,8 +913,15 @@ impl CompilationJob for CompileGlobalNodeJob {
             decl.type_expr.scope = decl.scope
             decl.type_expr = ^compile_node(<<decl.type_expr, ctx.with_expected(@type_info(type)))
             
-            if decl.type_expr.typ != @type_info(type) {
+            // error handling
+            if decl.type_expr.value == .Poison {
+                decl.var_type = @type_info(void)
+                decl.value = .Poison
+                return decl
+            } else if decl.type_expr.typ != @type_info(type) {
                 compiler.error_handler.report_error_at(decl.type_expr.location, "Expected type, got {}", [decl.type_expr.typ])
+                decl.var_type = @type_info(void)
+                decl.value = .Poison
                 return decl
             } else {
                 @assert(decl.type_expr.value == .Type)
@@ -759,8 +934,22 @@ impl CompilationJob for CompileGlobalNodeJob {
             if decl.value_expr.typ == null { return decl }
             decl.value = decl.value_expr.value
 
+            // error handling
+            if decl.value_expr.value == .Poison {
+                decl.var_type = @type_info(void)
+                decl.value = .Poison
+                return decl
+            }
+
             if decl.var_type == null {
                 decl.var_type = decl.value_expr.typ
+            }
+
+            if decl.value_expr.typ != decl.var_type {
+                compiler.error_handler.report_error_at(decl.value_expr.location, "Value type ({}) does not match expected type ({})", [decl.value_expr.typ, decl.var_type])
+                decl.typ = @type_info(void)
+                decl.value = .Poison
+                return decl
             }
         }
 
@@ -825,40 +1014,20 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
         }
 
-        decl.value_expr <- compile_node(decl.value_expr, ctx.with_expected(decl.var_type))
+        decl.value_expr <- evaluate_node(decl.value_expr, ctx.with_expected(decl.var_type))
         decl.value = decl.value_expr.value
+
+        if decl.value == .Poison {
+            return decl
+        }
+
+        if decl.value == .None {
+            compiler.error_handler.report_error_at(decl.value_expr.location, "Value is not constant")
+        }
 
         if decl.var_type == null {
             decl.var_type = decl.value_expr.typ
         }
-
-        if decl.value == .None {
-            debug_log("Evaluate initializer")
-            
-            // value is not known, so compile code and execute it
-            code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
-            code := code_gen.get().generate_code_for_expression(decl.value_expr)
-            context := Fiber.user_data(FiberContext)
-            context.interp.push_frame(code)
-            defer context.interp.pop_frame()
-            compiler.code_runner.get().run(<<context.interp)
-            frame := context.interp.top_frame()
-
-            decl.value_expr.value = match &<<decl.var_type {
-                TypeInfoInt(_)      -> .Int(frame.get_local(0, int))
-                TypeInfoFloat(_)    -> .Float(frame.get_local(0, f64))
-                TypeInfoBool(_)     -> .Bool(frame.get_local(0, bool))
-                TypeInfoString(_)   -> .String(frame.get_local(0, string))
-
-                _ -> .None
-            }
-            decl.value = decl.value_expr.value
-
-            if decl.value == .None {
-                compiler.error_handler.report_error_at(decl.value_expr.location, "Value is not constant")
-            }
-        }
-
 
         // @todo: create cast if necessary
 

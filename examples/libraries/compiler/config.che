@@ -4,8 +4,8 @@
 DEBUG_INTERPRETER   :: true
 DEBUG_JOBS          :: true
 DEBUG_PARSER        :: false
-DEBUG_WAIT          :: true
+DEBUG_WAIT          :: false
 DUMP_AST            :: false
 PRINT_AST           :: false
-PRINT_TYPED_AST     :: false
+PRINT_TYPED_AST     :: true
 VALIDATE_AST        :: true

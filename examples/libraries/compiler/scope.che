@@ -11,8 +11,9 @@ use import compiler
 #export_scope
 
 Scope :: struct {
-    parent  : ^Scope
-    symbols := Map[string, Symbol].new()
+    parent      : ^Scope
+    constant    := false
+    symbols     := Map[string, Symbol].new()
 }
 
 impl Scope {
@@ -83,13 +84,24 @@ impl Scope {
 
         return match symbols.get(name) {
             Some($sym)  -> sym
-            None        -> parent.get_symbol(name)
+            None        -> {
+                sym := parent.get_symbol(name)
+                if constant {
+                    match &sym {
+                        .Decl(_) -> {
+                            return .Poison
+                        }
+                    }
+                }
+                return sym
+            }
         }
     }
 }
 
 Symbol :: enum #copy {
     NotFound
+    Poison
     Decl        : ^AstDecl
     ConstDecl   : ^AstConstDecl
     Val         : (typ: ^TypeInfo, value: Value)
