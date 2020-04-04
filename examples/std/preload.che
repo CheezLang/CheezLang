@@ -406,6 +406,26 @@ Traits :: struct {
         return cast fat.value, cast fat.vtable
     }
 }
+
+//
+__any :: struct {
+    value       : ^void
+    type_info   : ^TypeInfo
+}
+
+Any :: struct {
+    from_pointers :: (value: ^void, type_info: ^TypeInfo) -> ^any {
+        t := __any(value, type_info)
+        return <<cast(^^any)^t
+    }
+
+    destructure :: (trait_ptr: $T) -> (ptr: ^void, vtable: ^void) {
+        fat := cast(^__any) ^trait_ptr
+        return cast fat.value, cast fat.vtable
+    }
+}
+
+//
 __FatFunction :: struct {
     func : ^void
     data : ^void

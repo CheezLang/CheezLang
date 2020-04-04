@@ -570,8 +570,9 @@ impl VariableRef for ArgumentsScope {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
         for param : stackframe.func.debug_info.params {
-            value := stackframe.stack[stackframe.bp + param.index]
-            var := Variable.new(interp, frame, param.name.to_owned(), fmt.format("{}", [value]))
+            value := Any.from_pointers(^stackframe.stack[stackframe.bp + param.index], param.type_info)
+            str := if param.type_info == @type_info(string) then fmt.format("`"{}`"", [value]) else fmt.format("{}", [value])
+            var := Variable.new(interp, frame, param.name.to_owned(), str)
             result.add(var.clone().change_type(VariableRef))
         }
         return result
@@ -593,8 +594,9 @@ impl VariableRef for LocalsScope {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
         for local : stackframe.func.debug_info.locals {
-            value := stackframe.stack[stackframe.bp + local.index]
-            var := Variable.new(interp, frame, local.name.to_owned(), fmt.format("{}", [value]))
+            value := Any.from_pointers(^stackframe.stack[stackframe.bp + local.index], local.type_info)
+            str := if local.type_info == @type_info(string) then fmt.format("`"{}`"", [value]) else fmt.format("{}", [value])
+            var := Variable.new(interp, frame, local.name.to_owned(), str)
             result.add(var.clone().change_type(VariableRef))
         }
         return result

@@ -4,6 +4,7 @@ use import std.map
 use import std.string
 use import std.math
 
+C   :: import std.c
 io  :: import std.io
 fs  :: import std.io.fs
 fmt :: import std.fmt
@@ -42,9 +43,10 @@ LineInfo :: struct #copy {
 }
 
 VariableInfo :: struct #copy {
-    id      : int
-    name    : string
-    index   : int
+    id          : int
+    name        : string
+    index       : int
+    type_info   : ^TypeInfo
 }
 
 CBCDebugInfo :: struct {
@@ -92,7 +94,7 @@ StackFrame :: struct {
     code    : []u64 = default
     stack   : []int = default
     func    : ^CBCFunction = null
-    return_value_size := 0
+    return_value_slots := 0
     parameter_indices : []int = default
 }
 
@@ -129,6 +131,10 @@ impl StackFrame {
 
         // locals
         str += " | "
+
+        if sp - bp > 5 {
+            str += "... "
+        }
 
         if sp >= bp {
             for i : max(bp, sp - 5) .. sp {
@@ -232,7 +238,7 @@ impl Interpreter {
             code = func.instructions.slice()
             stack = stack[sp-func.parameter_slots .. ]
             func = func
-            return_value_size = (func.ast_function.return_type.size + 7) / 8
+            return_value_slots = (func.ast_function.return_type.size + 7) / 8
             parameter_indices = func.parameter_indices.slice()
         )
 
@@ -367,21 +373,27 @@ impl Interpreter {
                 push(address)
             }
             .Load -> {
+                slots  := arg(int)
                 address := pop(^int)
                 push(<<address)
             }
             .Store -> {
+                slots  := arg(int)
                 address := pop(^int)
                 value   := pop(int)
                 <<address = value
             }
             .LoadLocal -> {
                 index := arg(int)
-                push(frame.stack[frame.bp + index])
+                slots  := arg(int)
+                C.memmove(^frame.stack[frame.sp], ^frame.stack[frame.bp + index], cast slots * @sizeof(u64))
+                frame.sp += slots
             }
             .StoreLocal -> {
                 index := arg(int)
-                frame.stack[frame.bp + index] = pop(int)
+                slots  := arg(int)
+                C.memmove(^frame.stack[frame.bp + index], ^frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
+                frame.sp -= slots
             }
 
             .Add -> {
@@ -648,13 +660,13 @@ impl Interpreter {
 
             .Return -> {
                 @assert(frame.sp > 0)
-                frame.stack[0] = frame.stack[frame.sp - 1]
+                C.memmove(^frame.stack[0], ^frame.stack[frame.sp - frame.return_value_slots], cast frame.return_value_slots * @sizeof(u64))
                 pop_frame()
                 if fp >= 0 {
                     // increment sp by one for return value
                     // @todo: needs to work with return values bigger than 8 bytes (1 stack slot)
                     // @fixme frames[fp].sp += 1 // fails to compile
-                    (^frames[fp]).sp += frame.return_value_size
+                    (^frames[fp]).sp += frame.return_value_slots
                 } else {
                     return .Done
                 }
@@ -757,10 +769,10 @@ impl Instruction {
             .ConstInt       -> fmt.format("ConstInt {}", [arg(int, 0)])
             .ConstFloat     -> fmt.format("ConstFloat {}", [arg(f64, 0)])
             .AddressOf      -> fmt.format("AddressOf {}", [arg(int, 0)])
-            .Load           -> fmt.format("Load")
-            .Store          -> fmt.format("Store")
-            .LoadLocal      -> fmt.format("LoadLocal {}", [arg(int, 0)])
-            .StoreLocal     -> fmt.format("StoreLocal {}", [arg(int, 0)])
+            .Load           -> fmt.format("Load {}", [arg(int, 0)])
+            .Store          -> fmt.format("Store {}", [arg(int, 0)])
+            .LoadLocal      -> fmt.format("LoadLocal {} {}", [arg(int, 0), arg(int, 1)])
+            .StoreLocal     -> fmt.format("StoreLocal {} {}", [arg(int, 0), arg(int, 1)])
 
             .Add            -> fmt.format("Add {}", [arg(InstNumTyp, 0)])
             .Sub            -> fmt.format("Sub {}", [arg(InstNumTyp, 0)])

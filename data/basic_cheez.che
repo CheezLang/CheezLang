@@ -74,10 +74,29 @@ max :: (a: int, b: int) -> int {
     return if a > b then a else b
 }
 
+bool_to_string :: (b: bool) -> string {
+    true_string := "true"
+    false_string := "false"
+    return if b then true_string else false_string
+}
+
+print_bool :: (b: bool) {
+    print_string(bool_to_string(b))
+}
+
+get_string :: () -> string {
+    str := "hello world"
+    return str
+}
+
 Main :: () {
-    print_string("lol")
-    print_int(5)
-    print_float(1.123)
+    x := 3.1415
+    print_bool(true)
+    print_bool(false)
+    print_string(get_string())
+    // print_string("lol")
+    // print_int(5)
+    // print_float(1.123)
     // print(max(8, 7))
     // countdown(10)
     // print(fac(10))

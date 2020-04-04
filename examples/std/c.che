@@ -23,4 +23,5 @@ realloc :: (mem: ^void, size: uint) -> ^void;
 free    :: (mem: ^void);
 
 memcpy  :: (dest: ^void, src: ^void, size: uint);
+memmove  :: (dest: ^void, src: ^void, size: uint);
 memset  :: (mem: ^void, value: i32, num: uint) -> ^void;

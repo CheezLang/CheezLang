@@ -75,9 +75,9 @@ impl CodeGenerator for ByteCodeGenerator {
 
         slot_index := 0
         for(reverse=true) param : func.params {
-            slot_index -= (param.var_type.size + 7) / 8
+            slot_index -= slots_for_size(param.var_type.size)
             variables[param.id] = slot_index
-            cbc_func.debug_info.params.add(VariableInfo(param.id, param.name, slot_index))
+            cbc_func.debug_info.params.add(VariableInfo(param.id, param.name, slot_index, param.var_type))
         }
         cbc_func.parameter_slots = -slot_index
 
@@ -124,12 +124,12 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.set_current_line(decl.location.line)
         builder.build_noop()
 
-        index := builder.add_local(decl.id, decl.name, decl.var_type.size)
+        index := builder.add_local(decl.id, decl.name, decl.var_type)
         variables[decl.id] = index
 
         if decl.value_expr != null {
             generate_expression(<<decl.value_expr)
-            builder.build_store_local(index)
+            builder.build_store_local(index, slots_for_size(decl.var_type.size))
         }
     }
 
@@ -372,7 +372,7 @@ impl CodeGenerator for ByteCodeGenerator {
         match id.symbol {
             .Decl($decl) -> match self.variables.get(decl.id) {
                 Some($index) -> {
-                    builder.build_load_local(index)
+                    builder.build_load_local(index, slots_for_size(decl.var_type.size))
                 }
                 None -> {
                     msg :: "[FATAL] Failed to get index of declaration"
@@ -437,16 +437,13 @@ impl InstructionBuilder {
         current_line = line
     }
 
-    add_local :: (&Self, id: int, name: string, size: int) -> int {
-        // size is in bytes, but the index is in stack slots, which are 8 bytes, so add 7 and divide by 8
-        slots := (size + 7) / 8
-
+    add_local :: (&Self, id: int, name: string, type_info: ^TypeInfo) -> int {
         // debug info
-        function.debug_info.locals.add(VariableInfo(id, name, function.local_slots))
+        function.debug_info.locals.add(VariableInfo(id, name, function.local_slots, type_info))
 
         //
         current_size := function.local_slots
-        function.local_slots += slots
+        function.local_slots += slots_for_size(type_info.size)
         return current_size
     }
 
@@ -491,26 +488,30 @@ impl InstructionBuilder {
         function.instructions.add(<<cast(^u64)^index)
     }
 
-    build_load :: (&Self) {
+    build_load :: (&Self, slots: int) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Load)
+        function.instructions.add(cast slots)
     }
 
-    build_store :: (&Self) {
+    build_store :: (&Self, slots: int) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Store)
+        function.instructions.add(cast slots)
     }
 
-    build_load_local :: (&Self, index: int) {
+    build_load_local :: (&Self, index: int, slots: int) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.LoadLocal)
         function.instructions.add(<<cast(^u64)^index)
+        function.instructions.add(cast slots)
     }
 
-    build_store_local :: (&Self, index: int) {
+    build_store_local :: (&Self, index: int, slots: int) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.StoreLocal)
         function.instructions.add(<<cast(^u64)^index)
+        function.instructions.add(cast slots)
     }
 
     build_add :: (&Self, typ: InstNumTyp) {
@@ -659,4 +660,10 @@ impl InstructionBuilder {
         function.instructions.add(cast msg.bytes.data)
         function.instructions.add(cast msg.bytes.length)
     }
+}
+
+#file_scope
+
+slots_for_size :: (size_in_bytes: int) -> int {
+    return (size_in_bytes + 7) / 8
 }
