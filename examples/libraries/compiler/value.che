@@ -1,3 +1,5 @@
+util :: import std.util
+mem :: import std.mem.allocator
 
 use import ast
 use import interpreter
@@ -11,8 +13,40 @@ Value :: enum #copy {
     Int         : int
     Float       : f64
     String      : string
-    NativeFunc  : NativeFunction
+    NativeFunc  : ^NativeFunctionWrapper
     Type        : ^TypeInfo
 }
 
-NativeFunction :: Fn(^Interpreter, int)
+NativeFunction :: Fn(^Interpreter)
+
+NativeFunctionWrapper :: struct {
+    function            : NativeFunction
+    function_type       : ^TypeInfoFunction
+    arg_slots           : int
+    parameter_indices   : []int
+}
+
+impl NativeFunctionWrapper {
+    new :: (func: NativeFunction, $T: type) -> ^NativeFunctionWrapper {
+        ti := cast(^TypeInfoFunction) @type_info(T)
+        raw := mem.alloc_raw(u8, cast @sizeof(NativeFunctionWrapper) + ti.param_types.length * @sizeof(int))
+
+        indices : []int = cast(^int) util.pointer_add(raw, @sizeof(NativeFunctionWrapper))
+        indices.length = ti.param_types.length
+        wrapper := cast(^NativeFunctionWrapper) raw
+
+        slot_index := 0
+        for(reverse=true) typ : ti.param_types {
+            slot_index -= (typ.size + 7) / 8
+            indices[it_index_rev] = slot_index
+        }
+
+        <<wrapper = NativeFunctionWrapper(
+            function            = func
+            function_type       = ti
+            arg_slots           = -slot_index
+            parameter_indices   = indices
+        )
+        return wrapper
+    }
+}

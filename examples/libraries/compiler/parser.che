@@ -12,6 +12,7 @@ use import compiler
 use import config
 use import error_handler
 use import lexer
+use import value
 
 #export_scope
 
@@ -645,11 +646,15 @@ impl Parser {
         if tok.typ != .NumberLiteral {
             return null
         }
-        value := tok.data.Integer
+        value := match tok.data {
+            .Integer($i) -> Value.Int(i)
+            .Double($f) -> Value.Float(f)
+            _ -> @assert(false)
+        }
         return allocate(AstNumberLiteral(
             id          = id
             location    = tok.location
-            int_value   = value
+            value       = value
         ))
     }
 

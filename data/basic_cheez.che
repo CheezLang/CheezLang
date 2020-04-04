@@ -46,7 +46,7 @@
 // ((a), (b := c), (d))
 
 countdown :: (n: int) {
-    print(fib(n))
+    // print(fac(n))
     if n > 0 {
         countdown(n - 1)
     }
@@ -75,7 +75,10 @@ max :: (a: int, b: int) -> int {
 }
 
 Main :: () {
-    print(max(8, 7))
+    print_string("lol")
+    print_int(5)
+    print_float(1.123)
+    // print(max(8, 7))
     // countdown(10)
     // print(fac(10))
     // print(fib(5))

@@ -131,7 +131,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         }
 
         AstNumberLiteral($num) -> {
-            fmt.format_into(result, "{}", [num.int_value])
+            fmt.format_into(result, "{}", [num.value])
         }
 
         AstString($str) -> {
@@ -386,7 +386,7 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
         }
 
         AstNumberLiteral($num) -> {
-            fmt.format_into(result, "{}", [num.int_value])
+            fmt.format_into(result, "{}", [num.value])
         }
 
         AstString($str) -> {

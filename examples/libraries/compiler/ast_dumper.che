@@ -106,7 +106,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         }
 
         AstNumberLiteral($num) -> {
-            fmt.format_into(result, "AstNumberLiteral #{} {} ({})`n", [num.id, num.int_value, num.location])
+            fmt.format_into(result, "AstNumberLiteral #{} {} ({})`n", [num.id, num.value, num.location])
         }
 
         AstString($num) -> {

@@ -221,7 +221,7 @@ impl CodeGenerator for ByteCodeGenerator {
             generate_expression(<<iff.false_case)
         } else {
             builder.set_current_line(iff.location.end_line)
-            builder.build_const(0)
+            builder.build_const_int(0)
         }
 
         // builder.set_current_line(iff.location.end_line)
@@ -249,17 +249,17 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_for :: (&Self, forr: &AstFor) {
         builder.set_current_line(forr.location.line)
-        builder.build_const(0)
+        builder.build_const_int(0)
     }
 
     generate_break :: (&Self, brake: &AstBreak) {
         builder.set_current_line(brake.location.line)
-        builder.build_const(0)
+        builder.build_const_int(0)
     }
 
     generate_continue :: (&Self, cont: &AstContinue) {
         builder.set_current_line(cont.location.line)
-        builder.build_const(0)
+        builder.build_const_int(0)
     }
 
     generate_return :: (&Self, ret: &AstReturn) {
@@ -276,18 +276,20 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_defer :: (&Self, def: &AstDefer) {
         builder.set_current_line(def.location.line)
-        builder.build_const(0)
+        builder.build_const_int(0)
     }
 
     generate_bool :: (&Self, bol: &AstBool) {
         builder.set_current_line(bol.location.line)
-        builder.build_const(if bol.bool_value then 1 else 0)
+        builder.build_const_int(if bol.bool_value then 1 else 0)
     }
 
     generate_string :: (&Self, str: &AstString) {
-        // @todo
         builder.set_current_line(str.location.line)
-        builder.build_const(-str.string_value.bytes.length)
+        // @! strings are length first, then pointer
+        // same as slices
+        builder.build_const_int(cast str.string_value.bytes.length)
+        builder.build_const_int(cast str.string_value.bytes.data)
     }
 
     generate_argument :: (&Self, arg: &AstArgument) {
@@ -324,7 +326,7 @@ impl CodeGenerator for ByteCodeGenerator {
                     generate_expression(<<arg)
                 }
                 builder.set_current_line(call.location.line)
-                builder.build_native_call(func, call.arguments.count())
+                builder.build_native_call(func)
             }
 
             _ -> {
@@ -358,7 +360,11 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_number_literal :: (&Self, num: &AstNumberLiteral) {
         builder.set_current_line(num.location.line)
-        builder.build_const(num.int_value)
+
+        match num.value {
+            .Int($i)    -> builder.build_const_int(i)
+            .Float($f)  -> builder.build_const_float(f)
+        }
     }
 
     generate_identifier :: (&Self, id: &AstIdentifier) {
@@ -467,9 +473,15 @@ impl InstructionBuilder {
         function.instructions.add(cast Instruction.Pop)
     }
 
-    build_const :: (&Self, value: int) {
+    build_const_int :: (&Self, value: int) {
         add_debug_info_line()
-        function.instructions.add(cast Instruction.Const)
+        function.instructions.add(cast Instruction.ConstInt)
+        function.instructions.add(<<cast(^u64)^value)
+    }
+
+    build_const_float :: (&Self, value: f64) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.ConstFloat)
         function.instructions.add(<<cast(^u64)^value)
     }
 
@@ -611,13 +623,10 @@ impl InstructionBuilder {
         function.instructions.add(cast arity)
     }
 
-    build_native_call :: (&Self, func: NativeFunction, arity: int) {
+    build_native_call :: (&Self, func: ^NativeFunctionWrapper) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.NativeCall)
-        func, data := FatFunctions.destructure(func, u64, u64)
-        function.instructions.add(func)
-        function.instructions.add(data)
-        function.instructions.add(cast arity)
+        function.instructions.add(cast func)
     }
 
     build_comp_call :: (&Self, ast_func: ^AstFunction) {

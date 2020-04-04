@@ -469,8 +469,11 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_number :: (&Self, num: &AstNumberLiteral, ctx: CNContext) -> &AstNode {
-        num.typ = @type_info(int) // @todo: fix this
-        num.value = .Int(num.int_value)
+        num.typ = match num.value {
+            .Int(_) -> @type_info(int)
+            .Float(_) -> @type_info(f64)
+            _ -> @assert(false)
+        }
         return num
     }
 
@@ -498,8 +501,8 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
 
             .NativeFunc($func) -> {
-                id.typ = func.typ
-                id.value = .NativeFunc(func.func)
+                id.typ = func.function_type
+                id.value = .NativeFunc(func)
             }
 
             .NotFound -> {
@@ -536,17 +539,21 @@ impl CompilationJob for CompileGlobalNodeJob {
                 // call.value = value
                 call.ast_function = func
 
-                for arg : call.arguments {
-                    param := &func.params[it_index]
+                if call.arguments.count() != func.params.length {
+                    compiler.error_handler.report_error_at(call.location, "Wrong number of arguments in function call")
+                } else {
+                    for arg : call.arguments {
+                        param := &func.params[it_index]
 
-                    arg.scope = call.scope
-                    arg = cast ^compile_node(<<arg, ctx.with_expected(null))
+                        arg.scope = call.scope
+                        arg = cast ^compile_node(<<arg, ctx.with_expected(param.var_type))
 
-                    if arg.typ != param.var_type {
-                        compiler.error_handler.report_error_at(
-                            arg.location,
-                            "Type of argument ({}) does not match type of parameter '{}' ({}).",
-                            [arg.typ, param.name, param.var_type])
+                        if arg.typ != param.var_type {
+                            compiler.error_handler.report_error_at(
+                                arg.location,
+                                "Type of argument ({}) does not match type of parameter '{}' ({}).",
+                                [arg.typ, param.name, param.var_type])
+                        }
                     }
                 }
 
@@ -554,11 +561,29 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
 
             .NativeFunc($func) -> {
-                // call.typ = cast typ
-                // call.value = value
-                for arg : call.arguments {
-                    arg.scope = call.scope
-                    arg = cast ^compile_node(<<arg, ctx.with_expected(null))
+                g_logger.log("Native call: ", [call.function.typ])
+                func_type := cast(^TypeInfoFunction) call.function.typ
+
+                call.typ = func_type.return_type
+
+                if call.arguments.count() != func_type.param_types.length {
+                    compiler.error_handler.report_error_at(
+                        call.location,
+                        "Wrong number of arguments ({}) in function call. Expected {}",
+                        [call.arguments.count(), func_type.param_types.length])
+                } else {
+                    for arg : call.arguments {
+                        param_type := &func_type.param_types[it_index]
+                        arg.scope = call.scope
+                        arg = cast ^compile_node(<<arg, ctx.with_expected(param_type))
+
+                        if arg.typ != param_type {
+                            compiler.error_handler.report_error_at(
+                                arg.location,
+                                "Type of argument ({}) does not match type of parameter ({}).",
+                                [arg.typ, param_type])
+                        }
+                    }
                 }
             }
 

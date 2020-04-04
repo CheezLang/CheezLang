@@ -91,7 +91,7 @@
       {
         "type": "cheezbc",
         "label": "Cheez Bytecode",
-        "program": "P:/dev/CheezLang/gen/cheezdb.exe",
+        "program": "D:/Programming/CheezLang/gen/cheezdb.exe",
         "languages": ["cheezbc"],
         "initialConfigurations": [
           {
@@ -106,7 +106,7 @@
       {
         "type": "cheez",
         "label": "Cheez",
-        "program": "P:/dev/CheezLang/gen/cheezdb.exe",
+        "program": "D:/Programming/CheezLang/gen/cheezdb.exe",
         "languages": ["cheez"],
         "initialConfigurations": [
           {

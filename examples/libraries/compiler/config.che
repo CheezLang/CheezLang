@@ -1,7 +1,7 @@
 
 #export_scope
 
-DEBUG_INTERPRETER   :: false
+DEBUG_INTERPRETER   :: true
 DEBUG_JOBS          :: false
 DEBUG_PARSER        :: false
 DEBUG_WAIT          :: false

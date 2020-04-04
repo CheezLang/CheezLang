@@ -99,7 +99,6 @@ AstIdentifier :: struct AstNode {
 impl AstNode for AstIdentifier {}
 
 AstNumberLiteral :: struct AstNode {
-    int_value : int
 }
 impl AstNode for AstNumberLiteral {}
 

@@ -76,11 +76,12 @@ impl CBCDebugInfo {
 }
 
 CBCFunction :: struct {
-    ast_function    : ^AstFunction = null
-    parameter_slots := 0
-    instructions    := Array[u64].create()
-    local_slots     := 0
-    debug_info      := CBCDebugInfo()
+    ast_function        : ^AstFunction = null
+    instructions        := Array[u64].create()
+    parameter_indices   := Array[int].create()
+    parameter_slots     := 0
+    local_slots         := 0
+    debug_info          := CBCDebugInfo()
 }
 
 StackFrame :: struct {
@@ -92,6 +93,7 @@ StackFrame :: struct {
     stack   : []int = default
     func    : ^CBCFunction = null
     return_value_size := 0
+    parameter_indices : []int = default
 }
 
 impl StackFrame {
@@ -106,9 +108,10 @@ impl StackFrame {
         return stack[sp]
     }
 
-    get_arg :: (&Self, index: int) -> int {
-        @assert(index >= 0 and index < bp)
-        return stack[index]
+    get_arg :: (&Self, index: int, $T: type) -> T {
+        @assert(index >= 0 and index < parameter_indices.length)
+        // g_logger.log("indices: {}", [parameter_indices])
+        return <<cast(^T)^stack[bp + parameter_indices[index]]
     }
 
     dump_stack :: (&Self) -> String {
@@ -230,6 +233,7 @@ impl Interpreter {
             stack = stack[sp-func.parameter_slots .. ]
             func = func
             return_value_size = (func.ast_function.return_type.size + 7) / 8
+            parameter_indices = func.parameter_indices.slice()
         )
 
         if const DEBUG_INTERPRETER {
@@ -237,7 +241,7 @@ impl Interpreter {
         }
     }
 
-    push_native_frame :: (&Self, arg_count: int) {
+    push_native_frame :: (&Self, wrapper: ^NativeFunctionWrapper) {
         if fp + 1 >= frames.length {
             frame := &frames[fp]
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
@@ -254,7 +258,7 @@ impl Interpreter {
         }
 
         _fp, _sp := fp, sp
-        defer { if const DEBUG_INTERPRETER then g_logger.log("push_native_frame {} (fp = {} -> {}, sp = {} -> {})", [arg_count, _fp, fp, _sp, sp]) }
+        defer { if const DEBUG_INTERPRETER then g_logger.log("push_native_frame {} (fp = {} -> {}, sp = {} -> {})", [wrapper.arg_slots, _fp, fp, _sp, sp]) }
 
         if fp >= 0 {
             sp += frames[fp].sp - frames[fp].bp
@@ -262,11 +266,12 @@ impl Interpreter {
         fp += 1
         frames[fp] = StackFrame(
             ip = 0
-            sp = arg_count
-            bp = arg_count
+            sp = wrapper.arg_slots
+            bp = wrapper.arg_slots
             code = null
-            stack = stack[sp-arg_count .. ]
+            stack = stack[sp-wrapper.arg_slots .. ]
             func = null
+            parameter_indices = wrapper.parameter_indices
         )
     }
 
@@ -347,10 +352,15 @@ impl Interpreter {
                 pop(int)
             }
 
-            .Const -> {
+            .ConstInt -> {
                 val := arg(int)
                 push(val)
             }
+            .ConstFloat -> {
+                val := arg(f64)
+                push(val)
+            }
+
             .AddressOf -> {
                 index := arg(int)
                 address := cast(int) ^frame.stack[frame.bp + index]
@@ -592,10 +602,9 @@ impl Interpreter {
             }
 
             .NativeCall -> {
-                func := FatFunctions.from_pointers(NativeFunction, arg(^void), arg(^void))
-                arity := arg(int)
+                wrapper := arg(^NativeFunctionWrapper)
 
-                push_native_frame(arity)
+                push_native_frame(wrapper)
                 
                 if const DEBUG_INTERPRETER {{
                     frame := top_frame()
@@ -606,7 +615,7 @@ impl Interpreter {
                         fmt.align(35), frame.dump_stack()
                     ], "stdout")
                 }}
-                func(^self, arity)
+                wrapper.function(^self)
                 if const DEBUG_INTERPRETER {{
                     frame := top_frame()
                     g_logger.log("{}{}{}{}{}{}{}{}", [
@@ -712,7 +721,7 @@ Instruction :: enum #repr("C") #tag_type(u64) {
     Noop
 
     Pop
-    Const
+    ConstInt, ConstFloat
     AddressOf
     Load, Store
     LoadLocal, StoreLocal
@@ -745,7 +754,8 @@ impl Instruction {
             .Noop           -> fmt.format("Noop")
 
             .Pop            -> fmt.format("Pop")
-            .Const          -> fmt.format("Const {}", [arg(int, 0)])
+            .ConstInt       -> fmt.format("ConstInt {}", [arg(int, 0)])
+            .ConstFloat     -> fmt.format("ConstFloat {}", [arg(f64, 0)])
             .AddressOf      -> fmt.format("AddressOf {}", [arg(int, 0)])
             .Load           -> fmt.format("Load")
             .Store          -> fmt.format("Store")
@@ -775,7 +785,10 @@ impl Instruction {
             .BranchIf       -> fmt.format("BranchIf {}", [arg(int, 0)])
 
             .Call           -> fmt.format("Call {} {}", [string(arg(^u8, 0), arg(int, 1)), arg(int, 2)])
-            .NativeCall     -> fmt.format("NativeCall {2}", [arg(^void, 0), arg(^void, 1), arg(int, 2)])
+            .NativeCall     -> {
+                wrapper := arg(^NativeFunctionWrapper, 0)
+                fmt.format("NativeCall {}", [wrapper.function_type])
+            }
             .CompCall       -> {
                 func := arg(^AstFunction, 0)
                 fmt.format("CompCall {}#{}", [func.name, func.id])

@@ -82,17 +82,29 @@ compile_files :: (files: []String) {
     console_error_handler := ConsoleErrorHandler.new(null)
 
     compiler := Compiler.new(1, ^console_error_handler)
-    compiler.get().global_scope.define_native_function("print", @type_info(void), cast(NativeFunction) (interp, arg_count) => {
+    compiler.get().global_scope.define_native_function("print_string", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
         frame := interp.top_frame()
-        for i : 0..arg_count {
-            val := frame.get_arg(i)
+        io.set_console_color(.Green, .Black)
+        io.formatln("{}", [frame.get_arg(0, string)])
+        io.set_console_color(.White, .Black)
+    }, fn(string)))
+    compiler.get().global_scope.define_native_function("print_int", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+        frame := interp.top_frame()
+        io.set_console_color(.Green, .Black)
+        io.formatln("{}", [frame.get_arg(0, int)])
+        io.set_console_color(.White, .Black)
+    }, fn(int)))
+    compiler.get().global_scope.define_native_function("print_float", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+        frame := interp.top_frame()
+        io.set_console_color(.Green, .Black)
+        io.formatln("{}", [frame.get_arg(0, f64)])
+        io.set_console_color(.White, .Black)
+    }, fn(f64)))
 
-            io.set_console_color(.Green, .Black)
-            io.formatln("{}", [val])
-            io.set_console_color(.White, .Black)
-        }
-    })
-    compiler.get().global_scope.define_native_function("debugbreak", @type_info(void), cast(NativeFunction) (interp, arg_count) => {})
+    compiler.get().global_scope.define_native_function("debugbreak", NativeFunctionWrapper.new(
+        cast(NativeFunction) (interp) => {},
+        fn())
+    )
 
     for(by_ref=true) file : files {
         compiler.get().add_job(LoadFileJob.new(file.clone()))
