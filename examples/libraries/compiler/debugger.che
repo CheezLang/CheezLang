@@ -309,22 +309,43 @@ impl CheezDebugAdapter {
         return result
     }
 
-    print :: (&Self, interp: ^Interpreter, arg_count: int) {
+    print_string :: (&Self, interp: ^Interpreter) {
         frame := interp.top_frame()
-        for 0..arg_count {
-            val := frame.get_arg(it_index)
-            self.adapter.emit_output_event(fmt.format("{}", [val]), "console")
-        }
+        self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, string)]), "console")
     }
 
-    debug_break :: (&Self, interp: ^Interpreter, arg_count: int) {
+    print_int :: (&Self, interp: ^Interpreter) {
+        frame := interp.top_frame()
+        self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, int)]), "console")
+    }
+
+    print_float :: (&Self, interp: ^Interpreter) {
+        frame := interp.top_frame()
+        self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, f64)]), "console")
+    }
+
+    debug_break :: (&Self, interp: ^Interpreter) {
         debugger.get().pause()
     }
 
     compile_cheez_program :: (&Self, path: string) {
         compiler = Compiler.new(1, ^self)
-        compiler.get().global_scope.define_native_function("print", @type_info(void), cast(NativeFunction) self.print)
-        compiler.get().global_scope.define_native_function("debugbreak", @type_info(void), cast(NativeFunction) self.debug_break)
+
+        // register native functions
+        compiler.get().global_scope.define_native_function(
+            "print_string",
+            NativeFunctionWrapper.new(cast(NativeFunction) self.print_string, fn(string)))
+        compiler.get().global_scope.define_native_function(
+            "print_int",
+            NativeFunctionWrapper.new(cast(NativeFunction) self.print_int, fn(int)))
+        compiler.get().global_scope.define_native_function(
+            "print_float",
+            NativeFunctionWrapper.new(cast(NativeFunction) self.print_float, fn(f64)))
+        compiler.get().global_scope.define_native_function(
+            "debugbreak",
+            NativeFunctionWrapper.new(cast(NativeFunction) self.debug_break, fn()))
+        //
+
         compiler.get().code_runner = debugger.clone().change_type(CodeRunner)
         compiler.get().add_job(LoadFileJob.new(path.to_owned()))
         compiler.get().start_compilation()

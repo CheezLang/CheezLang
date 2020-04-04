@@ -459,6 +459,7 @@ TypeInfoFunction :: struct TypeInfo {
     return_type : ^TypeInfo
     param_types : []^TypeInfo
 }
+impl TypeInfo for TypeInfoFunction {}
 __ti_TypeInfoFunction := @type_info(TypeInfoFunction)
 
 TypeInfoTuple :: struct TypeInfo {
