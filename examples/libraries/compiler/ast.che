@@ -85,6 +85,12 @@ AstBlock :: struct AstNode {
 }
 impl AstNode for AstBlock {}
 
+AstCast :: struct AstNode {
+    type_expr   : ^AstNode
+    value_expr  : &AstNode
+}
+impl AstNode for AstCast {}
+
 AstCall :: struct AstNode {
     function        : &AstNode
     arguments       : Array[^AstArgument]

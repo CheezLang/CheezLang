@@ -396,7 +396,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         if (p.TargetType == CheezType.Any)
                         {
-                            var str = LLVM.StructCreateNamed(context, $"&{p.TargetType.ToString()}");
+                            var str = LLVM.StructCreateNamed(context, $"^{p.TargetType.ToString()}");
                             LLVM.StructSetBody(str, new LLVMTypeRef[] {
                                 LLVM.Int8Type().GetPointerTo(),
                                 rttiTypeInfoPtr
@@ -405,7 +405,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         }
                         else if (p.TargetType is TraitType)
                         {
-                            var str = LLVM.StructCreateNamed(context, $"&{p.TargetType.ToString()}");
+                            var str = LLVM.StructCreateNamed(context, $"^{p.TargetType.ToString()}");
                                 LLVM.StructSetBody(str, new LLVMTypeRef[] {
                                 LLVM.Int8Type().GetPointerTo(),
                                 LLVM.Int8Type().GetPointerTo()
@@ -424,7 +424,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     {
                         if (r.TargetType == CheezType.Any)
                         {
-                            var str = LLVM.StructCreateNamed(context, $"ref {r.TargetType.ToString()}");
+                            var str = LLVM.StructCreateNamed(context, $"&{r.TargetType.ToString()}");
                             LLVM.StructSetBody(str, new LLVMTypeRef[] {
                                 LLVM.Int8Type().GetPointerTo(),
                                 rttiTypeInfoPtr
@@ -433,7 +433,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         }
                         else if (r.TargetType is TraitType)
                         {
-                            var str = LLVM.StructCreateNamed(context, $"ref {r.TargetType.ToString()}");
+                            var str = LLVM.StructCreateNamed(context, $"&{r.TargetType.ToString()}");
                             LLVM.StructSetBody(str, new LLVMTypeRef[] {
                                 LLVM.Int8Type().GetPointerTo(),
                                 LLVM.Int8Type().GetPointerTo()

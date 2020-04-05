@@ -33,11 +33,12 @@ impl Parser {
         } 
     }
 
-    new :: (lexer: &Lexer, error_handler: ^ErrorHandler, allocator: ^mem.Allocator) -> Self {
+    new :: (lexer: &Lexer, error_handler: ^ErrorHandler, allocator: ^mem.Allocator, first_id: int) -> Self {
         return Parser(
             lexer           = lexer
             error_handler   = error_handler
             allocator       = allocator
+            _next_id        = first_id
         )
     }
 

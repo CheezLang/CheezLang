@@ -652,6 +652,28 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             throw new NotImplementedException();
         }
 
+        private LLVMValueRef GeneratePatternConditionTraitPointer(AstExpression pattern, LLVMValueRef value, TraitType trait)
+        {
+            switch (pattern)
+            {
+                case AstCallExpr call:
+                    {
+                        value = builder.CreateLoad(value, "");
+                        var type = call.FunctionExpr.Value as CheezType;
+                        var vtableOfType = vtableMap[trait.Declaration.Implementations[type]];
+                        var vtableOfValue = builder.CreateExtractValue(value, 1, "vtable_of_value");
+
+                        vtableOfType = builder.CreatePtrToInt(vtableOfType, LLVM.Int64Type(), "vtable_of_type");
+                        vtableOfValue = builder.CreatePtrToInt(vtableOfValue, LLVM.Int64Type(), "vtable_of_value");
+
+                        var match = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, vtableOfType, vtableOfValue, "vtables_match");
+                        return match;
+                    }
+            }
+
+            throw new NotImplementedException();
+        }
+
         private LLVMValueRef GeneratePatternConditionEnum(AstExpression pattern, LLVMValueRef value, CheezType valueType)
         {
             var matchingReference = valueType is ReferenceType;
@@ -719,6 +741,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     return GeneratePatternConditionStruct(pattern, value, valueType);
                 case TraitType trait:
                     return GeneratePatternConditionTrait(pattern, value, trait);
+                case CheezType _ when valueType is PointerType p && p.TargetType is TraitType trait:
+                    return GeneratePatternConditionTraitPointer(pattern, value, trait);
                 case EnumType _:
                     return GeneratePatternConditionEnum(pattern, value, valueType);
 

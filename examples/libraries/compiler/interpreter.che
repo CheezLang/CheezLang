@@ -434,6 +434,71 @@ impl Interpreter {
                 frame.sp -= slots
             }
 
+            .CastFD -> set(f64, 0, cast(f64) peek(f32, 0))
+            .CastDF -> set(f32, 0, cast(f32) peek(f64, 0))
+            .CastDS -> set(i64, 0, cast(i64) peek(f64, 0))
+            .CastDU -> set(u64, 0, cast(u64) peek(f64, 0))
+            .CastSD -> set(f64, 0, cast(f64) peek(i64, 0))
+            .CastUD -> set(f64, 0, cast(f64) peek(u64, 0))
+            
+            .CastSU -> set(u64,  0, cast(u64) peek(i64, 0))
+            .CastUS -> set(i64,  0, cast(i64) peek(u64, 0))
+
+            .CastSigned -> {
+                from := arg(InstNumTyp)
+                to  := arg(InstNumTyp)
+                match from, to {
+                    use InstNumTyp
+                    I8, I8  -> set(i8,  0, cast(i8)  peek(i8, 0))
+                    I8, I16 -> set(i16, 0, cast(i16) peek(i8, 0))
+                    I8, I32 -> set(i32, 0, cast(i32) peek(i8, 0))
+                    I8, I64 -> set(i64, 0, cast(i64) peek(i8, 0))
+                    
+                    I16, I8  -> set(i8,  0, cast(i8)  peek(i16, 0))
+                    I16, I16 -> set(i16, 0, cast(i16) peek(i16, 0))
+                    I16, I32 -> set(i32, 0, cast(i32) peek(i16, 0))
+                    I16, I64 -> set(i64, 0, cast(i64) peek(i16, 0))
+
+                    I32, I8  -> set(i8,  0, cast(i8)  peek(i32, 0))
+                    I32, I16 -> set(i16, 0, cast(i16) peek(i32, 0))
+                    I32, I32 -> set(i32, 0, cast(i32) peek(i32, 0))
+                    I32, I64 -> set(i64, 0, cast(i64) peek(i32, 0))
+
+                    I64, I8  -> set(i8,  0, cast(i8)  peek(i64, 0))
+                    I64, I16 -> set(i16, 0, cast(i16) peek(i64, 0))
+                    I64, I32 -> set(i32, 0, cast(i32) peek(i64, 0))
+                    I64, I64 -> set(i64, 0, cast(i64) peek(i64, 0))
+                    _ -> @assert(false)
+                }
+            }
+            .CastUnsigned -> {
+                from := arg(InstNumTyp)
+                to  := arg(InstNumTyp)
+                match from, to {
+                    use InstNumTyp
+                    U8, U8  -> set(u8,  0, cast(u8)  peek(u8, 0))
+                    U8, U16 -> set(u16, 0, cast(u16) peek(u8, 0))
+                    U8, U32 -> set(u32, 0, cast(u32) peek(u8, 0))
+                    U8, U64 -> set(u64, 0, cast(u64) peek(u8, 0))
+                    
+                    U16, U8  -> set(u8,  0, cast(u8)  peek(u16, 0))
+                    U16, U16 -> set(u16, 0, cast(u16) peek(u16, 0))
+                    U16, U32 -> set(u32, 0, cast(u32) peek(u16, 0))
+                    U16, U64 -> set(u64, 0, cast(u64) peek(u16, 0))
+
+                    U32, U8  -> set(u8,  0, cast(u8)  peek(u32, 0))
+                    U32, U16 -> set(u16, 0, cast(u16) peek(u32, 0))
+                    U32, U32 -> set(u32, 0, cast(u32) peek(u32, 0))
+                    U32, U64 -> set(u64, 0, cast(u64) peek(u32, 0))
+
+                    U64, U8  -> set(u8,  0, cast(u8)  peek(u64, 0))
+                    U64, U16 -> set(u16, 0, cast(u16) peek(u64, 0))
+                    U64, U32 -> set(u32, 0, cast(u32) peek(u64, 0))
+                    U64, U64 -> set(u64, 0, cast(u64) peek(u64, 0))
+                    _ -> @assert(false)
+                }
+            }
+
             .Add -> {
                 typ := arg(InstNumTyp)
                 match typ {
@@ -764,6 +829,17 @@ Instruction :: enum #repr("C") #tag_type(u64) {
     LoadLocal, StoreLocal
     StoreStack
 
+    CastFD  // float to double
+    CastDF  // double to float
+    CastDS  // double to i64
+    CastDU  // double to u64
+    CastSD  // i64 to double
+    CastUD  // u64 to double
+    CastSU  // i64 to u64
+    CastUS  // u64 to i64
+    CastSigned      // i to i
+    CastUnsigned    // u to u
+
     Add, Sub, Mul, Div, Mod
     Ieq, Ine, Ilt, Ile, Igt, Ige
     Neg
@@ -803,6 +879,17 @@ impl Instruction {
             .LoadLocal      -> fmt.format("LoadLocal {} {}", [arg(int, 0), arg(int, 1)])
             .StoreLocal     -> fmt.format("StoreLocal {} {}", [arg(int, 0), arg(int, 1)])
             .StoreStack     -> fmt.format("StoreStack {} {}", [arg(int, 0), arg(int, 1)])
+
+            .CastFD         -> fmt.format("CastFD")
+            .CastDF         -> fmt.format("CastDF")
+            .CastDS         -> fmt.format("CastDS")
+            .CastDU         -> fmt.format("CastDU")
+            .CastSD         -> fmt.format("CastSD")
+            .CastUD         -> fmt.format("CastUD")
+            .CastSU         -> fmt.format("CastSU")
+            .CastUS         -> fmt.format("CastUS")
+            .CastSigned     -> fmt.format("CastSigned {} {}", [arg(InstNumTyp, 0), arg(InstNumTyp, 1)])
+            .CastUnsigned   -> fmt.format("CastUnsigned {} {}", [arg(InstNumTyp, 0), arg(InstNumTyp, 1)])
 
             .Add            -> fmt.format("Add {}", [arg(InstNumTyp, 0)])
             .Sub            -> fmt.format("Sub {}", [arg(InstNumTyp, 0)])

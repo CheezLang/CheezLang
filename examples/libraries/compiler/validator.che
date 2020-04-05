@@ -87,6 +87,18 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
+        AstCast($node) -> {
+            assert("AstCast", node.typ != null)
+
+            if node.type_expr != null and !validate_node(<<node.type_expr, error_handler) {
+                return false
+            }
+
+            if !validate_node(node.value_expr, error_handler) {
+                return false
+            }
+        }
+
         AstArgument($node) -> {
             assert("AstArgument", node.typ != null)
             assert("AstArgument", node.typ == node.value_expr.typ)

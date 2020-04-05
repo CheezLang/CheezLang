@@ -759,7 +759,7 @@ impl Location {
         return Location(
             file        = file
             byte_index  = byte_index
-            byte_length = byte_length
+            byte_length = end.byte_index - byte_index
             line        = line
             column      = column
             end_line    = end.end_line

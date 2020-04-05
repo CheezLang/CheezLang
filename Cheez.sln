@@ -7,13 +7,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Backends", "Backends", "{24
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LLVM", "LLVM", "{D88D0A71-2D0E-4D18-A3E9-F00C663C8196}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{0B7A9A99-628D-4DD8-8D85-AE057E3B6051}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompilerLibrary", "CompilerLibrary\CompilerLibrary.csproj", "{BBDCB000-95D4-4747-9E69-AE7D260CD401}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LLVMSharpBackend", "Backends\LLVM\LLVMSharpBackend\LLVMSharpBackend.csproj", "{3AA41F6B-4465-4D75-812E-AEE52C95A081}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CompilerCLI", "CompilerCLI\CompilerCLI.csproj", "{06A9B4B8-F07E-4F1E-870E-BB606A0AA91D}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{0B7A9A99-628D-4DD8-8D85-AE057E3B6051}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CheezCBindingGenerator", "Tools\CheezCBindingGenerator\CheezCBindingGenerator.vcxproj", "{31D0B4D0-063C-4297-923E-5EC681271152}"
 EndProject

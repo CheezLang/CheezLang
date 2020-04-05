@@ -1,35 +1,31 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
   <PropertyGroup>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
+    <FileUpgradeFlags>40</FileUpgradeFlags>
+    <UpgradeBackupLocation>D:\dev\CheezLang\Backup\Backends\LLVM\LLVMSharpBackend\</UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <NoWarn>1701;1702;NU1701</NoWarn>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Optimize>true</Optimize>
     <NoWarn>1701;1702;NU1701</NoWarn>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Remove="LLVM\DIBuilder.cs" />
     <Compile Remove="LLVM\DwarfATE.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="LLVMSharp" Version="5.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="2.9.3" />
     <PackageReference Include="Microsoft.Win32.Registry" Version="4.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\..\CompilerLibrary\CompilerLibrary.csproj" />
   </ItemGroup>
-
 </Project>

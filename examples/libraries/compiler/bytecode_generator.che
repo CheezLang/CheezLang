@@ -105,14 +105,15 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.set_current_line(node.location.line)
         match node {
             AstArgument($arg)       -> generate_argument(arg)
+            AstArray($arr)          -> generate_array(arr)
             AstBinary($bin)         -> generate_binary(bin)
-            AstUnary($un)           -> generate_unary(un)
             AstBlock($block)        -> generate_block(block)
             AstBool($bol)           -> generate_bool(bol)
             AstBreak($brake)        -> generate_break(brake)
             AstCall($call)          -> generate_call(call)
-            AstContinue($cont)      -> generate_continue(cont)
+            AstCast($cst)           -> generate_cast(cst)
             AstConstDecl($decl)     -> generate_const_decl(decl)
+            AstContinue($cont)      -> generate_continue(cont)
             AstDecl($decl)          -> generate_decl(decl)
             AstDefer($def)          -> generate_defer(def)
             AstFor($forr)           -> generate_for(forr)
@@ -122,7 +123,7 @@ impl CodeGenerator for ByteCodeGenerator {
             AstNumberLiteral($num)  -> generate_number_literal(num)
             AstReturn($ret)         -> generate_return(ret)
             AstString($str)         -> generate_string(str)
-            AstArray($arr)          -> generate_array(arr)
+            AstUnary($un)           -> generate_unary(un)
 
             _ -> {
                 dump := dump_ast(node, recurse = false)
@@ -341,6 +342,80 @@ impl CodeGenerator for ByteCodeGenerator {
             // pop value if not last and type is not void
             if it_index < block.children.count() - 1 and child.typ != @type_info(void) {
                 builder.build_pop(slots_for_size(child.typ.size))
+            }
+        }
+    }
+
+    generate_cast :: (&Self, cst: &AstCast) {
+        from := cst.value_expr.typ
+        to := cst.typ
+
+        generate_expression(cst.value_expr)
+
+        builder.set_current_line(cst.location.line)
+        match from, to {
+            TypeInfoFloat($from), TypeInfoFloat($to) -> {
+                if from.size < to.size {
+                    builder.build_cast_float_to_double()
+                } else if from.size > to.size {
+                    builder.build_cast_double_to_float()
+                }
+            }
+
+            TypeInfoInt($from), TypeInfoInt($to) -> {
+                match from.signed, to.signed {
+                    true, true -> builder.build_cast_signed(type_info_to_inst_number_type(from), type_info_to_inst_number_type(to))
+                    false, false -> builder.build_cast_unsigned(type_info_to_inst_number_type(from), type_info_to_inst_number_type(to))
+                    true, false -> {
+                        builder.build_cast_signed(type_info_to_inst_number_type(from), .I64)
+                        builder.build_cast_signed_to_unsigned()
+                        builder.build_cast_unsigned(.U64, type_info_to_inst_number_type(to))
+                    }
+                    false, true -> {
+                        builder.build_cast_unsigned(type_info_to_inst_number_type(from), .U64)
+                        builder.build_cast_unsigned_to_signed()
+                        builder.build_cast_signed(.I64, type_info_to_inst_number_type(to))
+                    }
+                }
+            }
+
+            TypeInfoFloat($from), TypeInfoInt($to) -> {
+                if from.size != 8 then
+                    builder.build_cast_float_to_double()
+
+                if to.signed then
+                    builder.build_cast_double_to_signed()
+                else
+                    builder.build_cast_double_to_unsigned()
+
+                if to.size != 8 {
+                    if to.signed then
+                        builder.build_cast_signed(.I64, type_info_to_inst_number_type(to))
+                    else
+                        builder.build_cast_unsigned(.U64, type_info_to_inst_number_type(to))
+                }
+            }
+
+            TypeInfoInt($from), TypeInfoFloat($to) -> {
+                if from.size != 8 {
+                    if from.signed then
+                        builder.build_cast_signed(type_info_to_inst_number_type(from), .I64)
+                    else
+                        builder.build_cast_unsigned(type_info_to_inst_number_type(from), .U64)
+                }
+
+                if from.signed then
+                    builder.build_cast_signed_to_double()
+                else
+                    builder.build_cast_unsigned_to_double()
+
+                if to.size != 8 {
+                    builder.build_cast_double_to_float()
+                }
+            }
+
+            _ -> {
+                error_handler.report_error_at(cst.location, "generate_cast: not implemented: ({}) to ({})", [from, to])
             }
         }
     }
@@ -588,6 +663,60 @@ impl InstructionBuilder {
         function.instructions.add(cast Instruction.StoreStack)
         function.instructions.add(cast index)
         function.instructions.add(cast slots)
+    }
+
+    build_cast_float_to_double :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastFD)
+    }
+
+    build_cast_double_to_float :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastDF)
+    }
+
+    build_cast_double_to_signed :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastDS)
+    }
+
+    build_cast_double_to_unsigned :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastDU)
+    }
+
+    build_cast_signed_to_double :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastSD)
+    }
+
+    build_cast_unsigned_to_double :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastUD)
+    }
+
+    build_cast_signed :: (&Self, from: InstNumTyp, to: InstNumTyp) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastSigned)
+        function.instructions.add(cast from)
+        function.instructions.add(cast to)
+    }
+
+    build_cast_unsigned :: (&Self, from: InstNumTyp, to: InstNumTyp) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastUnsigned)
+        function.instructions.add(cast from)
+        function.instructions.add(cast to)
+    }
+
+    build_cast_signed_to_unsigned :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastSU)
+    }
+
+    build_cast_unsigned_to_signed :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CastUS)
     }
 
     build_add :: (&Self, typ: InstNumTyp) {

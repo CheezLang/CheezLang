@@ -165,6 +165,15 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
                 }
             }
         }
+        
+        AstCast($cst) -> {
+            fmt.format_into(result, "AstCast #{} ({})`n", [cst.id, cst.location])
+            if recurse {
+                if cst.type_expr != null then
+                    dump_ast_helper(result, <<cst.type_expr, recurse, indent + 1)
+                dump_ast_helper(result, cst.value_expr, recurse, indent + 1)
+            }
+        }
 
         AstIf($iff) -> {
             fmt.format_into(result, "AstIf #{} ({})`n", [iff.id, iff.location])

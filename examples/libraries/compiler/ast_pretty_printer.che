@@ -181,6 +181,17 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += ")"
         }
 
+        AstCast($cst) -> {
+            result += "cast"
+            if cst.type_expr != null {
+                result += "("
+                pretty_print_ast_helper(result, <<cst.type_expr)
+                result += ")"
+            }
+            result += " "
+            pretty_print_ast_helper(result, cst.value_expr)
+        }
+
         AstIf($iff) -> {
             result += "if "
             pretty_print_ast_helper(result, iff.condition)
@@ -453,6 +464,11 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
                 pretty_print_typed_ast_helper(result, <<arg)
             }
             result += ")"
+        }
+
+        AstCast($cst) -> {
+            fmt.format_into(result, "cast({}) ", [cst.typ])
+            pretty_print_typed_ast_helper(result, cst.value_expr)
         }
 
         AstIf($iff) -> {
