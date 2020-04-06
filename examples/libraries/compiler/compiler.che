@@ -214,8 +214,11 @@ impl Compiler {
         comp.get().global_scope = comp.get().new_scope()
         comp.get().define_builtin_types(<<comp.get().global_scope)
 
-        // create mutex for global scope
-        comp.get().global_scope.mutex = Some(Mutex.new())
+        // create mutex for global scope if thread_count > 1
+        if thread_count > 0 {
+            comp.get().global_scope.mutex = Some(Mutex.new())
+        }
+
         for 0..thread_count {
             comp.get().threads.add(Thread.new(cast comp.get().thread_func))
         }
