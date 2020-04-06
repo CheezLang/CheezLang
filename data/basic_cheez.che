@@ -1,3 +1,10 @@
+_ :: Main()
+Main :: () {
+    T3 :: fib(N - 1)
+    print_string("Main")
+    foo()
+}
+N :: 20
 
 foo :: () {
     T1 :: fib(N)
@@ -10,12 +17,6 @@ bar :: () {
     print_string("bar")
 }
 
-Main :: () {
-    T3 :: fib(N - 1)
-    print_string("Main")
-    foo()
-}
-
 fib :: (n: int) -> int {
     if n <= 1 {
         return 1
@@ -23,5 +24,3 @@ fib :: (n: int) -> int {
 
     return fib(n - 1) + fib(n - 2)
 }
-
-N :: 20

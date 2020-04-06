@@ -114,9 +114,10 @@ impl CompilationJob for CompileGlobalNodeJob {
         }
 
         if const VALIDATE_AST {
-            debug_log("Validate node", [])
+            debug_log("Validate node")
             if !validate_node(<<node, compiler.error_handler) {
-                // @todo
+                debug_log("Validation failed")
+                return
             }
         }
 
@@ -1015,11 +1016,6 @@ impl CompilationJob for CompileGlobalNodeJob {
         code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
         code_gen.get().generate_code_for_function(^func)
 
-        // @temp
-        if func.name == "Main" {
-            compiler.add_job(RunCodeJob.new(^func))
-        }
-
         debug_log("compile_function '{}': End", [func.name])
         return func
     }
@@ -1161,8 +1157,10 @@ impl CompilationJob for CompileGlobalNodeJob {
             return decl
         }
 
-        if decl.value == .None {
+        if decl.value_expr.typ != @type_info(void) and decl.value == .None {
             compiler.error_handler.report_error_at(decl.value_expr.location, "Value is not constant")
+            poison(decl)
+            return decl
         }
 
         if decl.var_type == null {
@@ -1219,11 +1217,13 @@ impl CompilationJob for LoadFileJob {
             Err(_) -> compiler.string_database.intern(path.slice())
         }
 
+        // @todo: thread sync needed because we are accessing compiler.sources
         if !compiler.sources.contains(full_path) {
             content := fs.read_file(full_path)
 
             match content {
                 Ok($content) -> {
+                // @todo: thread sync needed because we are accessing compiler.sources
                     compiler.sources.set(full_path, content)
                     lexer := Lexer.from_string(compiler.sources.at(full_path).slice(), compiler.string_database)
                     lexer.get().location.file = full_path
