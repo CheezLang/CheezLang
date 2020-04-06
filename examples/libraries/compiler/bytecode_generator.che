@@ -106,6 +106,7 @@ impl CodeGenerator for ByteCodeGenerator {
         match node {
             AstArgument($arg)       -> generate_argument(arg)
             AstArray($arr)          -> generate_array(arr)
+            AstAssignment($ass)     -> generate_assignment(ass)
             AstBinary($bin)         -> generate_binary(bin)
             AstBlock($block)        -> generate_block(block)
             AstBool($bol)           -> generate_bool(bol)
@@ -136,6 +137,27 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_const_decl :: (&Self, decl: &AstConstDecl) {
         // do nothing
+    }
+
+    generate_assignment :: (&Self, ass: &AstAssignment) {
+        match ass.pattern {
+            AstIdentifier($id) -> match id.symbol {
+                .Decl($decl) -> {
+                    // @todo: figure out if this is a local variable or a global
+                    generate_expression(ass.value_expr)
+                    builder.set_current_line(ass.location.line)
+                    builder.build_store_local(self.variables[decl.id], slots_for_size(ass.value_expr.typ.size))
+                }
+                
+                _ -> {
+                    error_handler.report_error_at(ass.pattern.location, "generate_assignment: symbol not implemented: {}", [id.symbol])
+                }
+            }
+
+            _ -> {
+                error_handler.report_error_at(ass.pattern.location, "generate_assignment: pattern not implemented")
+            }
+        }
     }
 
     generate_array :: (&Self, arr: &AstArray) {
@@ -182,28 +204,6 @@ impl CodeGenerator for ByteCodeGenerator {
         }
     }
 
-    type_info_to_inst_number_type :: (&Self, type_info: ^TypeInfo) -> InstNumTyp {
-        return match &<<type_info {
-            TypeInfoInt($ti) -> match ti.size, ti.signed {
-                (1, true)   -> .I8
-                (2, true)   -> .I16
-                (4, true)   -> .I32
-                (8, true)   -> .I64
-                (1, false)  -> .U8
-                (2, false)  -> .U16
-                (4, false)  -> .U32
-                (8, false)  -> .U64
-                _ -> @assert(false)
-            }
-            TypeInfoFloat($ti) -> match ti.size {
-                4 -> .F32
-                8 -> .F64
-                _ -> @assert(false)
-            }
-            _ -> @assert(false)
-        }
-    }
-
     generate_binary :: (&Self, bin: &AstBinary) {
         generate_expression(bin.left)
         generate_expression(bin.right)
@@ -224,10 +224,6 @@ impl CodeGenerator for ByteCodeGenerator {
 
             .And        -> builder.build_and()
             .Or         -> builder.build_or()
-
-            .Assign     -> {
-                error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
-            }
 
             .Move       -> {
                 error_handler.report_error_at(bin.location, "Binary operator {} implemented", [bin.operator])
@@ -871,4 +867,26 @@ impl InstructionBuilder {
 
 slots_for_size :: (size_in_bytes: int) -> int {
     return (size_in_bytes + 7) / 8
+}
+
+type_info_to_inst_number_type :: (type_info: ^TypeInfo) -> InstNumTyp {
+    return match &<<type_info {
+        TypeInfoInt($ti) -> match ti.size, ti.signed {
+            (1, true)   -> .I8
+            (2, true)   -> .I16
+            (4, true)   -> .I32
+            (8, true)   -> .I64
+            (1, false)  -> .U8
+            (2, false)  -> .U16
+            (4, false)  -> .U32
+            (8, false)  -> .U64
+            _ -> @assert(false)
+        }
+        TypeInfoFloat($ti) -> match ti.size {
+            4 -> .F32
+            8 -> .F64
+            _ -> @assert(false)
+        }
+        _ -> @assert(false)
+    }
 }

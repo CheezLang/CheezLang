@@ -165,6 +165,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             AstArgument($arg)       -> compile_argument(arg, ctx)
             AstArray($arr)          -> compile_array(arr, ctx)
             AstArrayType($arr)      -> compile_array_type(arr, ctx)
+            AstAssignment($ass)     -> compile_assignment(ass, ctx)
             AstBinary($bin)         -> compile_binary(bin, ctx)
             AstBlock($block)        -> compile_block(block, ctx)
             AstBool($bol)           -> compile_bool(bol, ctx)
@@ -195,6 +196,85 @@ impl CompilationJob for CompileGlobalNodeJob {
         return node
     }
 
+    compile_assignment :: (&Self, ass: &AstAssignment, ctx: CNContext) -> &AstNode {
+        // @todo: check if assignment is of form <expr>[<index>] = <value>
+        // and the []set operator is overridden
+        // in that case turn it into @typeof(<expr>)."[]set"(<expr>, <index>, <value>)
+
+        ass.pattern.scope = ass.scope
+        ass.pattern <- compile_node(ass.pattern, ctx)
+        handle_poison(ass, ass.pattern)
+
+        // @todo: check if pattern is lvalue
+
+        ass.value_expr.scope = ass.scope
+        ass.value_expr <- compile_node(ass.value_expr, ctx.with_expected(ass.pattern.typ))
+        handle_poison(ass, ass.value_expr)
+
+        // check types
+        if !TypeInfo.same(ass.value_expr.typ, ass.pattern.typ) {
+            compiler.error_handler.report_error_at(
+                ass.value_expr.location,
+                "Can't assign value of type '{}' to pattern of type '{}'",
+                [ass.value_expr.typ, ass.pattern.typ])
+            poison(ass)
+            return ass
+        }
+
+        match ass.pattern {
+            AstIdentifier($id) -> match id.symbol {
+                .Decl($decl) -> {
+                    // check for mutability
+                    if !decl.mutable {
+                        compiler.error_handler.report_error_at(ass.pattern.location, "Can't assign to '{}' because it is not mutable", [id.name])
+                        poison(ass)
+                        return ass
+                    }
+                }
+
+                .ConstDecl($decl) -> {
+                    compiler.error_handler.report_error_at(ass.pattern.location, "Can't assign to constant '{}'", [id.name])
+                    poison(ass)
+                    return ass
+                }
+
+                _ -> {
+                    compiler.error_handler.report_error_at(ass.pattern.location, "Invalid pattern on left side of '='")
+                    poison(ass)
+                    return ass
+                }
+            }
+
+            AstDot($dot) -> {
+                compiler.error_handler.report_error_at(ass.pattern.location, "compile_assignment: not implemented: <expr>.<id>")
+                poison(ass)
+                return ass
+            }
+
+            AstIndex($ind) -> {
+                compiler.error_handler.report_error_at(ass.pattern.location, "compile_assignment: not implemented: <expr>[<index>]")
+                poison(ass)
+                return ass
+            }
+
+            AstUnary($un) if un.operator == .Deref -> {
+                compiler.error_handler.report_error_at(ass.pattern.location, "compile_assignment: not implemented: *<expr>")
+                poison(ass)
+                return ass
+            }
+
+            _ -> {
+                compiler.error_handler.report_error_at(ass.pattern.location, "Invalid pattern on left side of '='")
+                poison(ass)
+                return ass
+            }
+        }
+
+        // ok
+        ass.typ = @type_info(void)
+        return ass
+    }
+    
     compile_array :: (&Self, arr: &AstArray, ctx: CNContext) -> &AstNode {
         arr.typ = @type_info(void)
 
@@ -465,10 +545,6 @@ impl CompilationJob for CompileGlobalNodeJob {
                 bin.typ = @type_info(bool)
             }
 
-            .Assign     -> {
-                bin.typ = @type_info(void)
-            }
-
             .Move       -> {
                 bin.typ = bin.left.typ
             }
@@ -642,16 +718,19 @@ impl CompilationJob for CompileGlobalNodeJob {
                 compiler.error_handler.report_error_at(id.location, "Unknown symbol '{}'", [id.name])
                 poison(id)
                 Fiber.yield()
+                return id
             }
 
             .Poison -> {
                 compiler.error_handler.report_error_at(id.location, "Can't use variable '{}' in constant context", [id.name])
                 poison(id)
+                return id
             }
 
             $sym -> {
-                id.typ = @type_info(void)
                 compiler.error_handler.report_error_at(id.location, "[compile_identifier] not implemented: {}", [sym])
+                poison(id)
+                return id
             }
         }
 
@@ -1179,7 +1258,22 @@ impl CompilationJob for LoadFileJob {
 
 #file_scope
 
+handle_poison :: (node: &AstNode, possible_poison: &AstNode) #macro {
+    if possible_poison.value == .Poison {
+        node.typ = @type_info(void)
+        node.value = .Poison
+        return node
+    }
+}
+
 poison :: (node: &AstNode) {
     node.typ = @type_info(void)
     node.value = .Poison
+}
+
+impl TypeInfo {
+    same :: (a: ^TypeInfo, b: ^TypeInfo) -> bool {
+        // @todo
+        return a == b
+    }
 }

@@ -71,6 +71,10 @@ impl Parser {
     }
 
     parse_expression :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
+        if check_token(.KwMut) {
+            return parse_declaration(allow_comma, allow_function)
+        }
+
         expr := parse_comma_expression(allow_comma, allow_function)
 
         if check_token(.Equal) {
@@ -117,6 +121,7 @@ impl Parser {
                     pattern     = expr
                     type_expr   = type_expr
                     value_expr  = value_expr
+                    mutable     = false
                 ))
             } else {
                 return allocate(AstDecl(
@@ -125,11 +130,57 @@ impl Parser {
                     pattern     = expr
                     type_expr   = type_expr
                     value_expr  = null
+                    mutable     = false
                 ))
             }
         }
         
         return expr
+    }
+
+    parse_declaration :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
+        mutable := false
+        if check_token(.KwMut) {
+            lexer.next_token()
+            mutable = true
+        }
+
+        pattern := parse_comma_expression(allow_comma, allow_function)
+
+        consume(.Colon)
+        lexer.skip_whitespace()
+
+        type_expr : ^AstNode = if check_token(.Equal) or check_token(.Colon) {
+            null
+        } else {
+            parse_comma_expression(allow_comma, allow_function)
+        }
+
+        if check_token(.Equal) {
+            lexer.next_token()
+            lexer.skip_whitespace()
+            value_expr := parse_comma_expression(allow_comma, allow_function)
+
+            return allocate(AstDecl(
+                id          = next_id()
+                location    = pattern.location.to(value_expr.location)
+                pattern     = pattern
+                type_expr   = type_expr
+                value_expr  = value_expr
+                mutable     = mutable
+            ))
+        } else {
+            return allocate(AstDecl(
+                id          = next_id()
+                location    = pattern.location.to(type_expr.location)
+                pattern     = pattern
+                type_expr   = type_expr
+                value_expr  = null
+                mutable     = mutable
+            ))
+        }
+        
+        return pattern
     }
 
     parse_comma_expression :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
@@ -589,6 +640,7 @@ impl Parser {
                                 pattern     = null
                                 type_expr   = e
                                 value_expr  = null
+                                mutable     = false
                             ))
                             params.add(decl)
                         }

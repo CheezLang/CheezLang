@@ -51,6 +51,18 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
+        AstAssignment($node) -> {
+            assert("AstAssignment", node.typ == @type_info(void))
+
+            if !validate_node(node.pattern, error_handler) {
+                return false
+            }
+
+            if !validate_node(node.value_expr, error_handler) {
+                return false
+            }
+        }
+
         AstFunction($node) -> {
             // assert("AstFunction", node.typ != null) // @todo
             // @todo: parameters

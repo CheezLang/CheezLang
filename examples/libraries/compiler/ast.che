@@ -32,6 +32,7 @@ AstDecl :: struct AstNode {
     pattern     : ^AstNode
     type_expr   : ^AstNode
     value_expr  : ^AstNode
+    mutable     : bool
 
     name        : string = "_"
     var_type    : ^TypeInfo = null
@@ -128,7 +129,7 @@ AstBinary :: struct AstNode {
     left        : &AstNode
     right       : &AstNode
 
-    BinOp :: enum #copy { Add, Sub, Mul, Div, Mod, And, Or, Less, LessEq, Greater, GreaterEq, Equal, NotEqual, Assign, Move, Pipe, Range, RangeIncl }
+    BinOp :: enum #copy { Add, Sub, Mul, Div, Mod, And, Or, Less, LessEq, Greater, GreaterEq, Equal, NotEqual, Move, Pipe, Range, RangeIncl }
 }
 impl AstNode for AstBinary {}
 
@@ -251,7 +252,6 @@ impl AstBinary.BinOp {
             .GreaterEq  -> ">="
             .Equal      -> "=="
             .NotEqual   -> "!="
-            .Assign     -> "="
             .Move       -> "<-"
             .Pipe       -> "|"
             .Range      -> ".."

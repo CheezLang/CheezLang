@@ -1,5 +1,19 @@
 
+N :: 123
+S :: "bbbb"
+
 Main :: () {
-    print_int(int(3.5))
-    print_float(f64(f32(5) + f32(0.5)))
+    mut a := "hi"
+    mut b := -2
+    mut c := "aaaa"
+    print_string(a)
+    print_int(b)
+    print_string(c)
+    a = "world"
+    b = N
+    c = S
+    print_string(a)
+    print_int(b)
+    print_string(c)
+
 }

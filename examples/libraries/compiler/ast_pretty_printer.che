@@ -88,6 +88,9 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         }
 
         AstDecl($decl) -> {
+            if decl.mutable {
+                result += "mut "
+            }
             if decl.pattern != null {
                 pretty_print_ast_helper(result, <<decl.pattern)
             } else {
@@ -381,6 +384,9 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
         }
 
         AstDecl($decl) -> {
+            if decl.mutable {
+                result += "mut "
+            }
             if decl.pattern != null {
                 pretty_print_typed_ast_helper(result, <<decl.pattern)
             } else {
