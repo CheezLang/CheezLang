@@ -39,14 +39,16 @@ enable_profiler :: false
 #export_scope
 
 
-wait_until :: (cond: Code, on_error: Code) #macro {
+wait_until :: (cond: Code, on_error: Code, on_yield: Code = {}, on_resume: Code = {}) #macro {
     fiber_context := Fiber.user_data(FiberContext)
     fiber_context.job.progressed = true
 
     loop {
         if @insert(cond) then break
         if const DEBUG_WAIT then g_logger.log("[{}] [{}] suspending on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+        @insert(on_yield)
         Fiber.yield()
+        @insert(on_resume)
         if const DEBUG_WAIT then g_logger.log("[{}] [{}] resuming on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
         fiber_context.job.progressed = false
 
@@ -59,29 +61,17 @@ wait_until :: (cond: Code, on_error: Code) #macro {
     fiber_context.job.progressed = true
 }
 
-compile_files :: (files: []String) {
-    // ti_printable := @type_info(Printable)
-    // ti_string := @type_info(String)
-
-    // ti_printable_val, ti_printable_vtable := Traits.destructure(ti_printable)
-    // ti_string_val, ti_string_vtable := Traits.destructure(ti_string)
-
-    // C.printf("ti_printable: 0x%llx, 0x%llx`n", ti_printable_val, ti_printable_vtable)
-    // C.printf("ti_string: 0x%llx, 0x%llx`n", ti_string_val, ti_string_vtable)
-
-    // for(by_ref=true) imp : ti_string.traits {
-    //     C.puts("===")
-    //     ti_trait_val, ti_trait_vtable := Traits.destructure(imp.trait_type)
-    //     C.printf("ti_trait: 0x%llx, 0x%llx`n", ti_trait_val, ti_trait_vtable)
-    //     C.printf("vtable: 0x%llx`n", imp.vtable)
-    // }
-    // return 
+compile_files :: (files: []String, thread_count: int) {
+    console_error_handler := ConsoleErrorHandler.new(null)
 
     g_logger.log("compile files: {}", [files])
 
-    console_error_handler := ConsoleErrorHandler.new(null)
+    if thread_count < 1 or thread_count > 32 {
+        console_error_handler.report_error("Invalid thread_count: {}", [thread_count])
+        return
+    }
 
-    compiler := Compiler.new(1, ^console_error_handler)
+    compiler := Compiler.new(thread_count, ^console_error_handler)
     compiler.get().global_scope.define_native_function("print_string", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
         frame := interp.top_frame()
         io.set_console_color(.Green, .Black)
@@ -141,8 +131,8 @@ Compiler :: struct {
     jobs            := RingQueue[^CompilationJob].new()
 
     fibers          := Array[^FiberContext].create(1024)
+    ready_fibers    := RingQueue[^FiberContext].new()
     waiting_fibers  := RingQueue[^FiberContext].new()
-    paused_fibers   := RingQueue[^FiberContext].new()
     any_progress    := false
 
     mutex           : Mutex
@@ -223,6 +213,9 @@ impl Compiler {
         comp.get().error_handler.text_provider = ^comp.get()
         comp.get().global_scope = comp.get().new_scope()
         comp.get().define_builtin_types(<<comp.get().global_scope)
+
+        // create mutex for global scope
+        comp.get().global_scope.mutex = Some(Mutex.new())
         for 0..thread_count {
             comp.get().threads.add(Thread.new(cast comp.get().thread_func))
         }
@@ -270,6 +263,9 @@ impl Compiler {
     }
 
     add_job :: (&Self, job: $T) {
+        self.lock()
+        defer self.release()
+
         ptr := mem.alloc(T, job_allocator)
         <<ptr = job
         ptr.compiler = ^self
@@ -281,6 +277,9 @@ impl Compiler {
     }
 
     new_scope :: (&Self, parent: ^Scope = null, constant: bool = false) -> ^Scope {
+        self.lock()
+        defer self.release()
+
         scope := mem.alloc(Scope, scope_allocator)
         <<scope = Scope(
             parent      = parent
@@ -290,12 +289,18 @@ impl Compiler {
     }
 
     new_type :: (&Self, type_info: $T) -> ^T {
+        self.lock()
+        defer self.release()
+
         result := mem.alloc(T, type_allocator)
         <<result = type_info
         return result
     }
 
     new_ast :: (&Self, ast: $T) -> ^T {
+        self.lock()
+        defer self.release()
+
         result := mem.alloc(T, ast_allocator)
         <<result = ast
         result.id = next_ast_id
@@ -349,8 +354,8 @@ impl Compiler {
         }
         WaitForMultipleObjects(cast threads.get_length(), handles, 1, INFINITE)
 
-        if paused_fibers.count() > 0 {
-            error_handler.report_error("[Compile] {} fibers were still waiting", [paused_fibers.count()])
+        if waiting_fibers.count() > 0 {
+            error_handler.report_error("[Compile] {} fibers were still waiting", [waiting_fibers.count()])
         }
 
         g_logger.log("[Compiler] finished compilation with {} fibers", [fibers.get_length()])
@@ -393,69 +398,76 @@ impl Compiler {
         current_fiber : ^FiberContext = null
         while true #label main_loop {
             {
+                // g_logger.log("[{}] waiting for lock", [active_threads])
                 self.lock()
                 defer self.release()
-
-                active_threads -= 1
+                // g_logger.log("[{}] got lock", [active_threads])
 
                 // if fiber made progress or finished, move all stuff from q2 to q
                 if current_fiber != null {
+                    active_threads -= 1
                     current_fiber.thread = -1
 
                     // done or progressed
                     if current_fiber.job == null or current_fiber.job.progressed {
                         any_progress = true
-                        while self.paused_fibers.count() > 0 {
-                            self.waiting_fibers.push(self.paused_fibers.pop())
+                        while self.waiting_fibers.count() > 0 {
+                            self.ready_fibers.push(self.waiting_fibers.pop())
                         }
                         any_progress = false
                     }
 
                     if current_fiber.job != null {
-                        self.paused_fibers.push(current_fiber)
+                        self.waiting_fibers.push(current_fiber)
                     }
 
                     current_fiber = null
                 }
 
-                // no waiting fibers
-                if self.waiting_fibers.count() == 0 {
+                // no ready fibers
+                if self.ready_fibers.count() == 0 {
                     if self.jobs.count() > 0 {
                         job := self.jobs.pop()
                         fiber := self.find_free_fiber()
                         fiber.job = job
-                        self.waiting_fibers.push(fiber)
+                        self.ready_fibers.push(fiber)
 
+                    // this doesn't work right now
                     /*
-                    } else if self.paused_fibers.count() > 0 {
+                    } else if self.waiting_fibers.count() > 0 {
                         if self.active_threads > 0 then continue
 
                         // if all fibers are paused and we didn't make any progress
                         // then we're done
                         if !any_progress then break main_loop
-                        self.waiting_fibers.push(self.paused_fibers.pop())
+                        self.ready_fibers.push(self.waiting_fibers.pop())
                     // */
 
                     } else {
                         if self.active_threads > 0 then continue
+                        
+                        // g_logger.log("[{}] exit thread", [active_threads])
                         break main_loop
                     }
                 }
 
-                current_fiber = self.waiting_fibers.pop()
+                current_fiber = self.ready_fibers.pop()
                 current_fiber.thread = thread_id
                 active_threads += 1
             }
 
+            // g_logger.log("[{}] resuming fiber", [active_threads])
             current_fiber.fiber.resume()
         }
 
         // cancel all fibers
         self.lock()
         defer self.release()
-        for fib : paused_fibers {
-            fib.job.cancelled = true
-            fib.fiber.resume()
+        for fib : waiting_fibers {
+            if fib.job != null {
+                fib.job.cancelled = true
+                fib.fiber.resume()
+            }
         }
     }
 }

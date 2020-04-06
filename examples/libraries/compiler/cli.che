@@ -80,6 +80,8 @@ CommandCompile :: struct {
 e.g. ... compile foo.che bar.che
 e.g. ... compile foo bar")
     files : Array[String]
+
+    thread_count := 1
 }
 
 CommandBuild :: struct {
@@ -250,5 +252,5 @@ bin/", [])
 }
 
 command_compile :: (options: ^CommandCompile) {
-    compile_files(options.files.slice())
+    compile_files(options.files.slice(), options.thread_count)
 }

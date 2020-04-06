@@ -1,7 +1,10 @@
 use import std.map
+use import std.thread
 
 fmt :: import std.fmt
 io  :: import std.io
+
+use import logging.logger
 
 use import ast
 use import types
@@ -14,6 +17,8 @@ Scope :: struct {
     parent      : ^Scope
     constant    := false
     symbols     := Map[string, Symbol].new()
+
+    mutex       := Option[Mutex].None
 }
 
 impl Scope {
@@ -24,7 +29,28 @@ impl Scope {
         // } 
     }
 
+    lock :: (&Self) {
+        match &mutex {
+            Some($m) -> {
+                // g_logger.log("scope lock")
+                m.lock()
+            }
+        }
+    }
+
+    release :: (&Self) {
+        match &mutex {
+            Some($m) -> {
+                // g_logger.log("scope release")
+                m.release()
+            }
+        }
+    }
+
     define_value :: (&Self, name: string, typ: ^TypeInfo, val: Value) -> Result[(), ()] {
+        self.lock()
+        defer self.release()
+
         if symbols.contains(name) {
             return Err()
         }
@@ -35,6 +61,9 @@ impl Scope {
     }
 
     define_function :: (&Self, name: string, func: &AstFunction) -> Result[(), ()] {
+        self.lock()
+        defer self.release()
+
         if symbols.contains(name) {
             return Err()
         }
@@ -45,6 +74,9 @@ impl Scope {
     }
 
     define_decl :: (&Self, name: string, decl: &AstDecl) -> Result[(), ()] {
+        self.lock()
+        defer self.release()
+
         if symbols.contains(name) {
             return Err()
         }
@@ -55,6 +87,9 @@ impl Scope {
     }
 
     define_const_decl :: (&Self, name: string, decl: &AstConstDecl) -> Result[(), ()] {
+        self.lock()
+        defer self.release()
+
         if symbols.contains(name) {
             return Err()
         }
@@ -65,6 +100,9 @@ impl Scope {
     }
 
     define_native_function :: (&Self, name: string, wrapper: ^NativeFunctionWrapper) -> Result[(), ()] {
+        self.lock()
+        defer self.release()
+
         if symbols.contains(name) {
             return Err()
         }
@@ -76,11 +114,16 @@ impl Scope {
 
     get_symbol :: (&Self, name: string) -> Symbol {
         if parent == null {
+            self.lock()
+            defer self.release()
+
             wait_until(symbols.contains(name), {
                 return Symbol.NotFound
-            })
+            }, self.release(), self.lock())
             return symbols.at(name)
         }
+
+        @assert(self.mutex == .None)
 
         return match symbols.get(name) {
             Some($sym)  -> sym

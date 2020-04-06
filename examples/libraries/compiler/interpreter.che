@@ -747,15 +747,14 @@ impl Interpreter {
                 _ := arg(int)
                 _ := arg(int)
                 wait_until(func.bytecode != null, {
-                    error_handler.report_error("Failed to execute bytecode: {}{}{}{}{}{}{}{}{}{}{}{}", [
-                        fmt.align(30), frame.func.debug_info.get_line_for_ip(frame.ip_prev)
-                        fmt.align(35), fp
-                        fmt.align(40), frame.sp
-                        fmt.align(46), frame.ip_prev
-                        fmt.align(54), Instruction.pretty_print(frame.code[frame.ip_prev..])
-                        fmt.align(74), frame.dump_stack()
-                    ])
-                    return .Done
+                    // error_handler.report_error("Failed to execute bytecode: {}{}{}{}{}{}{}{}{}{}{}{}", [
+                    //     fmt.align(30), frame.func.debug_info.get_line_for_ip(frame.ip_prev)
+                    //     fmt.align(35), fp
+                    //     fmt.align(40), frame.sp
+                    //     fmt.align(46), frame.ip_prev
+                    //     fmt.align(54), Instruction.pretty_print(frame.code[frame.ip_prev..])
+                    //     fmt.align(74), frame.dump_stack()
+                    // ])
                 })
                 push_frame(func.bytecode)
             }

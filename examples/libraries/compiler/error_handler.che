@@ -1,9 +1,11 @@
-use import lexer
-
 use import std.math
 use import std.string
-io  :: import std.io
+use import std.thread
+
 fmt :: import std.fmt
+io  :: import std.io
+
+use import lexer
 
 #export_scope
 
@@ -19,10 +21,11 @@ TextProvider :: trait {
 }
 
 ConsoleErrorHandler :: struct ErrorHandler {
-    error_count       := 0
-    do_print_location := true
-    code_color_error  := io.ConsoleColor.Red
-    code_color_normal := io.ConsoleColor.Green
+    error_count         := 0
+    do_print_location   := true
+    code_color_error    := io.ConsoleColor.Red
+    code_color_normal   := io.ConsoleColor.Green
+    mutex               := Mutex.new()
 }
 
 impl ConsoleErrorHandler {
@@ -36,7 +39,21 @@ impl ErrorHandler for ConsoleErrorHandler {
         return error_count > 0
     }
 
+    report_error :: (&Self, message: string, args: []^any = []) {
+        mutex.lock()
+        defer mutex.release()
+
+        error_count += 1
+
+        io.set_console_color(@bin_or(io.ConsoleColor.Red, io.ConsoleColor.Bright), io.ConsoleColor.Black)
+        io.formatln(message, args)
+        io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
+    }
+
     report_error_at :: (&Self, location: Location, message: string, args: []^any = []) {
+        mutex.lock()
+        defer mutex.release()
+
         error_count += 1
 
         io.set_console_color(@bin_or(io.ConsoleColor.White, io.ConsoleColor.Bright), io.ConsoleColor.Black)
@@ -46,14 +63,6 @@ impl ErrorHandler for ConsoleErrorHandler {
         io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
 
         if do_print_location then print_location(location)
-    }
-
-    report_error :: (&Self, message: string, args: []^any = []) {
-        error_count += 1
-
-        io.set_console_color(@bin_or(io.ConsoleColor.Red, io.ConsoleColor.Bright), io.ConsoleColor.Black)
-        io.formatln(message, args)
-        io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
     }
 
     print_location :: (&Self, location: Location) {

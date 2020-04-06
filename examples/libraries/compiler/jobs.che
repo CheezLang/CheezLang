@@ -467,9 +467,8 @@ impl CompilationJob for CompileGlobalNodeJob {
         bin.left <- compile_node(bin.left, ctx)
         bin.right <- compile_node(bin.right, ctx)
 
-        if bin.left.typ == null or bin.right.typ == null {
-            return bin
-        }
+        handle_poison(bin, bin.left)
+        handle_poison(bin, bin.right)
 
         // find matching operator
         match bin.operator {
@@ -695,8 +694,8 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
 
             .ConstDecl($decl) -> {
-                wait_until(decl.value_expr.value != .None, {
-                    compiler.error_handler.report_error_at(id.location, "Failed to get value of constant declaration")
+                wait_until(decl.value_expr.value != .None and decl.value_expr.typ != null, {
+                    compiler.error_handler.report_error_at(id.location, "Failed to get value and type of constant declaration")
                 })
                 id.typ = decl.value_expr.typ // @todo: get type of type expr if available
                 id.value = decl.value_expr.value
@@ -717,7 +716,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             .NotFound -> {
                 compiler.error_handler.report_error_at(id.location, "Unknown symbol '{}'", [id.name])
                 poison(id)
-                Fiber.yield()
+                loop Fiber.yield()
                 return id
             }
 
@@ -1112,6 +1111,7 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_const_decl :: (&Self, decl: &AstConstDecl, ctx: CNContext) -> &AstNode {
+        // debug_log("compile_const_decl")
         decl.typ = @type_info(void)
         decl.value_expr.scope = decl.scope
 
@@ -1152,10 +1152,12 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
         }
 
+
         decl.value_expr <- evaluate_node(decl.value_expr, ctx.with_expected(decl.var_type))
         decl.value = decl.value_expr.value
 
         if decl.value == .Poison {
+            poison(decl)
             return decl
         }
 
