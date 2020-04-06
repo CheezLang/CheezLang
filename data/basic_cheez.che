@@ -1,26 +1,12 @@
 _ :: Main()
 Main :: () {
-    T3 :: fib(N - 1)
-    print_string("Main")
-    foo()
-}
-N :: 20
-
-foo :: () {
-    T1 :: fib(N)
-    print_string("foo")
-    bar()
+    // print_string("test")
+    // b := 5
+    // print_int(b)
+    // a : [square(12)]int
+    // print_int(a.length)
 }
 
-bar :: () {
-    T2 :: fib(N + 1)
-    print_string("bar")
-}
-
-fib :: (n: int) -> int {
-    if n <= 1 {
-        return 1
-    }
-
-    return fib(n - 1) + fib(n - 2)
-}
+// square :: (a: int) -> int {
+//     return a * a
+// }

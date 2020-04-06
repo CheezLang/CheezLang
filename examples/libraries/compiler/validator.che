@@ -196,6 +196,13 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
+        AstDot($node) -> {
+            assert("AstDot", node.typ != null)
+            if node.sub != null and !validate_node(<<node.sub, error_handler) {
+                return false
+            }
+        }
+
         AstArray($node) -> {
             assert("AstArray", node.typ != null)
             // @todo

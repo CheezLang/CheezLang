@@ -323,16 +323,12 @@ impl Compiler {
         Data :: struct {
             thread      : Thread
             callback    : Fn()
-            threads     : []Thread
+            compiler    : ^Compiler
         }
         thread_func :: (data: ^Data) {
-            handles := mem.alloc_raw(HANDLE, cast data.threads.length)
+            data.compiler.wait_for_threads()
 
-            for(by_ref=true) data.threads {
-                handles[it_index] = it.data.handle
-            }
-            WaitForMultipleObjects(cast data.threads.length, handles, 1, INFINITE)
-
+            g_logger.log("on_done: Done waiting for all threads")
             data.callback()
 
             Memory.drop(<<data)
@@ -344,19 +340,21 @@ impl Compiler {
         <<data = Data(
             thread      = t
             callback    = callback
-            threads     = self.threads.slice()
+            compiler    = ^self
         )
         data.thread.start()
     }
 
-    wait_until_done :: (&Self) {
+    wait_for_threads :: (&Self) {
         handles := mem.alloc_raw(HANDLE, cast threads.get_length())
 
         for threads {
             handles[it_index] = it.data.handle
         }
         WaitForMultipleObjects(cast threads.get_length(), handles, 1, INFINITE)
+    }
 
+    wait_until_done :: (&Self) {
         if waiting_fibers.count() > 0 {
             error_handler.report_error("[Compile] {} fibers were still waiting", [waiting_fibers.count()])
         }

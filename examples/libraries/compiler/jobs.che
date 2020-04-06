@@ -130,6 +130,7 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     evaluate_node :: (&Self, node: &AstNode, ctx: CNContext) -> &AstNode {
+        debug_log("evaluate_node")
         if node.typ != null {
             return node
         }
@@ -177,6 +178,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             AstContinue($cont)      -> compile_continue(cont, ctx)
             AstDecl($decl)          -> compile_decl(decl, ctx)
             AstDefer($def)          -> compile_defer(def, ctx)
+            AstDot($dot)            -> compile_dot(dot, ctx)
             AstFor($forr)           -> compile_for(forr, ctx)
             AstFunction($func)      -> compile_function(func, ctx)
             AstIdentifier($id)      -> compile_identifier(id, ctx)
@@ -195,6 +197,47 @@ impl CompilationJob for CompileGlobalNodeJob {
         }
 
         return node
+    }
+
+    compile_dot :: (&Self, dot: &AstDot, ctx: CNContext) -> &AstNode {
+        if dot.sub == null {
+            compiler.error_handler.report_error_at(dot.location, "compile_dot: anonymous not implemented")
+            poison(dot)
+            return dot
+        }
+
+        dot.sub.scope = dot.scope
+        dot.sub = ^compile_node(<<dot.sub, ctx)
+        handle_poison(dot, <<dot.sub)
+
+        name := dot.name.name
+        match dot.sub.typ {
+            TypeInfoArray($ti) -> {
+                if name == "length" or name == "count" { // @todo: remove length eventually
+                    dot.typ = @type_info(int)
+                    dot.value = .Int(ti.count)
+                } else if name == "data" {
+                    compiler.error_handler.report_error_at(dot.location, "TODO: array.data")
+                    poison(dot)
+                    return dot
+                } else {
+                    compiler.error_handler.report_error_at(
+                        dot.name.location,
+                        "Type '{}' has no subscript '{}'",
+                        [dot.sub.typ, name])
+                    poison(dot)
+                    return dot
+                }
+            }
+
+            _ -> {
+                compiler.error_handler.report_error_at(dot.sub.location, "Invalid type on left size of '.': '{}'", [dot.sub.typ])
+                poison(dot)
+                return dot
+            }
+        }
+
+        return dot
     }
 
     compile_assignment :: (&Self, ass: &AstAssignment, ctx: CNContext) -> &AstNode {
@@ -914,6 +957,7 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     compile_function :: (&Self, func: &AstFunction, ctx: CNContext) -> &AstNode {
+        // debug_log("compile_function")
         // @todo: polymorphic functions
 
         _prev_func := self.function
@@ -1022,7 +1066,6 @@ impl CompilationJob for CompileGlobalNodeJob {
 
     compile_decl :: (&Self, decl: &AstDecl, ctx: CNContext) -> &AstNode {
         decl.typ = @type_info(void)
-        decl.value_expr.scope = decl.scope
 
         decl.name = match &<<decl.pattern {
             AstIdentifier($id) -> id.name
@@ -1062,7 +1105,9 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
         }
 
+        // compile value if present
         if decl.value_expr != null {
+            decl.value_expr.scope = decl.scope
             decl.value_expr = ^compile_node(<<decl.value_expr, ctx.with_expected(decl.var_type))
             if decl.value_expr.typ == null { return decl }
             decl.value = decl.value_expr.value

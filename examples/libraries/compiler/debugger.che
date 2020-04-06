@@ -49,27 +49,26 @@ Main :: () {
 DebuggerCallbacks :: trait {
     hit_breakpoint :: (&Self);
     step_done :: (&Self);
-    terminated :: (&Self);
     continued :: (&Self);
     output_generated :: (&Self, format: string, args: []^any = [], category: string = "console");
 }
 
 Debugger :: struct {
-    interp      : ^Interpreter
-    cond_run    : Rc[ConditionVariable]
-    lock_run    : Rc[ReentrantLock]
-    cond_pause  : Rc[ConditionVariable]
-    lock_pause  : Rc[ReentrantLock]
-    callbacks   : ^DebuggerCallbacks
+    current_interp  : ^Interpreter
+    cond_run        : Rc[ConditionVariable]
+    lock_run        : Rc[ReentrantLock]
+    cond_pause      : Rc[ConditionVariable]
+    lock_pause      : Rc[ReentrantLock]
+    callbacks       : ^DebuggerCallbacks
 
-    breakpoints : Map[String, Array[Breakpoint]]
+    breakpoints     : Map[String, Array[Breakpoint]]
 
-    running     : bool = false
-    fp_old      : int  = 0
-    line_break  : int  = 0
-    no_break    : bool = false
-    break_cond  := BreakCondition.None
-    old_frame   := StackFrame()
+    running         : bool = false
+    fp_old          : int  = 0
+    line_break      : int  = 0
+    no_break        : bool = false
+    break_cond      := BreakCondition.None
+    old_frame       := StackFrame()
 }
 
 BreakCondition :: enum {
@@ -79,15 +78,15 @@ BreakCondition :: enum {
 impl Debugger {
     new :: () -> Rc[Debugger] {
         return Rc[Debugger].new(Debugger(
-            interp      = null
-            cond_run    = ConditionVariable.new()
-            lock_run    = ReentrantLock.new()
-            cond_pause  = ConditionVariable.new()
-            lock_pause  = ReentrantLock.new()
-            breakpoints = Map[String, Array[Breakpoint]].new()
-            running     = false
-            no_break    = false
-            callbacks   = null
+            current_interp  = null
+            cond_run        = ConditionVariable.new()
+            lock_run        = ReentrantLock.new()
+            cond_pause      = ConditionVariable.new()
+            lock_pause      = ReentrantLock.new()
+            breakpoints     = Map[String, Array[Breakpoint]].new()
+            running         = false
+            no_break        = false
+            callbacks       = null
         ))
     }
 
@@ -96,16 +95,16 @@ impl Debugger {
     }
 
     store_old_state :: (&Self) {
-        if interp == null {
+        if current_interp == null {
             return
         }
-        self.old_frame = <<^interp.frames[interp.fp]
-        self.fp_old = interp.fp
+        self.old_frame = <<^current_interp.frames[current_interp.fp]
+        self.fp_old = current_interp.fp
         self.line_break = get_current_line()
     }
 
     get_current_line :: (&Self) -> int {
-        frame := &interp.get_stackframes()[interp.fp]
+        frame := &current_interp.get_stackframes()[current_interp.fp]
         return frame.func.debug_info.get_line_for_ip(frame.ip)
     }
 
@@ -148,14 +147,18 @@ impl Debugger {
     }
 
     is_on_breakpoint :: (&Self) -> bool {
-        if interp == null {
+        if current_interp.fp < 0 {
+            // currently not executing anything
+            return false
+        }
+        if current_interp == null {
             return false
         }
         if breakpoints.count() == 0 {
             return false
         }
 
-        frame := &interp.get_stackframes()[interp.fp]
+        frame := &current_interp.get_stackframes()[current_interp.fp]
 
         path := frame.func.debug_info.path.slice()
         line := frame.func.debug_info.get_line_for_ip(frame.ip)
@@ -180,7 +183,7 @@ impl Debugger {
 
 impl CodeRunner for Debugger {
     run :: (&Self, interp: &Interpreter) {
-        self.interp = ^interp
+        self.current_interp = ^interp
 
         self.store_old_state()
 
@@ -242,6 +245,12 @@ impl CodeRunner for Debugger {
                     }
                 }
 
+                // it could be that the current fiber yielded while in interp.step()
+                // and then another fiber executed this function, overriding self.current_interp
+                // so we need to reset it here
+                // (we're only dealing with one thread anyways)
+                self.current_interp = ^interp
+
                 if !running {
                     if callbacks != null then callbacks.hit_breakpoint()
                     break
@@ -297,13 +306,13 @@ impl CheezDebugAdapter {
         result := Array[Rc[VariableRef]].create()
 
 
-        locals := LocalsScope.new(debugger.get().interp, frame)
+        locals := LocalsScope.new(debugger.get().current_interp, frame)
         result.add(locals.clone().change_type(VariableRef))
 
-        args := ArgumentsScope.new(debugger.get().interp, frame)
+        args := ArgumentsScope.new(debugger.get().current_interp, frame)
         result.add(args.clone().change_type(VariableRef))
 
-        registers := RegistersScope.new(debugger.get().interp, frame)
+        registers := RegistersScope.new(debugger.get().current_interp, frame)
         result.add(registers.clone().change_type(VariableRef))
 
         return result
@@ -384,16 +393,11 @@ impl DebuggerCallbacks for CheezDebugAdapter {
         self.adapter.emit_stop_event("step")
     }
 
-    terminated :: (&Self) {
-        self.adapter.emit_terminated_event()
-    }
-
     continued :: (&Self) {
         self.adapter.emit_continued_event()
     }
 
     output_generated :: (&Self, format: string, args: []^any = [], category: string = "console") {
-        g_logger.log("output_generated")
         self.adapter.emit_output_event(fmt.format(format, args), category)
     }
 }
@@ -420,10 +424,8 @@ impl CommandHandler for CheezDebugAdapter {
     }
 
     threads :: (&Self) -> Result[Array[DapThread], String] {
-        g_logger.log("request threads")
         result := Array[DapThread].create()
         result.add(DapThread(0, "Main Thread".to_owned()))
-        g_logger.log("{}", [result.slice()])
         return Ok(result)
     }
 
@@ -440,7 +442,7 @@ impl CommandHandler for CheezDebugAdapter {
     stacktrace :: (&Self) -> Result[Array[DapStackFrame], String] {
         debugger.get().pause()
 
-        frames := debugger.get().interp.get_stackframes()
+        frames := debugger.get().current_interp.get_stackframes()
 
         stack_frames := Array[DapStackFrame].create()
 
@@ -476,7 +478,7 @@ impl CommandHandler for CheezDebugAdapter {
 
         frame_id := arguments.frame_id
 
-        frame := &debugger.get().interp.get_stackframes()[frame_id]
+        frame := &debugger.get().current_interp.get_stackframes()[frame_id]
         scopes_json := Array[DapScope].create()
 
         scopes := self.collect_scopes(frame_id)

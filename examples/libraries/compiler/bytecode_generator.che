@@ -117,6 +117,7 @@ impl CodeGenerator for ByteCodeGenerator {
             AstContinue($cont)      -> generate_continue(cont)
             AstDecl($decl)          -> generate_decl(decl)
             AstDefer($def)          -> generate_defer(def)
+            AstDot($dot)            -> generate_dot(dot)
             AstFor($forr)           -> generate_for(forr)
             AstIdentifier($id)      -> generate_identifier(id)
             AstIf($iff)             -> generate_if(iff)
@@ -308,7 +309,29 @@ impl CodeGenerator for ByteCodeGenerator {
         }
     }
 
+    generate_dot :: (&Self, dot: &AstDot) {
+        builder.set_current_line(dot.location.line)
+
+        name := dot.name.name
+        match dot.sub.typ {
+            TypeInfoArray($ti) -> {
+                if name == "length" or name == "count" { // @todo: remove length eventually
+                    builder.build_const_int(ti.count)
+                } else if name == "data" {
+                    error_handler.report_error_at(dot.location, "generate_dot: not implemented: {}.{}", [dot.sub.typ, dot.name.name])
+                } else {
+                    @assert(false)
+                }
+            }
+
+            _ -> {
+                error_handler.report_error_at(dot.location, "generate_dot: not implemented: {}.{}", [dot.sub.typ, dot.name.name])
+            }
+        }
+    }
+
     generate_defer :: (&Self, def: &AstDefer) {
+        error_handler.report_error_at(def.location, "generate_defer: not implemented")
         builder.set_current_line(def.location.line)
         builder.build_const_int(0)
     }

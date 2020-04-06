@@ -678,27 +678,39 @@ impl Parser {
     parse_atomic_expression :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
         token := lexer.peek_token()
         return match token.typ {
-            .OpenParen      -> parse_parenthesized(allow_function)
-            .OpenBracket    -> parse_bracketed()
-            .OpenBrace      -> parse_block()
             .Identifier     -> parse_identifier()
-            .NumberLiteral  -> parse_number()
-            .KwTrue         -> parse_bool()
-            .KwFalse        -> parse_bool()
-            .StringLiteral  -> parse_string()
-            .KwIf           -> parse_if(allow_comma)
-            .KwLoop         -> parse_loop(allow_comma)
-            .KwFor          -> parse_for(allow_comma)
             .KwBreak        -> parse_break(allow_comma)
             .KwContinue     -> parse_continue(allow_comma)
             .KwDefer        -> parse_defer(allow_comma)
+            .KwFalse        -> parse_bool()
+            .KwFor          -> parse_for(allow_comma)
+            .KwIf           -> parse_if(allow_comma)
+            .KwLoop         -> parse_loop(allow_comma)
             .KwReturn       -> parse_return(allow_comma)
+            .KwTrue         -> parse_bool()
+            .NumberLiteral  -> parse_number()
+            .OpenBrace      -> parse_block()
+            .OpenBracket    -> parse_bracketed()
+            .OpenParen      -> parse_parenthesized(allow_function)
+            .Period         -> parse_anonymous_dot()
+            .StringLiteral  -> parse_string()
 
             _ -> {
                 error_handler.report_error_at(token.location, "Unexpected token {} in expression", [token])
                 null
             }
         }
+    }
+
+    parse_anonymous_dot :: (&Self) -> ^AstNode {
+        beg := consume(.Period).location
+        name := try(parse_identifier())
+        return allocate(AstDot(
+            id              = next_id()
+            location        = beg.to(name.location)
+            sub             = null
+            name            = <<name
+        ))
     }
 
     parse_string :: (&Self) -> ^AstString {
