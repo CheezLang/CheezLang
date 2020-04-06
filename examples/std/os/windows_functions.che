@@ -157,6 +157,7 @@ ExitThread         :: (exitCode: DWORD) -> DWORD #stdcall;
 TerminateThread    :: (hThread: HANDLE, dwExitCode: DWORD) -> BOOL #stdcall;
 ReleaseMutex       :: (handle: HANDLE) -> BOOL #stdcall;
 CreateMutexA       :: (lpMutexAttributes: ^void, bInitialOwner: BOOL, lpName: ^char) -> HANDLE #stdcall;
+GetExitCodeThread  :: (hThread: HANDLE, lpExitCode: ^DWORD) -> BOOL #stdcall;
 
 InitializeCriticalSection               :: (section: ^CRITICAL_SECTION) #stdcall;
 EnterCriticalSection                    :: (section: ^CRITICAL_SECTION) #stdcall;

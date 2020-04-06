@@ -155,11 +155,16 @@ use import windows_types
 // _ :: 65000 //	utf-7	Unicode (UTF-7)
 CP_UTF8 :: 65001 //	utf-8	Unicode (UTF-8)
 
-MAX_PATH                           :: 260
-FILE_NOTIFY_CHANGE_LAST_WRITE      :: 0x00000010
-FILE_NOTIFY_CHANGE_SIZE            :: 0x00000008
-WT_EXECUTEONLYONCE                 :: 0x00000008
-INFINITE                           :: 0xFFFFFFFF
+WAIT_OBJECT_0                       :: 0
+WAIT_ABANDONED                      :: 0x00000080
+WAIT_TIMEOUT                        :: 0x00000102
+WAIT_FAILED                         :: 0xFFFFFFFF
+
+MAX_PATH                            :: 260
+FILE_NOTIFY_CHANGE_LAST_WRITE       :: 0x00000010
+FILE_NOTIFY_CHANGE_SIZE             :: 0x00000008
+WT_EXECUTEONLYONCE                  :: 0x00000008
+INFINITE                            :: 0xFFFFFFFF
 //
 
 // Console Attributes
