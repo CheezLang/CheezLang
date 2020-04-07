@@ -24,7 +24,7 @@ use import value
 
 
 CodeRunner :: trait {
-    run :: (&Self, interp: &Interpreter);
+    run :: (&Self, interp: &Interpreter) -> InterpStepResult;
 }
 
 DefaultCodeRunner :: struct CodeRunner {
@@ -32,8 +32,8 @@ DefaultCodeRunner :: struct CodeRunner {
 }
 
 impl CodeRunner for DefaultCodeRunner {
-    run :: (&Self, interp: &Interpreter) {
-        interp.run()
+    run :: (&Self, interp: &Interpreter) -> InterpStepResult {
+        return interp.run()
     }
 }
 
@@ -156,6 +156,12 @@ impl StackFrame {
 
         return str
     }
+}
+
+InterpStepResult :: enum {
+    Continue
+    Done
+    Error : String
 }
 
 Interpreter :: struct {
@@ -322,7 +328,7 @@ impl Interpreter {
         }
     }
 
-    step :: (&Self) -> enum { Continue, Done } {
+    step :: (&Self) -> InterpStepResult {
         @assert(fp >= 0)
         frame := ^frames[fp]
         arg :: (T: type) #macro {
@@ -797,6 +803,22 @@ impl Interpreter {
                 }
             }
 
+            .CheckRange -> {
+                max := pop(int)
+                min := pop(int)
+                value := peek(int, 0)
+                if value < min or value >= max {
+                    return .Error(fmt.format("Range check failed: {} not in {}..{}", [value, min, max]))
+                }
+            }
+
+            .CheckNull -> {
+                value := pop(int)
+                if value == 0 {
+                    return .Error(fmt.format("Null check failed"))
+                }
+            }
+
             .Panic -> {
                 str := string(arg(^u8), arg(int))
                 file := frame.func.debug_info.path.slice()
@@ -820,13 +842,16 @@ impl Interpreter {
         return .Continue
     }
 
-    run :: (&Self) {
+    run :: (&Self) -> InterpStepResult {
         @assert(fp >= 0)
         loop {
-            if step() == .Done {
-                return
+            result := step()
+            if result != .Continue {
+                return result
             }
         }
+
+        return .Done
     }
 }
 
@@ -868,6 +893,8 @@ Instruction :: enum #repr("C") #tag_type(u64) {
 
     Call, NativeCall, CompCall
     Return, ReturnVoid
+
+    CheckRange, CheckNull
 
     Panic
     Halt
@@ -942,6 +969,8 @@ impl Instruction {
             .Return         -> fmt.format("Return")
             .ReturnVoid     -> fmt.format("ReturnVoid")
 
+            .CheckRange     -> fmt.format("CheckRange")
+            .CheckNull      -> fmt.format("CheckNull")
             .Halt           -> fmt.format("Halt")
             .Panic          -> fmt.format("Panic `"{}`"", [string(arg(^u8, 0), arg(int, 1))])
             _               -> fmt.format("Unknown {}", [code[0]])

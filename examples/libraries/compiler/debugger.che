@@ -50,6 +50,7 @@ DebuggerCallbacks :: trait {
     hit_breakpoint :: (&Self);
     step_done :: (&Self);
     continued :: (&Self);
+    error :: (&Self, msg: string);
     output_generated :: (&Self, format: string, args: []^any = [], category: string = "console");
 }
 
@@ -182,7 +183,7 @@ impl Debugger {
 }
 
 impl CodeRunner for Debugger {
-    run :: (&Self, interp: &Interpreter) {
+    run :: (&Self, interp: &Interpreter) -> InterpStepResult {
         self.current_interp = ^interp
 
         self.store_old_state()
@@ -237,11 +238,23 @@ impl CodeRunner for Debugger {
                     break
                 }
 
-                match interp.step() {
+                step_result := interp.step()
+                match step_result {
                     .Done -> {
                         // running = false
                         if callbacks != null then callbacks.continued()
-                        return
+                        return .Done
+                    }
+
+                    .Error($msg) -> {
+                        self.old_frame = default
+                        self.fp_old = 0
+                        self.line_break = 0
+                        self.break_cond = BreakCondition.None
+                        running = false
+                        if callbacks != null then callbacks.error(msg.slice())
+                        break
+                        // return
                     }
                 }
 
@@ -260,6 +273,8 @@ impl CodeRunner for Debugger {
             running = false
             // cond_pause.get().notify()
         }
+
+        return .Done
     }
 }
 
@@ -395,6 +410,10 @@ impl DebuggerCallbacks for CheezDebugAdapter {
 
     continued :: (&Self) {
         self.adapter.emit_continued_event()
+    }
+
+    error :: (&Self, msg: string) {
+        self.adapter.emit_stop_event("exception", Some(msg), Some(msg))
     }
 
     output_generated :: (&Self, format: string, args: []^any = [], category: string = "console") {

@@ -32,6 +32,9 @@ ByteCodeGenerator :: struct {
     variables       := Map[int, int].new()
 
     function        : ^AstFunction = null
+
+    build_range_checks  := true
+    build_null_checks   := true
 }
 
 impl ByteCodeGenerator {
@@ -166,7 +169,13 @@ impl CodeGenerator for ByteCodeGenerator {
                             generate_expression(node.sub, deref = false)
                             generate_expression(node.index)
                             // @todo: cast index to i64
-                            // @todo: check range
+
+                            if self.build_range_checks {
+                                builder.build_const_int(0)
+                                builder.build_const_int(ti.count)
+                                builder.build_check_range()
+                            }
+
                             builder.build_const_int(ti.target.size)
                             builder.build_mul(.I64)
                             builder.build_add(.I64)
@@ -321,7 +330,13 @@ impl CodeGenerator for ByteCodeGenerator {
                     generate_expression(node.sub, deref = false)
                     generate_expression(node.index)
                     // @todo: cast index to i64
-                    // @todo: check range
+
+                    if self.build_range_checks {
+                        builder.build_const_int(0)
+                        builder.build_const_int(ti.count)
+                        builder.build_check_range()
+                    }
+
                     builder.build_const_int(ti.target.size)
                     builder.build_mul(.I64)
                     builder.build_add(.I64)
@@ -950,6 +965,16 @@ impl InstructionBuilder {
     build_halt :: (&Self) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.Halt)
+    }
+
+    build_check_range :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CheckRange)
+    }
+
+    build_check_null :: (&Self) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.CheckNull)
     }
 
     build_panic :: (&Self, msg: string) {

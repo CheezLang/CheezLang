@@ -1,30 +1,7 @@
 _ :: Main()
 Main :: () {
     mut a : [5]int = [1, 2, 3, 4, 5]
-    print_int(a[0])
-    print_int(a[1])
-    print_int(a[2])
-    print_int(a[3])
-    print_int(a[4])
-    
-    print_string("")
-    a = foo()
-    print_int(a[0])
-    print_int(a[1])
-    print_int(a[2])
-    print_int(a[3])
-    print_int(a[4])
-
-    print_string("")
-    a[0] = 123
-    a[1] = 456
-    print_int(a[0])
-    print_int(a[1])
-    print_int(a[2])
-    print_int(a[3])
-    print_int(a[4])
-}
-
-foo :: () -> [5]int {
-    return [987, 654, 321, -123, -456]
+    c := 5
+    print_int(a[c])
+    print_string("test")
 }

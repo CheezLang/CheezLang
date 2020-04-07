@@ -329,10 +329,18 @@ impl DebugAdapter {
         emit_event("initialized", JsonValue.JsonObject(body))
     }
 
-    emit_stop_event :: (&Self, reason: string) {
+    emit_stop_event :: (&Self, reason: string, description: Option[string] = None, text: Option[string] = None) {
         body := Table[string, JsonValue].create(strings_equal)
         body["reason"] = JsonValue.JsonString(reason.to_owned())
         body["threadId"] = JsonValue.JsonNumber(0)
+
+        if description == .Some {
+            body["description"] = JsonValue.JsonString(description.Some.to_owned())
+        }
+        if text == .Some {
+            body["text"] = JsonValue.JsonString(text.Some.to_owned())
+        }
+
         emit_event("stopped", JsonValue.JsonObject(body))
     }
 
