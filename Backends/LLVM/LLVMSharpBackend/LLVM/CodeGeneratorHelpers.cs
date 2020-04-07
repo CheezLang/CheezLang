@@ -161,6 +161,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private void CheckPointerNull(LLVMValueRef pointer, ILocation location, string message)
         {
+            if (!checkForNullTraitObjects)
+                return;
+
             var bbNull = currentLLVMFunction.AppendBasicBlock("cpn.null");
             var bbEnd = currentLLVMFunction.AppendBasicBlock("cpn.end");
 

@@ -12,7 +12,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
     public partial class LLVMCodeGenerator : ICodeGenerator
     {
         // temp
-        private bool genDebugInfo = true;
+        private bool genDebugInfo = false;
 
         //
         private Workspace workspace;
@@ -46,7 +46,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef stackTraceTop;
 
         // vtable stuff
-        private bool checkForNullTraitObjects = true;
+        private bool checkForNullTraitObjects = false;
         private Dictionary<CheezType, LLVMTypeRef> vtableTypes = new Dictionary<CheezType, LLVMTypeRef>();
         private Dictionary<CheezType, (LLVMValueRef type_info, LLVMValueRef vtable)> typeInfoTable = new Dictionary<CheezType, (LLVMValueRef type_info, LLVMValueRef vtable)>();
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
@@ -62,7 +62,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         //
         private LLVMTypeRef voidPointerType;
-        private int pointerSize = 4;
+        private int pointerSize = 8;
 
         // rtti stuff
         private CheezType sTypeInfoAttribute;
