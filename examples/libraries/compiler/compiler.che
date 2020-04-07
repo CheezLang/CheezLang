@@ -45,11 +45,11 @@ wait_until :: (cond: Code, on_error: Code, on_yield: Code = {}, on_resume: Code 
 
     loop {
         if @insert(cond) then break
-        if const DEBUG_WAIT then g_logger.log("[{}] [{}] suspending on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+        if const DEBUG_ENABLED then if DEBUG_WAIT then g_logger.log("[{}] [{}] suspending on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
         @insert(on_yield)
         Fiber.yield()
         @insert(on_resume)
-        if const DEBUG_WAIT then g_logger.log("[{}] [{}] resuming on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+        if const DEBUG_ENABLED then if DEBUG_WAIT then g_logger.log("[{}] [{}] resuming on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
         fiber_context.job.progressed = false
 
         if fiber_context.job.cancelled {
@@ -57,7 +57,7 @@ wait_until :: (cond: Code, on_error: Code, on_yield: Code = {}, on_resume: Code 
             loop Fiber.yield()
         }
     }
-    if const DEBUG_WAIT then g_logger.log("[{}] [{}] done on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+    if const DEBUG_ENABLED then if DEBUG_WAIT then g_logger.log("[{}] [{}] done on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
     fiber_context.job.progressed = true
 }
 

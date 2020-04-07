@@ -4,6 +4,7 @@ use import std.mem.std_heap_allocator
 use import std.printable
 use import std.string
 
+C   :: import std.c
 fmt :: import std.fmt
 fs  :: import std.io.fs
 io  :: import std.io
@@ -23,7 +24,6 @@ use import scope
 use import types
 use import validator
 use import value
-
 
 #export_scope
 
@@ -97,15 +97,18 @@ impl CompilationJob for CompileGlobalNodeJob {
     }
 
     debug_log :: (&Self, msg: string, args: []^any = []) {
-        if const DEBUG_JOBS {
+        if const DEBUG_ENABLED { if DEBUG_JOBS {
             str := fmt.format(msg, args)
             g_logger.log("[{}] [CompileGlobalNode #{}] {}", [Fiber.user_data(FiberContext).thread, node.id, str])
-        } 
+        }}
     }
 
     execute :: (&Self) {
         debug_log("Begin compilation")
-
+        // {
+        //     dump := pretty_print_ast(<<node)
+        //     g_logger.log("{}", [dump])
+        // }
         node.scope = compiler.global_scope
         node = ^compile_node(<<node, CNContext())
         if node.value == .Poison {
@@ -121,16 +124,16 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
         }
 
-        if const PRINT_TYPED_AST {
+        if const DEBUG_ENABLED { if PRINT_TYPED_AST {
             dump := pretty_print_typed_ast(<<node)
             g_logger.log("{}", [dump])
-        }
+        }}
 
         debug_log("Done")
     }
 
     evaluate_node :: (&Self, node: &AstNode, ctx: CNContext) -> &AstNode {
-        debug_log("evaluate_node")
+        // debug_log("evaluate_node")
         if node.typ != null {
             return node
         }
@@ -163,7 +166,14 @@ impl CompilationJob for CompileGlobalNodeJob {
         if node.typ != null {
             return node
         }
+
+        {
+            // dump := dump_ast(node, recurse = false)
+            // debug_log("compile_node: {}", [dump])
+        }
+
         return match node {
+        // result : &AstNode = match node {
             AstArgument($arg)       -> compile_argument(arg, ctx)
             AstArray($arr)          -> compile_array(arr, ctx)
             AstArrayType($arr)      -> compile_array_type(arr, ctx)
@@ -183,6 +193,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             AstFunction($func)      -> compile_function(func, ctx)
             AstIdentifier($id)      -> compile_identifier(id, ctx)
             AstIf($iff)             -> compile_if(iff, ctx)
+            AstIndex($index)        -> compile_index(index, ctx)
             AstLoop($lop)           -> compile_loop(lop, ctx)
             AstNumberLiteral($num)  -> compile_number(num, ctx)
             AstReturn($ret)         -> compile_return(ret, ctx)
@@ -196,7 +207,12 @@ impl CompilationJob for CompileGlobalNodeJob {
             }
         }
 
-        return node
+        // if result.typ == null {
+        //     compiler.error_handler.report_error_at(result.location, "[ERROR] typ is null")
+        //     poison(result)
+        // }
+
+        // return result
     }
 
     compile_dot :: (&Self, dot: &AstDot, ctx: CNContext) -> &AstNode {
@@ -295,10 +311,26 @@ impl CompilationJob for CompileGlobalNodeJob {
                 return ass
             }
 
-            AstIndex($ind) -> {
-                compiler.error_handler.report_error_at(ass.pattern.location, "compile_assignment: not implemented: <expr>[<index>]")
-                poison(ass)
-                return ass
+            AstIndex($node) -> {
+                match node.sub.typ {
+                    TypeInfoArray($ti) -> match node.index.typ {
+                        TypeInfoInt(_) -> {
+                            // ok
+                        }
+
+                        _ -> {
+                            compiler.error_handler.report_error_at(ass.pattern.location, "Invalid pattern on left side of '='")
+                            poison(node)
+                            return node
+                        }
+                    }
+
+                    _ -> {
+                        compiler.error_handler.report_error_at(ass.pattern.location, "Invalid pattern on left side of '='")
+                        poison(node)
+                        return node
+                    }
+                }
             }
 
             AstUnary($un) if un.operator == .Deref -> {
@@ -340,7 +372,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 expected = val.typ
             }
 
-            if val.typ != expected {
+            if !TypeInfo.same(val.typ, expected) {
                 compiler.error_handler.report_error_at(val.location, "Type of value ({}) does not match expected type {}", [val.typ, expected])
                 poison(arr)
                 return arr
@@ -373,7 +405,10 @@ impl CompilationJob for CompileGlobalNodeJob {
             arr.count.scope = arr.scope
             arr.count = ^evaluate_node(<<arr.count, ctx.with_expected(@type_info(int)))
 
-            if arr.count.value == .Poison or arr.count.typ != @type_info(int) {
+            handle_poison(arr, <<arr.count)
+
+            if !TypeInfo.same(arr.count.typ, @type_info(int)) {
+                compiler.error_handler.report_error_at(arr.count.location, "Expected int, got '{}'", [arr.count.typ])
                 poison(arr)
                 return arr
             }
@@ -517,7 +552,7 @@ impl CompilationJob for CompileGlobalNodeJob {
         // find matching operator
         match bin.operator {
             .Add -> {
-                if bin.left.typ != bin.right.typ {
+                if !TypeInfo.same(bin.left.typ, bin.right.typ) {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
@@ -526,7 +561,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 bin.typ = bin.left.typ
             }
             .Sub -> {
-                if bin.left.typ != bin.right.typ {
+                if !TypeInfo.same(bin.left.typ, bin.right.typ) {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
@@ -535,7 +570,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 bin.typ = bin.left.typ
             }
             .Mul -> {
-                if bin.left.typ != bin.right.typ {
+                if !TypeInfo.same(bin.left.typ, bin.right.typ) {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
@@ -544,7 +579,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 bin.typ = bin.left.typ
             }
             .Div -> {
-                if bin.left.typ != bin.right.typ {
+                if !TypeInfo.same(bin.left.typ, bin.right.typ) {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
@@ -553,7 +588,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 bin.typ = bin.left.typ
             }
             .Mod -> {
-                if bin.left.typ != bin.right.typ {
+                if !TypeInfo.same(bin.left.typ, bin.right.typ) {
                     compiler.error_handler.report_error_at(
                         bin.location, 
                         "Types of left and right sub expressions don't match. Left: {}, Right: {}",
@@ -649,6 +684,45 @@ impl CompilationJob for CompileGlobalNodeJob {
         return iff
     }
 
+    compile_index :: (&Self, node: &AstIndex, ctx: CNContext) -> &AstNode {
+        node.sub.scope = node.scope
+        node.sub <- compile_node(node.sub, ctx)
+        handle_poison(node, node.sub)
+
+        node.index.scope = node.scope
+        node.index <- compile_node(node.index, ctx)
+        handle_poison(node, node.index)
+
+        match node.sub.typ {
+            TypeInfoArray($ti) -> match node.index.typ {
+                TypeInfoInt(_) -> {
+                    // ok
+                    node.typ = ti.target
+                }
+
+                _ -> {
+                    compiler.error_handler.report_error_at(
+                        node.index.location,
+                        "Type '{}' can't be used as index for type '{}'",
+                        [node.index.typ, node.sub.typ])
+                    poison(node)
+                    return node
+                }
+            }
+
+            _ -> {
+                compiler.error_handler.report_error_at(
+                    node.sub.location,
+                    "Type '{}' has not operator '[]'",
+                    [node.sub.typ])
+                poison(node)
+                return node
+            }
+        }
+
+        return node
+    }
+
     compile_loop :: (&Self, lop: &AstLoop, ctx: CNContext) -> &AstNode {
         lop.typ = @type_info(void)
         lop.body.scope = lop.scope
@@ -690,7 +764,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             ret.value_expr.scope = ret.scope
             compile_node(<<ret.value_expr, ctx.with_expected(self.function.return_type))
 
-            if ret.value_expr.typ != self.function.return_type {
+            if !TypeInfo.same(ret.value_expr.typ, self.function.return_type) {
                 compiler.error_handler.report_error_at(
                     ret.value_expr.location,
                     "Type of return value ({}) does not match return type of containing function ({}).",
@@ -879,7 +953,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                             poison(call)
                             return call
                         }
-                        if arg.typ != param.var_type {
+                        if !TypeInfo.same(arg.typ, param.var_type) {
                             compiler.error_handler.report_error_at(
                                 arg.location,
                                 "Type of argument ({}) does not match type of parameter '{}' ({}).",
@@ -911,7 +985,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                             poison(call)
                             return call
                         }
-                        if arg.typ != param_type {
+                        if !TypeInfo.same(arg.typ, param_type) {
                             compiler.error_handler.report_error_at(
                                 arg.location,
                                 "Type of argument ({}) does not match type of parameter ({}).",
@@ -1123,7 +1197,7 @@ impl CompilationJob for CompileGlobalNodeJob {
                 decl.var_type = decl.value_expr.typ
             }
 
-            if decl.value_expr.typ != decl.var_type {
+            if !TypeInfo.same(decl.value_expr.typ, decl.var_type) {
                 compiler.error_handler.report_error_at(decl.value_expr.location, "Value type ({}) does not match expected type ({})", [decl.value_expr.typ, decl.var_type])
                 decl.var_type = @type_info(void)
                 poison(decl)
@@ -1224,10 +1298,10 @@ impl CompilationJob for RunCodeJob {
     }
 
     debug_log :: (&Self, msg: string, args: []^any = []) {
-        if const DEBUG_JOBS {
+        if const DEBUG_ENABLED { if DEBUG_JOBS {
             str := fmt.format(msg, args)
             g_logger.log("[{}] [RunCodeJob '{}'] {}", [Fiber.user_data(FiberContext).thread, function.name, str])
-        } 
+        }}
     }
 
     execute :: (&Self) {
@@ -1248,10 +1322,10 @@ impl CompilationJob for LoadFileJob {
     }
 
     debug_log :: (&Self, msg: string, args: []^any = []) {
-        if const DEBUG_JOBS {
+        if const DEBUG_ENABLED { if DEBUG_JOBS {
             str := fmt.format(msg, args)
             g_logger.log("[{}] [LoadFileJob '{}'] {}", [Fiber.user_data(FiberContext).thread, path, str])
-        } 
+        }}
     }
 
     execute :: (&Self) {
@@ -1279,14 +1353,14 @@ impl CompilationJob for LoadFileJob {
                         decl := parser.parse_node()
                         if decl == null then break
 
-                        if const DUMP_AST {
+                        if const DEBUG_ENABLED { if DUMP_AST {
                             dump := dump_ast(<<decl)
                             g_logger.log("{}", [dump])
-                        }
-                        if const PRINT_AST {
+                        }}
+                        if const DEBUG_ENABLED { if PRINT_AST {
                             dump := pretty_print_ast(<<decl)
                             g_logger.log("{}", [dump])
-                        }
+                        }}
 
                         compiler.add_job(CompileGlobalNodeJob.new(decl))
                     }
@@ -1320,7 +1394,14 @@ poison :: (node: &AstNode) {
 
 impl TypeInfo {
     same :: (a: ^TypeInfo, b: ^TypeInfo) -> bool {
-        // @todo
-        return a == b
+        if a == b {
+            return true
+        }
+
+        return match a, b {
+            TypeInfoArray($a), TypeInfoArray($b) -> a.count == b.count and same(a.target, b.target)
+
+            _ -> false
+        }
     }
 }

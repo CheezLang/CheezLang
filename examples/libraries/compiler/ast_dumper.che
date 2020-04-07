@@ -185,6 +185,14 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             }
         }
 
+        AstIndex($node) -> {
+            fmt.format_into(result, "AstIndex #{} ({})`n", [node.id, node.location])
+            if recurse {
+                dump_ast_helper(result, node.sub, recurse, indent + 1)
+                dump_ast_helper(result, node.index, recurse, indent + 1)
+            }
+        }
+
         AstLoop($lop) -> {
             fmt.format_into(result, "AstLoop #{} ({})`n", [lop.id, lop.location])
             if recurse {

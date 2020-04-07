@@ -1,36 +1,30 @@
-N :: 33
-
 _ :: Main()
 Main :: () {
-    print_string("test")
-    b := 5
-    print_int(b)
-    a : [square(2)]int
-    print_int(a.length)
+    mut a : [5]int = [1, 2, 3, 4, 5]
+    print_int(a[0])
+    print_int(a[1])
+    print_int(a[2])
+    print_int(a[3])
+    print_int(a[4])
+    
+    print_string("")
+    a = foo()
+    print_int(a[0])
+    print_int(a[1])
+    print_int(a[2])
+    print_int(a[3])
+    print_int(a[4])
+
+    print_string("")
+    a[0] = 123
+    a[1] = 456
+    print_int(a[0])
+    print_int(a[1])
+    print_int(a[2])
+    print_int(a[3])
+    print_int(a[4])
 }
 
-square :: (a: int) -> int {
-    return a * a
-}
-
-// foo :: fib(N)
-// bar :: fib(N)
-// baz :: fib(N)
-// foz :: fib(N)
-
-fib :: (mut n: int) -> int {
-    // mut a := 1
-    // mut b := 1
-
-    // loop {
-    //     if n <= 0 {
-    //         return a
-    //     }
-    //     c := a + b
-    //     a = b
-    //     b = c
-    //     n = n - 1
-    // }
-
-    return if n <= 1 then 1 else fib(n - 1) + fib(n - 2)
+foo :: () -> [5]int {
+    return [987, 654, 321, -123, -456]
 }

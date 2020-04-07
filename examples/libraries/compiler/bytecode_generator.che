@@ -101,7 +101,7 @@ impl CodeGenerator for ByteCodeGenerator {
         return cbc_func
     }
 
-    generate_expression :: (&Self, node: &AstNode) {
+    generate_expression :: (&Self, node: &AstNode, deref: bool = true) {
         builder.set_current_line(node.location.line)
         match node {
             AstArgument($arg)       -> generate_argument(arg)
@@ -119,8 +119,9 @@ impl CodeGenerator for ByteCodeGenerator {
             AstDefer($def)          -> generate_defer(def)
             AstDot($dot)            -> generate_dot(dot)
             AstFor($forr)           -> generate_for(forr)
-            AstIdentifier($id)      -> generate_identifier(id)
+            AstIdentifier($id)      -> generate_identifier(id, deref)
             AstIf($iff)             -> generate_if(iff)
+            AstIndex($index)        -> generate_index(index)
             AstLoop($lop)           -> generate_loop(lop)
             AstNumberLiteral($num)  -> generate_number_literal(num)
             AstReturn($ret)         -> generate_return(ret)
@@ -142,6 +143,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_assignment :: (&Self, ass: &AstAssignment) {
         match ass.pattern {
+            // x = z
             AstIdentifier($id) -> match id.symbol {
                 .Decl($decl) -> {
                     // @todo: figure out if this is a local variable or a global
@@ -152,6 +154,44 @@ impl CodeGenerator for ByteCodeGenerator {
                 
                 _ -> {
                     error_handler.report_error_at(ass.pattern.location, "generate_assignment: symbol not implemented: {}", [id.symbol])
+                }
+            }
+
+            // x[y] = z
+            AstIndex($node) -> {
+                match node.sub.typ {
+                    TypeInfoArray($ti) -> match node.index.typ {
+                        TypeInfoInt(_) -> {
+                            // address
+                            generate_expression(node.sub, deref = false)
+                            generate_expression(node.index)
+                            // @todo: cast index to i64
+                            // @todo: check range
+                            builder.build_const_int(ti.target.size)
+                            builder.build_mul(.I64)
+                            builder.build_add(.I64)
+
+                            // value
+                            generate_expression(ass.value_expr)
+
+                            // =
+                            builder.build_store(slots_for_size(ti.target.size))
+                        }
+
+                        _ -> {
+                            error_handler.report_error_at(
+                                node.index.location,
+                            "generate_assignment not implemented for index: ({})[{}]",
+                                [node.sub.typ, node.index.typ])
+                        }
+                    }
+
+                    _ -> {
+                        error_handler.report_error_at(
+                            node.sub.location,
+                            "generate_assignment not implemented for index: '{}'",
+                            [node.sub.typ])
+                    }
                 }
             }
 
@@ -272,6 +312,37 @@ impl CodeGenerator for ByteCodeGenerator {
         // fix branches
         builder.fix_branch(br_true, l_true)
         builder.fix_branch(br_end, l_end)
+    }
+
+    generate_index :: (&Self, node: &AstIndex) {
+        match node.sub.typ {
+            TypeInfoArray($ti) -> match node.index.typ {
+                TypeInfoInt(_) -> {
+                    generate_expression(node.sub, deref = false)
+                    generate_expression(node.index)
+                    // @todo: cast index to i64
+                    // @todo: check range
+                    builder.build_const_int(ti.target.size)
+                    builder.build_mul(.I64)
+                    builder.build_add(.I64)
+                    builder.build_load(slots_for_size(ti.target.size))
+                }
+
+                _ -> {
+                    error_handler.report_error_at(
+                        node.index.location,
+                    "generate_index not implemented for: ({})[{}]",
+                        [node.sub.typ, node.index.typ])
+                }
+            }
+
+            _ -> {
+                error_handler.report_error_at(
+                    node.sub.location,
+                    "generate_index not implemented for: '{}'",
+                    [node.sub.typ])
+            }
+        }
     }
 
     generate_loop :: (&Self, lop: &AstLoop) {
@@ -498,12 +569,16 @@ impl CodeGenerator for ByteCodeGenerator {
         }
     }
 
-    generate_identifier :: (&Self, id: &AstIdentifier) {
+    generate_identifier :: (&Self, id: &AstIdentifier, deref: bool) {
         builder.set_current_line(id.location.line)
         match id.symbol {
             .Decl($decl) -> match self.variables.get(decl.id) {
                 Some($index) -> {
-                    builder.build_load_local(index, slots_for_size(decl.var_type.size))
+                    if deref {
+                        builder.build_load_local(index, slots_for_size(decl.var_type.size))
+                    } else {
+                        builder.build_address_of(index)
+                    }
                 }
                 None -> {
                     msg :: "[FATAL] Failed to get index of declaration"

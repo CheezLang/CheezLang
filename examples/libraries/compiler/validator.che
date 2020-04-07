@@ -165,6 +165,16 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
+        AstIndex($node) -> {
+            assert("AstIndex", node.typ != null)
+            if !validate_node(node.sub, error_handler) {
+                return false
+            }
+            if !validate_node(node.index, error_handler) {
+                return false
+            }
+        }
+
         AstReturn($node) -> {
             assert("AstReturn", node.typ != null)
             if node.value_expr != null and !validate_node(<<node.value_expr, error_handler) {

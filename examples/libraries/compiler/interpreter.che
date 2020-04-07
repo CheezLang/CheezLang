@@ -270,9 +270,9 @@ impl Interpreter {
             parameter_indices   = func.parameter_indices.slice()
         )
 
-        if const DEBUG_INTERPRETER {
+        if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
             g_logger.log("push_frame {} (fp = {} -> {}, sp = {} -> {}, local_slots = {})", [func.parameter_slots, _fp, fp, _sp, sp, func.local_slots])
-        }
+        }}
 
         return true
     }
@@ -294,7 +294,7 @@ impl Interpreter {
         }
 
         _fp, _sp := fp, sp
-        defer { if const DEBUG_INTERPRETER then g_logger.log("push_native_frame {} (fp = {} -> {}, sp = {} -> {})", [wrapper.arg_slots, _fp, fp, _sp, sp]) }
+        defer { if const DEBUG_ENABLED then if DEBUG_INTERPRETER then g_logger.log("push_native_frame {} (fp = {} -> {}, sp = {} -> {})", [wrapper.arg_slots, _fp, fp, _sp, sp]) }
 
         if fp >= 0 {
             sp += frames[fp].sp - frames[fp].bp
@@ -313,7 +313,7 @@ impl Interpreter {
 
     pop_frame :: (&Self) {
         _fp, _sp := fp, sp
-        defer { if const DEBUG_INTERPRETER then g_logger.log("pop_frame (fp = {} -> {}, sp = {} -> {})", [_fp, fp, _sp, sp]) }
+        defer { if const DEBUG_ENABLED then if DEBUG_INTERPRETER then g_logger.log("pop_frame (fp = {} -> {}, sp = {} -> {})", [_fp, fp, _sp, sp]) }
 
         fp -= 1
         if fp >= 0 {
@@ -359,7 +359,7 @@ impl Interpreter {
         frame.ip_prev = frame.ip
         opcode := frame.code[frame.ip]
 
-        if const DEBUG_INTERPRETER {
+        if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
             g_logger.log("{}{}{}{}{}{}{}{}{}{}{}", [
                 frame.func.debug_info.get_line_for_ip(frame.ip)
                 fmt.align(6), fp
@@ -376,7 +376,7 @@ impl Interpreter {
             //     fmt.align(25), Instruction.pretty_print(frame.code[frame.ip..])
             //     fmt.align(45), frame.dump_stack()
             // ])
-        }
+        }}
 
         frame.ip += 1
 
@@ -737,7 +737,7 @@ impl Interpreter {
 
                 push_native_frame(wrapper)
                 
-                if const DEBUG_INTERPRETER {{
+                if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
                     frame := top_frame()
                     g_logger.log("{}{}{}{}{}{}{}{}", [
                         fmt.align(0), fp
@@ -747,7 +747,7 @@ impl Interpreter {
                     ], "stdout")
                 }}
                 wrapper.function(^self)
-                if const DEBUG_INTERPRETER {{
+                if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
                     frame := top_frame()
                     g_logger.log("{}{}{}{}{}{}{}{}", [
                         fmt.align(0), fp

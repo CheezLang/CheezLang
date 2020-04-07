@@ -26,11 +26,11 @@ Parser :: struct {
 
 impl Parser {
     debug_log :: (&Self, msg: string, args: []^any = []) {
-        if const DEBUG_PARSER {
+        if const DEBUG_ENABLED { if DEBUG_PARSER {
             str := fmt.format(msg, args)
             location := lexer.current_location()
             g_logger.log("[{}] [Parser] {}:{}:{}: {}", [Fiber.user_data(FiberContext).thread, location.file, location.line, location.column, str])
-        } 
+        }}
     }
 
     new :: (lexer: &Lexer, error_handler: ^ErrorHandler, allocator: ^mem.Allocator, first_id: int) -> Self {
@@ -335,13 +335,24 @@ impl Parser {
         loop {
             match lexer.peek_token().typ {
                 .OpenParen -> {
-                    id := next_id()
                     args, beg, end := parse_argument_list()
                     expr = allocate(AstCall(
-                        id          = id
+                        id          = next_id()
                         location    = expr.location.to(end)
                         function    = <<expr
                         arguments   = args
+                    ))
+                }
+
+                .OpenBracket -> {
+                    lexer.next_token()
+                    index := try(parse_expression(true, false))
+                    end := consume(.ClosingBracket).location
+                    expr = allocate(AstIndex(
+                        id          = next_id()
+                        location    = expr.location.to(end)
+                        sub         = <<expr
+                        index       = <<index
                     ))
                 }
 
@@ -399,7 +410,7 @@ impl Parser {
                 error_handler.report_error_at(beg.to(end), "Too many values in array type expression")
             }
 
-            target := try(parse_expression(false, false))
+            target := try(parse_unary(false, false))
 
             count : ^AstNode = null
             if values.count() > 0 {

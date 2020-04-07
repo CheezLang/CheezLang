@@ -1,22 +1,24 @@
-use import std.time
-use import std.string
 use import std.array
-use import std.mem.arena_allocator
 use import std.mem.allocator
+use import std.mem.arena_allocator
 use import std.process
-io  :: import std.io
-fs  :: import std.io.fs
-fmt :: import std.fmt
+use import std.string
+use import std.time
+
 C   :: import std.c
+fmt :: import std.fmt
+fs  :: import std.io.fs
+io  :: import std.io
 
 use import clap.clap
 use import logging.logger
 
 use import compiler
-use import lexer
-use import string_database
-use import parser
+use import config
 use import error_handler
+use import lexer
+use import parser
+use import string_database
 
 LOG_PATH :: "../data/logs/compiler_log.txt"
 
@@ -82,6 +84,14 @@ e.g. ... compile foo bar")
     files : Array[String]
 
     thread_count := 1
+
+    debug_interpreter := false
+    debug_jobs        := false
+    debug_parser      := false
+    debug_wait        := false
+    dump_ast          := false
+    print_ast         := false
+    print_typed_ast   := false
 }
 
 CommandBuild :: struct {
@@ -252,5 +262,12 @@ bin/", [])
 }
 
 command_compile :: (options: ^CommandCompile) {
+    DEBUG_INTERPRETER = options.debug_interpreter
+    DEBUG_JOBS        = options.debug_jobs
+    DEBUG_PARSER      = options.debug_parser
+    DEBUG_WAIT        = options.debug_wait
+    DUMP_AST          = options.dump_ast
+    PRINT_AST         = options.print_ast
+    PRINT_TYPED_AST   = options.print_typed_ast
     compile_files(options.files.slice(), options.thread_count)
 }

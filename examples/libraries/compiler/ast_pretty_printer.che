@@ -207,6 +207,13 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             }
         }
 
+        AstIndex($node) -> {
+            pretty_print_typed_ast_helper(result, node.sub)
+            result += "["
+            pretty_print_typed_ast_helper(result, node.index)
+            result += "]"
+        }
+
         AstLoop($lop) -> {
             result += "loop "
             pretty_print_ast_helper(result, lop.body)
@@ -489,6 +496,13 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
             }
         }
 
+        AstIndex($node) -> {
+            pretty_print_typed_ast_helper(result, node.sub)
+            result += "["
+            pretty_print_typed_ast_helper(result, node.index)
+            result += "]"
+        }
+
         AstLoop($lop) -> {
             result += "loop "
             pretty_print_typed_ast_helper(result, lop.body)
@@ -569,6 +583,9 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
         AstArray($array) -> {
             result += "["
             for v : array.values {
+                if it_index > 0 {
+                    result += ", "
+                }
                 pretty_print_typed_ast_helper(result, <<v)
             }
             result += "]"
