@@ -99,14 +99,12 @@ impl Debugger {
         if current_interp == null {
             return
         }
-        self.old_frame = <<^current_interp.frames[current_interp.fp]
-        self.fp_old = current_interp.fp
-        self.line_break = get_current_line()
-    }
 
-    get_current_line :: (&Self) -> int {
-        frame := &current_interp.get_stackframes()[current_interp.fp]
-        return frame.func.debug_info.get_line_for_ip(frame.ip)
+        frame := current_interp.top_frame()
+
+        self.old_frame = <<frame
+        self.fp_old = current_interp.fp
+        self.line_break = frame.func.debug_info.get_location_for_ip(frame.ip).line
     }
 
     launch :: (&Self) {
@@ -162,12 +160,12 @@ impl Debugger {
         frame := &current_interp.get_stackframes()[current_interp.fp]
 
         path := frame.func.debug_info.path.slice()
-        line := frame.func.debug_info.get_line_for_ip(frame.ip)
+        location := frame.func.debug_info.get_location_for_ip(frame.ip)
 
         match breakpoints.get(path) {
             Some($arr) -> {
                 for(by_ref=true) breakpoint : arr.slice() {
-                    if breakpoint.line == line {
+                    if breakpoint.line == location.line {
                         return true
                     }
                 }
@@ -205,9 +203,9 @@ impl CodeRunner for Debugger {
             // 
             while running {
                 frame := &interp.get_stackframes()[interp.fp]
-                line := frame.func.debug_info.get_line_for_ip(frame.ip)
+                location := frame.func.debug_info.get_location_for_ip(frame.ip)
 
-                if frame.func != old_frame.func or line != line_break {
+                if frame.func != old_frame.func or location.line != line_break {
                     no_break = false
                 }
 
@@ -223,8 +221,8 @@ impl CodeRunner for Debugger {
 
                 do_break := match &self.break_cond {
                     .None    -> false
-                    .Step    -> interp.fp < fp_old or (frame.func == old_frame.func and line != line_break)
-                    .StepIn  -> interp.fp != fp_old or (frame.func == old_frame.func and line != line_break)
+                    .Step    -> interp.fp < fp_old or (frame.func == old_frame.func and location.line != line_break)
+                    .StepIn  -> interp.fp != fp_old or (frame.func == old_frame.func and location.line != line_break)
                     .StepOut -> interp.fp < fp_old
                 }
 
@@ -326,9 +324,6 @@ impl CheezDebugAdapter {
 
         args := ArgumentsScope.new(debugger.get().current_interp, frame)
         result.add(args.clone().change_type(VariableRef))
-
-        registers := RegistersScope.new(debugger.get().current_interp, frame)
-        result.add(registers.clone().change_type(VariableRef))
 
         return result
     }
@@ -469,7 +464,7 @@ impl CommandHandler for CheezDebugAdapter {
         for(by_ref=true, reverse=true) frame : frames {
             defer { use_prev_ip = true }
             ip := if use_prev_ip then frame.ip_prev else frame.ip
-            line := frame.func.debug_info.get_line_for_ip(ip)
+            location := frame.func.debug_info.get_location_for_ip(ip)
 
             name := if frame.func.ast_function != null {
                 frame.func.ast_function.name
@@ -481,11 +476,11 @@ impl CommandHandler for CheezDebugAdapter {
                 id     = frames.length - it_index - 1
                 name   = name.to_owned()
                 source = DapSource(
-                    name = name.to_owned() // @todo
+                    name = name.to_owned()
                     path = frame.func.debug_info.path.clone()
                 )
-                line   = line
-                column = 5 // @todo
+                line    = location.line
+                column  = location.column
             ))
         }
 
@@ -634,33 +629,6 @@ impl VariableRef for LocalsScope {
             var := Variable.new(interp, frame, local.name.to_owned(), str)
             result.add(var.clone().change_type(VariableRef))
         }
-        return result
-    }
-}
-
-RegistersScope :: struct VariableRef {
-
-}
-
-impl RegistersScope {
-    new :: (interp: ^Interpreter, frame: int) -> Rc[RegistersScope] {
-        return Rc[RegistersScope].new(RegistersScope(interp, frame, "Registers".to_string(), "registers".to_string(), -1))
-    }
-}
-
-impl VariableRef for RegistersScope {
-    get_variables :: (&Self) -> Array[Rc[VariableRef]] {
-        result := Array[Rc[VariableRef]].create()
-
-        stackframe := &interp.get_stackframes()[self.frame]
-
-        ip := Variable.new(interp, frame, "ip".to_owned(), fmt.format("{}", [stackframe.ip]))
-        result.add(ip.clone().change_type(VariableRef))
-        sp := Variable.new(interp, frame, "sp".to_owned(), fmt.format("{}", [stackframe.sp]))
-        result.add(sp.clone().change_type(VariableRef))
-        bp := Variable.new(interp, frame, "bp".to_owned(), fmt.format("{}", [stackframe.bp]))
-        result.add(bp.clone().change_type(VariableRef))
-
         return result
     }
 }

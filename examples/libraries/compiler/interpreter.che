@@ -1,23 +1,24 @@
 use import std.array
 use import std.hash_table
 use import std.map
-use import std.string
 use import std.math
+use import std.string
 
 C   :: import std.c
-io  :: import std.io
-fs  :: import std.io.fs
 fmt :: import std.fmt
+fs  :: import std.io.fs
+io  :: import std.io
 mem :: import std.mem.allocator
 
 use import logging.logger
 
-use import string_database
-use import bytecode_generator
-use import error_handler
 use import ast
+use import bytecode_generator
 use import compiler
 use import config
+use import error_handler
+use import lexer
+use import string_database
 use import value
 
 #export_scope
@@ -38,8 +39,8 @@ impl CodeRunner for DefaultCodeRunner {
 }
 
 LineInfo :: struct #copy {
-    line  : int
-    count : int
+    location    : Location
+    count       : int
 }
 
 VariableInfo :: struct #copy {
@@ -50,30 +51,24 @@ VariableInfo :: struct #copy {
 }
 
 CBCDebugInfo :: struct {
-    path    := String.empty()
-    lines   := Array[LineInfo].create()
-    locals  := Array[VariableInfo].create()
-    params  := Array[VariableInfo].create()
+    path        := String.empty()
+    locations   := Array[LineInfo].create()
+    locals      := Array[VariableInfo].create()
+    params      := Array[VariableInfo].create()
 }
 
 impl CBCDebugInfo {
-    get_line_for_ip :: (&Self, ip: int) -> int {
-        // g_logger.log("get_line_for_ip({}, lines: {})", [ip, lines.slice()])
+    get_location_for_ip :: (&Self, ip: int) -> Location {
         i := 0
-        for lines {
+        for self.locations {
             if it.count == 0 then continue
             i += it.count
             if i > ip {
-                return it.line
+                return it.location
             }
         }
 
-        return -1
-    }
-    get_line_for_ip2 :: (&Self, ip: int, print: Fn(string, []^any, string)) -> int {
-        line := get_line_for_ip(ip)
-        // print("get_line_for_ip({}) -> {}  (lines: {})", [ip, line, lines.slice()], "console")
-        return line
+        return Location(line = -1, column = -1)
     }
 }
 
@@ -207,10 +202,11 @@ impl Interpreter {
     push_frame :: (&Self, func: ^CBCFunction) -> bool {
         if fp + 1 >= frames.length {
             frame := &frames[fp]
+            location := frame.func.debug_info.get_location_for_ip(frame.ip_prev)
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
                 frame.func.debug_info.path.slice()
-                frame.func.debug_info.get_line_for_ip(frame.ip_prev)
-                5 // @todo: this is the column, read from debug info
+                location.line
+                location.column
                 fp
                 frame.sp
                 frame.ip_prev
@@ -222,10 +218,11 @@ impl Interpreter {
 
         if sp + func.local_slots >= stack.length {
             frame := &frames[fp]
+            location := frame.func.debug_info.get_location_for_ip(frame.ip_prev)
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}, required={}) {}           {}", [
                 frame.func.debug_info.path.slice()
-                frame.func.debug_info.get_line_for_ip(frame.ip_prev)
-                5 // @todo: this is the column, read from debug info
+                location.line
+                location.column
                 fp
                 frame.sp
                 frame.ip_prev
@@ -249,8 +246,8 @@ impl Interpreter {
             // g_logger.log("[INTERP] {}:{}:{}: Trying to call function with {} arguments but not enough arguments are on the stack at (fp={}, sp={}, ip={}) {}           {}", [
             //     func.parameter_slots
             //     frame.func.debug_info.path.slice()
-            //     frame.func.debug_info.get_line_for_ip(frame.ip_prev)
-            //     5 // @todo: this is the column, read from debug info
+            //     location.line
+            //     location.column
             //     fp
             //     frame.sp
             //     frame.ip_prev
@@ -286,10 +283,11 @@ impl Interpreter {
     push_native_frame :: (&Self, wrapper: ^NativeFunctionWrapper) {
         if fp + 1 >= frames.length {
             frame := &frames[fp]
+            location := frame.func.debug_info.get_location_for_ip(frame.ip_prev)
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
                 frame.func.debug_info.path.slice()
-                frame.func.debug_info.get_line_for_ip(frame.ip_prev)
-                5 // @todo: this is the column, read from debug info
+                location.line
+                location.column
                 fp
                 frame.sp
                 frame.ip_prev
@@ -367,7 +365,7 @@ impl Interpreter {
 
         if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
             g_logger.log("{}{}{}{}{}{}{}{}{}{}{}", [
-                frame.func.debug_info.get_line_for_ip(frame.ip)
+                frame.func.debug_info.get_location_for_ip(frame.ip).line
                 fmt.align(6), fp
                 fmt.align(11), frame.sp
                 fmt.align(17), frame.ip
@@ -375,7 +373,7 @@ impl Interpreter {
                 fmt.align(45), frame.dump_stack()
             ], "stdout")
 
-            //     frame.func.debug_info.get_line_for_ip(frame.ip)
+            //     frame.func.debug_info.get_location_for_ip(frame.ip).line
             //     fmt.align(6), fp
             //     fmt.align(11), frame.sp
             //     fmt.align(17), frame.ip
@@ -770,7 +768,7 @@ impl Interpreter {
                 _ := arg(int)
                 wait_until(func.bytecode != null, {
                     // error_handler.report_error("Failed to execute bytecode: {}{}{}{}{}{}{}{}{}{}{}{}", [
-                    //     fmt.align(30), frame.func.debug_info.get_line_for_ip(frame.ip_prev)
+                    //     fmt.align(30), frame.func.debug_info.get_location_for_ip(frame.ip_prev).line
                     //     fmt.align(35), fp
                     //     fmt.align(40), frame.sp
                     //     fmt.align(46), frame.ip_prev
@@ -821,10 +819,7 @@ impl Interpreter {
 
             .Panic -> {
                 str := string(arg(^u8), arg(int))
-                file := frame.func.debug_info.path.slice()
-                line := frame.func.debug_info.get_line_for_ip(frame.ip_prev)
-                g_logger.log("[PANIC] {}:{}: {}", [file, line, str], "stderr")
-                return .Done
+                return .Error(fmt.format("[PANIC] {}", [str]))
             }
 
             .Halt -> {
@@ -833,7 +828,7 @@ impl Interpreter {
 
             $unknown -> {
                 g_logger.log("{}: Unknown Instruction '{}'", [
-                    frame.func.debug_info.get_line_for_ip(frame.ip_prev)
+                    frame.func.debug_info.get_location_for_ip(frame.ip_prev)
                     Instruction.pretty_print(frame.code[frame.ip_prev..])
                 ], "stdout")
             }

@@ -1,7 +1,7 @@
 _ :: Main()
 Main :: () {
     mut a : [5]int = [1, 2, 3, 4, 5]
-    c := 5
+            c := 5
     print_int(a[c])
     print_string("test")
 }

@@ -12,9 +12,10 @@ use import logging.logger
 use import ast
 use import ast_dumper
 use import error_handler
-use import types
 use import interpreter
+use import lexer
 use import string_database
+use import types
 use import value
 
 #export_scope
@@ -85,7 +86,7 @@ impl CodeGenerator for ByteCodeGenerator {
         cbc_func.parameter_slots = -slot_index
 
         generate_expression(<<func.body)
-        builder.set_current_line(func.body.location.end_line)
+        builder.set_location(func.body.location)
         builder.build_return_void()
 
         builder.end_function()
@@ -105,7 +106,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_expression :: (&Self, node: &AstNode, deref: bool = true) {
-        builder.set_current_line(node.location.line)
+        builder.set_location(node.location)
         match node {
             AstArgument($arg)       -> generate_argument(arg)
             AstArray($arr)          -> generate_array(arr)
@@ -151,7 +152,7 @@ impl CodeGenerator for ByteCodeGenerator {
                 .Decl($decl) -> {
                     // @todo: figure out if this is a local variable or a global
                     generate_expression(ass.value_expr)
-                    builder.set_current_line(ass.location.line)
+                    builder.set_location(ass.location)
                     builder.build_store_local(self.variables[decl.id], slots_for_size(ass.value_expr.typ.size))
                 }
                 
@@ -211,7 +212,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_array :: (&Self, arr: &AstArray) {
-        builder.set_current_line(arr.location.line)
+        builder.set_location(arr.location)
 
         // pushes the array and then the index
         builder.build_push(slots_for_size(arr.typ.size))
@@ -231,7 +232,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_decl :: (&Self, decl: &AstDecl) {
-        builder.set_current_line(decl.location.line)
+        builder.set_location(decl.location)
         builder.build_noop()
 
         index := builder.add_local(decl.id, decl.name, decl.var_type)
@@ -245,7 +246,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_unary :: (&Self, un: &AstUnary) {
         generate_expression(un.sub)
-        builder.set_current_line(un.location.line)
+        builder.set_location(un.location)
         match un.operator {
             .Not -> builder.build_not()
             .Neg -> builder.build_neg(type_info_to_inst_number_type(un.sub.typ))
@@ -257,7 +258,7 @@ impl CodeGenerator for ByteCodeGenerator {
     generate_binary :: (&Self, bin: &AstBinary) {
         generate_expression(bin.left)
         generate_expression(bin.right)
-        builder.set_current_line(bin.location.line)
+        builder.set_location(bin.location)
         match bin.operator {
             .Add        -> builder.build_add(type_info_to_inst_number_type(bin.typ))
             .Sub        -> builder.build_sub(type_info_to_inst_number_type(bin.typ))
@@ -294,7 +295,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_if :: (&Self, iff: &AstIf) {
-        builder.set_current_line(iff.location.line)
+        builder.set_location(iff.location)
         
         // condition
         generate_expression(iff.condition)
@@ -304,11 +305,11 @@ impl CodeGenerator for ByteCodeGenerator {
         if iff.false_case != null {
             generate_expression(<<iff.false_case)
         } else {
-            builder.set_current_line(iff.location.end_line)
+            builder.set_location(iff.location)
             builder.build_const_int(0)
         }
 
-        // builder.set_current_line(iff.location.end_line)
+        // builder.set_location(iff.location)
         br_end := builder.build_branch(0)
 
         // if case
@@ -361,7 +362,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_loop :: (&Self, lop: &AstLoop) {
-        builder.set_current_line(lop.location.line)
+        builder.set_location(lop.location)
         loop_start := builder.next()
         generate_expression(lop.body)
         builder.build_pop(slots_for_size(lop.body.typ.size))
@@ -369,26 +370,26 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_for :: (&Self, forr: &AstFor) {
-        builder.set_current_line(forr.location.line)
+        builder.set_location(forr.location)
         builder.build_const_int(0)
     }
 
     generate_break :: (&Self, brake: &AstBreak) {
-        builder.set_current_line(brake.location.line)
+        builder.set_location(brake.location)
         builder.build_const_int(0)
     }
 
     generate_continue :: (&Self, cont: &AstContinue) {
-        builder.set_current_line(cont.location.line)
+        builder.set_location(cont.location)
         builder.build_const_int(0)
     }
 
     generate_return :: (&Self, ret: &AstReturn) {
-        builder.set_current_line(ret.location.line)
+        builder.set_location(ret.location)
 
         if ret.value_expr != null {
             generate_expression(<<ret.value_expr)
-            builder.set_current_line(ret.location.line)
+            builder.set_location(ret.location)
             builder.build_return()
         } else {
             builder.build_return_void()
@@ -396,7 +397,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_dot :: (&Self, dot: &AstDot) {
-        builder.set_current_line(dot.location.line)
+        builder.set_location(dot.location)
 
         name := dot.name.name
         match dot.sub.typ {
@@ -418,17 +419,17 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_defer :: (&Self, def: &AstDefer) {
         error_handler.report_error_at(def.location, "generate_defer: not implemented")
-        builder.set_current_line(def.location.line)
+        builder.set_location(def.location)
         builder.build_const_int(0)
     }
 
     generate_bool :: (&Self, bol: &AstBool) {
-        builder.set_current_line(bol.location.line)
+        builder.set_location(bol.location)
         builder.build_const_int(if bol.bool_value then 1 else 0)
     }
 
     generate_string :: (&Self, str: &AstString) {
-        builder.set_current_line(str.location.line)
+        builder.set_location(str.location)
         // @! strings are length first, then pointer
         // same as slices
         builder.build_const_int(cast str.string_value.bytes.length)
@@ -440,7 +441,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_block :: (&Self, block: &AstBlock) {
-        builder.set_current_line(block.location.line)
+        builder.set_location(block.location)
         for child : block.children {
             generate_expression(<<child)
 
@@ -457,7 +458,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
         generate_expression(cst.value_expr)
 
-        builder.set_current_line(cst.location.line)
+        builder.set_location(cst.location)
         match from, to {
             TypeInfoFloat($from), TypeInfoFloat($to) -> {
                 if from.size < to.size {
@@ -526,7 +527,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_call :: (&Self, call: &AstCall) {
-        builder.set_current_line(call.location.line)
+        builder.set_location(call.location)
         builder.build_noop()
 
         match call.function.value {
@@ -534,7 +535,7 @@ impl CodeGenerator for ByteCodeGenerator {
                 for arg : call.arguments {
                     generate_expression(<<arg)
                 }
-                builder.set_current_line(call.location.line)
+                builder.set_location(call.location)
                 builder.build_comp_call(call.ast_function)
             }
 
@@ -542,7 +543,7 @@ impl CodeGenerator for ByteCodeGenerator {
                 for arg : call.arguments {
                     generate_expression(<<arg)
                 }
-                builder.set_current_line(call.location.line)
+                builder.set_location(call.location)
                 builder.build_native_call(func)
             }
 
@@ -557,14 +558,14 @@ impl CodeGenerator for ByteCodeGenerator {
         //         if id.name == "print" {
         //             for arg : call.arguments {
         //                 generate_expression(<<arg)
-        //                 builder.set_current_line(call.location.line)
+        //                 builder.set_location(call.location)
         //                 builder.build_print()
         //             }
         //         } else {
         //             for arg : call.arguments {
         //                 generate_expression(<<arg)
         //             }
-        //             builder.set_current_line(call.location.line)
+        //             builder.set_location(call.location)
         //             builder.build_comp_call(call.ast_function)
         //         }
         //     }
@@ -576,7 +577,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_number_literal :: (&Self, num: &AstNumberLiteral) {
-        builder.set_current_line(num.location.line)
+        builder.set_location(num.location)
 
         match num.value {
             .Int($i)    -> builder.build_const_int(i)
@@ -585,7 +586,7 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_identifier :: (&Self, id: &AstIdentifier, deref: bool) {
-        builder.set_current_line(id.location.line)
+        builder.set_location(id.location)
         match id.symbol {
             .Decl($decl) -> match self.variables.get(decl.id) {
                 Some($index) -> {
@@ -631,22 +632,22 @@ impl CodeGenerator for ByteCodeGenerator {
 }
 
 InstructionBuilder :: struct {
-    function        : ^CBCFunction
-    current_line    : int
-    strings         : &StringDatabase
+    function            : ^CBCFunction
+    current_location    : Location
+    strings             : &StringDatabase
 }
 
 impl InstructionBuilder {
     new :: (strings: &StringDatabase) -> InstructionBuilder {
         return InstructionBuilder(
-            function        = null
-            current_line    = -1
-            strings         = strings
+            function            = null
+            current_location    = Location(line = -1, column = -1)
+            strings             = strings
         )
     }
 
     begin_function :: (&Self, func: ^CBCFunction) {
-        current_line = -1
+        current_location = Location(line = -1, column = -1)
         function = func
     }
 
@@ -662,14 +663,14 @@ impl InstructionBuilder {
         function.instructions[branch] = u64(address)
     }
 
-    set_current_line :: (&Self, line: int) {
-        lines := &function.debug_info.lines
-        if lines.count() > 0 and lines.peek_last().count == 0 {
-            lines.peek_last().line = line
-        } else if current_line != line {
-            function.debug_info.lines.add(LineInfo(line, 0))
+    set_location :: (&Self, location: Location) {
+        locations := &function.debug_info.locations
+        if locations.count() > 0 and locations.peek_last().count == 0 {
+            locations.peek_last().location = location
+        } else if current_location.line != location.line or current_location.column != location.column {
+            function.debug_info.locations.add(LineInfo(location, 0))
         }
-        current_line = line
+        current_location = location
     }
 
     add_local :: (&Self, id: int, name: string, type_info: ^TypeInfo) -> int {
@@ -687,11 +688,11 @@ impl InstructionBuilder {
     }
 
     add_debug_info_line :: () #macro #transparent {
-        @assert(function.debug_info.lines.count() > 0)
+        @assert(function.debug_info.locations.count() > 0)
         current_instruction_count := function.instructions.count()
         defer {
             new_instruction_count := function.instructions.count()
-            function.debug_info.lines.peek_last().count += new_instruction_count - current_instruction_count
+            function.debug_info.locations.peek_last().count += new_instruction_count - current_instruction_count
         }
     }
 

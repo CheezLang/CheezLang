@@ -146,7 +146,15 @@ impl CompilationJob for CompileGlobalNodeJob {
             context := Fiber.user_data(FiberContext)
             context.interp.push_frame(code)
             defer context.interp.pop_frame()
-            compiler.code_runner.get().run(<<context.interp)
+            match compiler.code_runner.get().run(<<context.interp) {
+                .Error($msg) -> {
+                    frame := context.interp.top_frame()
+                    location := frame.func.debug_info.get_location_for_ip(frame.ip)
+                    compiler.error_handler.report_error_at(location, "{}", [msg])
+                    poison(node)
+                    return node
+                }
+            }
             frame := context.interp.top_frame()
 
             node.value = match &<<node.typ {
@@ -1312,6 +1320,13 @@ impl CompilationJob for RunCodeJob {
         context := Fiber.user_data(FiberContext)
         context.interp.comp_call(<<function)
         compiler.code_runner.get().run(<<context.interp)
+        match compiler.code_runner.get().run(<<context.interp) {
+            .Error($msg) -> {
+                frame := context.interp.top_frame()
+                location := frame.func.debug_info.get_location_for_ip(frame.ip)
+                compiler.error_handler.report_error_at(location, "{}", [msg])
+            }
+        }
         debug_log("Done")
     }
 }
