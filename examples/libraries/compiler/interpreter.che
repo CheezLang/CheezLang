@@ -194,11 +194,11 @@ impl Interpreter {
         return frames[..=fp]
     }
 
-    comp_call :: (&Self, function: &AstFunction) {
-        push_frame(function.bytecode)
+    comp_call :: (&Self, function: &AstFunction) -> bool {
+        return push_frame(function.bytecode)
     }
 
-    push_frame :: (&Self, func: ^CBCFunction) {
+    push_frame :: (&Self, func: ^CBCFunction) -> bool {
         if fp + 1 >= frames.length {
             frame := &frames[fp]
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
@@ -211,7 +211,23 @@ impl Interpreter {
                 Instruction.pretty_print(frame.code[frame.ip_prev..])
                 frame.dump_stack()
             ], "stdout")
-            return
+            return false
+        }
+
+        if sp + func.local_slots >= stack.length {
+            frame := &frames[fp]
+            g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}, required={}) {}           {}", [
+                frame.func.debug_info.path.slice()
+                frame.func.debug_info.get_line_for_ip(frame.ip_prev)
+                5 // @todo: this is the column, read from debug info
+                fp
+                frame.sp
+                frame.ip_prev
+                sp + func.local_slots
+                Instruction.pretty_print(frame.code[frame.ip_prev..])
+                frame.dump_stack()
+            ], "stdout")
+            return false
         }
 
         _fp, _sp := fp, sp
@@ -235,7 +251,7 @@ impl Interpreter {
             //     Instruction.pretty_print(frame.code[frame.ip_prev..])
             //     frame.dump_stack()
             // ], "stdout")
-            return
+            return false
         }
 
         return_value_slots := 0
@@ -257,6 +273,8 @@ impl Interpreter {
         if const DEBUG_INTERPRETER {
             g_logger.log("push_frame {} (fp = {} -> {}, sp = {} -> {}, local_slots = {})", [func.parameter_slots, _fp, fp, _sp, sp, func.local_slots])
         }
+
+        return true
     }
 
     push_native_frame :: (&Self, wrapper: ^NativeFunctionWrapper) {
@@ -754,7 +772,9 @@ impl Interpreter {
                     //     fmt.align(74), frame.dump_stack()
                     // ])
                 })
-                push_frame(func.bytecode)
+                if !push_frame(func.bytecode) {
+                    return .Done
+                }
             }
 
             .Return -> {

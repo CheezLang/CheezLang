@@ -34,7 +34,7 @@ CompilationJob :: trait {
     compiler    : ^Compiler = null
 
     get_name :: (&Self) -> string;
-    execute :: (&Self, compiler: &Compiler);
+    execute :: (&Self);
 }
 
 LoadFileJob :: struct CompilationJob {
@@ -103,7 +103,7 @@ impl CompilationJob for CompileGlobalNodeJob {
         } 
     }
 
-    execute :: (&Self, compiler: &Compiler) {
+    execute :: (&Self) {
         debug_log("Begin compilation")
 
         node.scope = compiler.global_scope
@@ -1230,15 +1230,15 @@ impl CompilationJob for RunCodeJob {
         } 
     }
 
-    execute :: (&Self, compiler: &Compiler) {
+    execute :: (&Self) {
         if compiler.error_handler.has_errors() {
             return
         }
-        debug_log("Start", [function.name])
+        debug_log("Begin execution")
         context := Fiber.user_data(FiberContext)
         context.interp.comp_call(<<function)
         compiler.code_runner.get().run(<<context.interp)
-        debug_log("Done", [function.name])
+        debug_log("Done")
     }
 }
 
@@ -1254,7 +1254,7 @@ impl CompilationJob for LoadFileJob {
         } 
     }
 
-    execute :: (&Self, compiler: &Compiler) {
+    execute :: (&Self) {
         debug_log("Begin loading")
 
         full_path := match fs.get_full_path(path.slice()) {

@@ -276,7 +276,7 @@ impl Compiler {
     }
 
     run_job :: (&Self, context: ^FiberContext) {
-        context.job.execute(self)
+        context.job.execute()
     }
 
     new_scope :: (&Self, parent: ^Scope = null, constant: bool = false) -> ^Scope {
@@ -355,6 +355,7 @@ impl Compiler {
     }
 
     wait_until_done :: (&Self) {
+        wait_for_threads()
         if waiting_fibers.count() > 0 {
             error_handler.report_error("[Compile] {} fibers were still waiting", [waiting_fibers.count()])
         }

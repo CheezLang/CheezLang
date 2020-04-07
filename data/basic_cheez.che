@@ -1,12 +1,36 @@
+N :: 33
+
 _ :: Main()
 Main :: () {
-    // print_string("test")
-    // b := 5
-    // print_int(b)
-    // a : [square(12)]int
-    // print_int(a.length)
+    print_string("test")
+    b := 5
+    print_int(b)
+    a : [square(2)]int
+    print_int(a.length)
 }
 
-// square :: (a: int) -> int {
-//     return a * a
-// }
+square :: (a: int) -> int {
+    return a * a
+}
+
+// foo :: fib(N)
+// bar :: fib(N)
+// baz :: fib(N)
+// foz :: fib(N)
+
+fib :: (mut n: int) -> int {
+    // mut a := 1
+    // mut b := 1
+
+    // loop {
+    //     if n <= 0 {
+    //         return a
+    //     }
+    //     c := a + b
+    //     a = b
+    //     b = c
+    //     n = n - 1
+    // }
+
+    return if n <= 1 then 1 else fib(n - 1) + fib(n - 2)
+}
