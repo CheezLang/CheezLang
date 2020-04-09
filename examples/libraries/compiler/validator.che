@@ -127,6 +127,15 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             assert("AstString", node.typ != null)
         }
 
+        AstStruct($node) -> {
+            assert("AstStruct", node.typ != null)
+            for child : node.children {
+                if !validate_node(<<child, error_handler) {
+                    return false
+                }
+            }
+        }
+
         AstNumberLiteral($node) -> {
             assert("AstNumberLiteral", node.typ != null)
         }

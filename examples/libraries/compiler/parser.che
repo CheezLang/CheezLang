@@ -686,6 +686,35 @@ impl Parser {
         ))
     }
 
+    parse_struct :: (&Self) -> ^AstNode {
+        nodes := Array[^AstNode].create()
+
+        beg := consume(.KwStruct).location
+
+        lexer.skip_whitespace()
+        consume(.OpenBrace)
+
+        loop {
+            lexer.skip_whitespace()
+            next := lexer.peek_token()
+            if next.typ == .ClosingBrace or next.typ == .EOF {
+                break
+            }
+
+            node := parse_node()
+            if node == null then break
+            nodes.add(node)
+        }
+
+        end := consume(.ClosingBrace).location
+
+        return allocate(AstStruct(
+            id          = next_id()
+            location    = beg.to(end)
+            children    = nodes
+        ))
+    }
+
     parse_atomic_expression :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
         token := lexer.peek_token()
         return match token.typ {
@@ -698,6 +727,7 @@ impl Parser {
             .KwIf           -> parse_if(allow_comma)
             .KwLoop         -> parse_loop(allow_comma)
             .KwReturn       -> parse_return(allow_comma)
+            .KwStruct       -> parse_struct()
             .KwTrue         -> parse_bool()
             .NumberLiteral  -> parse_number()
             .OpenBrace      -> parse_block()

@@ -92,6 +92,23 @@ impl(T: type) Option[T] {
             None -> @assert(false)
         }
     }
+
+    unwrap_or :: (Self, def: T) -> T {
+        return match self {
+            Some($v) -> {
+                Memory.drop(def)
+                v
+            }
+            None -> def
+        }
+    }
+
+    map_ref :: (self: Option[&T], fun: fn(&T) -> $K) -> Option[K] {
+        return match self {
+            Some($value) -> Some(fun(value))
+            None -> None
+        }
+    }
 }
 
 impl(V: type, E: type) Result[V, E] {

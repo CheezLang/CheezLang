@@ -90,6 +90,12 @@ compile_files :: (files: []String, thread_count: int) {
         io.formatln("{}", [frame.get_arg(0, f64)])
         io.set_console_color(.White, .Black)
     }, fn(f64)))
+    compiler.get().global_scope.define_native_function("print_bool", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+        frame := interp.top_frame()
+        io.set_console_color(.Green, .Black)
+        io.formatln("{}", [frame.get_arg(0, bool)])
+        io.set_console_color(.White, .Black)
+    }, fn(bool)))
     compiler.get().global_scope.define_native_function("print_array", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
         frame := interp.top_frame()
         io.set_console_color(.Green, .Black)
@@ -297,6 +303,15 @@ impl Compiler {
 
         result := mem.alloc(T, type_allocator)
         <<result = type_info
+        return result
+    }
+
+    new_type_data_array :: (&Self, $T: type, count: int) -> []T {
+        self.lock()
+        defer self.release()
+
+        result := mem.alloc_n(T, cast count, type_allocator)
+        C.memset(result.data, 0, cast @sizeof(T) * count)
         return result
     }
 

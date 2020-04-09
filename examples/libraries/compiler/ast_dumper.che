@@ -29,6 +29,9 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         AstStruct($str) -> {
             fmt.format_into(result, "AstStruct #{} ({})`n", [str.id, str.location])
             if recurse {
+                for child : str.children {
+                    dump_ast_helper(result, <<child, recurse, indent + 1)
+                }
             }
         }
         

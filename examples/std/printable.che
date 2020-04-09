@@ -298,7 +298,11 @@ impl Printable for TypeInfoTrait {
 }
 impl Printable for TypeInfoStruct {
     print :: (&Self, str: &String, format: string) {
-        str += "TODO: printable for TypeInfoStruct"
+        fmt.format_into(str, "struct {} ``{`n", [self.name])
+        for mem : self.members {
+            fmt.format_into(str, "    {} : {}`n", [mem.name, mem.typ])
+        }
+        str += "}"
     }
 }
 impl Printable for TypeInfoEnum {

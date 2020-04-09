@@ -121,7 +121,7 @@ impl CodeGenerator for ByteCodeGenerator {
             AstContinue($cont)      -> generate_continue(cont)
             AstDecl($decl)          -> generate_decl(decl)
             AstDefer($def)          -> generate_defer(def)
-            AstDot($dot)            -> generate_dot(dot)
+            AstDot($dot)            -> generate_dot(dot, deref)
             AstFor($forr)           -> generate_for(forr)
             AstIdentifier($id)      -> generate_identifier(id, deref)
             AstIf($iff)             -> generate_if(iff)
@@ -203,6 +203,22 @@ impl CodeGenerator for ByteCodeGenerator {
                             [node.sub.typ])
                     }
                 }
+            }
+
+            AstDot($dot) if dot.symbol == .StructMember -> {
+                member := dot.symbol.StructMember
+                
+                // struct ptr
+                generate_expression(<<dot.sub, deref = false)
+                // @todo: deal with non l-values
+                builder.build_const_int(member.offset)
+                builder.build_add(.I64)
+
+                // value
+                generate_expression(ass.value_expr)
+
+                // =
+                builder.build_store(slots_for_size(dot.typ.size))
             }
 
             _ -> {
@@ -396,7 +412,7 @@ impl CodeGenerator for ByteCodeGenerator {
         }
     }
 
-    generate_dot :: (&Self, dot: &AstDot) {
+    generate_dot :: (&Self, dot: &AstDot, deref: bool) {
         builder.set_location(dot.location)
 
         name := dot.name.name
@@ -408,6 +424,22 @@ impl CodeGenerator for ByteCodeGenerator {
                     error_handler.report_error_at(dot.location, "generate_dot: not implemented: {}.{}", [dot.sub.typ, dot.name.name])
                 } else {
                     @assert(false)
+                }
+            }
+
+            TypeInfoStruct($ti) -> {
+                member := dot.symbol.StructMember
+                
+                // struct ptr
+                generate_expression(<<dot.sub, deref = false)
+                // @todo: deal with non l-values
+                builder.build_const_int(member.offset)
+                builder.build_add(.I64)
+
+                if deref {
+                    builder.build_load(slots_for_size(dot.typ.size))
+                } else {
+                    // pointer is already on top of stack
                 }
             }
 

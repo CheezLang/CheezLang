@@ -34,8 +34,15 @@ append_indented :: (result: &String, str: &String, indent: int) {
 pretty_print_ast_helper :: (result: &String, node: &AstNode) {
     match node {
         AstStruct($str) -> {
-            fmt.format_into(result, "struct ``{")
+            fmt.format_into(result, "struct ``{`n")
             // @todo
+
+            r := String.empty()
+            for child : str.children {
+                r.clear()
+                pretty_print_ast_helper(r, <<child)
+                append_indented(result, r, 4)
+            }
             fmt.format_into(result, "``}")
         }
         
@@ -338,8 +345,15 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
 pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
     match node {
         AstStruct($str) -> {
-            fmt.format_into(result, "struct ``{")
+            fmt.format_into(result, "struct ``{ // size: {}, alignment: {}`n", [str.struct_type.size, str.struct_type.alignment])
             // @todo
+
+            r := String.empty()
+            for child : str.children {
+                r.clear()
+                pretty_print_typed_ast_helper(r, <<child)
+                append_indented(result, r, 4)
+            }
             fmt.format_into(result, "``}")
         }
         

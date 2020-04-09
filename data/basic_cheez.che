@@ -1,7 +1,40 @@
 _ :: Main()
 Main :: () {
-    mut a : [5]int = [1, 2, 3, 4, 5]
-            c := 5
-    print_int(a[c])
-    print_string("test")
+    test := "lol"
+
+    arr : [5]int
+
+    arr[0] = 1
+    arr[1] = 2
+    arr[2] = 3
+    arr[3] = 4
+    arr[4] = 5
+
+    print_int(arr[0])
+    print_int(arr[1])
+    print_int(arr[2])
+    print_int(arr[3])
+    print_int(arr[4])
+
+    bar : Bar
+    bar.a = 123
+    bar.b = 0.5
+    bar.c = "hi, was geht?"
+    bar.d = true
+
+    print_int(bar.a)
+    print_float(bar.b)
+    print_string(bar.c)
+    print_bool(bar.d)
+}
+
+Foo :: struct {
+}
+Bar :: struct {
+    a : int
+    b : f64
+    c := "aaaa"
+    d : bool = false
+
+    T :: string
 }

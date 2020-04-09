@@ -48,6 +48,12 @@ impl AstNode for AstImport {}
 
 AstStruct :: struct AstNode {
     name        := "#anonymous"
+    children    : Array[^AstNode]
+
+    sub_scope   : ^Scope = null
+    struct_type : ^TypeInfo = null
+    members     := Array[^AstDecl].create()
+    constants   := Array[^AstConstDecl].create()
 }
 impl AstNode for AstStruct {}
 
@@ -213,6 +219,8 @@ impl AstNode for AstArrayType {}
 AstDot :: struct AstNode {
     sub     : ^AstNode
     name    : &AstIdentifier
+
+    symbol  := Symbol.NotFound
 }
 impl AstNode for AstDot {}
 

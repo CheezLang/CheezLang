@@ -426,7 +426,8 @@ impl Interpreter {
             .Load -> {
                 slots  := arg(int)
                 address := pop(^int)
-                push(<<address)
+                C.memcpy(^frame.stack[frame.sp], address, cast slots * @sizeof(u64))
+                frame.sp += slots
             }
             .Store -> {
                 slots := arg(int)
