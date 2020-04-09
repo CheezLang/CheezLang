@@ -468,13 +468,21 @@ impl Into[JsonValue] for DapStackFrame {
 
 DapReqVariables :: struct {
     variables_reference : int
+    start               : Option[int]
+    count               : Option[int]
 }
 
 impl Into[DapReqVariables] for JsonValue {
     into :: (&Self) -> DapReqVariables {
         map := &self.as_map()
         variablesReference := map.at("variablesReference").to_number()
-        return DapReqVariables(cast(int) variablesReference)
+        start := map.get("start").map_ref((v: &JsonValue) => int(v.to_number()))
+        count := map.get("count").map_ref((v: &JsonValue) => int(v.to_number()))
+        return DapReqVariables(
+            variables_reference = cast(int) variablesReference
+            start               = start
+            count               = count
+        )
     }
 }
 
@@ -510,14 +518,22 @@ DapVariable :: struct {
     variables_reference : int
     name                : String
     value               : String
+    named_variables     : int
+    indexed_variables   : int
 }
 
 impl Into[JsonValue] for DapVariable {
     into :: (&Self) -> JsonValue {
         json := Table[string, JsonValue].create(strings_equal)
-        json["name"] = JsonValue.JsonString(self.name.clone())
-        json["value"] = JsonValue.JsonString(self.value.clone())
-        json["variablesReference"] = JsonValue.JsonNumber(cast(double) self.variables_reference)
+        json["name"]                = JsonValue.JsonString(self.name.clone())
+        json["value"]               = JsonValue.JsonString(self.value.clone())
+        json["variablesReference"]  = JsonValue.JsonNumber(cast(double) self.variables_reference)
+        if self.named_variables != 0 {
+            json["namedVariables"] = JsonValue.JsonNumber(cast(double) self.named_variables)
+        }
+        if self.indexed_variables != 0 {
+            json["indexedVariables"] = JsonValue.JsonNumber(cast(double) self.indexed_variables)
+        }
         return JsonValue.JsonObject(json)
     }
 }

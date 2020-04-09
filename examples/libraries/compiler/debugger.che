@@ -1,33 +1,35 @@
 use import std.array
+use import std.box
 use import std.hash_table
 use import std.map
-use import std.string
-use import std.box
-use import std.rc
-use import std.thread
+use import std.math
 use import std.mem.std_heap_allocator
 use import std.os.windows
 use import std.os.windows_functions
+use import std.rc
+use import std.string
+use import std.thread
 
-io  :: import std.io
-mem :: import std.mem.allocator
-fmt :: import std.fmt
-fs  :: import std.io.fs
+fmt  :: import std.fmt
+fs   :: import std.io.fs
+io   :: import std.io
+mem  :: import std.mem.allocator
+util :: import std.util
 
-use import json.json
 use import dap.debug_adapter
+use import json.json
 use import logging.logger
 
+use import ast
+use import ast_dumper
+use import bytecode_generator
 use import compiler
+use import error_handler
 use import interpreter
 use import jobs
-use import bytecode_generator
-use import string_database
-use import error_handler
-use import ast
 use import lexer
 use import parser
-use import ast_dumper
+use import string_database
 use import value
 
 LOG_PATH :: "D:/dev/CheezLang/data/logs/debugger_log.txt"
@@ -343,6 +345,11 @@ impl CheezDebugAdapter {
         self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, f64)]), "console")
     }
 
+    print_bool :: (&Self, interp: ^Interpreter) {
+        frame := interp.top_frame()
+        self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, bool)]), "console")
+    }
+
     debug_break :: (&Self, interp: ^Interpreter) {
         debugger.get().pause()
     }
@@ -364,6 +371,9 @@ impl CheezDebugAdapter {
         compiler.get().global_scope.define_native_function(
             "print_float",
             NativeFunctionWrapper.new(cast(NativeFunction) self.print_float, fn(f64)))
+        compiler.get().global_scope.define_native_function(
+            "print_bool",
+            NativeFunctionWrapper.new(cast(NativeFunction) self.print_bool, fn(bool)))
         compiler.get().global_scope.define_native_function(
             "debugbreak",
             NativeFunctionWrapper.new(cast(NativeFunction) self.debug_break, fn()))
@@ -513,27 +523,34 @@ impl CommandHandler for CheezDebugAdapter {
         debugger.get().pause()
 
         index := arguments.variables_reference
-        variables_json := Array[DapVariable].create()
+        start := arguments.start.unwrap_or(0)
+        count := arguments.count.unwrap_or(int.max)
+
+        variables := Array[DapVariable].create()
 
         var_ref := &self.get_variable_reference(index)
-        vars := var_ref.get_variables()
+        vars := var_ref.get_variables(start, count)
         for var : vars {
-            self.add_variable_ref(var.clone())
+            var_index := self.add_variable_ref(var.clone())
 
             match &var.get() {
                 Variable($var) -> {
-
-                    variables_json.add(DapVariable(
-                        name = var.name.clone()
-                        value = var.value.clone()
-                        variables_reference = 0
+                    if var.named_variables == 0 and var.indexed_variables == 0 {
+                        var_index = 0
+                    }
+                    variables.add(DapVariable(
+                        name                = var.name.clone()
+                        value               = var.value.clone()
+                        variables_reference = var_index
+                        named_variables     = var.named_variables
+                        indexed_variables   = var.indexed_variables
                     ))
                 }
                 _ -> { @assert(false) }
             }
         }
 
-        return Ok(variables_json)
+        return Ok(variables)
     }
 
     pause :: (&Self) -> Result[(), String] {
@@ -582,7 +599,7 @@ VariableRef :: trait {
     hint    : String
     index   : int
 
-    get_variables :: (&Self) -> Array[Rc[VariableRef]];
+    get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]];
 }
 
 ArgumentsScope :: struct VariableRef {
@@ -596,13 +613,12 @@ impl ArgumentsScope {
 }
 
 impl VariableRef for ArgumentsScope {
-    get_variables :: (&Self) -> Array[Rc[VariableRef]] {
+    get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
         for param : stackframe.func.debug_info.params {
-            value := Any.from_pointers(^stackframe.stack[stackframe.bp + param.index], param.type_info)
-            str := if param.type_info == @type_info(string) then fmt.format("`"{}`"", [value]) else fmt.format("{}", [value])
-            var := Variable.new(interp, frame, param.name.to_owned(), str)
+            var := Variable.new(
+                interp, frame, param.name.to_owned(), param.type_info, ^stackframe.stack[stackframe.bp + param.index])
             result.add(var.clone().change_type(VariableRef))
         }
         return result
@@ -620,13 +636,12 @@ impl LocalsScope {
 }
 
 impl VariableRef for LocalsScope {
-    get_variables :: (&Self) -> Array[Rc[VariableRef]] {
+    get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
         for local : stackframe.func.debug_info.locals {
-            value := Any.from_pointers(^stackframe.stack[stackframe.bp + local.index], local.type_info)
-            str := if local.type_info == @type_info(string) then fmt.format("`"{}`"", [value]) else fmt.format("{}", [value])
-            var := Variable.new(interp, frame, local.name.to_owned(), str)
+            var := Variable.new(
+                interp, frame, local.name.to_owned(), local.type_info, ^stackframe.stack[stackframe.bp + local.index])
             result.add(var.clone().change_type(VariableRef))
         }
         return result
@@ -634,18 +649,67 @@ impl VariableRef for LocalsScope {
 }
 
 Variable :: struct VariableRef {
-    value : String
+    value               : String
+    named_variables     : int
+    indexed_variables   : int
+
+    type_info           : ^TypeInfo
+    pointer             : ^void
 }
 
 impl Variable {
-    new :: (interp: ^Interpreter, frame: int, name: String, value: String) -> Rc[Variable] {
-        return Rc[Variable].new(Variable(interp, frame, name, String.empty(), -1, value))
+    new :: (interp: ^Interpreter, frame: int, name: String, type_info: ^TypeInfo, pointer: ^void) -> Rc[Variable] {
+        any_value := Any.from_pointers(pointer, type_info)
+
+        named_variables, indexed_variables := match type_info {
+            TypeInfoStruct($ti) -> ti.members.length, 0
+            TypeInfoArray($ti) -> 0, ti.count
+            _ -> 0, 0
+        }
+
+        return Rc[Variable].new(Variable(
+            interp              = interp
+            frame               = frame
+            name                = name
+            hint                = String.empty()
+            index               = -1
+            value               = if type_info == @type_info(string) then fmt.format("`"{}`"", [any_value]) else fmt.format("{}", [any_value])
+            named_variables     = named_variables
+            indexed_variables   = indexed_variables
+            type_info           = type_info
+            pointer             = pointer
+        ))
     }
 }
 
 impl VariableRef for Variable {
-    get_variables :: (&Self) -> Array[Rc[VariableRef]] {
+    get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
+
+        match self.type_info {
+            TypeInfoStruct($ti) -> {
+                for 0 .. min(ti.members.length, count) {
+                    index := start + it
+                    if index < 0 or index >= ti.members.length then break
+                    member := ^ti.members[index]
+                    var := Variable.new(
+                        interp, frame, member.name.to_owned(), member.typ, util.pointer_add(self.pointer, member.offset))
+                    result.add(var.clone().change_type(VariableRef))
+                }
+            }
+
+            TypeInfoArray($ti) -> {
+                g_logger.log("start: {}, count: {}", [start, count])
+                for 0 .. min(ti.count, count) {
+                    index := start + it
+                    if index < 0 or index >= ti.count then break
+                    var := Variable.new(
+                        interp, frame, fmt.format("[{}]", [index]), ti.target, util.pointer_add(self.pointer, index * ti.target.size))
+                    result.add(var.clone().change_type(VariableRef))
+                }
+            }
+        }
+
         return result
     }
 }
