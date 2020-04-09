@@ -54,6 +54,9 @@ AstStruct :: struct AstNode {
     struct_type : ^TypeInfo = null
     members     := Array[^AstDecl].create()
     constants   := Array[^AstConstDecl].create()
+
+    // flags
+    members_done := false
 }
 impl AstNode for AstStruct {}
 

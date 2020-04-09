@@ -18,6 +18,7 @@ mem :: import std.mem.allocator
 C   :: import std.c
 io  :: import std.io
 fmt :: import std.fmt
+fs  :: import std.io.fs
 
 use import logging.logger
 
@@ -115,7 +116,7 @@ compile_files :: (files: []String, thread_count: int) {
     )
 
     for(by_ref=true) file : files {
-        compiler.get().add_job(LoadFileJob.new(file.clone()))
+        compiler.get().add_job(compiler.get().create_job(LoadFileJob.new(file.clone())))
     }
 
     start := get_time_milliseconds()
@@ -152,6 +153,13 @@ Compiler :: struct {
     all_nodes       := Array[^AstNode].create()
 
     code_runner     : Rc[CodeRunner]
+
+    structs         := Map[int, ^AstStruct].new()
+    structs_mutex   := Mutex.new()
+
+    string_sources_file := String.empty()
+    string_sources  := String.empty()
+    string_location := Location(line=1, column=1)
 
     // filename -> filecontent
     // contains all source files loaded during compilation
@@ -220,6 +228,14 @@ impl Compiler {
         comp.get().global_scope = comp.get().new_scope()
         comp.get().define_builtin_types(<<comp.get().global_scope)
 
+        comp.get().string_sources_file = match fs.get_full_path("int/string_sources.che") {
+            Ok($path) -> path
+            Err(_) -> "int/string_sources.che".to_owned()
+        }
+        comp.get().sources.set(comp.get().string_sources_file.slice(), "".to_owned())
+        comp.get().string_location.file = comp.get().string_sources_file.slice()
+        fs.write_file(comp.get().string_sources_file.slice(), "")
+
         // create mutex for global scope if thread_count > 1
         if thread_count > 0 {
             comp.get().global_scope.mutex = Some(Mutex.new())
@@ -271,14 +287,65 @@ impl Compiler {
         if threads.get_length() > 1 then mutex.release()
     }
 
-    add_job :: (&Self, job: $T) {
+    add_string_source :: (&Self, content: string) -> Rc[Lexer] {
+        self.lock()
+        defer self.release()
+
+        string_sources := ^sources[string_sources_file.slice()]
+        string_sources.append_string(content)
+        fs.append_file(string_sources_file.slice(), content)
+
+        lexer := Lexer.from_string(content, string_database)
+        lexer.get().location = string_location
+        string_location.byte_index = string_sources.get_length()
+        string_location.line += content.count_char('`n')
+        string_location.column = 1
+
+        return lexer
+    }
+
+    add_source :: (&Self, path: string, content: String) {
+        self.lock()
+        defer self.release()
+
+        sources.set(path, content)
+    }
+
+    get_source :: (&Self, path: string) -> string {
+        self.lock()
+        defer self.release()
+
+        return sources[path].slice()
+    }
+
+    register_struct :: (&Self, typ: ^TypeInfoStruct, ast: ^AstStruct) {
+        self.lock()
+        defer self.release()
+
+        structs[int(typ)] = ast
+    }
+
+    get_struct_ast :: (&Self, typ: ^TypeInfoStruct) -> ^AstStruct {
+        self.lock()
+        defer self.release()
+
+        return structs[int(typ)]
+    }
+
+    create_job :: (&Self, job: $T) -> ^CompilationJob {
         self.lock()
         defer self.release()
 
         ptr := mem.alloc(T, job_allocator)
         <<ptr = job
         ptr.compiler = ^self
-        jobs.push(ptr)
+        return ptr
+    }
+
+    add_job :: (&Self, job: ^CompilationJob) {
+        self.lock()
+        defer self.release()
+        jobs.push(job)
     }
 
     run_job :: (&Self, context: ^FiberContext) {

@@ -1,52 +1,39 @@
 _ :: Main()
 Main :: () {
-    test := "lol"
-
-    arr : [5]int
-
-    arr[0] = 1
-    arr[1] = 2
-    arr[2] = 3
-    arr[3] = 4
-    arr[4] = 5
-
-    print_int(arr[0])
-    print_int(arr[1])
-    print_int(arr[2])
-    print_int(arr[3])
-    print_int(arr[4])
-
-    bar : Bar
-    bar.a = 123
-    bar.b = 0.5
-    bar.c = "hi, was geht?"
-    bar.d = true
-
-    print_int(bar.a)
-    print_float(bar.b)
-    print_string(bar.c)
-    print_bool(bar.d)
-
     foo : Foo
-    foo.name = "foo"
-    foo.bar = bar
 
-    print_string(foo.name)
-    print_int(foo.bar.a)
-    print_float(foo.bar.b)
-    print_string(foo.bar.c)
-    print_bool(foo.bar.d)
+    foo.a = 654
+    foo.c = 7.6
+    foo.e = true
+    foo.g = "hi"
+    
+    print_int(foo.a)
+    print_int(foo.b)
+    print_float(foo.c)
+    print_float(foo.d)
+    print_bool(foo.e)
+    print_bool(foo.f)
+    print_string(foo.g)
+}
+
+get_more :: () -> string {
+    print_string("in get_more")
+    return "T :: int"
 }
 
 Foo :: struct {
-    name : string
-    bar : Bar
-}
-Bar :: struct {
+    {
+        source := "
+    get_more()
     a : int
-    b : f64
-    c := "aaaa"
-    d : bool = false
-
-    T :: string
+    b := 123
+    c : f64
+    d := 0.5
+    e : bool
+    f := true
+    g : string
+"
+        print_string(source)
+        source
+    }
 }

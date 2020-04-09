@@ -76,20 +76,100 @@ CompileGlobalNodeJob :: struct CompilationJob {
 impl CompileGlobalNodeJob {
     new :: (node: ^AstNode) -> CompileGlobalNodeJob {
         return CompileGlobalNodeJob(
-            name = fmt.format("CompileGlobalNode #{}", [node.id])
+            name = fmt.format("CompileGlobalNodeJob #{}", [node.id])
             node = node
         )
     }
 }
 
-CNContext :: struct #copy {
-    expected : ^TypeInfo = null
+CompileStructMemberJob :: struct CompilationJob {
+    name    : String
+    structt : ^AstStruct
+    node    : ^AstNode
 }
 
-impl CNContext {
-    with_expected :: (Self, typ: ^TypeInfo) -> CNContext {
-        expected = typ
-        return self
+impl CompileStructMemberJob {
+    new :: (structt: ^AstStruct, node: ^AstNode) -> CompileStructMemberJob {
+        return CompileStructMemberJob(
+            name    = fmt.format("CompileStructMemberJob #{}", [node.id])
+            structt = structt
+            node    = node
+        )
+    }
+}
+
+impl CompilationJob for CompileStructMemberJob {
+    get_name :: (&Self) -> string {
+        return name.slice()
+    }
+
+    debug_log :: (&Self, msg: string, args: []^any = []) {
+        if const DEBUG_ENABLED { if DEBUG_JOBS {
+            str := fmt.format(msg, args)
+            g_logger.log("[CompileStructMemberJob #{}] {}", [node.id, str])
+        }}
+    }
+
+    execute :: (&Self) {
+        debug_log("Begin compilation")
+
+        compile_node := CompileNode(
+            job         = ^self
+            compiler    = compiler
+            node        = node
+            function    = null
+        )
+
+        match &<<node {
+            AstDecl($decl) -> {
+                compile_node.compile_node(decl, CNContext())
+                structt.members.add(^decl)
+            }
+
+            AstConstDecl($decl) -> {
+                compile_node.compile_node(decl, CNContext())
+                structt.constants.add(^decl)
+            }
+
+            _ -> {
+                node = ^compile_node.evaluate_node(<<node, CNContext())
+                if node.value == .Poison {
+                    poison(<<node)
+                    return
+                }
+
+                match node.typ {
+                    TypeInfoString($ti) -> {
+                        @assert(node.value == .String)
+                        str := node.value.String
+                        lexer := compiler.add_string_source(str)
+                        parser := Parser.new(lexer.get(), compiler.error_handler, compiler.ast_allocator, compiler.next_ast_id)
+                        (^compiler).next_ast_id += 0xFFFFFFFF // ?
+
+                        loop {
+                            node := parser.parse_node()
+                            if node == null then break
+
+                            if const DEBUG_ENABLED { if DUMP_AST {
+                                dump := dump_ast(<<node)
+                                g_logger.log("{}", [dump])
+                            }}
+                            if const DEBUG_ENABLED { if PRINT_AST {
+                                dump := pretty_print_ast(<<node)
+                                g_logger.log("{}", [dump])
+                            }}
+
+                            node.scope = compiler.global_scope
+                            job := compiler.create_job(CompileStructMemberJob.new(structt, node))
+                            compiler.add_job(job)
+                            wait_until(job.done, {})
+                        }
+                    }
+                }
+            }
+        }
+
+        debug_log("Done")
     }
 }
 
@@ -101,18 +181,22 @@ impl CompilationJob for CompileGlobalNodeJob {
     debug_log :: (&Self, msg: string, args: []^any = []) {
         if const DEBUG_ENABLED { if DEBUG_JOBS {
             str := fmt.format(msg, args)
-            g_logger.log("[{}] [CompileGlobalNode #{}] {}", [Fiber.user_data(FiberContext).thread, node.id, str])
+            g_logger.log("[CompileGlobalNodeJob #{}] {}", [node.id, str])
         }}
     }
 
     execute :: (&Self) {
         debug_log("Begin compilation")
-        // {
-        //     dump := pretty_print_ast(<<node)
-        //     g_logger.log("{}", [dump])
-        // }
-        node.scope = compiler.global_scope
-        node = ^compile_node(<<node, CNContext())
+
+        compile_node := CompileNode(
+            job         = ^self
+            compiler    = compiler
+            node        = node
+            function    = null
+        )
+
+        node = ^compile_node.compile_node(<<node, CNContext())
+
         if node.value == .Poison {
             debug_log("Failed. Got poison")
             return
@@ -132,6 +216,125 @@ impl CompilationJob for CompileGlobalNodeJob {
         }}
 
         debug_log("Done")
+    }
+}
+
+impl CompilationJob for RunCodeJob {
+    get_name :: (&Self) -> string {
+        return name.slice()
+    }
+
+    debug_log :: (&Self, msg: string, args: []^any = []) {
+        if const DEBUG_ENABLED { if DEBUG_JOBS {
+            str := fmt.format(msg, args)
+            g_logger.log("[RunCodeJob '{}'] {}", [function.name, str])
+        }}
+    }
+
+    execute :: (&Self) {
+        if compiler.error_handler.has_errors() {
+            return
+        }
+        debug_log("Begin execution")
+        context := Fiber.user_data(FiberContext)
+        context.interp.comp_call(<<function)
+        compiler.code_runner.get().run(<<context.interp)
+        match compiler.code_runner.get().run(<<context.interp) {
+            .Error($msg) -> {
+                frame := context.interp.top_frame()
+                location := frame.func.debug_info.get_location_for_ip(frame.ip)
+                compiler.error_handler.report_error_at(location, "{}", [msg])
+            }
+        }
+        debug_log("Done")
+    }
+}
+
+impl CompilationJob for LoadFileJob {
+    get_name :: (&Self) -> string {
+        return name.slice()
+    }
+
+    debug_log :: (&Self, msg: string, args: []^any = []) {
+        if const DEBUG_ENABLED { if DEBUG_JOBS {
+            str := fmt.format(msg, args)
+            g_logger.log("[LoadFileJob '{}'] {}", [path, str])
+        }}
+    }
+
+    execute :: (&Self) {
+        debug_log("Begin loading")
+
+        full_path := match fs.get_full_path(path.slice()) {
+            Ok($p) -> compiler.string_database.intern(p.slice())
+            Err(_) -> compiler.string_database.intern(path.slice())
+        }
+
+        // @todo: thread sync needed because we are accessing compiler.sources
+        if !compiler.sources.contains(full_path) {
+            content := fs.read_file(full_path)
+
+            match content {
+                Ok($content) -> {
+                // @todo: thread sync needed because we are accessing compiler.sources
+                    compiler.add_source(full_path, content)
+                    lexer := Lexer.from_string(compiler.get_source(full_path), compiler.string_database)
+                    lexer.get().location.file = full_path
+                    parser := Parser.new(lexer.get(), compiler.error_handler, compiler.ast_allocator, compiler.next_ast_id)
+                    (^compiler).next_ast_id += 0xFFFFFFFF // ?
+
+                    loop {
+                        node := parser.parse_node()
+                        if node == null then break
+
+                        if const DEBUG_ENABLED { if DUMP_AST {
+                            dump := dump_ast(<<node)
+                            g_logger.log("{}", [dump])
+                        }}
+                        if const DEBUG_ENABLED { if PRINT_AST {
+                            dump := pretty_print_ast(<<node)
+                            g_logger.log("{}", [dump])
+                        }}
+
+                        node.scope = compiler.global_scope
+                        compiler.add_job(compiler.create_job(CompileGlobalNodeJob.new(node)))
+                    }
+                }
+
+                Err(_) -> {
+                    compiler.error_handler.report_error("Failed to load source file '{}'", [full_path])
+                }
+            }
+        }
+        
+        debug_log("Done")
+    }
+}
+
+
+CompileNode :: struct {
+    job         : ^CompilationJob
+    compiler    : ^Compiler
+    node        : ^AstNode
+    function    : ^AstFunction
+}
+CNContext :: struct #copy {
+    expected : ^TypeInfo = null
+}
+
+impl CNContext {
+    with_expected :: (Self, typ: ^TypeInfo) -> CNContext {
+        expected = typ
+        return self
+    }
+}
+
+impl CompileNode {
+    debug_log :: (&Self, msg: string, args: []^any = []) {
+        if const DEBUG_ENABLED { if DEBUG_JOBS {
+            str := fmt.format(msg, args)
+            g_logger.log("[{}] {}", [job.get_name(), str])
+        }}
     }
 
     evaluate_node :: (&Self, node: &AstNode, ctx: CNContext) -> &AstNode {
@@ -261,6 +464,11 @@ impl CompilationJob for CompileGlobalNodeJob {
                 // wait_until(ti.members != null, {
                 //     // @todo: report error? i dont think its necessary here
                 // })
+
+                struct_ast := compiler.get_struct_ast(ti)
+                wait_until(struct_ast.members_done, {
+                    // nothing to see here...
+                })
 
                 // check if member with this name exists
                 member : ^TypeInfoStructMember = null
@@ -834,22 +1042,34 @@ impl CompilationJob for CompileGlobalNodeJob {
         str.typ = @type_info(type)
         str.sub_scope = compiler.new_scope(str.scope)
 
+        jobs := Array[^CompileStructMemberJob].create()
+
         // @todo: create a job for each child, so children can depend on other children
         for child : str.children {
             child.scope = str.sub_scope
-            child = ^compile_node(<<child, ctx)
+            job := compiler.create_job(CompileStructMemberJob.new(^str, child))
+            jobs.add(cast job)
+            compiler.add_job(job)
 
-            match &<<child {
-                AstDecl($decl) -> {
-                    str.members.add(^decl)
-                }
+            // child = ^compile_node(<<child, ctx)
 
-                AstConstDecl($decl) -> {
-                    str.constants.add(^decl)
-                }
-            }
+            // match &<<child {
+            //     AstDecl($decl) -> {
+            //         str.members.add(^decl)
+            //     }
+
+            //     AstConstDecl($decl) -> {
+            //         str.constants.add(^decl)
+            //     }
+            // }
         }
 
+        for job : jobs {
+            wait_until(job.done, {
+                // nothing to see here...
+            })
+        }
+        str.members_done = true
 
         // create type info
         member_type_infos := compiler.new_type_data_array(TypeInfoStructMember, str.members.count())
@@ -865,6 +1085,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             name        = str.name
             members     = member_type_infos
         ))
+        compiler.register_struct(cast str.struct_type, ^str)
 
         // calculate size and alignment
         {
@@ -1406,97 +1627,6 @@ impl CompilationJob for CompileGlobalNodeJob {
         // @todo: create cast if necessary
 
         return decl
-    }
-}
-
-impl CompilationJob for RunCodeJob {
-    get_name :: (&Self) -> string {
-        return name.slice()
-    }
-
-    debug_log :: (&Self, msg: string, args: []^any = []) {
-        if const DEBUG_ENABLED { if DEBUG_JOBS {
-            str := fmt.format(msg, args)
-            g_logger.log("[{}] [RunCodeJob '{}'] {}", [Fiber.user_data(FiberContext).thread, function.name, str])
-        }}
-    }
-
-    execute :: (&Self) {
-        if compiler.error_handler.has_errors() {
-            return
-        }
-        debug_log("Begin execution")
-        context := Fiber.user_data(FiberContext)
-        context.interp.comp_call(<<function)
-        compiler.code_runner.get().run(<<context.interp)
-        match compiler.code_runner.get().run(<<context.interp) {
-            .Error($msg) -> {
-                frame := context.interp.top_frame()
-                location := frame.func.debug_info.get_location_for_ip(frame.ip)
-                compiler.error_handler.report_error_at(location, "{}", [msg])
-            }
-        }
-        debug_log("Done")
-    }
-}
-
-impl CompilationJob for LoadFileJob {
-    get_name :: (&Self) -> string {
-        return name.slice()
-    }
-
-    debug_log :: (&Self, msg: string, args: []^any = []) {
-        if const DEBUG_ENABLED { if DEBUG_JOBS {
-            str := fmt.format(msg, args)
-            g_logger.log("[{}] [LoadFileJob '{}'] {}", [Fiber.user_data(FiberContext).thread, path, str])
-        }}
-    }
-
-    execute :: (&Self) {
-        debug_log("Begin loading")
-
-        full_path := match fs.get_full_path(path.slice()) {
-            Ok($p) -> compiler.string_database.intern(p.slice())
-            Err(_) -> compiler.string_database.intern(path.slice())
-        }
-
-        // @todo: thread sync needed because we are accessing compiler.sources
-        if !compiler.sources.contains(full_path) {
-            content := fs.read_file(full_path)
-
-            match content {
-                Ok($content) -> {
-                // @todo: thread sync needed because we are accessing compiler.sources
-                    compiler.sources.set(full_path, content)
-                    lexer := Lexer.from_string(compiler.sources.at(full_path).slice(), compiler.string_database)
-                    lexer.get().location.file = full_path
-                    parser := Parser.new(lexer.get(), compiler.error_handler, compiler.ast_allocator, compiler.next_ast_id)
-                    (^compiler).next_ast_id += 0xFFFFFFFF // ?
-
-                    loop {
-                        decl := parser.parse_node()
-                        if decl == null then break
-
-                        if const DEBUG_ENABLED { if DUMP_AST {
-                            dump := dump_ast(<<decl)
-                            g_logger.log("{}", [dump])
-                        }}
-                        if const DEBUG_ENABLED { if PRINT_AST {
-                            dump := pretty_print_ast(<<decl)
-                            g_logger.log("{}", [dump])
-                        }}
-
-                        compiler.add_job(CompileGlobalNodeJob.new(decl))
-                    }
-                }
-
-                Err(_) -> {
-                    compiler.error_handler.report_error("Failed to load source file '{}'", [full_path])
-                }
-            }
-        }
-        
-        debug_log("Done")
     }
 }
 

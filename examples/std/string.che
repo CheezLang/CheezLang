@@ -588,6 +588,17 @@ impl string {
         return false
     }
 
+    count_char :: (Self, ch: char) -> int {
+        count := 0
+        for c : self {
+            if c == ch {
+                count += 1
+            }
+        }
+
+        return count
+    }
+
     index_of :: (Self, ch: char) -> int {
         bytes := self.bytes
         for i : 0..bytes.length {

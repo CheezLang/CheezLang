@@ -380,7 +380,7 @@ impl CheezDebugAdapter {
         //
 
         compiler.get().code_runner = debugger.clone().change_type(CodeRunner)
-        compiler.get().add_job(LoadFileJob.new(path.to_owned()))
+        compiler.get().add_job(compiler.get().create_job(LoadFileJob.new(path.to_owned())))
         compiler.get().start_compilation()
 
         compiler.get().on_done(cast self.on_done)
