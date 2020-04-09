@@ -26,9 +26,21 @@ Main :: () {
     print_float(bar.b)
     print_string(bar.c)
     print_bool(bar.d)
+
+    foo : Foo
+    foo.name = "foo"
+    foo.bar = bar
+
+    print_string(foo.name)
+    print_int(foo.bar.a)
+    print_float(foo.bar.b)
+    print_string(foo.bar.c)
+    print_bool(foo.bar.d)
 }
 
 Foo :: struct {
+    name : string
+    bar : Bar
 }
 Bar :: struct {
     a : int

@@ -499,8 +499,13 @@ impl CommandHandler for CheezDebugAdapter {
 
     scopes :: (&Self, arguments: DapReqScopes) -> Result[Array[DapScope], String] {
         debugger.get().pause()
+        self.clear_variable_refs()
 
         frame_id := arguments.frame_id
+
+        if frame_id < 0 or frame_id > debugger.get().current_interp.fp {
+            return Err(fmt.format("Failed to get scopes, frame id out of bounds"))
+        }
 
         frame := &debugger.get().current_interp.get_stackframes()[frame_id]
         scopes_json := Array[DapScope].create()
@@ -527,6 +532,10 @@ impl CommandHandler for CheezDebugAdapter {
         count := arguments.count.unwrap_or(int.max)
 
         variables := Array[DapVariable].create()
+
+        if index < 0 or index >= variable_refs.count() {
+            return Err(fmt.format("Failed to get variables, variableReferences out of bounds"))
+        }
 
         var_ref := &self.get_variable_reference(index)
         vars := var_ref.get_variables(start, count)
