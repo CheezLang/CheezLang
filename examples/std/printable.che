@@ -304,11 +304,15 @@ impl Printable for TypeInfoTrait {
 }
 impl Printable for TypeInfoStruct {
     print :: (&Self, str: &String, format: string) {
-        fmt.format_into(str, "struct {} ``{`n", [self.name])
-        for mem : self.members {
-            fmt.format_into(str, "    {} : {}`n", [mem.name, mem.typ])
+        if format == "?" {
+            fmt.format_into(str, "struct {} ``{`n", [self.name])
+            for mem : self.members {
+                fmt.format_into(str, "    {} : {}`n", [mem.name, mem.typ])
+            }
+            str += "}"
+        } else {
+            str += self.name
         }
-        str += "}"
     }
 }
 impl Printable for TypeInfoEnum {

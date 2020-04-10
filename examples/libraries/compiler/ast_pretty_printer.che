@@ -349,9 +349,9 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
             // @todo
 
             r := String.empty()
-            for child : str.children {
+            for mem : str.members {
                 r.clear()
-                pretty_print_typed_ast_helper(r, <<child)
+                pretty_print_typed_ast_helper(r, <<mem)
                 append_indented(result, r, 4)
             }
             fmt.format_into(result, "``}")

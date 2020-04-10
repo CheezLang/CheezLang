@@ -302,6 +302,7 @@ impl CheezDebugAdapter {
     }
 
     clear_variable_refs :: (&Self) {
+        g_logger.log("clear_variable_refs")
         variable_refs.clear()
     }
 
@@ -350,6 +351,12 @@ impl CheezDebugAdapter {
         self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, bool)]), "console")
     }
 
+    print_String :: (&Self, interp: ^Interpreter) {
+        frame := interp.top_frame()
+        str := frame.get_arg(0, ^String)
+        self.adapter.emit_output_event(fmt.format("{}", [str.slice()]), "console")
+    }
+
     debug_break :: (&Self, interp: ^Interpreter) {
         debugger.get().pause()
     }
@@ -366,6 +373,9 @@ impl CheezDebugAdapter {
             "print_string",
             NativeFunctionWrapper.new(cast(NativeFunction) self.print_string, fn(string)))
         compiler.get().global_scope.define_native_function(
+            "print",
+            NativeFunctionWrapper.new(cast(NativeFunction) self.print_String, fn(string)))
+        compiler.get().global_scope.define_native_function(
             "print_int",
             NativeFunctionWrapper.new(cast(NativeFunction) self.print_int, fn(int)))
         compiler.get().global_scope.define_native_function(
@@ -379,6 +389,35 @@ impl CheezDebugAdapter {
             NativeFunctionWrapper.new(cast(NativeFunction) self.debug_break, fn()))
         //
 
+        // strings
+        compiler.get().global_scope.define_native_function("new_string", NativeFunctionWrapper.new(
+            cast(NativeFunction) (interp) => {
+                frame := interp.top_frame()
+                str := mem.alloc(String)
+                <<str = String.empty()
+                frame.set_return(str)
+            },
+            fn() -> ^String)
+        )
+        compiler.get().global_scope.define_native_function("append_string", NativeFunctionWrapper.new(
+            cast(NativeFunction) (interp) => {
+                frame := interp.top_frame()
+                str := frame.get_arg(0, ^String)
+                value := frame.get_arg(1, string)
+                str.append_string(value)
+            },
+            fn(^String, string))
+        )
+        compiler.get().global_scope.define_native_function("slice", NativeFunctionWrapper.new(
+            cast(NativeFunction) (interp) => {
+                frame := interp.top_frame()
+                str := frame.get_arg(0, ^String)
+                frame.set_return(str.slice())
+            },
+            fn(^String) -> string)
+        )
+
+        //
         compiler.get().code_runner = debugger.clone().change_type(CodeRunner)
         compiler.get().add_job(compiler.get().create_job(LoadFileJob.new(path.to_owned())))
         compiler.get().start_compilation()
@@ -533,8 +572,8 @@ impl CommandHandler for CheezDebugAdapter {
 
         variables := Array[DapVariable].create()
 
-        if index < 0 or index >= variable_refs.count() {
-            return Err(fmt.format("Failed to get variables, variableReferences out of bounds"))
+        if index < 0 or index > variable_refs.count() {
+            return Err(fmt.format("Failed to get variables, variableReferences out of bounds: {}", [variable_refs.count()]))
         }
 
         var_ref := &self.get_variable_reference(index)
@@ -672,24 +711,32 @@ impl Variable {
         any_value := Any.from_pointers(pointer, type_info)
 
         named_variables, indexed_variables := match type_info {
-            TypeInfoStruct($ti) -> ti.members.length, 0
-            TypeInfoArray($ti) -> 0, ti.count
+            TypeInfoStruct($ti)     -> ti.members.length, 0
+            TypeInfoArray($ti)      -> 0, ti.count
+            TypeInfoPointer($ti)    -> (if (<<cast(^int)pointer) == 0 then 0 else 1, 0)
             _ -> 0, 0
         }
 
         value := match type_info {
+            // $ti if ti == @type_info(String) -> {
+            //     ptr := cast(^String)pointer
+            //     fmt.format("`"{}`"", [ptr.slice()])
+            // }
+
             TypeInfoString(_) -> fmt.format("`"{}`"", [any_value])
+
             TypeInfoPointer($ti) -> {
                 if (<<cast(^int)pointer) == 0 {
                     "null".to_owned()
                 } else {
-                    ptr := <<cast(^^void)pointer
-                    any_value := Any.from_pointers(ptr, ti.target)
+                    // ptr := <<cast(^^void)pointer
+                    // any_value := Any.from_pointers(ptr, ti.target)
 
-                    fmt.format("^ {}", [any_value])
+                    // fmt.format("^ {}", [any_value])
+                    fmt.format("{}", [int(pointer)])
                 }
             }
-            _ -> fmt.format("{}", [any_value])
+            _ -> fmt.format("{:?}", [any_value])
         }
 
         return Rc[Variable].new(Variable(
@@ -724,7 +771,6 @@ impl VariableRef for Variable {
             }
 
             TypeInfoArray($ti) -> {
-                g_logger.log("start: {}, count: {}", [start, count])
                 for 0 .. min(ti.count, count) {
                     index := start + it
                     if index < 0 or index >= ti.count then break
@@ -732,6 +778,18 @@ impl VariableRef for Variable {
                         interp, frame, fmt.format("[{}]", [index]), ti.target, util.pointer_add(self.pointer, index * ti.target.size))
                     result.add(var.clone().change_type(VariableRef))
                 }
+            }
+
+            TypeInfoPointer($ti) -> {
+                ptr := <<cast(^^void)pointer
+                var := Variable.new(
+                    interp,
+                    frame,
+                    "*".to_owned(),
+                    ti.target,
+                    ptr
+                )
+                result.add(var.clone().change_type(VariableRef))
             }
         }
 

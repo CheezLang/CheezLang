@@ -484,6 +484,7 @@ impl CompileNode {
                 if member != null {
                     dot.typ = member.typ
                     dot.symbol = .StructMember(member)
+                    if dot.sub.has_flags(.LValue) then AstNode.set_flags(dot, .LValue)
                     return dot
                 }
 
@@ -810,6 +811,12 @@ impl CompileNode {
             un.typ = un.sub.typ
             un.value = .Type(compiler.pointer_type(un.sub.value.Type, mutable))
         } else {
+            if !un.sub.has_flags(.LValue) {
+                compiler.error_handler.report_error_at(un.location, "Can't create pointer to non l-value")
+                poison(un)
+                return un
+            }
+
             match un.sub {
                 AstIdentifier($id) -> match id.symbol {
                     .Decl($decl) -> {
@@ -820,12 +827,30 @@ impl CompileNode {
                         }
                     }
                 }
-                AstDot($dot) -> match dot.symbol {
-                    .Decl($decl) -> {
-                        if mutable and !decl.mutable {
-                            compiler.error_handler.report_error_at(un.location, "Can't create mutable pointer to immutable variabe")
-                            poison(un)
-                            return un
+                AstDot($dot) -> {
+                    if mutable {
+                        node := dot.sub
+                        loop {
+                            match node {
+                                AstDot($dot) -> {
+                                    node = dot.sub
+                                }
+                                AstIdentifier($id) -> match id.symbol {
+                                    .Decl($decl) -> {
+                                        if !decl.mutable {
+                                            compiler.error_handler.report_error_at(un.location, "Can't create mutable pointer to immutable variabe")
+                                            poison(un)
+                                            return un
+                                        }
+
+                                        break
+                                    }
+
+                                    _ -> break
+                                }
+
+                                _ -> break
+                            }
                         }
                     }
                 }

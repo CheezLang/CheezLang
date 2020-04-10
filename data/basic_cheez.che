@@ -1,12 +1,23 @@
 _ :: Main()
 Main :: () {
-    mut a := 123
-    ptr := ^mut a
-    print_int(a)
-    print_int(*ptr)
-    
-    *ptr = 456
-    
-    print_int(a)
-    print_int(*ptr)
+    str := new_string()
+    append_string(str, "hi")
+    append_string(str, " ")
+    append_string(str, "du")
+    print(str)
+    print_string(slice(str))
 }
+
+// Foo :: struct {
+//     {
+//         str := new_string()
+//         append_string(str, "a")
+//         append_string(str, " : ")
+//         append_string(str, "int")
+//         append_string(str, "
+// ")
+//         append_string(str, "b : string")
+//         print(str)
+//         slice(str)
+//     }
+// }

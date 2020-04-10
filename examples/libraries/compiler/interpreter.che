@@ -118,6 +118,11 @@ impl StackFrame {
         return <<cast(^T)^stack[bp + parameter_indices[index]]
     }
 
+    set_return :: (&Self, v: $T) {
+        <<cast(^T)^stack[0] = v
+        return_value_slots = (@sizeof(T) + 7) / 8
+    }
+
     dump_stack :: (&Self) -> String {
         str := String.with_capacity(128)
 
@@ -280,7 +285,7 @@ impl Interpreter {
         return true
     }
 
-    push_native_frame :: (&Self, wrapper: ^NativeFunctionWrapper) {
+    push_native_frame :: (&Self, wrapper: ^NativeFunctionWrapper) -> ^StackFrame {
         if fp + 1 >= frames.length {
             frame := &frames[fp]
             location := frame.func.debug_info.get_location_for_ip(frame.ip_prev)
@@ -294,7 +299,7 @@ impl Interpreter {
                 Instruction.pretty_print(frame.code[frame.ip_prev..])
                 frame.dump_stack()
             ], "stdout")
-            return
+            return ^frames[fp]
         }
 
         _fp, _sp := fp, sp
@@ -313,6 +318,8 @@ impl Interpreter {
             func = null
             parameter_indices = wrapper.parameter_indices
         )
+
+        return ^frames[fp]
     }
 
     pop_frame :: (&Self) {
@@ -740,7 +747,7 @@ impl Interpreter {
             .NativeCall -> {
                 wrapper := arg(^NativeFunctionWrapper)
 
-                push_native_frame(wrapper)
+                native_frame := push_native_frame(wrapper)
                 
                 if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
                     frame := top_frame()
@@ -754,14 +761,24 @@ impl Interpreter {
                 wrapper.function(^self)
                 if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
                     frame := top_frame()
-                    g_logger.log("{}{}{}{}{}{}{}{}", [
-                        fmt.align(0), fp
-                        fmt.align(5), frame.sp
-                        fmt.align(10), "ExitNativeFunction"
-                        fmt.align(35), frame.dump_stack()
+                    g_logger.log("ret_slots: {}{}{}{}{}{}{}{}{}", [
+                        native_frame.return_value_slots
+                        fmt.align(20), fp
+                        fmt.align(25), frame.sp
+                        fmt.align(30), "ExitNativeFunction"
+                        fmt.align(55), frame.dump_stack()
                     ], "stdout")
                 }}
                 pop_frame()
+
+                if fp >= 0 {
+                    // increment sp by one for return value
+                    // @todo: needs to work with return values bigger than 8 bytes (1 stack slot)
+                    // @fixme frames[fp].sp += 1 // fails to compile
+                    (^frames[fp]).sp += native_frame.return_value_slots
+                } else {
+                    return .Done
+                }
             }
             .CompCall -> {
                 func := arg(^AstFunction)
