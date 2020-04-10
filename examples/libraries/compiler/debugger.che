@@ -374,7 +374,7 @@ impl CheezDebugAdapter {
             NativeFunctionWrapper.new(cast(NativeFunction) self.print_string, fn(string)))
         compiler.get().global_scope.define_native_function(
             "print",
-            NativeFunctionWrapper.new(cast(NativeFunction) self.print_String, fn(string)))
+            NativeFunctionWrapper.new(cast(NativeFunction) self.print_String, fn(^String)))
         compiler.get().global_scope.define_native_function(
             "print_int",
             NativeFunctionWrapper.new(cast(NativeFunction) self.print_int, fn(int)))
@@ -718,10 +718,10 @@ impl Variable {
         }
 
         value := match type_info {
-            // $ti if ti == @type_info(String) -> {
-            //     ptr := cast(^String)pointer
-            //     fmt.format("`"{}`"", [ptr.slice()])
-            // }
+            $ti if ti == @type_info(String) -> {
+                ptr := cast(^String)pointer
+                fmt.format("`"{}`"", [ptr.slice()])
+            }
 
             TypeInfoString(_) -> fmt.format("`"{}`"", [any_value])
 
@@ -729,11 +729,7 @@ impl Variable {
                 if (<<cast(^int)pointer) == 0 {
                     "null".to_owned()
                 } else {
-                    // ptr := <<cast(^^void)pointer
-                    // any_value := Any.from_pointers(ptr, ti.target)
-
-                    // fmt.format("^ {}", [any_value])
-                    fmt.format("{}", [int(pointer)])
+                    fmt.format("{}", [any_value])
                 }
             }
             _ -> fmt.format("{:?}", [any_value])
