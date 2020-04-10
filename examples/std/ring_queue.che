@@ -74,6 +74,7 @@ impl(T: type) RingQueue[T] {
         if size > get_length() {
             C.memset(cast ^data[get_length()], 0, u64((size - get_length()) * @sizeof(T)))
         }
+
     }
 
     push :: (&Self, val: T) {
@@ -90,6 +91,7 @@ impl(T: type) RingQueue[T] {
 
         val := data[first]
         // data[first] = default
+        C.memset(^data[first], 0, @sizeof(T))
         first = (first + 1) % capacity
         return val
     }
@@ -124,7 +126,7 @@ impl(T: type) Drop for RingQueue[T] {
 for_extension_ring_queue_T :: (que: &RingQueue[$T], code: Code, reverse: bool = false, by_ref: bool = true) #for {
     while it_index := 0, it_index < que.count(), it_index += 1 {
         if const reverse {
-            it_index_rev := que.length - it_index - 1
+            it_index_rev := que.count() - it_index - 1
             if const by_ref {
                 it := &que[it_index_rev]
             } else {

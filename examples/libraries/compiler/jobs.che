@@ -152,17 +152,18 @@ impl CompilationJob for CompileStructMemberJob {
 
                             if const DEBUG_ENABLED { if DUMP_AST {
                                 dump := dump_ast(<<node)
-                                g_logger.log("{}", [dump])
+                                g_logger.log("[{}] {}", [self.name, dump])
                             }}
                             if const DEBUG_ENABLED { if PRINT_AST {
                                 dump := pretty_print_ast(<<node)
-                                g_logger.log("{}", [dump])
+                                g_logger.log("[{}] {}", [self.name, dump])
                             }}
 
-                            node.scope = compiler.global_scope
+                            node.scope = self.node.scope
                             job := compiler.create_job(CompileStructMemberJob.new(structt, node))
                             compiler.add_job(job)
-                            wait_until(job.done, {})
+                            wait_until(job.done, {
+                            })
                         }
                     }
                 }
@@ -212,7 +213,7 @@ impl CompilationJob for CompileGlobalNodeJob {
 
         if const DEBUG_ENABLED { if PRINT_TYPED_AST {
             dump := pretty_print_typed_ast(<<node)
-            g_logger.log("{}", [dump])
+            g_logger.log("[{}] {}", [self.name, dump])
         }}
 
         debug_log("Done")
@@ -238,7 +239,6 @@ impl CompilationJob for RunCodeJob {
         debug_log("Begin execution")
         context := Fiber.user_data(FiberContext)
         context.interp.comp_call(<<function)
-        compiler.code_runner.get().run(<<context.interp)
         match compiler.code_runner.get().run(<<context.interp) {
             .Error($msg) -> {
                 frame := context.interp.top_frame()
@@ -289,11 +289,11 @@ impl CompilationJob for LoadFileJob {
 
                         if const DEBUG_ENABLED { if DUMP_AST {
                             dump := dump_ast(<<node)
-                            g_logger.log("{}", [dump])
+                            g_logger.log("[{}] {}", [self.name, dump])
                         }}
                         if const DEBUG_ENABLED { if PRINT_AST {
                             dump := pretty_print_ast(<<node)
-                            g_logger.log("{}", [dump])
+                             g_logger.log("[{}] {}", [self.name, dump])
                         }}
 
                         node.scope = compiler.global_scope
@@ -338,12 +338,13 @@ impl CompileNode {
     }
 
     evaluate_node :: (&Self, node: &AstNode, ctx: CNContext) -> &AstNode {
-        // debug_log("evaluate_node")
+        debug_log("evaluate_node")
         if node.typ != null {
             return node
         }
         node.scope = compiler.new_scope(node.scope, constant = true)
         node <- compile_node(node, ctx)
+
 
         if node.value == .None {
             code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
@@ -360,6 +361,7 @@ impl CompileNode {
                     return node
                 }
             }
+
             frame := context.interp.top_frame()
 
             node.value = match &<<node.typ {

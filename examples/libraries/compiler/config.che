@@ -3,10 +3,10 @@
 
 DEBUG_ENABLED       :: true
 DEBUG_INTERPRETER   := false
-DEBUG_JOBS          := true
+DEBUG_JOBS          := false
 DEBUG_PARSER        := false
 DEBUG_WAIT          := false
-DUMP_AST            := true
+DUMP_AST            := false
 PRINT_AST           := false
 PRINT_TYPED_AST     := false
 VALIDATE_AST        :: true

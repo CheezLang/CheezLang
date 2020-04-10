@@ -47,6 +47,7 @@ wait_until :: (cond: Code, on_error: Code, on_yield: Code = {}, on_resume: Code 
     loop {
         if @insert(cond) then break
         if const DEBUG_ENABLED then if DEBUG_WAIT then g_logger.log("[{}] [{}] suspending on {}", [fiber_context.thread, fiber_context.job.get_name(), @expr_to_string(@insert(cond))])
+        
         @insert(on_yield)
         Fiber.yield()
         @insert(on_resume)
@@ -135,11 +136,18 @@ FiberContext :: struct {
 }
 
 Compiler :: struct {
+    // there is a weird bug where the pointer to the  debug adapter at some point changes to point to the compiler
+    // and thus overrides variables of the compiler
+    // so put this dummy memory here so that if that happens
+    // the state of the compiler is "protected"
+    dummy           : [1024]u8 = default
+
+
     jobs            := RingQueue[^CompilationJob].new()
 
     fibers          := Array[^FiberContext].create(1024)
-    ready_fibers    := RingQueue[^FiberContext].new()
-    waiting_fibers  := RingQueue[^FiberContext].new()
+    ready_fibers    := RingQueue[^FiberContext].new(10)
+    waiting_fibers  := RingQueue[^FiberContext].new(10)
     any_progress    := false
 
     mutex           : Mutex
@@ -228,9 +236,9 @@ impl Compiler {
         comp.get().global_scope = comp.get().new_scope()
         comp.get().define_builtin_types(<<comp.get().global_scope)
 
-        comp.get().string_sources_file = match fs.get_full_path("int/string_sources.che") {
+        comp.get().string_sources_file = match fs.get_full_path("d:\dev\CheezLang\gen\int\string_sources.che") {
             Ok($path) -> path
-            Err(_) -> "int/string_sources.che".to_owned()
+            Err(_) -> "d:\dev\CheezLang\gen\int\string_sources.che".to_owned()
         }
         comp.get().sources.set(comp.get().string_sources_file.slice(), "".to_owned())
         comp.get().string_location.file = comp.get().string_sources_file.slice()
@@ -297,6 +305,7 @@ impl Compiler {
 
         lexer := Lexer.from_string(content, string_database)
         lexer.get().location = string_location
+        lexer.get().offset = string_location.byte_index
         string_location.byte_index = string_sources.get_length()
         string_location.line += content.count_char('`n')
         string_location.column = 1
@@ -482,10 +491,8 @@ impl Compiler {
         current_fiber : ^FiberContext = null
         while true #label main_loop {
             {
-                // g_logger.log("[{}] waiting for lock", [active_threads])
                 self.lock()
                 defer self.release()
-                // g_logger.log("[{}] got lock", [active_threads])
 
                 // if fiber made progress or finished, move all stuff from q2 to q
                 if current_fiber != null {
@@ -496,7 +503,8 @@ impl Compiler {
                     if current_fiber.job == null or current_fiber.job.progressed {
                         any_progress = true
                         while self.waiting_fibers.count() > 0 {
-                            self.ready_fibers.push(self.waiting_fibers.pop())
+                            fiber := self.waiting_fibers.pop()
+                            self.ready_fibers.push(fiber)
                         }
                         any_progress = false
                     }
@@ -514,6 +522,7 @@ impl Compiler {
                         job := self.jobs.pop()
                         fiber := self.find_free_fiber()
                         fiber.job = job
+
                         self.ready_fibers.push(fiber)
 
                     // this doesn't work right now
@@ -529,8 +538,6 @@ impl Compiler {
 
                     } else {
                         if self.active_threads > 0 then continue
-                        
-                        // g_logger.log("[{}] exit thread", [active_threads])
                         break main_loop
                     }
                 }
@@ -540,7 +547,6 @@ impl Compiler {
                 active_threads += 1
             }
 
-            // g_logger.log("[{}] resuming fiber", [active_threads])
             current_fiber.fiber.resume()
         }
 

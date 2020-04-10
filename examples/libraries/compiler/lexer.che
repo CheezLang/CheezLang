@@ -16,6 +16,7 @@ Lexer :: struct {
     text        : string
     location    : Location
     peek        : Option[Token]
+    offset      : int
     string_db   : &StringDatabase
 
     // interned keywords
@@ -72,8 +73,9 @@ impl Lexer {
                 line        = 1
                 column      = 1
             )
-            peek          = None
-            string_db     = string_db
+            offset          = 0
+            peek            = None
+            string_db       = string_db
 
             KwLambda   = string_db.intern("lambda")
             KwReturn   = string_db.intern("return")
@@ -157,16 +159,18 @@ impl Lexer {
 
         match skip_newlines_and_comments() {
             Some($loc) -> {
-                return Token(
+                t := Token(
                     typ = TokenType.NewLine
                     location = loc
                     suffix = None
                     data = TokenData.None
                 )
+                return t
             }
         }
 
-        return read_token()
+        t := read_token()
+        return t
     }
 
     skip_whitespace :: (&Self) {
@@ -210,7 +214,7 @@ impl Lexer {
 
         token.location.byte_length = 0
 
-        if location.byte_index >= text.bytes.length {
+        if location.byte_index - offset >= text.bytes.length {
             return token
         }
 
@@ -346,7 +350,7 @@ impl Lexer {
         use LexerNumberState
 
         state := Init
-        while location.byte_index < text.bytes.length {
+        while location.byte_index - offset < text.bytes.length {
             c, c_len := peek_char(0)
             next, _  := peek_char(1)
 
@@ -545,15 +549,15 @@ impl Lexer {
 
     parse_suffix :: (&Self, token: &Token) {
         if is_ident_begin(peek_char(0)[0]) {
-            start := location.byte_index
-            while location.byte_index < text.bytes.length {
+            start := location.byte_index - offset
+            while location.byte_index - offset < text.bytes.length {
                 c, c_len := peek_char(0)
                 if !is_ident_char(c) then break
                 location.byte_index += int(c_len)
                 location.column += 1
             }
 
-            token.suffix = Some(text[start..location.byte_index])
+            token.suffix = Some(text[start .. location.byte_index - offset])
         }
     }
 
@@ -565,16 +569,16 @@ impl Lexer {
 
     parse_identifier :: (&Self, token: &Token, typ: TokenType) {
         token.typ = typ
-        start := location.byte_index
+        start := location.byte_index - offset
 
-        while location.byte_index < text.bytes.length {
+        while location.byte_index - offset < text.bytes.length {
             c, c_len := peek_char(0)
             if !is_ident_char(c) then break
             location.byte_index += int(c_len)
             location.column += 1
         }
 
-        str := text[start..location.byte_index]
+        str := text[start .. location.byte_index - offset]
         token.data = TokenData.String(string_db.intern(str))
     }
 
@@ -582,10 +586,10 @@ impl Lexer {
         token.typ = typ
         location.byte_index += 1
         location.column += 1
-        start := location.byte_index
+        start := location.byte_index - offset
 
         foundEnd := false
-        while location.byte_index < text.bytes.length {
+        while location.byte_index - offset < text.bytes.length {
             c, c_len := peek_char(0)
             location.byte_index += int(c_len)
             location.column += 1
@@ -594,7 +598,7 @@ impl Lexer {
                 foundEnd = true
                 break
             } else if c == '``' {
-                if location.byte_index >= text.bytes.length {
+                if location.byte_index - offset >= text.bytes.length {
                     // TODO: report error
                     break
                 }
@@ -613,14 +617,14 @@ impl Lexer {
             // TODO: report
         }
 
-        str := text[start .. location.byte_index - 1]
+        str := text[start .. location.byte_index - offset - 1]
         token.data = TokenData.String(string_db.intern(str))
     }
 
     skip_newlines_and_comments :: (&Self) -> loc: Option[Location] {
         loc = None
 
-        while location.byte_index < text.bytes.length {
+        while location.byte_index - offset < text.bytes.length {
             curr, curr_len := peek_char(0)
             next, next_len := peek_char(1)
 
@@ -651,7 +655,7 @@ impl Lexer {
     }
 
     peek_char :: (&Self, offset: int) -> char, i32 {
-        index := location.byte_index
+        index := location.byte_index - self.offset
         while offset > 0, offset -= 1 {
             _, len := Utf8.decode(text.slice().bytes[index..text.bytes.length])
             index += int(len)
@@ -665,7 +669,7 @@ impl Lexer {
 
     parse_multi_line_comment :: (&Self) {
         level := 0
-        while location.byte_index < text.bytes.length {
+        while location.byte_index - offset < text.bytes.length {
             curr, curr_len := peek_char(0)
             next, next_len := peek_char(1)
 
@@ -692,7 +696,7 @@ impl Lexer {
     }
 
     parse_single_line_comment :: (&Self) {
-        while location.byte_index < text.bytes.length {
+        while location.byte_index - offset < text.bytes.length {
             next, len := peek_char(0)
             if next == '`n' {
                 break
@@ -783,7 +787,7 @@ TokenData :: enum #copy {
 
 impl Printable for Location {
     print :: (&Self, str: &String, format: string) {
-        str.appendf("{}:{}->{}", (line, column, end_line))
+        str.appendf("{}:{}:{}->{}", (file, line, column, end_line))
     }
 }
 
