@@ -10,12 +10,34 @@ use import value
 
 #export_scope
 
+AstNodeFlags :: enum #flags {
+    None
+    LValue
+}
+
+__uiaeuiaeuiae := @type_info(AstNodeFlags)
+
 AstNode :: trait {
     id       : int
     location : Location
     scope    : ^Scope = null
     typ      : ^TypeInfo = null
     value    : Value = Value.None
+    flags    : int = 0
+}
+
+impl AstNode {
+    set_flags :: (&Self, flags: AstNodeFlags) {
+        self.flags = @bin_or(self.flags, int(flags))
+    }
+
+    clear_flags :: (&Self, flags: AstNodeFlags) {
+        self.flags = @bin_and(self.flags, @bin_not(int(flags)))
+    }
+
+    has_flags :: (&Self, flags: AstNodeFlags) -> bool {
+        return @bin_and(self.flags, int(flags)) == int(flags)
+    }
 }
 
 // statements
@@ -146,7 +168,7 @@ AstUnary :: struct AstNode {
     operator    : UnOp
     sub         : &AstNode
 
-    UnOp :: enum #copy { Neg, Not, Ref, RefMut, Ptr, Deref }
+    UnOp :: enum #copy { Neg, Not, Ref, RefMut, Ptr, PtrMut, Deref }
 }
 impl AstNode for AstUnary {}
 
@@ -281,6 +303,8 @@ impl AstUnary.UnOp {
             .Ref    -> "&"
             .RefMut -> "&mut "
             .Ptr    -> "^"
+            .PtrMut -> "^mut "
+            .Deref  -> "*"
             _       -> @assert(false)
         }
     }

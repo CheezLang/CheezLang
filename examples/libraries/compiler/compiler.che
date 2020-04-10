@@ -382,6 +382,20 @@ impl Compiler {
         return result
     }
 
+    pointer_type :: (&Self, target: ^TypeInfo, mutable: bool) -> ^TypeInfo {
+        // todo: fat
+        typ := self.new_type(TypeInfoPointer(
+            size        = 8
+            alignment   = 8
+            traits      = []
+            target      = target
+            is_mut      = mutable
+            is_fat      = false
+        ))
+
+        return typ
+    }
+
     new_type_data_array :: (&Self, $T: type, count: int) -> []T {
         self.lock()
         defer self.release()

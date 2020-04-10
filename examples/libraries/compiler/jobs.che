@@ -586,9 +586,26 @@ impl CompileNode {
             }
 
             AstUnary($un) if un.operator == .Deref -> {
-                compiler.error_handler.report_error_at(ass.pattern.location, "compile_assignment: not implemented: *<expr>")
-                poison(ass)
-                return ass
+                match un.sub.typ {
+                    TypeInfoPointer($ti) -> {
+                        if !ti.is_mut {
+                            compiler.error_handler.report_error_at(ass.pattern.location, "Can't assign to immutable pointer")
+                            poison(ass)
+                            return ass
+                        }
+                    }
+                    TypeInfoReference($ti) -> {
+                        if !ti.is_mut {
+                            compiler.error_handler.report_error_at(ass.pattern.location, "Can't assign to immutable reference")
+                            poison(ass)
+                            return ass
+                        }
+                    }
+                }
+                // ok
+                // compiler.error_handler.report_error_at(ass.pattern.location, "compile_assignment: not implemented: *<expr>")
+                // poison(ass)
+                // return ass
             }
 
             _ -> {
@@ -709,6 +726,7 @@ impl CompileNode {
             .Ref    -> compile_unary_ref(un, ctx)
             .RefMut -> compile_unary_ref_mut(un, ctx)
             .Ptr    -> compile_unary_ptr(un, ctx)
+            .PtrMut -> compile_unary_ptr(un, ctx)
             .Deref  -> compile_unary_deref(un, ctx)
         }
     }
@@ -782,12 +800,70 @@ impl CompileNode {
     }
 
     compile_unary_ptr :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
-        compiler.error_handler.report_error_at(un.location, "compile_unary_ptr: not implemented")
+        mutable := un.operator == .PtrMut
+        un.sub.scope = un.scope
+        un.sub <- compile_node(un.sub, ctx)
+        handle_poison(un, un.sub)
+
+        if un.sub.typ == @type_info(type) {
+            @assert(un.sub.value == .Type)
+            un.typ = un.sub.typ
+            un.value = .Type(compiler.pointer_type(un.sub.value.Type, mutable))
+        } else {
+            match un.sub {
+                AstIdentifier($id) -> match id.symbol {
+                    .Decl($decl) -> {
+                        if mutable and !decl.mutable {
+                            compiler.error_handler.report_error_at(un.location, "Can't create mutable pointer to immutable variabe")
+                            poison(un)
+                            return un
+                        }
+                    }
+                }
+                AstDot($dot) -> match dot.symbol {
+                    .Decl($decl) -> {
+                        if mutable and !decl.mutable {
+                            compiler.error_handler.report_error_at(un.location, "Can't create mutable pointer to immutable variabe")
+                            poison(un)
+                            return un
+                        }
+                    }
+                }
+            }
+            un.typ = compiler.pointer_type(un.sub.typ, mutable)
+        }
+
         return un
     }
 
     compile_unary_deref :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
-        compiler.error_handler.report_error_at(un.location, "compile_unary_deref: not implemented")
+        un.sub.scope = un.scope
+        un.sub <- compile_node(un.sub, ctx)
+        handle_poison(un, un.sub)
+
+        if !un.sub.has_flags(.LValue) {
+            compiler.error_handler.report_error_at(un.location, "Can't dereference non l-value")
+            poison(un)
+            return un
+        }
+
+        match un.sub.typ {
+            TypeInfoPointer($ti) -> {
+                un.typ = ti.target
+            }
+            TypeInfoReference($ti) -> {
+                un.typ = ti.target
+            }
+
+            _ -> {
+                compiler.error_handler.report_error_at(
+                    un.location,
+                    "Can't dereference value of type '{}'",
+                    [un.sub.typ]
+                )
+                poison(un)
+            }
+        }
         return un
     }
 
@@ -1154,6 +1230,7 @@ impl CompileNode {
                 wait_until(decl.var_type != null, {
                     compiler.error_handler.report_error_at(id.location, "Failed to get type of declaration")
                 })
+                AstNode.set_flags(id, .LValue)
                 id.typ = decl.var_type
             }
 
@@ -1656,6 +1733,7 @@ impl TypeInfo {
 
         return match a, b {
             TypeInfoArray($a), TypeInfoArray($b) -> a.count == b.count and same(a.target, b.target)
+            TypeInfoPointer($a), TypeInfoPointer($b) -> a.is_mut == b.is_mut and same(a.target, b.target)
 
             _ -> false
         }

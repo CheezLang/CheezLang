@@ -221,6 +221,17 @@ impl CodeGenerator for ByteCodeGenerator {
                 builder.build_store(slots_for_size(dot.typ.size))
             }
 
+            AstUnary($un) if un.operator == .Deref -> {
+                // ptr
+                generate_expression(un.sub)
+
+                // value
+                generate_expression(ass.value_expr)
+
+                // =
+                builder.build_store(slots_for_size(un.typ.size))
+            }
+
             _ -> {
                 error_handler.report_error_at(ass.pattern.location, "generate_assignment: pattern not implemented")
             }
@@ -261,11 +272,35 @@ impl CodeGenerator for ByteCodeGenerator {
     }
 
     generate_unary :: (&Self, un: &AstUnary) {
-        generate_expression(un.sub)
-        builder.set_location(un.location)
         match un.operator {
-            .Not -> builder.build_not()
-            .Neg -> builder.build_neg(type_info_to_inst_number_type(un.sub.typ))
+            .Not -> {
+                generate_expression(un.sub)
+                builder.set_location(un.location)
+                builder.build_not()
+            }
+            .Neg -> {
+                generate_expression(un.sub)
+                builder.set_location(un.location)
+                builder.build_neg(type_info_to_inst_number_type(un.sub.typ))
+            }
+
+            .Ptr -> {
+                generate_expression(un.sub, deref = false)
+            }
+            .PtrMut -> {
+                generate_expression(un.sub, deref = false)
+            }
+            .Ref -> {
+                generate_expression(un.sub, deref = false)
+            }
+            .RefMut -> {
+                generate_expression(un.sub, deref = false)
+            }
+
+            .Deref -> {
+                generate_expression(un.sub)
+                builder.build_load(slots_for_size(un.typ.size))
+            }
 
             _ -> error_handler.report_error_at(un.location, "Code gen for unary not implemented")
         }

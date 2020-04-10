@@ -518,6 +518,7 @@ DapVariable :: struct {
     variables_reference : int
     name                : String
     value               : String
+    type_name           : String
     named_variables     : int
     indexed_variables   : int
 }
@@ -527,6 +528,7 @@ impl Into[JsonValue] for DapVariable {
         json := Table[string, JsonValue].create(strings_equal)
         json["name"]                = JsonValue.JsonString(self.name.clone())
         json["value"]               = JsonValue.JsonString(self.value.clone())
+        json["type"]                = JsonValue.JsonString(self.type_name.clone())
         json["variablesReference"]  = JsonValue.JsonNumber(cast(double) self.variables_reference)
         if self.named_variables != 0 {
             json["namedVariables"] = JsonValue.JsonNumber(cast(double) self.named_variables)

@@ -316,11 +316,29 @@ impl Parser {
             }
             .Hat -> {
                 beg := lexer.next_token().location
+
+                mutable := if check_token(.KwMut) {
+                    lexer.next_token()
+                    true
+                } else {
+                    false
+                }
+
                 sub := parse_unary(allow_comma, allow_function)
                 return allocate(AstUnary(
                     id          = next_id()
                     location    = beg.to(sub.location)
-                    operator    = .Ptr
+                    operator    = if mutable then .PtrMut else .Ptr
+                    sub         = <<sub
+                ))
+            }
+            .Asterisk -> {
+                beg := lexer.next_token().location
+                sub := parse_unary(allow_comma, allow_function)
+                return allocate(AstUnary(
+                    id          = next_id()
+                    location    = beg.to(sub.location)
+                    operator    = .Deref
                     sub         = <<sub
                 ))
             }

@@ -550,6 +550,7 @@ impl CommandHandler for CheezDebugAdapter {
                     variables.add(DapVariable(
                         name                = var.name.clone()
                         value               = var.value.clone()
+                        type_name           = fmt.format("{}", [var.type_info])
                         variables_reference = var_index
                         named_variables     = var.named_variables
                         indexed_variables   = var.indexed_variables
@@ -676,13 +677,28 @@ impl Variable {
             _ -> 0, 0
         }
 
+        value := match type_info {
+            TypeInfoString(_) -> fmt.format("`"{}`"", [any_value])
+            TypeInfoPointer($ti) -> {
+                if (<<cast(^int)pointer) == 0 {
+                    "null".to_owned()
+                } else {
+                    ptr := <<cast(^^void)pointer
+                    any_value := Any.from_pointers(ptr, ti.target)
+
+                    fmt.format("^ {}", [any_value])
+                }
+            }
+            _ -> fmt.format("{}", [any_value])
+        }
+
         return Rc[Variable].new(Variable(
             interp              = interp
             frame               = frame
             name                = name
             hint                = String.empty()
             index               = -1
-            value               = if type_info == @type_info(string) then fmt.format("`"{}`"", [any_value]) else fmt.format("{}", [any_value])
+            value               = value
             named_variables     = named_variables
             indexed_variables   = indexed_variables
             type_info           = type_info

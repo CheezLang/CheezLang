@@ -1,45 +1,12 @@
 _ :: Main()
 Main :: () {
-    foo : Foo
-
-    foo.a = 654
-    foo.c = 7.6
-    foo.e = true
-    foo.g = "hi"
-    foo.x = "du"
+    mut a := 123
+    ptr := ^mut a
+    print_int(a)
+    print_int(*ptr)
     
-    print_int(foo.a)
-    print_int(foo.b)
-    print_float(foo.c)
-    print_float(foo.d)
-    print_bool(foo.e)
-    print_bool(foo.f)
-    print_string(foo.g)
-    print_string(foo.x)
-}
-
-get_more :: () -> string {
-    // print_string("in get_more")
-    return "x : string"
-}
-
-Foo :: struct {
-    {
-        source := "
-    {
-        a := 5
-        b := true
-        uiae := get_more()
-        uiae
-    }
-    a : int
-    b : = 123
-    c : f64
-    d := 0.5
-    e : bool
-    f := true
-    g : string"
-        // print_string(source)
-        source
-    }
+    *ptr = 456
+    
+    print_int(a)
+    print_int(*ptr)
 }
