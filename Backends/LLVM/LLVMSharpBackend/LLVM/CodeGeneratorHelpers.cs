@@ -7,6 +7,7 @@ using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using Cheez.Util;
+using CompilerLibrary.Extras;
 using LLVMSharp;
 using System;
 using System.Collections.Generic;
@@ -1202,23 +1203,35 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                     case PointerType p:
                         {
+                            // target
                             builder.CreateStore(
                                 RTTITypeInfoAsPtr(p.TargetType),
                                 builder.CreateStructGEP(global, offset + 0, ""));
+                            // is_mut
+                            builder.CreateStore(
+                                LLVM.ConstInt(LLVM.Int1Type(), 1ul, false),
+                                builder.CreateStructGEP(global, offset + 1, ""));
+                            // is_fat
                             builder.CreateStore(
                                 LLVM.ConstInt(LLVM.Int1Type(), p.IsFatPointer ? 1ul : 0ul, false),
-                                builder.CreateStructGEP(global, offset + 1, ""));
+                                builder.CreateStructGEP(global, offset + 2, ""));
                             break;
                         }
 
                     case ReferenceType p:
                         {
+                            // target
                             builder.CreateStore(
                                 RTTITypeInfoAsPtr(p.TargetType),
                                 builder.CreateStructGEP(global, offset + 0, ""));
+                            // is_mut
+                            builder.CreateStore(
+                                LLVM.ConstInt(LLVM.Int1Type(), 1ul, false),
+                                builder.CreateStructGEP(global, offset + 1, ""));
+                            // is_fat
                             builder.CreateStore(
                                 LLVM.ConstInt(LLVM.Int1Type(), p.IsFatReference ? 1ul : 0ul, false),
-                                builder.CreateStructGEP(global, offset + 1, ""));
+                                builder.CreateStructGEP(global, offset + 2, ""));
                             break;
                         }
 

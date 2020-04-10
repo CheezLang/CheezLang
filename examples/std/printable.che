@@ -269,13 +269,19 @@ impl Printable for TypeInfoInt {
 }
 impl Printable for TypeInfoPointer {
     print :: (&Self, str: &String, format: string) {
-        str += "^" // @todo: mut
+        str += "^"
+        if self.is_mut {
+            str += "mut "
+        }
         fmt.format_into(str, "{}", [target])
     }
 }
 impl Printable for TypeInfoReference {
     print :: (&Self, str: &String, format: string) {
-        str += "&" // @todo: mut
+        str += "&"
+        if self.is_mut {
+            str += "mut "
+        }
         fmt.format_into(str, "{}", [target])
     }
 }

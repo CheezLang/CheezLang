@@ -1450,7 +1450,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var result = builder.CreateICmp(op, left, right, "");
                 return result;
             }
-            else if (bin.ActualOperator is EnumFlagsCompineOperator eco)
+            else if (bin.ActualOperator is EnumFlagsCombineOperator eco)
             {
                 var llvmEnumType = CheezTypeToLLVMType(bin.Type);
 

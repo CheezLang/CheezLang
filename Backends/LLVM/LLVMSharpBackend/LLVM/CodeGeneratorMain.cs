@@ -280,7 +280,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (optimize) // TODO
             {
                 Console.WriteLine("[LLVM] Running optimizations...");
-                var (modifiedFunctions, modifiedModule) = RunOptimizations(3);
+                var (modifiedFunctions, modifiedModule) = RunOptimizations(1);
 
                 Console.WriteLine($"[LLVM] {modifiedFunctions} functions where modified during optimization.");
                 if (!modifiedModule) Console.WriteLine($"[LLVM] Module was not modified during optimization.");
@@ -328,7 +328,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             var pmBuilder = LLVM.PassManagerBuilderCreate();
             LLVM.PassManagerBuilderSetOptLevel(pmBuilder, level);
-            LLVM.PassManagerBuilderUseInlinerWithThreshold(pmBuilder, 100);
+            LLVM.PassManagerBuilderUseInlinerWithThreshold(pmBuilder, 0);
 
             var funcPM = module.CreateFunctionPassManagerForModule();
             LLVM.PassManagerBuilderPopulateFunctionPassManager(pmBuilder, funcPM);

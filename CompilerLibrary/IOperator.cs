@@ -1,4 +1,5 @@
 ﻿using Cheez.Ast.Statements;
+using Cheez.Extras;
 using Cheez.Types;
 using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
@@ -129,7 +130,7 @@ namespace Cheez
         }
     }
 
-    public class EnumFlagsCompineOperator : IBinaryOperator
+    public class EnumFlagsCombineOperator : IBinaryOperator
     {
         public EnumType EnumType { get; }
         public CheezType LhsType => EnumType;
@@ -138,7 +139,7 @@ namespace Cheez
 
         public string Name => "or";
 
-        public EnumFlagsCompineOperator(EnumType type)
+        public EnumFlagsCombineOperator(EnumType type)
         {
             EnumType = type;
         }
@@ -189,7 +190,15 @@ namespace Cheez
 
         public object Execute(object left, object right)
         {
-            throw new NotImplementedException();
+            var l = left as EnumValue;
+            var r = right as EnumValue;
+            if (l == null || r == null)
+                throw new ArgumentException($"'{nameof(left)}' and '{nameof(right)}' must be enum values, but are '{left}' and '{right}'");
+            if (l.Type != r.Type)
+                throw new ArgumentException($"'{nameof(left)}' and '{nameof(right)}' must have the same type, but have {l.Type} and {r.Type}");
+            
+            var contains = l.Members.Intersect(r.Members).Count() > 0;
+            return contains;
         }
     }
 

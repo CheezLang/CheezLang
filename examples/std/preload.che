@@ -511,12 +511,14 @@ __ti_TypeInfoInt := @type_info(TypeInfoInt)
 
 TypeInfoPointer :: struct TypeInfo {
     target : ^TypeInfo
+    is_mut : bool
     is_fat : bool
 }
 __ti_TypeInfoPointer := @type_info(TypeInfoPointer)
 
 TypeInfoReference :: struct TypeInfo {
     target : ^TypeInfo
+    is_mut : bool
     is_fat : bool
 }
 __ti_TypeInfoReference := @type_info(TypeInfoReference)

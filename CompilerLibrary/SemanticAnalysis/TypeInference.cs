@@ -5759,6 +5759,11 @@ namespace Cheez
                 var leftType = expr.Left.Type is ReferenceType r ? r.TargetType : expr.Left.Type;
                 var rightType = expr.Right.Type is ReferenceType r2 ? r2.TargetType : expr.Right.Type;
 
+                if (expr.Operator == "and" && leftType is EnumType)
+                {
+
+                }
+
                 var ops = expr.Scope.GetBinaryOperators(expr.Operator, leftType, rightType);
 
                 if (ops.Count == 0)

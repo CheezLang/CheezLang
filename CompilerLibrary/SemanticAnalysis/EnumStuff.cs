@@ -147,7 +147,10 @@ namespace Cheez
             {
                 expr.IsFlags = true;
                 expr.IsReprC = true;
-                expr.Scope.DefineBinaryOperator(new EnumFlagsCompineOperator(enumType));
+                
+                // GlobalScope.DefineBinaryOperator(new EnumFlagsCompineOperator(enumType));
+                // GlobalScope.DefineBinaryOperator(new EnumFlagsTestOperator(enumType));
+                expr.Scope.DefineBinaryOperator(new EnumFlagsCombineOperator(enumType));
                 expr.Scope.DefineBinaryOperator(new EnumFlagsTestOperator(enumType));
             }
 

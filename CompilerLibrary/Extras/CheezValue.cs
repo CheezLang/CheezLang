@@ -8,7 +8,7 @@ using System.Text;
 
 namespace CompilerLibrary.Extras
 {
-    class EnumValue
+    public class EnumValue
     {
         public EnumType Type { get; }
         public long Tag { get; }
