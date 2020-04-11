@@ -995,6 +995,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             sTypeInfoEnum               = workspace.GlobalScope.GetStruct("TypeInfoEnum").StructType;
             sTypeInfoEnumMember         = workspace.GlobalScope.GetStruct("TypeInfoEnumMember").StructType;
             sTypeInfoTrait              = workspace.GlobalScope.GetStruct("TypeInfoTrait").StructType;
+            sTypeInfoImplFunction       = workspace.GlobalScope.GetStruct("TypeInfoImplFunction").StructType;
             sTypeInfoTraitFunction      = workspace.GlobalScope.GetStruct("TypeInfoTraitFunction").StructType;
             sTypeInfoTraitImpl          = workspace.GlobalScope.GetStruct("TypeInfoTraitImpl").StructType;
             sTypeInfoType               = workspace.GlobalScope.GetStruct("TypeInfoType").StructType;
@@ -1020,6 +1021,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             rttiTypeInfoEnum            = CheezTypeToLLVMType(sTypeInfoEnum);
             rttiTypeInfoEnumMember      = CheezTypeToLLVMType(sTypeInfoEnumMember);
             rttiTypeInfoTrait           = CheezTypeToLLVMType(sTypeInfoTrait);
+            rttiTypeInfoImplFunction    = CheezTypeToLLVMType(sTypeInfoImplFunction);
             rttiTypeInfoTraitFunction   = CheezTypeToLLVMType(sTypeInfoTraitFunction);
             rttiTypeInfoTraitImpl       = CheezTypeToLLVMType(sTypeInfoTraitImpl);
             rttiTypeInfoAttribute       = CheezTypeToLLVMType(sTypeInfoAttribute);
@@ -1143,10 +1145,26 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     $"ti.{type}.trait_impls",
                     workspace.TypeTraitMap.GetValueOrDefault(type)?.Select(impl => GenerateRTTIForTraitImpl(type, impl))
                 );
+                // create impl function array
+                var implFunctionSlice = CreateSlice(
+                    sTypeInfoImplFunction,
+                    $"ti.{type}.impls_functions",
+                    workspace
+                            .GetImplsForType(type)
+                            .Select(impl => impl.Functions)
+                            .SelectMany(list => list)
+                            .Where(func => valueMap.ContainsKey(func))
+                            .Select(func => LLVM.ConstNamedStruct(rttiTypeInfoImplFunction, new LLVMValueRef[] {
+                        RTTITypeInfoAsPtr(func.FunctionType),
+                        CheezValueToLLVMValue(CheezType.String, func.Name),
+                        LLVM.ConstPointerCast(valueMap[func], LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[0], false).GetPointerTo())
+                    }))
+                );
 
                 builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)type.GetSize(), true), builder.CreateStructGEP(global, 0, "ti.size.ptr"));
                 builder.CreateStore(LLVM.ConstInt(LLVM.Int64Type(), (ulong)type.GetAlignment(), true), builder.CreateStructGEP(global, 1, "ti.align.ptr"));
                 builder.CreateStore(traitImplSlice, builder.CreateStructGEP(global, 2, "ti.traits.ptr"));
+                builder.CreateStore(implFunctionSlice, builder.CreateStructGEP(global, 3, "ti.functions.ptr"));
                 
                 switch (type)
                 {

@@ -34,7 +34,7 @@ append_indented :: (result: &String, str: &String, indent: int) {
 pretty_print_ast_helper :: (result: &String, node: &AstNode) {
     match node {
         AstStruct($str) -> {
-            fmt.format_into(result, "struct ``{`n")
+            fmt.format_into(result, "struct {} ``{`n", [str.name])
             // @todo
 
             r := String.empty()
@@ -164,6 +164,10 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += ")"
         }
 
+        AstUfc($ufc) -> {
+            pretty_print_ast_helper(result, ufc.value_expr)
+        }
+
         AstUnary($un) -> {
             result += "("
             fmt.format_into(result, "{}", [un.operator.lexeme()])
@@ -215,9 +219,14 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         }
 
         AstIndex($node) -> {
-            pretty_print_typed_ast_helper(result, node.sub)
+            pretty_print_ast_helper(result, node.sub)
             result += "["
-            pretty_print_typed_ast_helper(result, node.index)
+            for arg : node.arguments {
+                if it_index > 0 {
+                    result += ", "
+                }
+                pretty_print_ast_helper(result, <<arg)
+            }
             result += "]"
         }
 
@@ -290,6 +299,26 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += "}"
         }
 
+        AstPoly($poly) -> {
+            result += "("
+            for param : poly.params {
+                if it_index > 0 {
+                    result += ", "
+                }
+                pretty_print_ast_helper(result, <<param)
+            }
+            result += ") "
+            match poly.value_expr {
+                AstEnum(_) -> {}
+                AstStruct(_) -> {}
+                AstTrait(_) -> {}
+                _ -> {
+                    result += "const "
+                }
+            }
+            pretty_print_ast_helper(result, poly.value_expr)
+        }
+
         AstTuple($tuple) -> {
             result += "("
             for v : tuple.values {
@@ -325,13 +354,6 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             pretty_print_ast_helper(result, dot.name)
         }
 
-        AstIndex($index) -> {
-            pretty_print_ast_helper(result, index.sub)
-            result += "["
-            pretty_print_ast_helper(result, index.index)
-            result += "]"
-        }
-
         $node -> {
             // if ^node == null {
             //     @assert(false)
@@ -345,7 +367,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
 pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
     match node {
         AstStruct($str) -> {
-            fmt.format_into(result, "struct ``{ // size: {}, alignment: {}`n", [str.struct_type.size, str.struct_type.alignment])
+            fmt.format_into(result, "struct {} ``{ // size: {}, alignment: {}`n", [str.name, str.struct_type.size, str.struct_type.alignment])
             // @todo
 
             r := String.empty()
@@ -466,6 +488,11 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
             result += ")"
         }
 
+        AstUfc($ufc) -> {
+            fmt.format_into(result, "{}", [ufc.symbol])
+            // pretty_print_typed_ast_helper(result, ufc.symbol)
+        }
+
         AstUnary($un) -> {
             result += "("
             fmt.format_into(result, "{}", [un.operator.lexeme()])
@@ -513,7 +540,12 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
         AstIndex($node) -> {
             pretty_print_typed_ast_helper(result, node.sub)
             result += "["
-            pretty_print_typed_ast_helper(result, node.index)
+            for arg : node.arguments {
+                if it_index > 0 {
+                    result += ", "
+                }
+                pretty_print_typed_ast_helper(result, <<arg)
+            }
             result += "]"
         }
 
@@ -586,6 +618,26 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
             result += "}"
         }
 
+        AstPoly($poly) -> {
+            result += "("
+            for param : poly.params {
+                if it_index > 0 {
+                    result += ", "
+                }
+                pretty_print_typed_ast_helper(result, <<param)
+            }
+            result += ") "
+            match poly.value_expr {
+                AstEnum(_) -> {}
+                AstStruct(_) -> {}
+                AstTrait(_) -> {}
+                _ -> {
+                    result += "const "
+                }
+            }
+            pretty_print_ast_helper(result, poly.value_expr)
+        }
+
         AstTuple($tuple) -> {
             result += "("
             for v : tuple.values {
@@ -614,13 +666,6 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
                 pretty_print_typed_ast_helper(result, <<dot.sub)
             result += "."
             pretty_print_typed_ast_helper(result, dot.name)
-        }
-
-        AstIndex($index) -> {
-            pretty_print_typed_ast_helper(result, index.sub)
-            result += "["
-            pretty_print_typed_ast_helper(result, index.index)
-            result += "]"
         }
 
         $node -> {

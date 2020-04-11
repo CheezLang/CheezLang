@@ -242,27 +242,27 @@ for_extension_table :: (r: &Table[$K, $V], code: Code) #for {
 }
 
 // iterator
-TableIterator :: struct(K: type, V: type) {
+TableIterator :: struct(K: type, V: type) #copy {
     table: &Table[K, V]
     index: int
 }
 
-impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
-    next :: (&Self) -> Option[(K, V)] {
-        entries := table.get_entries()
-        while index < entries.length {
-            e := &entries[index]
-            index += 1
+// impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
+//     next :: (&Self) -> Option[(K, V)] {
+//         entries := table.get_entries()
+//         while index < entries.length {
+//             e := &entries[index]
+//             index += 1
 
-            if e.filled {
-                return Some((e.key, e.value))
-            }
-        }
+//             if e.filled {
+//                 return Some((e.key, e.value))
+//             }
+//         }
 
-        return None
-    }
+//         return None
+//     }
 
-    dispose :: (&Self) {
-        free(^self)
-    }
-}
+//     dispose :: (&Self) {
+//         free(^self)
+//     }
+// }

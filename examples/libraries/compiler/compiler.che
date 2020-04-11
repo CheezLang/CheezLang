@@ -1,5 +1,6 @@
 use import std.array
 use import std.fiber
+use import std.hash
 use import std.map
 use import std.mem.arena_allocator
 use import std.mem.bump_allocator
@@ -33,6 +34,7 @@ use import lexer
 use import parser
 use import scope
 use import string_database
+use import types
 use import value
 
 enable_profiler :: false
@@ -173,6 +175,23 @@ FiberContext :: struct {
     thread  : int = -1
 }
 
+
+FunctionTypeWrapper :: struct #copy {
+    typ : ^TypeInfoFunction
+}
+
+impl Hashable for FunctionTypeWrapper {
+    hash :: (&Self) -> uint {
+        return @bin_xor(uint(typ.param_types.length) * 987654321, 0x268af332e)
+    }
+}
+
+impl Equatable[FunctionTypeWrapper] for FunctionTypeWrapper {
+    equal :: (&Self, other: &FunctionTypeWrapper) -> bool {
+        return TypeInfo.same(typ, other.typ)
+    }
+}
+
 Compiler :: struct {
     // there is a weird bug where the pointer to the  debug adapter at some point changes to point to the compiler
     // and thus overrides variables of the compiler
@@ -206,6 +225,8 @@ Compiler :: struct {
     string_sources_file := String.empty()
     string_sources  := String.empty()
     string_location := Location(line=1, column=1)
+
+    native_function_wrappers := Map[FunctionTypeWrapper, NativeFunctionWrapper2].new()
 
     // filename -> filecontent
     // contains all source files loaded during compilation
@@ -326,6 +347,10 @@ impl Compiler {
 
         // structs
         scope.define_value("String", @type_info(type), .Type(@type_info(String)))
+
+        // temp
+        register_native_function_type(fn(^String))
+        register_native_function_type(fn(^String, string) -> ^String)
     }
 
     lock :: (&Self) {
@@ -375,11 +400,14 @@ impl Compiler {
         structs[int(typ)] = ast
     }
 
-    get_struct_ast :: (&Self, typ: ^TypeInfoStruct) -> ^AstStruct {
+    get_struct_ast :: (&Self, typ: ^TypeInfoStruct) -> Option[^AstStruct] {
         self.lock()
         defer self.release()
 
-        return structs[int(typ)]
+        return match structs.get(int(typ)) {
+            Some($ast) -> Some(ast)
+            None -> None
+        }
     }
 
     create_job :: (&Self, job: $T) -> ^CompilationJob {
@@ -423,15 +451,48 @@ impl Compiler {
         return result
     }
 
+    poly_type :: (&Self) -> ^TypeInfo {
+        typ := self.new_type(TypeInfoPoly(
+            size        = 0
+            alignment   = 1
+            impl_funcs  = []
+            traits      = []
+        ))
+
+        return typ
+    }
+
     pointer_type :: (&Self, target: ^TypeInfo, mutable: bool) -> ^TypeInfo {
-        // todo: fat
+        size := match target {
+            TypeInfoTrait(_) -> 16
+            TypeInfoAny(_) -> 24
+        }
         typ := self.new_type(TypeInfoPointer(
-            size        = 8
+            size        = size
             alignment   = 8
+            impl_funcs  = []
             traits      = []
             target      = target
             is_mut      = mutable
-            is_fat      = false
+            is_fat      = size > 8
+        ))
+
+        return typ
+    }
+
+    reference_type :: (&Self, target: ^TypeInfo, mutable: bool) -> ^TypeInfo {
+        size := match target {
+            TypeInfoTrait(_) -> 16
+            TypeInfoAny(_) -> 24
+        }
+        typ := self.new_type(TypeInfoReference(
+            size        = size
+            alignment   = 8
+            impl_funcs  = []
+            traits      = []
+            target      = target
+            is_mut      = mutable
+            is_fat      = size > 8
         ))
 
         return typ
@@ -455,6 +516,54 @@ impl Compiler {
         result.id = next_ast_id
         next_ast_id += 1
         return result
+    }
+
+    register_native_function_type :: (&Self, $FuncType: type) {
+        helper :: (func: fn(), interp: ^Interpreter) {
+            frame := interp.top_frame()
+            ArgTupleType :: @param_type_tuple(FuncType)
+            slots : [(@sizeof(ArgTupleType) + 7) / 8]u64 = default
+            args := &<<cast(^ArgTupleType)slots.data
+            index := 0
+            @for_function_parameters(FuncType, (ArgType, i) => {
+                // args[i] = frame.get(index, ArgType)
+                ptr := cast(^ArgType)^args[i]
+                <<ptr = frame.get(i, ArgType)
+                // io.formatln("{} : {} = {}", [i, @typename(ArgType), args[i]])
+
+                index += (@sizeof(ArgType) + 7) / 8
+            })
+
+            if const FuncType.return_type == void {
+                @call_with_tuple_args(cast(FuncType) func, args)
+            } else {
+                result := @call_with_tuple_args(cast(FuncType) func, args)
+                frame.set_return(result)
+            }
+        }
+
+        type_wrapper := match @type_info(FuncType) {
+            TypeInfoFunction($ti) -> FunctionTypeWrapper(ti)
+            _ -> {
+                return
+            }
+        }
+
+        h := helper
+        g_logger.log("native function wrapper '{}': {}", [@typename(FuncType), <<cast(^^int)^h])
+        if !native_function_wrappers.contains(type_wrapper) {
+            native_function_wrappers[type_wrapper] = helper
+        }
+    }
+
+    get_native_function_wrapper :: (&Self, ti: ^TypeInfoFunction) -> Option[NativeFunctionWrapper2] {
+        self.lock()
+        defer self.release()
+
+        return match native_function_wrappers.get(FunctionTypeWrapper(ti)) {
+            Some($wrapper) -> Some(wrapper)
+            None -> None
+        }
     }
 }
 

@@ -10,15 +10,19 @@ Value :: enum #copy {
     None
     Poison
     Function    : ^AstFunction
+    Poly        : ^AstPoly
     Bool        : bool
     Int         : int
     Float       : f64
     String      : string
     NativeFunc  : ^NativeFunctionWrapper
+    NativeFunc2 : (wrapper: NativeFunctionWrapper2, func: fn())
     Type        : ^TypeInfo
 }
 
 NativeFunction :: Fn(^Interpreter)
+
+NativeFunctionWrapper2 :: fn(fn(), ^Interpreter)
 
 NativeFunctionWrapper :: struct {
     function            : NativeFunction
@@ -49,5 +53,13 @@ impl NativeFunctionWrapper {
             parameter_indices   = indices
         )
         return wrapper
+    }
+
+    slots_for_type :: (ti: ^TypeInfoFunction) -> int {
+        slots := 0
+        for(reverse=true) typ : ti.param_types {
+            slots += (typ.size + 7) / 8
+        }
+        return slots
     }
 }

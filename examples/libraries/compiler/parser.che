@@ -353,7 +353,7 @@ impl Parser {
         loop {
             match lexer.peek_token().typ {
                 .OpenParen -> {
-                    args, beg, end := parse_argument_list()
+                    args, beg, end := parse_argument_list(.OpenParen, .ClosingParen)
                     expr = allocate(AstCall(
                         id          = next_id()
                         location    = expr.location.to(end)
@@ -363,14 +363,18 @@ impl Parser {
                 }
 
                 .OpenBracket -> {
-                    lexer.next_token()
-                    index := try(parse_expression(true, false))
-                    end := consume(.ClosingBracket).location
+                    args, beg, end := parse_argument_list(.OpenBracket, .ClosingBracket)
+                    if args.count() == 0 {
+                        error_handler.report_error_at(beg, "Missing argument")
+                        return null
+                    }
+                    index := args[0]
                     expr = allocate(AstIndex(
                         id          = next_id()
                         location    = expr.location.to(end)
                         sub         = <<expr
-                        index       = <<index
+                        arguments   = args
+                        index       = index
                     ))
                 }
 
@@ -617,7 +621,28 @@ impl Parser {
         ))
     }
 
-    parse_parenthesized :: (&Self, allow_function: bool) -> ^AstNode {
+    values_to_params :: (&Self, values: Array[^AstNode]) -> Array[^AstDecl] {
+        params := Array[^AstDecl].create()
+        for e : values {
+            match &<<e {
+                AstDecl($decl) -> params.add(^decl)
+                _ -> {
+                    decl := allocate(AstDecl(
+                        id          = next_id()
+                        location    = e.location
+                        pattern     = null
+                        type_expr   = e
+                        value_expr  = null
+                        mutable     = false
+                    ))
+                    params.add(decl)
+                }
+            }
+        }
+        return params
+    }
+
+    parse_parenthesized :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
         beg := consume(.OpenParen).location
 
         ends_in_comma := false
@@ -648,6 +673,28 @@ impl Parser {
         end := consume(.ClosingParen).location
 
         if allow_function {
+            if check_token(.KwConst) {
+                lexer.next_token()
+                lexer.skip_whitespace()
+                body := parse_expression(allow_comma, false)
+                return allocate(AstPoly(
+                    id          = next_id()
+                    location    = beg.to(body.location)
+                    param_scope = null
+                    params      = values_to_params(values)
+                    value_expr  = <<body
+                ))
+            }
+            if check_token(.KwStruct) or check_token(.KwEnum) or check_token(.KwTrait) {
+                body := parse_expression(allow_comma, false)
+                return allocate(AstPoly(
+                    id          = next_id()
+                    location    = beg.to(body.location)
+                    param_scope = null
+                    params      = values_to_params(values)
+                    value_expr  = <<body
+                ))
+            }
             // @todo: parse function if return type '->'
             return_type_expr : ^AstNode = null
 
@@ -658,24 +705,6 @@ impl Parser {
             }
 
             if return_type_expr != null or check_token(.OpenBrace) {
-                params := Array[^AstDecl].create()
-                for e : values {
-                    match &<<e {
-                        AstDecl($decl) -> params.add(^decl)
-                        _ -> {
-                            decl := allocate(AstDecl(
-                                id          = next_id()
-                                location    = e.location
-                                pattern     = null
-                                type_expr   = e
-                                value_expr  = null
-                                mutable     = false
-                            ))
-                            params.add(decl)
-                        }
-                    }
-                }
-
                 // parse as function if followed by {
                 body : ^AstNode = null
                 if check_token(.OpenBrace) {
@@ -686,7 +715,7 @@ impl Parser {
                     id                  = next_id()
                     location            = beg.to(body.location)
                     param_scope         = null
-                    params              = params
+                    params              = values_to_params(values)
                     return_type_expr    = return_type_expr
                     body                = body
                 ))
@@ -750,7 +779,7 @@ impl Parser {
             .NumberLiteral  -> parse_number()
             .OpenBrace      -> parse_block()
             .OpenBracket    -> parse_bracketed()
-            .OpenParen      -> parse_parenthesized(allow_function)
+            .OpenParen      -> parse_parenthesized(allow_comma, allow_function)
             .Period         -> parse_anonymous_dot()
             .StringLiteral  -> parse_string()
 
@@ -868,15 +897,15 @@ impl Parser {
         ))
     }
 
-    parse_argument_list :: (&Self) -> Array[^AstArgument], Location, Location {
+    parse_argument_list :: (&Self, open: TokenType, close: TokenType) -> Array[^AstArgument], Location, Location {
         args := Array[^AstArgument].create()
 
-        beg := consume(.OpenParen).location
+        beg := consume(open).location
         lexer.skip_whitespace()
 
         loop {
             next := lexer.peek_token()
-            if next.typ == .ClosingParen or next.typ == .EOF {
+            if next.typ == close or next.typ == .EOF {
                 break
             }
 
@@ -888,7 +917,7 @@ impl Parser {
             lexer.skip_whitespace()
 
             next = lexer.peek_token()
-            if next.typ == .ClosingParen or next.typ == .EOF {
+            if next.typ == close or next.typ == .EOF {
                 break
             }
             
@@ -896,7 +925,7 @@ impl Parser {
             lexer.skip_whitespace()
         }
 
-        end := consume(.ClosingParen).location
+        end := consume(close).location
 
         return args, beg, end
     }

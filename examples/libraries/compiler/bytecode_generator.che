@@ -168,7 +168,7 @@ impl CodeGenerator for ByteCodeGenerator {
                         TypeInfoInt(_) -> {
                             // address
                             generate_expression(node.sub, deref = false)
-                            generate_expression(node.index)
+                            generate_expression(<<node.index)
                             // @todo: cast index to i64
 
                             if self.build_range_checks {
@@ -380,7 +380,7 @@ impl CodeGenerator for ByteCodeGenerator {
             TypeInfoArray($ti) -> match node.index.typ {
                 TypeInfoInt(_) -> {
                     generate_expression(node.sub, deref = false)
-                    generate_expression(node.index)
+                    generate_expression(<<node.index)
                     // @todo: cast index to i64
 
                     if self.build_range_checks {
@@ -614,8 +614,16 @@ impl CodeGenerator for ByteCodeGenerator {
                 builder.build_native_call(func)
             }
 
+            .NativeFunc2($func) -> {
+                for arg : call.arguments {
+                    generate_expression(<<arg)
+                }
+                builder.set_location(call.location)
+                builder.build_native_call2(func.wrapper, func.func, NativeFunctionWrapper.slots_for_type(cast call.function.typ))
+            }
+
             _ -> {
-                error_handler.report_error_at(call.function.location, "Can't call {}", [call.function.value])
+                error_handler.report_error_at(call.function.location, "generate_call: Can't call {}", [call.function.value])
             }
         }
         // match call.function {
@@ -671,6 +679,16 @@ impl CodeGenerator for ByteCodeGenerator {
             }
 
             .ConstDecl($decl) -> match decl.value {
+                .Int($i) -> builder.build_const_int(i)
+                .Float($f) -> builder.build_const_float(f)
+                .Bool($b) -> builder.build_const_int(if b then 1 else 0)
+                .String($s) -> {
+                    builder.build_const_int(cast s.bytes.length)
+                    builder.build_const_int(cast s.bytes.data)
+                }
+            }
+
+            .Val($val) -> match val.value {
                 .Int($i) -> builder.build_const_int(i)
                 .Float($f) -> builder.build_const_float(f)
                 .Bool($b) -> builder.build_const_int(if b then 1 else 0)
@@ -1010,6 +1028,14 @@ impl InstructionBuilder {
         add_debug_info_line()
         function.instructions.add(cast Instruction.NativeCall)
         function.instructions.add(cast func)
+    }
+
+    build_native_call2 :: (&Self, wrapper: NativeFunctionWrapper2, func: fn(), arg_slots: int) {
+        add_debug_info_line()
+        function.instructions.add(cast Instruction.NativeCall2)
+        function.instructions.add(<<cast(^uint) ^wrapper)
+        function.instructions.add(<<cast(^uint) ^func)
+        function.instructions.add(cast arg_slots)
     }
 
     build_comp_call :: (&Self, ast_func: ^AstFunction) {

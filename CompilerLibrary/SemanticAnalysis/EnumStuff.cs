@@ -9,6 +9,7 @@ using Cheez.Types.Primitive;
 using Cheez.Util;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 
 namespace Cheez
@@ -265,6 +266,14 @@ namespace Cheez
 
         private AstEnumTypeExpr InstantiatePolyEnum(AstEnumTypeExpr decl, List<(CheezType type, object value)> args, ILocation location = null)
         {
+            if (decl.Name == "Option" && args[0].value is TraitType t)
+            {
+                //var t = args.FirstOrDefault(a => a.type is TraitType);
+                //if (t.type != null)
+                //{
+
+                //}
+            }
             if (args.Count != decl.Parameters.Count)
             {
                 if (location != null)

@@ -2332,6 +2332,11 @@ namespace Cheez
                 if (mTypesRequiredAtRuntime.Contains(type) || type.IsErrorType)
                     continue;
 
+                foreach (var impl in GetImplsForType(type))
+                    foreach (var func in impl.Functions)
+                        if (func.FunctionType != null)
+                            MarkTypeAsRequiredAtRuntime(func.FunctionType);
+
                 changes = true;
 
                 mTypesRequiredAtRuntime.Add(type);
@@ -2909,6 +2914,155 @@ namespace Cheez
                         return InferType(block, expected);
                     }
 
+
+                case "call_with_tuple_args":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr.Location, "@call_with_tuple_args takes 2 arguments");
+                            return expr;
+                        }
+
+
+                        var args = new List<AstArgument>();
+                        var argsTuple = InferArg(1, null);
+
+                        var tupleType = argsTuple.Type switch {
+                            TupleType t => t,
+                            ReferenceType r when r.TargetType is TupleType t => t,
+                            _ => null
+                        };
+                        if (tupleType == null)
+                        {
+                            ReportError(argsTuple, $"Second argument must be a tuple, but is {argsTuple.Type}");
+                            return expr;
+                        }
+
+                        for (int i = 0; i < tupleType.Members.Length; i++) {
+                            var mem = tupleType.Members[i];
+                            args.Add(new AstArgument(
+                                new AstArrayAccessExpr(
+                                    argsTuple,
+                                    new List<AstExpression> {
+                                        new AstNumberExpr(NumberData.FromBigInt(i), null, expr.Location)
+                                    },
+                                    expr.Location
+                                ),
+                                mem.name == null ? null : new AstIdExpr(mem.name, false, expr.Location),
+                                expr.Location
+                            ));
+                        }
+
+                        var call = new AstCallExpr(expr.Arguments[0].Expr, args, expr.Location);
+                        call.Replace(expr);
+                        return InferTypeHelper(call, expected, context);
+                    }
+
+
+                case "param_type_tuple":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@param_type_tuple takes 1 arguments");
+                            return expr;
+                        }
+
+                        var func = InferArg(0, CheezType.Type);
+                        if (!(func.Value is FunctionType funcType))
+                        {
+                            ReportError(func, $"First argument must be a function, but is {func.Type}");
+                            return expr;
+                        }
+
+                        expr.Type = CheezType.Type;
+                        expr.Value = TupleType.GetTuple(funcType.Parameters.Select(p => (p.name, p.type)).ToArray());
+
+                        return expr;
+                    }
+
+
+                case "for_function_parameters":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr.Location, "@for_function_parameters takes 2 arguments");
+                            return expr;
+                        }
+
+                        var func = InferArg(0, null);
+                        if (!(func.Value is FunctionType funcType))
+                        {
+                            ReportError(func, $"First argument must be a function, but is {func.Type}");
+                            return expr;
+                        }
+
+                        // create temp var if tuple is not a variable
+                        if (!(func is AstIdExpr))
+                        {
+                            func = new AstTempVarExpr(func);
+                        }
+
+                        var lambdaArg = expr.Arguments[1].Expr;
+                        if (!(lambdaArg is AstLambdaExpr lambda))
+                        {
+                            ReportError(lambdaArg, "Second argument must be a lambda");
+                            return expr;
+                        }
+
+                        if (lambda.Parameters.Count == 0)
+                        {
+                            ReportError(lambda, "Lambda must take 1-2 arguments");
+                            return expr;
+                        }
+
+                        if (lambda.Parameters.Count > 2)
+                        {
+                            ReportError(lambda, "Lambda must take 1-2 arguments");
+                            return expr;
+                        }
+
+                        var param = lambda.Parameters[0];
+                        var indexParam = lambda.Parameters.Count >= 2 ? lambda.Parameters[1] : null;
+
+                        var statements = new List<AstStatement>();
+
+                        int index = 0;
+                        foreach (var member in funcType.Parameters)
+                        {
+                            var code = lambda.Body.Clone();
+
+                            var stmts = new List<AstStatement>();
+
+                            if (indexParam != null)
+                            {
+                                var idx = new AstConstantDeclaration(
+                                    indexParam.Name.Clone(),
+                                    indexParam.TypeExpr?.Clone(),
+                                    new AstNumberExpr(NumberData.FromBigInt(index)),
+                                    null,
+                                    Location: indexParam);
+                                stmts.Add(idx);
+                            }
+                            {
+                                var funcVar = new AstConstantDeclaration(
+                                    param.Name.Clone(),
+                                    param.TypeExpr?.Clone(),
+                                    new AstTypeRef(member.type, func.Location),
+                                    null,
+                                    Location: param);
+                                stmts.Add(funcVar);
+                            }
+
+                            stmts.Add(new AstExprStmt(code, code));
+                            statements.Add(new AstExprStmt(new AstBlockExpr(stmts, Location: lambda.Body), lambda.Body));
+
+                            index++;
+                        }
+
+                        var block = new AstBlockExpr(statements, Location: expr);
+                        block.Replace(expr);
+                        return InferType(block, expected);
+                    }
 
                 case "for_struct_members":
                     {
@@ -4044,6 +4198,8 @@ namespace Cheez
                         }
 
                         expr.Type = tuple.Members[index].type;
+                        if (expr.SubExpression.GetFlag(ExprFlags.IsLValue))
+                            expr.SetFlag(ExprFlags.IsLValue, true);
                         break;
                     }
 

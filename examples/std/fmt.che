@@ -163,6 +163,7 @@ format :: (text: string, args: []^any = []) -> String {
 #file_scope
 
 format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format: string, recursive: bool) {
+    @assert(data != null)
     @assert(typ != null)
     if !recursive {
         trait_func := typ.get_trait_function(Printable, "print", fn(^void, &String, string))

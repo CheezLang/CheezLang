@@ -15,6 +15,7 @@ util :: import std.util
 use import logging.logger
 
 use import ast
+use import ast_cloner
 use import ast_dumper
 use import ast_pretty_printer
 use import bytecode_generator
@@ -411,9 +412,11 @@ impl CompileNode {
             AstIndex($index)        -> compile_index(index, ctx)
             AstLoop($lop)           -> compile_loop(lop, ctx)
             AstNumberLiteral($num)  -> compile_number(num, ctx)
+            AstPoly($poly)          -> compile_poly(poly, ctx)
             AstReturn($ret)         -> compile_return(ret, ctx)
             AstString($str)         -> compile_string(str, ctx)
             AstStruct($str)         -> compile_struct(str, ctx)
+            AstUfc($ufc)            -> compile_ufc(ufc, ctx)
             AstUnary($un)           -> compile_unary(un, ctx)
 
             _ -> {
@@ -438,10 +441,25 @@ impl CompileNode {
             return dot
         }
 
+        original_sub := dot.sub
         dot.sub.scope = dot.scope
         dot.sub = ^compile_node(<<dot.sub, ctx)
         handle_poison(dot, <<dot.sub)
 
+        match dot.sub.typ {
+            TypeInfoPointer($ti) -> {
+                deref := compiler.new_ast(AstUnary(
+                    id          = -1
+                    location    = dot.sub.location
+                    scope       = dot.sub.scope
+                    sub         = <<dot.sub
+                    operator    = .Deref
+                ))
+                dot.sub = ^compile_node(<<deref, ctx.with_expected(ti.target))
+                handle_poison(dot, <<dot.sub)
+            }
+        }
+        g_logger.log("{}", [dot.sub.typ])
         name := dot.name.name
         match dot.sub.typ {
             TypeInfoArray($ti) -> {
@@ -467,10 +485,11 @@ impl CompileNode {
                 //     // @todo: report error? i dont think its necessary here
                 // })
 
-                struct_ast := compiler.get_struct_ast(ti)
-                wait_until(struct_ast.members_done, {
-                    // nothing to see here...
-                })
+                match compiler.get_struct_ast(ti) {
+                    Some($ast) -> wait_until(ast.members_done, {
+                        // nothing to see here...
+                    })
+                }
 
                 // check if member with this name exists
                 member : ^TypeInfoStructMember = null
@@ -488,6 +507,41 @@ impl CompileNode {
                     return dot
                 }
 
+                g_logger.log("impl_funcs: {}", [ti.impl_funcs.length])
+                func : ^TypeInfoImplFunction = null
+                for(by_ref=true) ti.impl_funcs {
+                    if it.name == name {
+                        func = ^it
+                        break
+                    }
+                }
+
+                if func != null {
+                    g_logger.log("native function '{}': {}", [func.typ, <<cast(^^int)^func.pointer])
+                    match compiler.get_native_function_wrapper(cast func.typ) {
+                        Some($wrapper) -> {
+                            return compile_node(<<compiler.new_ast(AstUfc(
+                                id          = -1
+                                location    = dot.location
+                                scope       = dot.scope
+                                typ         = func.typ
+                                value_expr  = <<original_sub
+                                symbol      = .NativeFunc2(wrapper)
+                                value       = .NativeFunc2(wrapper, func.pointer)
+                            )), ctx)
+                        }
+
+                        None -> {
+                            compiler.error_handler.report_error_at(
+                                dot.name.location,
+                                "Can't call native function '{}' because no wrapper is available for type '{}'",
+                                [name, func.typ])
+                            poison(dot)
+                            return dot
+                        }
+                    }
+                }
+                
                 // @todo: find functions with this name
 
                 compiler.error_handler.report_error_at(dot.name.location, "Struct '{}' has no member or function '{}'", [ti.name, name])
@@ -659,6 +713,7 @@ impl CompileNode {
             size        = arr.values.count() * expected.size
             alignment   = expected.alignment
             traits      = []
+            impl_funcs  = []
             count       = arr.values.count()
             target      = expected
         ))
@@ -704,6 +759,7 @@ impl CompileNode {
                 size        = count * target.size
                 alignment   = target.alignment
                 traits      = []
+                impl_funcs  = []
                 count       = count
                 target      = target
             )))
@@ -712,6 +768,7 @@ impl CompileNode {
                 size        = 2 * @sizeof(^void)
                 alignment   = target.alignment
                 traits      = []
+                impl_funcs  = []
                 target      = target
             )))
         }
@@ -719,15 +776,20 @@ impl CompileNode {
         return arr
     }
 
+    compile_ufc :: (&Self, ufc: &AstUfc, ctx: CNContext) -> &AstNode {
+        // ufc.value
+        return ufc
+    }
+
     compile_unary :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
         un.sub.scope = un.scope
         return match un.operator {
             .Neg    -> compile_unary_neg(un, ctx)
             .Not    -> compile_unary_not(un, ctx)
-            .Ref    -> compile_unary_ref(un, ctx)
-            .RefMut -> compile_unary_ref_mut(un, ctx)
-            .Ptr    -> compile_unary_ptr(un, ctx)
-            .PtrMut -> compile_unary_ptr(un, ctx)
+            .Ref    -> compile_unary_ptr_or_ref(un, ctx)
+            .RefMut -> compile_unary_ptr_or_ref(un, ctx)
+            .Ptr    -> compile_unary_ptr_or_ref(un, ctx)
+            .PtrMut -> compile_unary_ptr_or_ref(un, ctx)
             .Deref  -> compile_unary_deref(un, ctx)
         }
     }
@@ -790,18 +852,14 @@ impl CompileNode {
         return un
     }
 
-    compile_unary_ref :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
-        compiler.error_handler.report_error_at(un.location, "compile_unary_ref: not implemented")
-        return un
-    }
+    compile_unary_ptr_or_ref :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
+        mutable, reference, str := match un.operator {
+            .Ref    -> false, true, "reference"
+            .RefMut -> true, true, "reference"
+            .Ptr    -> false, false, "pointer"
+            .PtrMut -> true, false, "pointer"
+        }
 
-    compile_unary_ref_mut :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
-        compiler.error_handler.report_error_at(un.location, "compile_unary_ref_mut: not implemented")
-        return un
-    }
-
-    compile_unary_ptr :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
-        mutable := un.operator == .PtrMut
         un.sub.scope = un.scope
         un.sub <- compile_node(un.sub, ctx)
         handle_poison(un, un.sub)
@@ -809,10 +867,14 @@ impl CompileNode {
         if un.sub.typ == @type_info(type) {
             @assert(un.sub.value == .Type)
             un.typ = un.sub.typ
-            un.value = .Type(compiler.pointer_type(un.sub.value.Type, mutable))
+            if reference {
+                un.value = .Type(compiler.reference_type(un.sub.value.Type, mutable))
+            } else {
+                un.value = .Type(compiler.pointer_type(un.sub.value.Type, mutable))
+            }
         } else {
             if !un.sub.has_flags(.LValue) {
-                compiler.error_handler.report_error_at(un.location, "Can't create pointer to non l-value")
+                compiler.error_handler.report_error_at(un.location, "Can't create {} to non l-value", [str])
                 poison(un)
                 return un
             }
@@ -821,7 +883,7 @@ impl CompileNode {
                 AstIdentifier($id) -> match id.symbol {
                     .Decl($decl) -> {
                         if mutable and !decl.mutable {
-                            compiler.error_handler.report_error_at(un.location, "Can't create mutable pointer to immutable variabe")
+                            compiler.error_handler.report_error_at(un.location, "Can't create mutable {} to immutable variabe", [str])
                             poison(un)
                             return un
                         }
@@ -838,7 +900,7 @@ impl CompileNode {
                                 AstIdentifier($id) -> match id.symbol {
                                     .Decl($decl) -> {
                                         if !decl.mutable {
-                                            compiler.error_handler.report_error_at(un.location, "Can't create mutable pointer to immutable variabe")
+                                            compiler.error_handler.report_error_at(un.location, "Can't create mutable {} to immutable variabe", [str])
                                             poison(un)
                                             return un
                                         }
@@ -855,7 +917,12 @@ impl CompileNode {
                     }
                 }
             }
-            un.typ = compiler.pointer_type(un.sub.typ, mutable)
+
+            if reference {
+                un.typ = compiler.reference_type(un.sub.typ, mutable)
+            } else {
+                un.typ = compiler.pointer_type(un.sub.typ, mutable)
+            }
         }
 
         return un
@@ -1042,24 +1109,82 @@ impl CompileNode {
         node.sub <- compile_node(node.sub, ctx)
         handle_poison(node, node.sub)
 
-        node.index.scope = node.scope
-        node.index <- compile_node(node.index, ctx)
-        handle_poison(node, node.index)
-
-        match node.sub.typ {
-            TypeInfoArray($ti) -> match node.index.typ {
-                TypeInfoInt(_) -> {
-                    // ok
-                    node.typ = ti.target
-                }
-
-                _ -> {
-                    compiler.error_handler.report_error_at(
-                        node.index.location,
-                        "Type '{}' can't be used as index for type '{}'",
-                        [node.index.typ, node.sub.typ])
+        match node.sub.value {
+            .Poly($poly) -> {
+                if node.arguments.count() != poly.params.length {
+                    compiler.error_handler.report_error_at(node.location, "Wrong number of arguments. Expected {}", [poly.params.length])
                     poison(node)
                     return node
+                } else {
+                    for arg : node.arguments {
+                        param := &poly.params[it_index]
+
+                        arg.scope = node.scope
+                        evaluate_node(<<arg, ctx.with_expected(param.var_type))
+
+                        if arg.value == .Poison {
+                            poison(node)
+                            return node
+                        }
+                        if !TypeInfo.same(arg.typ, param.var_type) {
+                            compiler.error_handler.report_error_at(
+                                arg.location,
+                                "Type of argument ({}) does not match type of parameter '{}' ({}).",
+                                [arg.typ, param.name, param.var_type])
+                        }
+                    }
+                }
+
+                cloner := AstCloner(compiler.next_ast_id, compiler.ast_allocator)
+                clone := cloner.clone(^poly.value_expr)
+                if clone == null {
+                    poison(node)
+                    return node
+                }
+
+                scope := compiler.new_scope(poly.scope)
+
+                for arg : node.arguments {
+                    param := &poly.params[it_index]
+
+                    g_logger.log("{}: {}, {}", [param.name, arg.typ, arg.value])
+                    scope.define_value(param.name, arg.typ, arg.value)
+                }
+
+                clone.scope = scope
+                return evaluate_node(<<clone, ctx)
+            }
+        }
+
+        match node.sub.typ {
+            TypeInfoArray($ti) -> {
+                for arg : node.arguments {
+                    arg.scope = node.scope
+                    compile_node(<<arg, ctx)
+                    handle_poison(node, <<arg)
+                }
+                node.index = node.arguments[0]
+
+                if node.arguments.count() != 1 {
+                    compiler.error_handler.report_error_at(node.location, "Wrong number of arguments. Expected 1")
+                    poison(node)
+                    return node
+                }
+
+                match node.index.typ {
+                    TypeInfoInt(_) -> {
+                        // ok
+                        node.typ = ti.target
+                    }
+
+                    _ -> {
+                        compiler.error_handler.report_error_at(
+                            node.index.location,
+                            "Type '{}' can't be used as index for type '{}'",
+                            [node.index.typ, node.sub.typ])
+                        poison(node)
+                        return node
+                    }
                 }
             }
 
@@ -1185,6 +1310,7 @@ impl CompileNode {
             size        = -1        // will be calculated later
             alignment   = -1        // will be calculated later
             traits      = []        // will be calculated later
+            impl_funcs  = []        // will be calculated later
             name        = str.name
             members     = member_type_infos
         ))
@@ -1233,6 +1359,39 @@ impl CompileNode {
             _ -> @assert(false)
         }
         return num
+    }
+
+    compile_poly :: (&Self, poly: &AstPoly, ctx: CNContext) -> &AstNode {
+        poly.param_scope = compiler.new_scope(poly.scope)
+        poly.value_expr.scope = poly.param_scope
+
+        match poly.value_expr {
+            AstFunction($func) -> {
+                func.name = poly.name
+            }
+            AstStruct($str) -> {
+                str.name = poly.name
+            }
+            AstEnum($en) -> {
+                en.name = poly.name
+            }
+            AstTrait($tr) -> {
+                tr.name = poly.name
+            }
+            AstPoly($poly) -> {
+                poly.name = poly.name
+            }
+        }
+
+        for param : poly.params {
+            param.scope = poly.scope
+            compile_node(<<param, ctx.with_expected(null))
+            handle_poison(poly, <<param)
+        }
+
+        poly.typ = @type_info(void)
+        poly.value = .Poly(^poly)
+        return poly
     }
 
     compile_identifier :: (&Self, id: &AstIdentifier, ctx: CNContext) -> &AstNode {
@@ -1345,8 +1504,25 @@ impl CompileNode {
             poison(call)
             return call
         }
-        
-        call.typ = @type_info(void)
+
+        match call.function {
+            AstUfc($ufc) -> {
+                new_args := Array[^AstArgument].create(call.arguments.count() + 1)
+                new_args.add(compiler.new_ast(AstArgument(
+                    location    = ufc.location
+                    scope       = ufc.scope
+                    name        = null
+                    value_expr  = ufc.value_expr
+                )))
+                for arg : call.arguments {
+                    new_args.add(arg)
+                }
+                call.arguments = new_args
+            }
+        }
+
+        dump := pretty_print_typed_ast(call)
+        g_logger.log("dump: {}", [dump])
 
         match call.function.value {
             .Type($typ) -> {
@@ -1399,6 +1575,36 @@ impl CompileNode {
             }
 
             .NativeFunc($func) -> {
+                func_type := cast(^TypeInfoFunction) call.function.typ
+
+                call.typ = func_type.return_type
+
+                if call.arguments.count() != func_type.param_types.length {
+                    compiler.error_handler.report_error_at(
+                        call.location,
+                        "Wrong number of arguments ({}) in function call. Expected {}",
+                        [call.arguments.count(), func_type.param_types.length])
+                } else {
+                    for arg : call.arguments {
+                        param_type := &func_type.param_types[it_index]
+                        arg.scope = call.scope
+                        arg = cast ^compile_node(<<arg, ctx.with_expected(param_type))
+
+                        if arg.value == .Poison {
+                            poison(call)
+                            return call
+                        }
+                        if !TypeInfo.same(arg.typ, param_type) {
+                            compiler.error_handler.report_error_at(
+                                arg.location,
+                                "Type of argument ({}) does not match type of parameter ({}).",
+                                [arg.typ, param_type])
+                        }
+                    }
+                }
+            }
+
+            .NativeFunc2($func) -> {
                 func_type := cast(^TypeInfoFunction) call.function.typ
 
                 call.typ = func_type.return_type
@@ -1550,6 +1756,7 @@ impl CompileNode {
             size        = 8
             alignment   = 8
             traits      = []
+            impl_funcs  = []
             param_types = param_types
             return_type = func.return_type
         ))
@@ -1685,6 +1892,9 @@ impl CompileNode {
             AstTrait($tr) -> {
                 tr.name = name
             }
+            AstPoly($poly) -> {
+                poly.name = name
+            }
         }
 
         // define symbol but only if not _
@@ -1758,7 +1968,33 @@ impl TypeInfo {
 
         return match a, b {
             TypeInfoArray($a), TypeInfoArray($b) -> a.count == b.count and same(a.target, b.target)
-            TypeInfoPointer($a), TypeInfoPointer($b) -> a.is_mut == b.is_mut and same(a.target, b.target)
+
+            // TypeInfoPointer($a), TypeInfoPointer($b) -> a.is_mut == b.is_mut and same(a.target, b.target)
+            // TypeInfoReference($a), TypeInfoReference($b) -> a.is_mut == b.is_mut and same(a.target, b.target)
+            TypeInfoPointer($a), TypeInfoPointer($b) -> same(a.target, b.target)
+            TypeInfoReference($a), TypeInfoReference($b) -> same(a.target, b.target)
+
+            // temp
+            // TypeInfoPointer($a), TypeInfoReference($b) -> a.is_mut == b.is_mut and same(a.target, b.target)
+            // TypeInfoReference($a), TypeInfoPointer($b) -> a.is_mut == b.is_mut and same(a.target, b.target)
+            TypeInfoPointer($a), TypeInfoReference($b) -> same(a.target, b.target)
+            TypeInfoReference($a), TypeInfoPointer($b) -> same(a.target, b.target)
+            //
+
+            TypeInfoFunction($a), TypeInfoFunction($b) -> {
+                if a.param_types.length != b.param_types.length {
+                    return false
+                }
+                if !same(a.return_type, b.return_type) {
+                    return false
+                }
+                for 0 .. a.param_types.length {
+                    if !same(a.param_types[it], b.param_types[it]) {
+                        return false
+                    }
+                }
+                return true
+            }
 
             _ -> false
         }

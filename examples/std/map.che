@@ -218,8 +218,8 @@ impl(K: type, V: type) Map[K, V] {
         entries = entries_new
     }
 
-    iterator :: (&Self) -> TableIterator[K, V] {
-        return TableIterator[K, V](self, 0)
+    iterator :: (&Self) -> MapIterator[K, V] {
+        return MapIterator[K, V](self, 0)
     }
 }
 
@@ -245,30 +245,30 @@ for_extension_table :: (r: &Map[$K, $V], code: Code) #for {
 }
 
 // iterator
-TableIterator :: struct(K: type, V: type) {
+MapIterator :: struct(K: type, V: type) #copy {
     table: &Map[K, V]
     index: int
 }
 
-impl(K: type, V: type) Iterator[(K, V)] for TableIterator[K, V] {
-    next :: (&Self) -> Option[(K, V)] {
-        entries := table.get_entries()
-        while index < entries.length {
-            e := &entries[index]
-            index += 1
+// impl(K: type, V: type) Iterator[(K, V)] for MapIterator[K, V] {
+//     next :: (&Self) -> Option[(K, V)] {
+//         entries := table.get_entries()
+//         while index < entries.length {
+//             e := &entries[index]
+//             index += 1
 
-            if e.filled {
-                return Some((e.key, e.value))
-            }
-        }
+//             if e.filled {
+//                 return Some((e.key, e.value))
+//             }
+//         }
 
-        return None
-    }
+//         return None
+//     }
 
-    dispose :: (&Self) {
-        free(^self)
-    }
-}
+//     dispose :: (&Self) {
+//         free(^self)
+//     }
+// }
 
 #file_scope
 

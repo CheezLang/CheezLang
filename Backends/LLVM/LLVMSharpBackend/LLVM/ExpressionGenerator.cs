@@ -318,6 +318,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return result;
             }
 
+            if (cc.Name.Name == "bin_not")
+            {
+                var val = GenerateExpression(cc.Arguments[0], true);
+                var result = builder.CreateNot(val, "");
+                return result;
+            }
+
             if (cc.Name.Name == "panic")
             {
                 var message = GenerateExpression(cc.Arguments[0], true);

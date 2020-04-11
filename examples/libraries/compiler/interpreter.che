@@ -322,6 +322,43 @@ impl Interpreter {
         return ^frames[fp]
     }
 
+    push_native_frame2 :: (&Self, arg_slots: int) -> ^StackFrame {
+        if fp + 1 >= frames.length {
+            frame := &frames[fp]
+            location := frame.func.debug_info.get_location_for_ip(frame.ip_prev)
+            g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
+                frame.func.debug_info.path.slice()
+                location.line
+                location.column
+                fp
+                frame.sp
+                frame.ip_prev
+                Instruction.pretty_print(frame.code[frame.ip_prev..])
+                frame.dump_stack()
+            ], "stdout")
+            return ^frames[fp]
+        }
+
+        _fp, _sp := fp, sp
+        defer { if const DEBUG_ENABLED then if DEBUG_INTERPRETER then g_logger.log("push_native_frame2 {} (fp = {} -> {}, sp = {} -> {})", [arg_slots, _fp, fp, _sp, sp]) }
+
+        if fp >= 0 {
+            sp += frames[fp].sp - frames[fp].bp
+        }
+        fp += 1
+        frames[fp] = StackFrame(
+            ip = 0
+            sp = arg_slots
+            bp = arg_slots
+            code = null
+            stack = stack[sp - arg_slots .. ]
+            func = null
+            parameter_indices = []
+        )
+
+        return ^frames[fp]
+    }
+
     pop_frame :: (&Self) {
         _fp, _sp := fp, sp
         defer { if const DEBUG_ENABLED then if DEBUG_INTERPRETER then g_logger.log("pop_frame (fp = {} -> {}, sp = {} -> {})", [_fp, fp, _sp, sp]) }
@@ -744,6 +781,45 @@ impl Interpreter {
                 }
             }
 
+            .NativeCall2 -> {
+                wrapper := arg(NativeFunctionWrapper2)
+                func := arg(fn())
+                arg_slots := arg(int)
+
+                native_frame := push_native_frame2(arg_slots)
+                
+                if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
+                    frame := top_frame()
+                    g_logger.log("{}{}{}{}{}{}{}{}", [
+                        fmt.align(0), fp
+                        fmt.align(5), frame.sp
+                        fmt.align(10), "EnterNativeFunction"
+                        fmt.align(35), frame.dump_stack()
+                    ], "stdout")
+                }}
+                wrapper(func, ^self)
+                if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
+                    frame := top_frame()
+                    g_logger.log("ret_slots: {}{}{}{}{}{}{}{}{}", [
+                        native_frame.return_value_slots
+                        fmt.align(20), fp
+                        fmt.align(25), frame.sp
+                        fmt.align(30), "ExitNativeFunction"
+                        fmt.align(55), frame.dump_stack()
+                    ], "stdout")
+                }}
+                pop_frame()
+
+                if fp >= 0 {
+                    // increment sp by one for return value
+                    // @todo: needs to work with return values bigger than 8 bytes (1 stack slot)
+                    // @fixme frames[fp].sp += 1 // fails to compile
+                    (^frames[fp]).sp += native_frame.return_value_slots
+                } else {
+                    return .Done
+                }
+            }
+
             .NativeCall -> {
                 wrapper := arg(^NativeFunctionWrapper)
 
@@ -904,7 +980,7 @@ Instruction :: enum #repr("C") #tag_type(u64) {
 
     Branch, BranchIf
 
-    Call, NativeCall, CompCall
+    Call, NativeCall, NativeCall2, CompCall
     Return, ReturnVoid
 
     CheckRange, CheckNull
@@ -974,6 +1050,12 @@ impl Instruction {
             .NativeCall     -> {
                 wrapper := arg(^NativeFunctionWrapper, 0)
                 fmt.format("NativeCall {}", [wrapper.function_type])
+            }
+            .NativeCall2    -> {
+                wrapper := arg(NativeFunctionWrapper2, 0)
+                func    := arg(fn(), 1)
+                args    := arg(int, 2)
+                fmt.format("NativeCall2 {}, {}, {}", [<<cast(^^int)^wrapper, <<cast(^^int)^func, args])
             }
             .CompCall       -> {
                 func := arg(^AstFunction, 0)

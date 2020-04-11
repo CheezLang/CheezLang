@@ -86,6 +86,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private CheezType sTypeInfoEnum;
         private CheezType sTypeInfoEnumMember;
         private CheezType sTypeInfoTrait;
+        private CheezType sTypeInfoImplFunction;
         private CheezType sTypeInfoTraitFunction;
         private CheezType sTypeInfoTraitImpl;
         private CheezType sTypeInfoType;
@@ -113,6 +114,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMTypeRef rttiTypeInfoEnum;
         private LLVMTypeRef rttiTypeInfoEnumMember;
         private LLVMTypeRef rttiTypeInfoTrait;
+        private LLVMTypeRef rttiTypeInfoImplFunction;
         private LLVMTypeRef rttiTypeInfoTraitFunction;
         private LLVMTypeRef rttiTypeInfoTraitImpl;
         private LLVMTypeRef rttiTypeInfoType;

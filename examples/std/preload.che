@@ -85,7 +85,7 @@ Result :: enum(V: type, E: type) #copy(V, E) {
 use Option
 use Result
 
-impl(T: type) Option[T] {
+impl(T: type) Option[T] if (!@is_trait(T)) {
     unwrap :: (Self) -> T {
         return match self {
             Some($v) -> v
@@ -475,6 +475,7 @@ TypeInfo :: trait {
     size        : int
     alignment   : int
     traits      : []TypeInfoTraitImpl
+    impl_funcs  : []TypeInfoImplFunction
 }
 
 TypeInfoVoid :: struct TypeInfo {}
@@ -556,6 +557,12 @@ TypeInfoEnum :: struct TypeInfo {
 __ti_TypeInfoEnum := @type_info(TypeInfoEnum)
 
 // 
+
+TypeInfoImplFunction :: struct #copy {
+    typ     : ^TypeInfo
+    name    : string
+    pointer : fn()
+}
 
 TypeInfoTraitFunction :: struct #copy {
     name    : string

@@ -1,5 +1,5 @@
-// examples which should be working
 // import examples.trait_function_call_performance
+// examples which should be working
 // import examples.glfw3_example
 // import examples.graphyfier.graphyfier
 // import examples.geometry_draw_thingy
@@ -33,12 +33,67 @@ import compiler.cli
 // use import std.string
 // io :: import std.io
 // C :: import std.c
+// mem :: import std.mem.allocator
+
+// Interpreter :: struct {}
+// impl Interpreter {
+//     get_arg :: (&Self, $T: type, index: int) -> T {
+//         return match T {
+//             string -> "lol"
+//             int -> 125
+//             _ -> default
+//         }
+//     }
+
+//     set_return :: (&Self, value: $T) {
+//         io.formatln("set_return: {}", [value])
+//     }
+// }
+
+// register_native_type :: ($FuncType: type) -> fn(fn(), ^Interpreter) {
+//     helper :: (func: fn(), interp: ^Interpreter) {
+//         ArgTupleType :: @param_type_tuple(FuncType)
+//         slots : [(@sizeof(ArgTupleType) + 7) / 8]u64 = default
+//         args := &<<cast(^ArgTupleType)slots.data
+//         @for_function_parameters(FuncType, (ArgType, i) => {
+//             args[i] = interp.get_arg(ArgType, i)
+//             // io.formatln("{} : {} = {}", [i, @typename(ArgType), args[i]])
+//         })
+
+//         if const FuncType.return_type == void {
+//             @call_with_tuple_args(cast(FuncType) func, args)
+//         } else {
+//             result := @call_with_tuple_args(cast(FuncType) func, args)
+//             interp.set_return(result)
+//         }
+//     }
+
+//     return helper
+// }
+
+// foo :: (a: int, b: string) -> bool {
+//     return a % 2 == 0 or b == "lol"
+// }
+
+// bar :: (s: string) {
+//     io.formatln("bar: {}", [s])
+// }
+
+// uiae :: (s: string) {
+//     io.formatln("uiae: {}", [s])
+// }
 
 // Main :: () {
-//     str := "uiae".to_owned()
-//     C.printf("%lld`n", 1)
-//     io.formatln("{}", [str])
-//     C.printf("%lld`n", 2)
+//     f1 := register_native_type(@typeof(foo))
+//     f2 := register_native_type(@typeof(bar))
+
+//     interp := Interpreter()
+
+//     f1(cast foo, ^interp)
+//     io.println("=====")
+//     f2(cast bar, ^interp)
+//     io.println("=====")
+//     f2(cast uiae, ^interp)
 // }
 
 // use import std.mem.allocator

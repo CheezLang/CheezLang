@@ -18,7 +18,7 @@ AstNodeFlags :: enum #flags {
 __uiaeuiaeuiae := @type_info(AstNodeFlags)
 
 AstNode :: trait {
-    id       : int
+    id       : int = -1
     location : Location
     scope    : ^Scope = null
     typ      : ^TypeInfo = null
@@ -104,6 +104,15 @@ AstFunction :: struct AstNode {
     bytecode            : ^CBCFunction = null
 }
 impl AstNode for AstFunction {}
+
+AstPoly :: struct AstNode {
+    params      : Array[^AstDecl]
+    value_expr  : &AstNode
+
+    param_scope : ^Scope
+    name        := "#anonymous"
+}
+impl AstNode for AstPoly {}
 
 AstArgument :: struct AstNode {
     name        : ^AstIdentifier
@@ -250,10 +259,16 @@ AstDot :: struct AstNode {
 impl AstNode for AstDot {}
 
 AstIndex :: struct AstNode {
-    sub     : &AstNode
-    index   : &AstNode
+    sub         : &AstNode
+    arguments   : Array[^AstArgument]
+    index       : ^AstNode
 }
 impl AstNode for AstIndex {}
+
+AstUfc :: struct AstNode {
+    value_expr  : &AstNode
+    symbol      : Symbol
+}
 
 // impl AstFunction {
 //     get_parameter :: (&Self, name: string) -> Option[&AstDecl] {

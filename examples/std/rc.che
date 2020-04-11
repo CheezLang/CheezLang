@@ -33,7 +33,7 @@ impl(T: type) Rc[T] {
         // drop :: (ptr: ^K) {
         //     Memory.drop(<<ptr)
         // }
-        drop_impl : fn(^T) = cast if const @type_has_trait(K, Drop) then ptr.drop else null
+        drop_impl : fn(^T) = cast if const !@is_trait(K) and @type_has_trait(K, Drop) then ptr.drop else null
         return Rc[T](data, cast ptr, drop_impl, owned)
     }
 
@@ -46,7 +46,7 @@ impl(T: type) Rc[T] {
         drop :: (ptr: ^K) {
             Memory.drop(<<ptr)
         }
-        drop_impl : fn(^T) = cast if const @type_has_trait(K, Drop) then drop else null
+        drop_impl : fn(^T) = cast if const !@is_trait(K) and @type_has_trait(K, Drop) then drop else null
         return Rc[T](data, cast ptr, drop_impl, true)
     }
 
@@ -64,11 +64,11 @@ impl(T: type) Rc[T] {
         return value == null
     }
 
-    try_get :: (&Self) -> Option[&T] {
-        return if value == null
-            then None
-            else Some(<<value)
-    }
+    // try_get :: (&Self) -> Option[&T] {
+    //     return if value == null
+    //         then None
+    //         else Some(<<value)
+    // }
 
     get :: (&Self) -> &T {
         @assert(value != null)

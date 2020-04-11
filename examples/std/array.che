@@ -225,17 +225,17 @@ impl(T: type) Array[T] if @is_default_constructable(T) {
     }
 }
 
-ArrayIterator :: struct(T: type) {
+ArrayIterator :: struct(T: type) #copy {
     array: &Array[T]
     index: int
 }
 
-impl(T: type) Iterator[T] for ArrayIterator[T] {
-    next :: (&Self) -> Option[T] {
-        index += 1
-        return if index > array.length { None } else { Some(array[index - 1]) }
-    }
-}
+// impl(T: type) Iterator[T] for ArrayIterator[T] {
+//     next :: (&Self) -> Option[T] {
+//         index += 1
+//         return if index > array.length { None } else { Some(array[index - 1]) }
+//     }
+// }
 
 impl(F: type, T: type) Into[Array[T]] for Array[F] if F : Into[T], #notyet {
     into :: (&Self) -> Array[T] {

@@ -25,28 +25,26 @@ use import value
 
 validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
     match node {
-        AstConstDecl($node) -> {
-            assert("AstConstDecl", node.typ == @type_info(void))
-            assert("AstConstDecl", node.var_type != null)
 
-            if node.type_expr != null and !validate_node(<<node.type_expr, error_handler) {
-                return false
-            }
-
+        AstArgument($node) -> {
+            assert("AstArgument", node.typ != null)
+            assert("AstArgument", node.typ == node.value_expr.typ)
             if !validate_node(node.value_expr, error_handler) {
                 return false
             }
         }
 
-        AstDecl($node) -> {
-            assert("AstDecl", node.typ == @type_info(void))
-            assert("AstDecl", node.var_type != null)
+        AstArray($node) -> {
+            assert("AstArray", node.typ != null)
+            // @todo
+        }
 
-            if node.type_expr != null and !validate_node(<<node.type_expr, error_handler) {
+        AstArrayType($node) -> {
+            assert("AstArray", node.typ != null)
+            if node.count != null and !validate_node(<<node.count, error_handler) {
                 return false
             }
-
-            if node.value_expr != null and !validate_node(<<node.value_expr, error_handler) {
+            if !validate_node(node.target, error_handler) {
                 return false
             }
         }
@@ -63,14 +61,12 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
-        AstFunction($node) -> {
-            // assert("AstFunction", node.typ != null) // @todo
-            // @todo: parameters
-            // @todo: return type
-
-            // @todo: type of node is function type
-
-            if node.body != null and !validate_node(<<node.body, error_handler) {
+        AstBinary($node) -> {
+            assert("AstBinary", node.typ != null)
+            if !validate_node(node.left, error_handler) {
+                return false
+            }
+            if !validate_node(node.right, error_handler) {
                 return false
             }
         }
@@ -82,6 +78,20 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
                 if !validate_node(<<child, error_handler) {
                     return false
                 }
+            }
+        }
+
+        AstBool($node) -> {
+            assert("AstBool", node.typ == @type_info(bool))
+        }
+
+        AstBreak($node) -> {
+            assert("AstBreak", node.typ != null)
+            if node.label != null and !validate_node(<<node.label, error_handler) {
+                return false
+            }
+            if node.value_expr != null and !validate_node(<<node.value_expr, error_handler) {
+                return false
             }
         }
 
@@ -111,54 +121,67 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
-        AstArgument($node) -> {
-            assert("AstArgument", node.typ != null)
-            assert("AstArgument", node.typ == node.value_expr.typ)
+        AstConstDecl($node) -> {
+            assert("AstConstDecl", node.typ == @type_info(void))
+            assert("AstConstDecl", node.var_type != null)
+
+            if node.type_expr != null and !validate_node(<<node.type_expr, error_handler) {
+                return false
+            }
+
             if !validate_node(node.value_expr, error_handler) {
+                return false
+            }
+        }
+
+        AstContinue($node) -> {
+            assert("AstContinue", node.typ != null)
+            if node.label != null and !validate_node(<<node.label, error_handler) {
+                return false
+            }
+        }
+
+        AstDecl($node) -> {
+            assert("AstDecl", node.typ == @type_info(void))
+            assert("AstDecl", node.var_type != null)
+
+            if node.type_expr != null and !validate_node(<<node.type_expr, error_handler) {
+                return false
+            }
+
+            if node.value_expr != null and !validate_node(<<node.value_expr, error_handler) {
+                return false
+            }
+        }
+
+        AstDefer($node) -> {
+            assert("AstDefer", node.typ != null)
+            if !validate_node(node.sub, error_handler) {
+                return false
+            }
+        }
+
+        AstDot($node) -> {
+            assert("AstDot", node.typ != null)
+            if node.sub != null and !validate_node(<<node.sub, error_handler) {
+                return false
+            }
+        }
+
+        AstFunction($node) -> {
+            // assert("AstFunction", node.typ != null) // @todo
+            // @todo: parameters
+            // @todo: return type
+
+            // @todo: type of node is function type
+
+            if node.body != null and !validate_node(<<node.body, error_handler) {
                 return false
             }
         }
 
         AstIdentifier($node) -> {
             assert("AstIdentifier", node.typ != null)
-        }
-
-        AstString($node) -> {
-            assert("AstString", node.typ != null)
-        }
-
-        AstStruct($node) -> {
-            assert("AstStruct", node.typ != null)
-            for child : node.children {
-                if !validate_node(<<child, error_handler) {
-                    return false
-                }
-            }
-        }
-
-        AstNumberLiteral($node) -> {
-            assert("AstNumberLiteral", node.typ != null)
-        }
-
-        AstBool($node) -> {
-            assert("AstBool", node.typ == @type_info(bool))
-        }
-
-        AstBinary($node) -> {
-            assert("AstBinary", node.typ != null)
-            if !validate_node(node.left, error_handler) {
-                return false
-            }
-            if !validate_node(node.right, error_handler) {
-                return false
-            }
-        }
-
-        AstUnary($node) -> {
-            assert("AstUnary", node.typ != null)
-            if !validate_node(node.sub, error_handler) {
-                return false
-            }
         }
 
         AstIf($node) -> {
@@ -179,9 +202,28 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             if !validate_node(node.sub, error_handler) {
                 return false
             }
-            if !validate_node(node.index, error_handler) {
-                return false
+
+            for arg : node.arguments {
+                if !validate_node(<<arg, error_handler) {
+                    return false
+                }
             }
+        }
+
+        AstNumberLiteral($node) -> {
+            assert("AstNumberLiteral", node.typ != null)
+        }
+
+        AstPoly($node) -> {
+            assert("AstPoly", node.typ != null)
+            // for param : node.params {
+            //     if !validate_node(<<param, error_handler) {
+            //         return false
+            //     }
+            // }
+            // if !validate_node(node.value_expr, error_handler) {
+            //     return false
+            // }
         }
 
         AstReturn($node) -> {
@@ -191,48 +233,26 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
-        AstBreak($node) -> {
-            assert("AstBreak", node.typ != null)
-            if node.label != null and !validate_node(<<node.label, error_handler) {
-                return false
-            }
-            if node.value_expr != null and !validate_node(<<node.value_expr, error_handler) {
-                return false
+        AstString($node) -> {
+            assert("AstString", node.typ != null)
+        }
+
+        AstStruct($node) -> {
+            assert("AstStruct", node.typ != null)
+            for child : node.children {
+                if !validate_node(<<child, error_handler) {
+                    return false
+                }
             }
         }
 
-        AstContinue($node) -> {
-            assert("AstContinue", node.typ != null)
-            if node.label != null and !validate_node(<<node.label, error_handler) {
-                return false
-            }
+        AstUfc($node) -> {
+            assert("AstUfc", node.typ != null)
         }
 
-        AstDefer($node) -> {
-            assert("AstDefer", node.typ != null)
+        AstUnary($node) -> {
+            assert("AstUnary", node.typ != null)
             if !validate_node(node.sub, error_handler) {
-                return false
-            }
-        }
-
-        AstDot($node) -> {
-            assert("AstDot", node.typ != null)
-            if node.sub != null and !validate_node(<<node.sub, error_handler) {
-                return false
-            }
-        }
-
-        AstArray($node) -> {
-            assert("AstArray", node.typ != null)
-            // @todo
-        }
-
-        AstArrayType($node) -> {
-            assert("AstArray", node.typ != null)
-            if node.count != null and !validate_node(<<node.count, error_handler) {
-                return false
-            }
-            if !validate_node(node.target, error_handler) {
                 return false
             }
         }

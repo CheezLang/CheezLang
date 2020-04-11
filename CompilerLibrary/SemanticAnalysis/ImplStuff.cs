@@ -34,7 +34,7 @@ namespace Cheez
         /// <param name="type"></param>
         /// <param name="trait"></param>
         /// <returns></returns>
-        private List<AstImplBlock> GetImplsForType(CheezType type, CheezType trait = null)
+        public List<AstImplBlock> GetImplsForType(CheezType type, CheezType trait = null)
         {
             var impls = GetImplsForTypeHelper(type);
             if (trait != null)
