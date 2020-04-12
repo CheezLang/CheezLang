@@ -233,6 +233,13 @@ namespace CheezCLI
                 }
             }
 
+            System.Console.WriteLine($"Global variables: {compiler.DefaultWorkspace.Variables.Count()}");
+            System.Console.WriteLine($"           Impls: {compiler.DefaultWorkspace.Impls.Count()}");
+            System.Console.WriteLine($"       Functions: {compiler.DefaultWorkspace.Functions.Count()}");
+            System.Console.WriteLine($"         Structs: {compiler.DefaultWorkspace.Structs.Count()}");
+            System.Console.WriteLine($"           Enums: {compiler.DefaultWorkspace.Enums.Count()}");
+            System.Console.WriteLine($"          Traits: {compiler.DefaultWorkspace.Traits.Count()}");
+
             if (errorHandler.HasErrors)
             {
                 result.ExitCode = 3;

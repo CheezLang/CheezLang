@@ -32,7 +32,10 @@ namespace Cheez
         private HashSet<CheezType> mTypesRequiredAtRuntime = new HashSet<CheezType>();
 
         public IEnumerable<AstFuncExpr> Functions => mAllFunctions;
+        public IEnumerable<AstImplBlock> Impls => mAllImpls;
         public IEnumerable<AstVariableDecl> Variables => mAllGlobalVariables;
+        public IEnumerable<AstStructTypeExpr> Structs => mAllStructs;
+        public IEnumerable<AstEnumTypeExpr> Enums => mAllEnums;
         public IEnumerable<AstTraitTypeExpr> Traits => mAllTraits;
         public IEnumerable<CheezType> TypesRequiredAtRuntime => mTypesRequiredAtRuntime;
         //

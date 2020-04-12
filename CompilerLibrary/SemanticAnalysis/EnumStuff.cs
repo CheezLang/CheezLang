@@ -143,6 +143,7 @@ namespace Cheez
             }
 
             var enumType = new EnumType(expr, isCopy);
+            AddEnum(expr);
 
             if (expr.HasDirective("flags"))
             {

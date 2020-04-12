@@ -79,6 +79,7 @@ namespace Cheez
 
             expr.Type = CheezType.Type;
             expr.Value = new StructType(expr, isCopy, expr.Name);
+            AddStruct(expr);
             return expr;
         }
 
