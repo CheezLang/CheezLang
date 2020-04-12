@@ -975,10 +975,10 @@ namespace Cheez.Parsing
                     NextToken();
                     indexName = ParseIdentifierExpr();
 
-                    ConsumeUntil(TokenType.Colon, null);
+                    ConsumeUntil(TokenType.KwIn, null);
                     collection = ParseExpression(false);
                 }
-                else if (CheckToken(TokenType.Colon))
+                else if (CheckToken(TokenType.KwIn))
                 {
                     varName = vn;
                     NextToken();

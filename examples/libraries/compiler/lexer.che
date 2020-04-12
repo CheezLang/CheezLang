@@ -37,7 +37,7 @@ Lexer :: struct {
     KwTrue     : string
     KwFalse    : string
     KwNull     : string
-    KwUsing    : string
+    KwUse    : string
     KwDefer    : string
     KwMatch    : string
     KwBreak    : string
@@ -51,6 +51,8 @@ Lexer :: struct {
     KwDo       : string
     KwMut      : string
     KwImport   : string
+    KwIn       : string
+    KwIs       : string
 }
 
 impl TextProvider for Lexer {
@@ -94,7 +96,7 @@ impl Lexer {
             KwTrue     = string_db.intern("true")
             KwFalse    = string_db.intern("false")
             KwNull     = string_db.intern("null")
-            KwUsing    = string_db.intern("using")
+            KwUse      = string_db.intern("use")
             KwDefer    = string_db.intern("defer")
             KwMatch    = string_db.intern("match")
             KwBreak    = string_db.intern("break")
@@ -108,6 +110,8 @@ impl Lexer {
             KwDo       = string_db.intern("do")
             KwMut      = string_db.intern("mut")
             KwImport   = string_db.intern("import")
+            KwIn       = string_db.intern("in")
+            KwIs       = string_db.intern("is")
         ))
     }
 
@@ -728,7 +732,7 @@ impl Lexer {
                     else if string.same(str, KwTrue)       then TokenType.KwTrue
                     else if string.same(str, KwFalse)      then TokenType.KwFalse
                     else if string.same(str, KwNull)       then TokenType.KwNull
-                    else if string.same(str, KwUsing)      then TokenType.KwUsing
+                    else if string.same(str, KwUse)        then TokenType.KwUse
                     else if string.same(str, KwDefer)      then TokenType.KwDefer
                     else if string.same(str, KwMatch)      then TokenType.KwMatch
                     else if string.same(str, KwBreak)      then TokenType.KwBreak
@@ -742,6 +746,8 @@ impl Lexer {
                     else if string.same(str, KwDo)         then TokenType.KwDo
                     else if string.same(str, KwMut)        then TokenType.KwMut
                     else if string.same(str, KwImport)     then TokenType.KwImport
+                    else if string.same(str, KwIn)         then TokenType.KwIn
+                    else if string.same(str, KwIs)         then TokenType.KwIs
                     else token.typ
             }
         }
@@ -877,7 +883,7 @@ impl Printable for TokenType {
             KwTrue            -> "KwTrue"
             KwFalse           -> "KwFalse"
             KwNull            -> "KwNull"
-            KwUsing           -> "KwUsing"
+            KwUse             -> "KwUse"
             KwDefer           -> "KwDefer"
             KwMatch           -> "KwMatch"
             KwBreak           -> "KwBreak"
@@ -891,6 +897,8 @@ impl Printable for TokenType {
             KwDo              -> "KwDo"
             KwMut             -> "KwMut"
             KwImport          -> "KwImport"
+            KwIn              -> "KwIn"
+            KwIs              -> "KwIs"
         }
     }
 }
@@ -962,7 +970,7 @@ TokenType :: enum #copy {
     KwTrue
     KwFalse
     KwNull
-    KwUsing
+    KwUse
     KwDefer
     KwMatch
     KwBreak
@@ -976,6 +984,8 @@ TokenType :: enum #copy {
     KwDo
     KwMut
     KwImport
+    KwIn
+    KwIs
 }
 
 #file_scope

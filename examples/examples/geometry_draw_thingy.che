@@ -45,14 +45,14 @@ impl BaseShape {
     }
 
     draw_nodes :: (&Self, g: &MyGame) {
-        for i : 0..nodes.get_length() {
+        for i in 0..nodes.get_length() {
             (sx, sy) := g.world_to_screen(nodes[i].pos)
             g.pge.draw_circle(sx, sy, 3, Pixel.rgba(255, 0, 0))
         }
     }
 
     hit_node :: (&Self, p: float2) -> ^Node {
-        for i : 0..nodes.get_length() {
+        for i in 0..nodes.get_length() {
             if (p - nodes[i].pos).magsq() < 0.01f {
                 return ^nodes[i]
             }
@@ -302,7 +302,7 @@ impl Game for MyGame {
                 selectedNode = temp_shape.next_node(vCursor)
                 selectedNode = temp_shape.next_node(vCursor)
             } else if pge.get_key(Key.F5).pressed {
-                for i : 0..shapes.get_length() {
+                for i in 0..shapes.get_length() {
                     selectedNode = shapes[i].hit_node(vCursor)
                     if selectedNode != null then break
                 }

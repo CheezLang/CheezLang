@@ -39,7 +39,7 @@ impl Printable for EnumExpr {
 impl Printable for StructExpr {
     print :: (&Self, str: &String, format: string) {
         sub_str := String.empty()
-        for mem : subs {
+        for mem in subs {
             if it_index > 0 {
                 sub_str.append_string(", ")
             }

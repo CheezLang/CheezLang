@@ -92,7 +92,9 @@
         "type": "cheez",
         "label": "Cheez",
         "program": "D:/Programming/CheezLang/gen/cheezdb.exe",
-        "languages": ["cheez"],
+        "languages": [
+          "cheez"
+        ],
         "initialConfigurations": [
           {
             "type": "cheez",
@@ -101,7 +103,9 @@
             "program": "${workspaceFolder}/TODO"
           }
         ],
-        "args": [ "cheez" ]
+        "args": [
+          "cheez"
+        ]
       }
     ],
     "breakpoints": [

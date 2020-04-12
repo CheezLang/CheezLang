@@ -122,7 +122,7 @@ impl EntityLayerCallbacks for Test {
             renderer.fill_quad(vec3(x, y), vec3(size, size) * 0.9f, texture = tex)
         }
 
-        // for l : lights {
+        // for l in lights {
         //     renderer.add_point_light(l.pos, l.col, l.radius, l.angle, l.direction, l.smoothness)
         // }
 
@@ -136,7 +136,7 @@ impl EntityLayerCallbacks for Test {
         // }
         // ImGui.SliderFloat("Exposure", cast exposure, 0, 15)
 
-        // for l : lights {
+        // for l in lights {
         //     ImGui.PushIDPtr(^l)
         //     ImGui.SliderFloat2("Position", cast ^l.pos, -10, 10)
         //     ImGui.ColorEdit3("Color", cast ^l.col, ImGui.ImGuiColorEditFlags_.HDR)

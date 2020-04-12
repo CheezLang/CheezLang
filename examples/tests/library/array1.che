@@ -29,7 +29,7 @@ print_array :: (a: &Array[int]) {
     C.printf("cap: %lld`n", a.get_capacity())
     C.printf("arr: [")
 
-    for i : 0..a.get_length() {
+    for i in 0..a.get_length() {
         if i > 0 {
             C.printf(", ")
         }

@@ -493,7 +493,7 @@ impl CompileNode {
 
                 // check if member with this name exists
                 member : ^TypeInfoStructMember = null
-                for(by_ref=true) mem : ti.members {
+                for(by_ref=true) mem in ti.members {
                     if mem.name == name {
                         member = ^mem
                         break
@@ -683,7 +683,7 @@ impl CompileNode {
             TypeInfoArray($arr_type) -> { expected = arr_type.target }
         }
 
-        for(by_ref=true) val : arr.values {
+        for(by_ref=true) val in arr.values {
             val.scope = arr.scope
             val = ^compile_node(<<val, ctx.with_expected(expected))
             
@@ -1116,7 +1116,7 @@ impl CompileNode {
                     poison(node)
                     return node
                 } else {
-                    for arg : node.arguments {
+                    for arg in node.arguments {
                         param := &poly.params[it_index]
 
                         arg.scope = node.scope
@@ -1144,7 +1144,7 @@ impl CompileNode {
 
                 scope := compiler.new_scope(poly.scope)
 
-                for arg : node.arguments {
+                for arg in node.arguments {
                     param := &poly.params[it_index]
 
                     g_logger.log("{}: {}, {}", [param.name, arg.typ, arg.value])
@@ -1158,7 +1158,7 @@ impl CompileNode {
 
         match node.sub.typ {
             TypeInfoArray($ti) -> {
-                for arg : node.arguments {
+                for arg in node.arguments {
                     arg.scope = node.scope
                     compile_node(<<arg, ctx)
                     handle_poison(node, <<arg)
@@ -1273,7 +1273,7 @@ impl CompileNode {
         jobs := Array[^CompileStructMemberJob].create()
 
         // @todo: create a job for each child, so children can depend on other children
-        for child : str.children {
+        for child in str.children {
             child.scope = str.sub_scope
             job := compiler.create_job(CompileStructMemberJob.new(^str, child))
             jobs.add(cast job)
@@ -1292,7 +1292,7 @@ impl CompileNode {
             // }
         }
 
-        for job : jobs {
+        for job in jobs {
             wait_until(job.done, {
                 // nothing to see here...
             })
@@ -1301,7 +1301,7 @@ impl CompileNode {
 
         // create type info
         member_type_infos := compiler.new_type_data_array(TypeInfoStructMember, str.members.count())
-        for mem : str.members {
+        for mem in str.members {
             member_type_infos[it_index].index = it_index
             member_type_infos[it_index].name = mem.name
             member_type_infos[it_index].typ = mem.var_type
@@ -1320,7 +1320,7 @@ impl CompileNode {
         {
             alignment   := 1
             size        := 0
-            for mem : str.members {
+            for mem in str.members {
                 wait_until(mem.var_type.size >= 0 and mem.var_type.alignment >= 0, {
                     compiler.error_handler.report_error_at(
                         str.location,
@@ -1383,7 +1383,7 @@ impl CompileNode {
             }
         }
 
-        for param : poly.params {
+        for param in poly.params {
             param.scope = poly.scope
             compile_node(<<param, ctx.with_expected(null))
             handle_poison(poly, <<param)
@@ -1514,7 +1514,7 @@ impl CompileNode {
                     name        = null
                     value_expr  = ufc.value_expr
                 )))
-                for arg : call.arguments {
+                for arg in call.arguments {
                     new_args.add(arg)
                 }
                 call.arguments = new_args
@@ -1552,7 +1552,7 @@ impl CompileNode {
                 if call.arguments.count() != func.params.length {
                     compiler.error_handler.report_error_at(call.location, "Wrong number of arguments in function call")
                 } else {
-                    for arg : call.arguments {
+                    for arg in call.arguments {
                         param := &func.params[it_index]
 
                         arg.scope = call.scope
@@ -1585,7 +1585,7 @@ impl CompileNode {
                         "Wrong number of arguments ({}) in function call. Expected {}",
                         [call.arguments.count(), func_type.param_types.length])
                 } else {
-                    for arg : call.arguments {
+                    for arg in call.arguments {
                         param_type := &func_type.param_types[it_index]
                         arg.scope = call.scope
                         arg = cast ^compile_node(<<arg, ctx.with_expected(param_type))
@@ -1615,7 +1615,7 @@ impl CompileNode {
                         "Wrong number of arguments ({}) in function call. Expected {}",
                         [call.arguments.count(), func_type.param_types.length])
                 } else {
-                    for arg : call.arguments {
+                    for arg in call.arguments {
                         param_type := &func_type.param_types[it_index]
                         arg.scope = call.scope
                         arg = cast ^compile_node(<<arg, ctx.with_expected(param_type))
@@ -1647,7 +1647,7 @@ impl CompileNode {
     compile_block :: (&Self, block: &AstBlock, ctx: CNContext) -> &AstNode {
         block.sub_scope = compiler.new_scope(block.scope)
 
-        for child : block.children {
+        for child in block.children {
             child.scope = block.sub_scope
 
             expected : ^TypeInfo = if it_index == block.children.count() - 1 then ctx.expected else null
@@ -1684,11 +1684,13 @@ impl CompileNode {
 
         // infer types of parameters
         param_types := mem.alloc_n(^TypeInfo, cast func.params.count(), compiler.type_allocator)
-        for param : func.params {
+        for param in func.params {
             param.scope = func.param_scope
 
-            param.name = match &<<param.pattern {
+            param.name = match param.pattern {
                 AstIdentifier($id) -> id.name
+                _ if param.pattern == null -> "_"
+
                 _ -> {
                     compiler.error_handler.report_error_at(param.location, "Non-identifier patterns not implemented yet")
                     return func

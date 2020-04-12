@@ -139,7 +139,7 @@ impl Console {
                 } else if completions.get_length() > 1 {
                     to_complete := text.sub_string(0, cast data.CursorPos)
                     add_entry(MessageType.Command, fmt.format("?{}", [to_complete]))
-                    for c : completions {
+                    for c in completions {
                         add_entry(MessageType.Log, fmt.format(" {}{}", [to_complete, c.slice()]))
                     }
                 }
@@ -207,7 +207,7 @@ impl Console {
 
             line_spacing := ImGui.ImVec2(4,1)
             ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.ItemSpacing, line_spacing)
-            for i : 0 .. items.count() {
+            for i in 0 .. items.count() {
                 item := &items.at(i)
 
                 color, has_color := match item.typ {

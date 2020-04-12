@@ -120,13 +120,13 @@ serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
             result += "[`n"
 
             body := String.empty()
-            for(by_ref=true) v : arr.slice() {
+            for(by_ref=true) v in arr.slice() {
                 if it_index > 0 {
                     body += ",`n"
                 }
                 serialize_json_value_helper_pretty(body, v)
             }
-            for line : body.slice().split_at_char('`n') {
+            for line in body.slice().split_at_char('`n') {
                 result += "    "
                 result += line
                 result += "`n"
@@ -136,7 +136,7 @@ serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
         .JsonObject($map) -> {
             result += "{`n"
             body := String.empty()
-            for kv : <<^map {
+            for kv in <<^map {
                 if it_index > 0 {
                     body += ",`n"
                 }
@@ -148,7 +148,7 @@ serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
 
                 serialize_json_value_helper_pretty(body, kv.value)
             }
-            for line : body.slice().split_at_char('`n') {
+            for line in body.slice().split_at_char('`n') {
                 result += "    "
                 result += line
                 result += "`n"
@@ -166,7 +166,7 @@ serialize_json_value_helper :: (result: &String, val: &JsonValue) {
         .JsonString($val) -> result.appendf("`"{}`"", escape_json_string(val.slice()))
         .JsonArray($arr) -> {
             result += "["
-            for(by_ref=true) v : arr.slice() {
+            for(by_ref=true) v in arr.slice() {
                 if it_index > 0 {
                     result += ","
                 }
@@ -176,7 +176,7 @@ serialize_json_value_helper :: (result: &String, val: &JsonValue) {
         }
         .JsonObject($map) -> {
             result += "{"
-            for kv : <<^map {
+            for kv in <<^map {
                 if it_index > 0 {
                     result += ","
                 }
@@ -325,7 +325,7 @@ consume :: (json: string, typ: JsonTokenType) -> bool, string {
 escape_json_string :: (str: string) -> String {
     result := String.with_capacity(str.bytes.length)
 
-    for c : str {
+    for c in str {
         match c {
             '`n' -> result.append_string("\n")
             '`t' -> result.append_string("\t")
@@ -343,7 +343,7 @@ unescape_json_string :: (str: string) -> String {
     result := String.with_capacity(str.bytes.length)
 
     was_backslash := false
-    for c : str {
+    for c in str {
         if was_backslash {
             result.append_char(match c {
                 'n' -> '`n'

@@ -51,7 +51,7 @@ test1 :: () {
         newStr[0] = str[0] - u8('a') + u8('A')
     }
 
-    for i : 1..str.bytes.length {
+    for i in 1..str.bytes.length {
         c := char(str[i])
         c = match (char(str[i - 1]), char(str[i])) {
             (' ', $x) if x >= 'a' and x <= 'z' -> x - 'a' + 'A'

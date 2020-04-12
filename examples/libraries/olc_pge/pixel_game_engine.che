@@ -189,7 +189,7 @@ impl PixelGameEngine {
                 tp1 = tp2
 
                 // Handle User Input - Keyboard
-                for i : 0..256 {
+                for i in 0..256 {
                     pKeyboardState[i].pressed = false
                     pKeyboardState[i].released = false
 
@@ -207,7 +207,7 @@ impl PixelGameEngine {
                 }
 
                 // Handle User Input - Mouse
-                for i : 0..5 {
+                for i in 0..5 {
                     pMouseState[i].pressed = false
                     pMouseState[i].released = false
 

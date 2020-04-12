@@ -406,13 +406,13 @@ impl Film {
             cast get_time_microseconds()
         )
 
-        for y : 0..height {
+        for y in 0..height {
             if antiAliasingSteps >= 0 {
                 row := y + 1
                 io.printf("Rendering row {}/{}`n", (row, height))
             }
 
-            for x : 0..width {
+            for x in 0..width {
                 fx := cast(double) x
                 fy := cast(double) y
 
@@ -422,7 +422,7 @@ impl Film {
                     ray := camera.project((fx + 0.5) * fw, (fy + 0.5) * fh)
                     color= scene.project(ray)
                 } else {
-                    for i : 0..antiAliasingSteps {
+                    for i in 0..antiAliasingSteps {
                         ray := camera.project((fx + r.next_double()) * fw, (fy + r.next_double()) * fh)
                         c := scene.project(ray)
                         color += c
@@ -540,7 +540,7 @@ impl SDFAllocator {
 }
 
 renderImage :: (film: &Film) {
-    for i : 0..film.pixels.length {
+    for i in 0..film.pixels.length {
         film.pixels[i] = Vec3(0, 0, 0)
     }
 

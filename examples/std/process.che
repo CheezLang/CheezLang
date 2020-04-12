@@ -33,7 +33,7 @@ run_process :: (program: string, args: []string, working_dir: string) -> bool {
 
     command_line := String.empty()
     command_line.appendf("`"{}`"", program)
-    for arg : args {
+    for arg in args {
         command_line.appendf(" `"{}`"", arg)
     }
     command_line.append_char(char(0))

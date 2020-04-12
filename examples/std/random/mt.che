@@ -28,7 +28,7 @@ impl MTwister {
     create :: (seed: u32) -> Self {
         result := MTwister(index = STATE_VECTOR_LENGTH)
         result.mt[0] = seed
-        for i : 1..int(STATE_VECTOR_LENGTH) {
+        for i in 1..int(STATE_VECTOR_LENGTH) {
             result.mt[i] = 0x6c078965 * @bin_xor(result.mt[i - 1], @bin_lsr(result.mt[i - 1], 30)) + u32(i)
         }
         return result
@@ -85,7 +85,7 @@ impl MTwister {
             i += 1
         }
 
-        for i : 0..int(STATE_VECTOR_LENGTH) {
+        for i in 0..int(STATE_VECTOR_LENGTH) {
             y = mt[i]
             y = @bin_xor(y, @bin_lsr(y, 11))
             y = @bin_xor(y, @bin_and(@bin_lsl(y, 7), 0x9d2c5680))

@@ -20,7 +20,7 @@ Main :: () {
     <<pa = 10
     io.println(<<pa)
 
-    for i : 0..100 {
+    for i in 0..100 {
         alloc(int, ^sa)
     }
     sa.print_diagnostics()

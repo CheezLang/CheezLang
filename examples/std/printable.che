@@ -135,7 +135,7 @@ impl(T: type) Printable for Option[T] if T: Printable {
 impl(T: type) Printable for Array[T] if T: Printable {
     print :: (&Self, str: &String, format: string) {
         str += "["
-        for(by_ref=true) v : self.slice() {
+        for(by_ref=true) v in self.slice() {
             if it_index > 0 {
                 str += ", "
             }
@@ -148,7 +148,7 @@ impl(T: type) Printable for Array[T] if T: Printable {
 impl(K: type, V: type) Printable for Table[K, V] if K: Printable, V: Printable {
     print :: (&Self, str: &String, format: string) {
         str += "{"
-        for v : <<^self {
+        for v in <<^self {
             if it_index > 0 {
                 str += ", "
             }
@@ -239,7 +239,7 @@ impl Printable for TypeInfoAny {
 impl Printable for TypeInfoFunction {
     print :: (&Self, str: &String, format: string) {
         str += "fn ("
-        for param_type : self.param_types {
+        for param_type in self.param_types {
             if it_index > 0 { str += ", " }
             fmt.format_into(str, "{}", [param_type])
         }
@@ -306,7 +306,7 @@ impl Printable for TypeInfoStruct {
     print :: (&Self, str: &String, format: string) {
         if format == "?" {
             fmt.format_into(str, "struct {} ``{`n", [self.name])
-            for mem : self.members {
+            for mem in self.members {
                 fmt.format_into(str, "    {} : {}`n", [mem.name, mem.typ])
             }
             str += "}"

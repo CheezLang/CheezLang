@@ -17,7 +17,7 @@ Main :: () {
 }
 
 fizz_buzz :: (n: int) {
-    for a : 1..n {
+    for a in 1..n {
         if a % 5 == 0 and a % 3 == 0 {
             C.printf("FizzBuzz ")
         } else if a % 5 == 0 {
@@ -46,7 +46,7 @@ test5 :: (n: int) {
 }
 
 test4 :: (n: int) {
-    for a : 0..n {
+    for a in 0..n {
         if a % 2 == 0 {
             continue
         }
@@ -68,7 +68,7 @@ test3 :: (n: int) {
 }
 
 test2 :: (n: int) {
-    for a : 0..n {
+    for a in 0..n {
         C.printf("%lld", a)
     }
     C.printf("`n")

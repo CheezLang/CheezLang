@@ -185,7 +185,7 @@ impl String {
     }
 
     index_of :: (&Self, ch: char) -> int {
-        for i : 0..length {
+        for i in 0..length {
             if data[i] == u8(ch) {
                 return i
             }
@@ -276,7 +276,7 @@ impl String {
         // 1        - in format
         // 2        - escape
 
-        for c : format {
+        for c in format {
             if state == 0 {
                 if c == '``' {
                     state = 2
@@ -333,7 +333,7 @@ impl String {
         result := Array[string].create()
 
         start := 0
-        for i : 0..length {
+        for i in 0..length {
             if data[i] == u8(c) {
                 sub := self.sliceFT(start, i)
                 if sub.bytes.length > 0 or !remove_empty {
@@ -368,7 +368,7 @@ for_extension_string_line_iterator :: (self: StringLineIterator, body: Code) #fo
         defer {it_index += 1}
 
         line_end  := -1
-        for c, i : bytes {
+        for c, i in bytes {
             if char(c) == '`n' {
                 line_end = i
                 break
@@ -396,7 +396,7 @@ StringSplitCharIterator :: struct {
 impl StringSplitCharIterator {
     to_array :: (Self) -> Array[string] {
         result := Array[string].create()
-        for part : self {
+        for part in self {
             result.add(part)
         }
         return result
@@ -439,7 +439,7 @@ streql :: (a: $T, b: $T2, len: int) -> bool {
         len = blen
     }
 
-    for i : 0..len {
+    for i in 0..len {
         if T.char_at(a, i) != T2.char_at(b, i) {
             return false
         }
@@ -455,7 +455,7 @@ streq :: (a: $T, b: $T2) -> bool {
         return false
     }
 
-    for i : 0..len {
+    for i in 0..len {
         if T.char_at(a, i) != T2.char_at(b, i) {
             return false
         }
@@ -509,7 +509,7 @@ impl string {
             return false
         }
 
-        for i : 0 .. pref_bytes.length {
+        for i in 0 .. pref_bytes.length {
             if self_bytes[i] != pref_bytes[i] {
                 return false
             }
@@ -527,7 +527,7 @@ impl string {
 
         offset := self_bytes.length - post_bytes.length
 
-        for i : 0 .. post_bytes.length {
+        for i in 0 .. post_bytes.length {
             if self_bytes[offset + i] != post_bytes[i] {
                 return false
             }
@@ -579,7 +579,7 @@ impl string {
     }
 
     contains :: (Self, ch: char) -> bool {
-        for c : self {
+        for c in self {
             if c == ch {
                 return true
             }
@@ -590,7 +590,7 @@ impl string {
 
     count_char :: (Self, ch: char) -> int {
         count := 0
-        for c : self {
+        for c in self {
             if c == ch {
                 count += 1
             }
@@ -601,7 +601,7 @@ impl string {
 
     index_of :: (Self, ch: char) -> int {
         bytes := self.bytes
-        for i : 0..bytes.length {
+        for i in 0..bytes.length {
             if bytes[i] == u8(ch) {
                 return i
             }
@@ -616,8 +616,8 @@ impl string {
         }
 
         bytes := self.bytes
-        for i : 0..self.bytes.length #label outer {
-            for k : 0..str.bytes.length {
+        for i in 0..self.bytes.length #label outer {
+            for k in 0..str.bytes.length {
                 if self[i + k] != str[k] then continue outer
             }
 

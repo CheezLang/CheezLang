@@ -74,7 +74,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
         AstBlock($node) -> {
             assert("AstBlock", node.typ != null)
 
-            for child : node.children {
+            for child in node.children {
                 if !validate_node(<<child, error_handler) {
                     return false
                 }
@@ -102,7 +102,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
                 return false
             }
 
-            for arg : node.arguments {
+            for arg in node.arguments {
                 if !validate_node(<<arg, error_handler) {
                     return false
                 }
@@ -203,7 +203,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
                 return false
             }
 
-            for arg : node.arguments {
+            for arg in node.arguments {
                 if !validate_node(<<arg, error_handler) {
                     return false
                 }
@@ -216,7 +216,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
 
         AstPoly($node) -> {
             assert("AstPoly", node.typ != null)
-            // for param : node.params {
+            // for param in node.params {
             //     if !validate_node(<<param, error_handler) {
             //         return false
             //     }
@@ -239,7 +239,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
 
         AstStruct($node) -> {
             assert("AstStruct", node.typ != null)
-            for child : node.children {
+            for child in node.children {
                 if !validate_node(<<child, error_handler) {
                     return false
                 }

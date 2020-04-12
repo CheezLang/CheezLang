@@ -6,8 +6,8 @@ io :: import std.io
 use import std.math
 
 Main :: () {
-    for a : 1..500 #label outer {
-        for b : a+1..500 {
+    for a in 1..500 #label outer {
+        for b in a+1..500 {
             c_squared := a * a + b * b
             c := int(sqrt(double(c_squared)))
 

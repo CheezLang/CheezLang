@@ -4,8 +4,8 @@ Sorted  :: property {}
 SortedA :: property {Sorted}
 SortedD :: property {Sorted}
 
-// impl(T: type) Sorted for T if T : SortedA {}
-// impl(T: type) Sorted for T if T : SortedB {}
+// impl(T: type) Sorted for T if T in SortedA {}
+// impl(T: type) Sorted for T if T in SortedB {}
 
 // usigned numbers are always positive
 impl(T: type) Positiv for T if @is_unsigned_int(T) {}

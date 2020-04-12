@@ -82,7 +82,7 @@ def :: (T: type) -> T {
     #code {
         type_info := @type_info(T)
 
-        for m : type_info.members {
+        for m in type_info.members {
             #statement @dot(result, m.name) = default(m.typ)
         }
     }

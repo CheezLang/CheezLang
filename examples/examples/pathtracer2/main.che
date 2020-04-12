@@ -95,8 +95,8 @@ pathtracer2 :: () {
         size := grid_size
         h    := (height-1)/size+1
         w    := (width-1)/size+1
-        for y: 0..h {
-            for x: 0..w {
+        for y in 0..h {
+            for x in 0..w {
                 context := alloc(RenderContext)
                 <<context = RenderContext(
                     id    = id
@@ -152,14 +152,14 @@ render_loop :: (context: ^RenderContext) {
 
     pixel_str := String.empty()
 
-    for py, py_index: context.min.y..context.max.y {
-        for px, px_index: context.min.x..context.max.x {
+    for py, py_index in context.min.y..context.max.y {
+        for px, px_index in context.min.x..context.max.x {
             pixel_str.clear()
             pixel_str.appendf("pixel {}, {}", (px, py))
             profile_scope(pixel_str.slice())
 
             col := vec3(0.0, 0.0, 0.0)
-            for s: 0..samples {
+            for s in 0..samples {
                 u := (real(px) + context.random.random_real()) / real(width)
                 v := (real(height - py - 1) + context.random.random_real()) / real(height)
                 r := context.cam.get_ray(u, v, context.random)
@@ -231,8 +231,8 @@ random_scene :: (cam: &Camera) -> ^Hittable {
         ))
     )))
 
-    for a: -11..11 {
-        for b: -11..11 {
+    for a in -11..11 {
+        for b in -11..11 {
             choose_mat := global_random.random_real()
             center := vec3(
                 x = real(a) + real(0.9) * global_random.random_real(),
@@ -488,8 +488,8 @@ big_scene :: (cam: &Camera) -> ^Hittable {
     // boxes
     {
         boxlist := Array[^Hittable].create()
-        for i: 0..nb {
-            for j : 0..nb {
+        for i in 0..nb {
+            for j in 0..nb {
                 w := real(100.0)
                 x0 := -1000.0 + real(i) * w
                 z0 := -1000.0 + real(j) * w
@@ -556,7 +556,7 @@ big_scene :: (cam: &Camera) -> ^Hittable {
             create_object(Material, Dielectric(1.5))
             create_object(Material, Dielectric(1.5))
         ]
-        for j : 0..1000 {
+        for j in 0..1000 {
             pos := vec3(
                 165.0 * global_random.random_real() - 200.0
                 165.0 * global_random.random_real() + 270.0

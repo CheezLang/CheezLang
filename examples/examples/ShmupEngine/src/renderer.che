@@ -125,7 +125,7 @@ impl Renderer {
             // create index buffer
             indices := mem.alloc_n(u32, line_cache_size * 2)
             defer mem.free_n(indices)
-            for i : 0..line_cache_size {
+            for i in 0..line_cache_size {
                 indices[i * 2 + 0] = u32(i * 2 + 0)
                 indices[i * 2 + 1] = u32(i * 2 + 1)
             }
@@ -151,7 +151,7 @@ impl Renderer {
 
             indices := mem.alloc_n(u32, quad_cache_size * 6)
             defer mem.free_n(indices)
-            for i : 0..quad_cache_size {
+            for i in 0..quad_cache_size {
                 indices[i * 6 + 0] = u32(i * 4 + 0)
                 indices[i * 6 + 1] = u32(i * 4 + 1)
                 indices[i * 6 + 2] = u32(i * 4 + 2)
@@ -204,7 +204,7 @@ impl Renderer {
 
             indices := mem.alloc_n(u32, point_light_cache_size * 6)
             defer mem.free_n(indices)
-            for i : 0..point_light_cache_size {
+            for i in 0..point_light_cache_size {
                 indices[i * 6 + 0] = u32(i * 4 + 0)
                 indices[i * 6 + 1] = u32(i * 4 + 1)
                 indices[i * 6 + 2] = u32(i * 4 + 2)
@@ -234,7 +234,7 @@ impl Renderer {
 
             indices := mem.alloc_n(u32, area_light_cache_size * 6)
             defer mem.free_n(indices)
-            for i : 0..area_light_cache_size {
+            for i in 0..area_light_cache_size {
                 indices[i * 6 + 0] = u32(i * 4 + 0)
                 indices[i * 6 + 1] = u32(i * 4 + 1)
                 indices[i * 6 + 2] = u32(i * 4 + 2)
@@ -277,7 +277,7 @@ impl Renderer {
         reload_shader(^color_shader, "../data/test_shader.shader")
         color_shader.bind()
         uTextures : [16]i32 = default
-        for i : 0..16 {
+        for i in 0..16 {
             uTextures[i] = i32(i)
         }
         color_shader.set_uniform_ints("uTextures", uTextures)
@@ -708,7 +708,7 @@ impl Renderer {
         quad_va.bind()
         quad_va.index_buffer.bind()
 
-        for tex : used_textures {
+        for tex in used_textures {
             tex.get().bind(it_index)
         }
 

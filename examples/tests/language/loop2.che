@@ -27,7 +27,7 @@ test1 :: (n: int) {
 test2 :: (n: int) {
     sum := 0
     sum_index := 0
-    for i, k: 0..n {
+    for i, k in 0..n {
         sum += i
         sum_index += k
     }
@@ -36,8 +36,8 @@ test2 :: (n: int) {
 
 test3 :: (n: int) {
     sum := 0
-    for i : 0..n #label a {
-        for k : i..n #label b {
+    for i in 0..n #label a {
+        for k in i..n #label b {
             if k % 2 == 0 then continue a
             sum += k
         }

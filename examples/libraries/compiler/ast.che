@@ -66,10 +66,23 @@ AstImport :: struct AstNode {
 }
 impl AstNode for AstImport {}
 
+AstUse :: struct AstNode {
+    value_expr : &AstNode
+}
+impl AstNode for AstUse {}
+
+AstImpl :: struct AstNode {
+    target_expr : &AstNode
+    trait_expr  : ^AstNode
+    children    : Array[^AstNode]
+}
+impl AstNode for AstImpl {}
+
 // expressions
 
 AstStruct :: struct AstNode {
     name        := "#anonymous"
+    trait_expr  : ^AstNode
     children    : Array[^AstNode]
 
     sub_scope   : ^Scope = null
@@ -84,11 +97,28 @@ impl AstNode for AstStruct {}
 
 AstTrait :: struct AstNode {
     name        := "#anonymous"
+    children    : Array[^AstNode]
+
+    sub_scope   : ^Scope = null
+    trait_type  : ^TypeInfo = null
+    members     := Array[^AstDecl].create()
+    functions   := Array[^AstConstDecl].create()
+
+    // flags
+    members_done := false
 }
 impl AstNode for AstTrait {}
 
 AstEnum :: struct AstNode {
     name        := "#anonymous"
+    children    : Array[^AstNode]
+
+    sub_scope   : ^Scope = null
+    enum_type   : ^TypeInfo = null
+    members     := Array[^AstDecl].create()
+
+    // flags
+    members_done := false
 }
 impl AstNode for AstEnum {}
 
@@ -195,7 +225,7 @@ AstIf :: struct AstNode {
 impl AstNode for AstIf {}
 
 AstFor :: struct AstNode {
-    it_name     : ^AstIdentifier
+    it_pattern  : ^AstNode
     index_name  : ^AstIdentifier
     collection  : &AstNode
     body        : &AstNode
@@ -208,10 +238,16 @@ AstLoop :: struct AstNode {
 impl AstNode for AstLoop {}
 
 AstMatch :: struct AstNode {
-    value_expr  : &AstNode
-    // @todo: cases
+    value_expr  : ^AstNode
+    cases       : Array[^AstMatchCase]
 }
 impl AstNode for AstMatch {}
+
+AstMatchCase :: struct {
+    pattern     : &AstNode
+    condition   : ^AstNode
+    body        : &AstNode
+}
 
 AstBreak :: struct AstNode {
     label       : ^AstIdentifier
@@ -272,7 +308,7 @@ AstUfc :: struct AstNode {
 
 // impl AstFunction {
 //     get_parameter :: (&Self, name: string) -> Option[&AstDecl] {
-//         for p : params {
+//         for p in params {
 //             match p.name {
 //                 AstIdentifier($)
 //             }

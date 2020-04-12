@@ -22,7 +22,7 @@ impl Hashable for string {
     hash :: (&Self) -> uint {
         h: u32 = 2166136261
 
-        for i : 0..self.bytes.length {
+        for i in 0..self.bytes.length {
             h += cast(u32)self[i]
             h *= 16777619
         }

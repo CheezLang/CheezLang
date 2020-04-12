@@ -20,7 +20,7 @@ count_steps :: (n: int) -> int {
 Main :: () {
     max_steps := 0
     max_n := 0
-    for n : 1..1000000 {
+    for n in 1..1000000 {
         count := count_steps(n)
         if count > max_steps {
             max_steps = count

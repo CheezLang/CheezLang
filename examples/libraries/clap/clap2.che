@@ -102,7 +102,7 @@ impl Clap {
         loc := Location(0, 0)
         current := String.empty()
 
-        for c : str {
+        for c in str {
             match state, c {
                 (Escaped, $c) -> {
                     state = Quoted
@@ -218,7 +218,7 @@ parse_args_enum :: (ti: ^TypeInfoEnum, args: []ClapToken, loc: Location) -> Opti
     result.loc = current.loc
     args = args[1..args.length]
 
-    for(by_ref=true) mem : ti.members {
+    for(by_ref=true) mem in ti.members {
         display_name := get_display_name_for_member(mem)
         if streq(display_name, current.raw.slice()) {
             result.mem = Some(^mem)
@@ -258,7 +258,7 @@ parse_args_struct :: (ti: ^TypeInfoStruct, args: []ClapToken, loc: Location) -> 
             // at this point current starts with -
             current_raw := current.raw.sliceF(1)
 
-            for(by_ref=true) mem : ti.members {
+            for(by_ref=true) mem in ti.members {
                 display_name := get_display_name_for_member(mem)
                 if streq(display_name, current_raw) {
                     mem_info = ^mem
@@ -377,7 +377,7 @@ get_value_help :: (result: ^void, expr: &Expr) {
             members_set := @alloca(bool, type_info.members.length)
             C.memset(members_set.data, 0, cast members_set.length * @sizeof(bool))
 
-            for mem : v.subs {
+            for mem in v.subs {
                 @assert(mem.mem != null)
                 offset := mem.mem.offset
                 match &mem.sub {
@@ -387,7 +387,7 @@ get_value_help :: (result: ^void, expr: &Expr) {
                 members_set[mem.mem.index] = true
             }
 
-            for set : members_set {
+            for set in members_set {
                 if set then continue
                 type_info := cast(^TypeInfoStruct) v.typ
                 mem := &type_info.members[it_index]
@@ -459,7 +459,7 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
             members_set := @alloca(bool, type_info.members.length)
             C.memset(members_set.data, 0, cast members_set.length * @sizeof(bool))
 
-            for mem : v.subs {
+            for mem in v.subs {
                 if mem.mem == null {
                     match &mem.sub {
                         Some($sub) -> {
@@ -487,7 +487,7 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
                 members_set[mem.mem.index] = true
             }
 
-            for set : members_set {
+            for set in members_set {
                 if set then continue
 
                 type_info := cast(^TypeInfoStruct) v.typ
@@ -558,7 +558,7 @@ get_auto_completions_at_helper :: (result: &Array[String], expr: &Expr, pos: int
 get_auto_completions_at_struct :: (result: &Array[String], expr: &StructExpr, pos: int) {
     // find sub from back
     found_sub := false
-    for(reverse=true) sub : expr.subs {
+    for(reverse=true) sub in expr.subs {
         if pos >= sub.loc.start {
             if sub.mem != null {
                 match &sub.sub {
@@ -688,7 +688,7 @@ get_auto_completions_at_enum :: (result: &Array[String], expr: &EnumExpr, pos: i
 autocomplete_type_members :: (ti: ^TypeInfo, prefix: string, result: &Array[String]) {
     match &<<ti {
         TypeInfoEnum($info) -> {
-            for(by_ref=true) mem : info.members {
+            for(by_ref=true) mem in info.members {
                 name := get_display_name_for_member(mem)
                 if name.bytes.length != prefix.bytes.length and name.starts_with(prefix) {
                     remainder := name.sub_string(prefix.bytes.length)
@@ -699,12 +699,12 @@ autocomplete_type_members :: (ti: ^TypeInfo, prefix: string, result: &Array[Stri
 
         TypeInfoStruct($info) -> {
             if prefix.bytes.length == 0 {
-                for(by_ref=true) mem : info.members {
+                for(by_ref=true) mem in info.members {
                     result.add(fmt.format("-{}", [mem.name]))
                 }
             } else if prefix[0] == u8('-') {
                 prefix := prefix.sub_string(1)
-                for(by_ref=true) mem : info.members {
+                for(by_ref=true) mem in info.members {
                     is_prefix := mem.name.starts_with(prefix)
                     if !is_prefix then continue
                     if mem.name.bytes.length < prefix.bytes.length {

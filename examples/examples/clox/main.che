@@ -7,7 +7,7 @@ io :: import std.io
 
 to_ascii_strings :: (argv: ^^u16, argc: int) -> Array[String] {
     array := Array[String].create(argc)
-    for i :0..argc {
+    for i in0..argc {
         str := String.empty()
         while k := 0, argv[i][k] != 0, k += 1 {
             str += char(argv[i][k])

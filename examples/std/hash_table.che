@@ -25,7 +25,7 @@ Entry :: struct(K: type, V: type) {
 impl(K: type, V: type) Drop for Table[K, V] {
     drop :: (&Self) {
         if entries.data != null {
-            for(by_ref=true) e, _ : entries {
+            for(by_ref=true) e, _ in entries {
                 if e.filled then Memory.drop(e.value <- None)
             }
             free_n(entries, allocator)
@@ -46,7 +46,7 @@ impl(K: type, V: type) Table[K, V] {
 
     clear :: (&Self) {
         // @todo
-        for(by_ref=true) entry : entries {
+        for(by_ref=true) entry in entries {
             entry.filled = false
             entry.is_tombstone = false
             entry.value = None
@@ -183,7 +183,7 @@ impl(K: type, V: type) Table[K, V] {
     adjust_capacity :: (&Self, cap: uint) {
         entries_new := alloc_n(Entry[K, V], cap, allocator)
 
-        for i : 0..entries_new.length {
+        for i in 0..entries_new.length {
             entries_new[i].filled = false
             entries_new[i].is_tombstone = false
         }
@@ -191,7 +191,7 @@ impl(K: type, V: type) Table[K, V] {
         // copy entries to new array
         if entries.data != null {
             count = 0
-            for i : 0..entries.length {
+            for i in 0..entries.length {
                 entry := ^entries[i]
                 if entry.filled {
                     dest := find_entry(entries_new, entry.key)
@@ -224,7 +224,7 @@ impl(K: type, V: type) Clone for Table[K, V] if K : Clone, V : Clone {
     clone :: (&Self) -> Self {
         result := Table[K, V].create(self.comparer)
         result.adjust_capacity(cast self.entries.length)
-        for kv : <<^self {
+        for kv in <<^self {
             result[kv.name.clone()] = kv.value.clone()
         }
         return result
@@ -233,7 +233,7 @@ impl(K: type, V: type) Clone for Table[K, V] if K : Clone, V : Clone {
 
 for_extension_table :: (r: &Table[$K, $V], code: Code) #for {
     it_index := 0
-    for(by_ref=true) e, _ : r.get_entries() {
+    for(by_ref=true) e, _ in r.get_entries() {
         if !e.filled then continue
         it : (name: K, value: &V) = e.key, &e.value.Some
         @insert(code, _break=@link(break), _continue=@link(continue))

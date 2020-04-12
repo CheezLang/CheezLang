@@ -17,7 +17,7 @@ Main :: () {
         a := alloc_raw(int, 5)
         io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
 
-        for i : 0..5 {
+        for i in 0..5 {
             a[i] = i * 2
         }
         io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
@@ -28,7 +28,7 @@ Main :: () {
         a := alloc_n(int, 5)
         io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
 
-        for i : 0..a.length {
+        for i in 0..a.length {
             a[i] = i + 1
         }
         io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
@@ -37,7 +37,7 @@ Main :: () {
 
     {
         a := alloc_n(int, 3)
-        for i : 0..a.length {
+        for i in 0..a.length {
             a[i] = i + 1
         }
         io.printf("{}, {}, {}`n", (a[0], a[1], a[2]))

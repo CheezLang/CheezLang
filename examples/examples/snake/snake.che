@@ -99,7 +99,7 @@ Main :: () {
     snake := Array[Quad].create()
 
     startCount := 5
-    for i : 0..startCount {
+    for i in 0..startCount {
         intesity := (cast(double)i) / cast(double)(startCount - 1)
         snake.add(Quad(
             Vec2i(10, 15)
@@ -152,7 +152,7 @@ Main :: () {
             action = Direction.None
 
             // move snake
-            for i : {1..snake.length}.reverse() {
+            for i in {1..snake.length}.reverse() {
                 snake[i].pos = snake[i - 1].pos
             }
 
@@ -177,7 +177,7 @@ Main :: () {
             }
         }
 
-        for i : 0..snake.length {
+        for i in 0..snake.length {
             snake[i].draw()
         }
 

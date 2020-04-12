@@ -1,5 +1,5 @@
-// import examples.trait_function_call_performance
 // examples which should be working
+// import examples.trait_function_call_performance
 // import examples.glfw3_example
 // import examples.graphyfier.graphyfier
 // import examples.geometry_draw_thingy
@@ -153,7 +153,7 @@ import compiler.cli
 //     interp := Interpreter.new()
 //     interp.printer = cast print
     
-//     for node : nodes {
+//     for node in nodes {
 //         decl := cast(^AstConstDecl) node
 //         name := decl.name.value
 //         func := cast(^AstFunction) ^decl.value
@@ -366,7 +366,7 @@ Main :: () {
     args := Clap.tokenize(command)
 
     io.println("Arguments`n==========")
-    for(by_ref=true) a : args {
+    for(by_ref=true) a in args {
         io.formatln(a)
     }
     io.println("==========")
@@ -387,12 +387,12 @@ Main :: () {
 
     io.println("-------------------`n`n")
 
-    for at : 0 .. (command.bytes.length + 1) {
+    for at in 0 .. (command.bytes.length + 1) {
         io.formatln(command)
         for 0 .. at do io.print(" ")
         io.println("^")
         auto_completions := get_auto_completions_at(@type_info(Command), result, at)
-        for completion : auto_completions {
+        for completion in auto_completions {
             io.formatln("> {}", [completion.slice()])
         }
         io.println("---`n")

@@ -150,7 +150,7 @@ impl Component for PathFollowComponent {
 
         // num_points :: 20
         // end := if loops then points.get_length() else points.get_length() - 1
-        // for i : 0 .. end {
+        // for i in0 .. end {
         //     k := (i + 1) % points.get_length()
         //     p0 := points[i]
         //     p3 := points[k]
@@ -162,7 +162,7 @@ impl Component for PathFollowComponent {
         //     p2 := p3 - d1
             
         //     prev := p0
-        //     for i : 1 ..= num_points {
+        //     for i in1 ..= num_points {
         //         t := float(i) / num_points
         //         k := 1 - t
         //         curr := (p0 * k * k * k) + (p1 * 3.0f * k * k * t) + (p2 * 3.0f * k * t * t) + (p3 * t * t * t)
@@ -172,7 +172,7 @@ impl Component for PathFollowComponent {
         // }
 
 
-        // for i : 0 .. points.get_length() {
+        // for i in0 .. points.get_length() {
         //     p0 := points[i]
         //     d0 := dirs[i]
         //     renderer.draw_line(p0, p0 + d0, vec3(1, 0, 0))
@@ -212,12 +212,12 @@ impl Component for PathFollowComponent {
         stream.appendf("                loops  = {}`n", loops)
         stream.appendf("                pos    = {}`n", pos)
         stream.append_string("                points = [`n")
-        for p : points {
+        for p in points {
             stream.appendf("                    ``{x={}, y={}, z={}}`n", (p.x, p.y, p.z))
         }
         stream.append_string("                ]`n", )
         stream.append_string("                dirs = [`n")
-        for p : dirs {
+        for p in dirs {
             stream.appendf("                    ``{x={}, y={}, z={}}`n", (p.x, p.y, p.z))
         }
         stream.append_string("                ]`n", )

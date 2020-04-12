@@ -50,7 +50,7 @@ impl Clap {
         loc := Location(0, 0)
         current := String.empty()
 
-        for c : str {
+        for c in str {
             match state, c {
                 (Escaped, $c) -> {
                     state = Quoted
@@ -120,7 +120,7 @@ parse_arguments_from_string :: ($T: type, str: string) -> ^T {
 
     current := String.empty()
 
-    for c : str {
+    for c in str {
         match state, c {
             (Escaped, $c) -> {
                 state = Quoted
@@ -298,7 +298,7 @@ parse_arguments_enum :: (type_info: ^TypeInfoEnum, args: &[]String, result: ^voi
     command := &args[0]
     args = args[1..]
 
-    for(by_ref=true) mem : type_info.members {
+    for(by_ref=true) mem in type_info.members {
         mem_name := get_display_name_for_member(mem)
         if streq(command.slice(), mem_name) {
             // first store the tag
@@ -333,7 +333,7 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
     // filter members of struct + handle #name and #ignore
     MemberInfo :: (name: string, mem: ^TypeInfoStructMember, set: bool)
     members := Array[MemberInfo].create()
-    for(by_ref=true) m : type_info.members {
+    for(by_ref=true) m in type_info.members {
         mem_name := get_display_name_for_member(m)
 
         if m.has_attribute("ignore") {
@@ -386,7 +386,7 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
     }
 
     // check if all members were set or have a default value
-    for(by_ref=true) mem_info : members {
+    for(by_ref=true) mem_info in members {
         if mem_info.set then continue
 
         default_value := mem_info.mem.value
@@ -424,7 +424,7 @@ get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent:
 
     description_indent := {
         m := 0
-        for(by_ref=true) mem : type_info.members {
+        for(by_ref=true) mem in type_info.members {
             if mem.name.bytes.length > m {
                 m = mem.name.bytes.length
             }
@@ -433,7 +433,7 @@ get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent:
     }
 
     // print descriptions
-    for(by_ref=true) mem : type_info.members {
+    for(by_ref=true) mem in type_info.members {
         indent_string(result, indent)
         
 
@@ -448,7 +448,7 @@ get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent:
 
             lines := text.split_at_char('`n', true)
 
-            for line : lines {
+            for line in lines {
                 if it_index == 0 {
                     indent_string(result, description_indent - mem_name.bytes.length - 1)
                 } else {
@@ -466,7 +466,7 @@ get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent:
 
     if type_info.members.length > 0 {
         result += "`n"
-        for(by_ref=true) mem : type_info.members {
+        for(by_ref=true) mem in type_info.members {
             mem_name := get_display_name_for_member(mem)
             get_help_message_member(result, mem.typ, mem_name, "-{}: ", indent, description_indent - mem_name.bytes.length - 3)
             result += "`n"
@@ -480,7 +480,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
 
     description_indent := {
         m := 0
-        for(by_ref=true) mem : type_info.members {
+        for(by_ref=true) mem in type_info.members {
             if mem.name.bytes.length > m {
                 m = mem.name.bytes.length
             }
@@ -489,7 +489,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
     }
 
     // print descriptions
-    for(by_ref=true) mem : type_info.members {
+    for(by_ref=true) mem in type_info.members {
         indent_string(result, indent)
 
         mem_name := get_display_name_for_member(mem)
@@ -503,7 +503,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
 
             lines := text.split_at_char('`n', true)
 
-            for line : lines {
+            for line in lines {
                 if it_index == 0 {
                     indent_string(result, description_indent - mem_name.bytes.length)
                 } else {
@@ -519,7 +519,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
 
     // print detailed info (args)
     printed_details_string := false
-    for(by_ref=true) mem : type_info.members {
+    for(by_ref=true) mem in type_info.members {
         if mem.typ == null then continue
 
         if !printed_details_string {
@@ -587,7 +587,7 @@ assign_value_to_member :: (member: ^TypeInfoStructMember, result: ^void, value: 
 
 to_ascii_strings :: (argv: ^^u16, argc: int) -> Array[String] {
     array := Array[String].create(argc)
-    for i : 0..argc {
+    for i in 0..argc {
         str := String.empty()
         while k := 0, argv[i][k] != 0, k += 1 {
             str += char(argv[i][k])
@@ -625,7 +625,7 @@ log_args :: (args: []String) {
     // io.formatln("len: {}", [ptr.length])
 
     // io.println("1")
-    // for(by_ref=false) arg : args {
+    // for(by_ref=false) arg in args {
     //     io.println("2")
     //     slc := arg.slice()
     //     io.println("3")

@@ -129,7 +129,7 @@ impl StackFrame {
         str += "[ "
 
         // parameters
-        for i : 0..bp {
+        for i in 0..bp {
             if i > 0 {
                 str += ", "
             }
@@ -144,7 +144,7 @@ impl StackFrame {
         }
 
         if sp >= bp {
-            for i : max(bp, sp - 10) .. sp {
+            for i in max(bp, sp - 10) .. sp {
                 str.appendf("{}", stack[i])
                 if i < sp - 1 {
                     str += ", "

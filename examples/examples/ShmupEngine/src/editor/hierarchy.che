@@ -73,12 +73,12 @@ impl Hierarchy {
 
             ImGui.Checkbox("Play", ^layer.playing)
 
-            for v : layer.uiae {
+            for v in layer.uiae {
                 str := fmt.format("u{}", [it_index])
                 ImGui.DragFloat(str.as_cstring(), ^layer.uiae[it_index], 0.01f)
             }
 
-            for l : data.layer_stack {
+            for l in data.layer_stack {
                 if l == ^layer then break
                 ImGui.PushIDPtr(l)
                 defer ImGui.PopID()
@@ -131,7 +131,7 @@ impl Hierarchy {
             ImGui.Separator()
 
             entity_index := current_entity_index
-            for e, i : layer.entities {
+            for e, i in layer.entities {
                 ImGui.PushIDInt(i32(i))
                 ImGui.BeginGroup()
 

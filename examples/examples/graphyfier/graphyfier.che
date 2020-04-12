@@ -212,7 +212,7 @@ impl Game for MyGame {
         prev := Complex()
 
         first := true
-        for xp: 0..width {
+        for xp in 0..width {
             x := map(double(xp), 0, double(width), xc - xr, xc + xr)
 
             match evaluate_function(x) {
@@ -265,7 +265,7 @@ impl Game for MyGame {
             lw *= scale
 
             // vertical
-            for _x: 0 ..= int(wmax.x / scale) {
+            for _x in 0 ..= int(wmax.x / scale) {
                 brightness : u8 = if _x == 0 then 200
                     else if _x % 10 == 0 then 150
                     else if _x % 5 == 0 then 100
@@ -276,7 +276,7 @@ impl Game for MyGame {
                 draw_line(x, -lw, x, lw, Pixel.rgba(200, 200, 200))
             }
 
-            for _x: int(wmin.x / scale)..0 {
+            for _x in int(wmin.x / scale)..0 {
                 brightness : u8 = if _x == 0 then 200
                     else if _x % 10 == 0 then 150
                     else if _x % 5 == 0 then 100
@@ -288,7 +288,7 @@ impl Game for MyGame {
             }
 
             // horizontal
-            for _y: 0 ..= int(wmax.y / scale) {
+            for _y in 0 ..= int(wmax.y / scale) {
                 brightness : u8 = if _y == 0 then 200
                     else if _y % 10 == 0 then 150
                     else if _y % 5 == 0 then 100
@@ -299,7 +299,7 @@ impl Game for MyGame {
                 draw_line(-lw, y, lw, y, Pixel.rgba(200, 200, 200))
             }
 
-            for _y: int(wmin.y / scale)..0 {
+            for _y in int(wmin.y / scale)..0 {
                 brightness : u8 = if _y == 0 then 200
                     else if _y % 10 == 0 then 150
                     else if _y % 5 == 0 then 100

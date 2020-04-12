@@ -63,7 +63,7 @@ do_print_any :: (data: ^void, typ: ^TypeInfo) {
         Slice($target) -> {
             ptr := <<cast(^[]void) data
             C.printf("[")
-            for i : 0..ptr.length {
+            for i in 0..ptr.length {
                 if i > 0 then C.printf(", ")
 
                 elem := pointer_add(ptr.data, i * target.size)
@@ -83,7 +83,7 @@ do_print_any :: (data: ^void, typ: ^TypeInfo) {
 
             C.printf("(")
             if tstruct.members.data != null {
-                for i : 0..tstruct.members.length {
+                for i in 0..tstruct.members.length {
                     if i > 0 then C.printf(", ")
                     member_info := ^tstruct.members[i]
                     member_ptr  := pointer_add(ptr, member_info.offset)
@@ -110,7 +110,7 @@ do_print_any :: (data: ^void, typ: ^TypeInfo) {
                 }
             }
 
-            for(by_ref=true) mem : tenum.members {
+            for(by_ref=true) mem in tenum.members {
                 if mem.tag == tag {
                     C.printf("%.*s", i32(mem.name.bytes.length), mem.name.bytes.data)
 

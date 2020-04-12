@@ -78,7 +78,7 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.begin_function(cbc_func)
 
         slot_index := 0
-        for(reverse=true) param : func.params {
+        for(reverse=true) param in func.params {
             slot_index -= slots_for_size(param.var_type.size)
             variables[param.id] = slot_index
             cbc_func.debug_info.params.add(VariableInfo(param.id, param.name, slot_index, param.var_type))
@@ -245,7 +245,7 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.build_push(slots_for_size(arr.typ.size))
         builder.build_load_address()
 
-        for val : arr.values {
+        for val in arr.values {
             builder.build_dup(1)
             generate_expression(<<val)
             builder.build_store(slots_for_size(val.typ.size))
@@ -509,7 +509,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_block :: (&Self, block: &AstBlock) {
         builder.set_location(block.location)
-        for child : block.children {
+        for child in block.children {
             generate_expression(<<child)
 
             // pop value if not last and type is not void
@@ -599,7 +599,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
         match call.function.value {
             .Function($func) -> {
-                for arg : call.arguments {
+                for arg in call.arguments {
                     generate_expression(<<arg)
                 }
                 builder.set_location(call.location)
@@ -607,7 +607,7 @@ impl CodeGenerator for ByteCodeGenerator {
             }
 
             .NativeFunc($func) -> {
-                for arg : call.arguments {
+                for arg in call.arguments {
                     generate_expression(<<arg)
                 }
                 builder.set_location(call.location)
@@ -615,7 +615,7 @@ impl CodeGenerator for ByteCodeGenerator {
             }
 
             .NativeFunc2($func) -> {
-                for arg : call.arguments {
+                for arg in call.arguments {
                     generate_expression(<<arg)
                 }
                 builder.set_location(call.location)
@@ -631,13 +631,13 @@ impl CodeGenerator for ByteCodeGenerator {
 
 
         //         if id.name == "print" {
-        //             for arg : call.arguments {
+        //             for arg in call.arguments {
         //                 generate_expression(<<arg)
         //                 builder.set_location(call.location)
         //                 builder.build_print()
         //             }
         //         } else {
-        //             for arg : call.arguments {
+        //             for arg in call.arguments {
         //                 generate_expression(<<arg)
         //             }
         //             builder.set_location(call.location)

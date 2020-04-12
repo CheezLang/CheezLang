@@ -83,7 +83,7 @@ impl DebugAdapter {
             match handler.threads() {
                 Ok($arr) -> {
                     threads_json := Array[JsonValue].create()
-                    for thread : arr {
+                    for thread in arr {
                         thread_json := Table[string, JsonValue].create(strings_equal)
                         thread_json["id"] = JsonValue.JsonNumber(cast(double) thread.id)
                         thread_json["name"] = JsonValue.JsonString(thread.name.clone())

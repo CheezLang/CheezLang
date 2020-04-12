@@ -219,7 +219,7 @@ Main :: () {
             ImGui.ColorPicker3("clear color", cast(^float)^clear_color, 0)
             ImGui.Separator()
             
-            for component : clear_color {
+            for component in clear_color {
                 ImGui.PushIDInt(i32(it_index))
                 ImGui.InputFloat("##", ^component)
                 ImGui.PopID()
@@ -372,7 +372,7 @@ ShowExampleMenuFile :: () {
         size := ImGui.ImVec2(0, 60)
         ImGui.BeginChildStr("child", size, true)
 
-        for i : 0..10 {
+        for i in 0..10 {
             text := fmt.format("Scrolling Text {}", [i])
             ImGui.Text(text.as_cstring())
         }
@@ -389,7 +389,7 @@ ShowExampleMenuFile :: () {
     if (ImGui.BeginMenu("Colors"))
     {
         sz := ImGui.GetTextLineHeight()
-        for i : 0..int(ImGui.ImGuiCol_.COUNT) {
+        for i in 0..int(ImGui.ImGuiCol_.COUNT) {
             name := ImGui.GetStyleColorName(cast i)
             p := ImGui.GetCursorScreenPos()
             // ImGui.GetWindowDrawList().AddRectFilled(p, ImVec2(p.x+sz, p.y+sz), ImGui.GetColorU32((ImGuiCol)i))

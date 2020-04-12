@@ -673,7 +673,7 @@ impl TypeInfoAttribute {
 
 impl TypeInfoStructMember {
     get_attribute :: (&Self, name: string) -> ^TypeInfoAttribute {
-        for(by_ref=true) att : attributes {
+        for(by_ref=true) att in attributes {
             if strings_equal(att.name, name) {
                 return ^att
             }
@@ -683,7 +683,7 @@ impl TypeInfoStructMember {
     }
 
     has_attribute :: (&Self, name: string) -> bool {
-        for(by_ref=true) att : attributes {
+        for(by_ref=true) att in attributes {
             if strings_equal(att.name, name) {
                 return true
             }
@@ -695,7 +695,7 @@ impl TypeInfoStructMember {
 
 impl TypeInfoEnumMember {
     get_attribute :: (&Self, name: string) -> ^TypeInfoAttribute {
-        for(by_ref=true) att : attributes {
+        for(by_ref=true) att in attributes {
             if strings_equal(att.name, name) {
                 return ^att
             }
@@ -705,7 +705,7 @@ impl TypeInfoEnumMember {
     }
 
     has_attribute :: (&Self, name: string) -> bool {
-        for(by_ref=true) att : attributes {
+        for(by_ref=true) att in attributes {
             if strings_equal(att.name, name) {
                 return true
             }

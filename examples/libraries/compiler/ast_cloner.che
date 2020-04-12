@@ -27,7 +27,7 @@ impl AstCloner {
 
     clone_array :: (&Self, arr: []^AstNode) -> Array[^AstNode] {
         result := Array[^AstNode].create(arr.length)
-        for node : arr {
+        for node in arr {
             result.add(node)
         }
         return result
@@ -55,7 +55,7 @@ impl AstCloner {
             // AstArray($array) -> {
             //     fmt.format_into(result, "AstArray #{} ({})`n", [array.id, array.location])
             //     if recurse {
-            //         for val : array.values {
+            //         for val in array.values {
             //             clone_ast_helper(result, <<val, recurse, indent + 1)
             //         }
             //     }
@@ -73,7 +73,7 @@ impl AstCloner {
             // AstBlock($block) -> {
             //     fmt.format_into(result, "AstBlock #{} ({})`n", [block.id, block.location])
             //     if recurse {
-            //         for child : block.children {
+            //         for child in block.children {
             //             clone_ast_helper(result, <<child, recurse, indent + 1)
             //         }
             //     }
@@ -122,7 +122,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstCall #{} ({})`n", [call.id, call.location])
             //     if recurse {
             //         clone_ast_helper(result, call.function, recurse, indent + 1)
-            //         for arg : call.arguments {
+            //         for arg in call.arguments {
             //             clone_ast_helper(result, <<arg, recurse, indent + 1)
             //         }
             //     }
@@ -171,7 +171,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstFunction #{} ({})`n", [func.id, func.location])
             //     if recurse {
             //         print("params:`n", indent + 1)
-            //         for param : func.params {
+            //         for param in func.params {
             //             clone_ast_helper(result, <<param, recurse, indent + 2)
             //         }
             //         if func.return_type_expr != null {
@@ -216,7 +216,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstIndex #{} ({})`n", [node.id, node.location])
             //     if recurse {
             //         clone_ast_helper(result, node.sub, recurse, indent + 1)
-            //         for arg : node.arguments {
+            //         for arg in node.arguments {
             //             clone_ast_helper(result, <<arg, recurse, indent + 1)
             //         }
             //     }
@@ -282,7 +282,7 @@ impl AstCloner {
             // AstPoly($poly) -> {
             //     fmt.format_into(result, "AstPoly #{} ({})`n", [poly.id, poly.location])
             //     if recurse {
-            //         for param : poly.params {
+            //         for param in poly.params {
             //             clone_ast_helper(result, <<param, recurse, indent + 2)
             //         }
             //         clone_ast_helper(result, poly.value_expr, recurse, indent + 1)
@@ -292,13 +292,14 @@ impl AstCloner {
             AstStruct($node) -> new_ast(AstStruct(
                 location    = node.location
                 name        = node.name
+                trait_expr  = clone(node.trait_expr)
                 children    = clone_array(node.children.slice())
             ))
 
             // AstTuple($tuple) -> {
             //     fmt.format_into(result, "AstTuple #{} ({})`n", [tuple.id, tuple.location])
             //     if recurse {
-            //         for val : tuple.values {
+            //         for val in tuple.values {
             //             clone_ast_helper(result, <<val, recurse, indent + 1)
             //         }
             //     }

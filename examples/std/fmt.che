@@ -31,7 +31,7 @@ parse_int :: (str: string) -> int {
         str = str[1..]
     }
 
-    for c : str {
+    for c in str {
         val *= 10
         val += int(c - '0')
     }
@@ -95,7 +95,7 @@ format_into :: (result: &String, text: string, args: []^any = []) {
     argIndex := 0
     state    := Text
 
-    for c : text {
+    for c in text {
         match state {
             Text -> {
                 if c == '``' {
@@ -231,7 +231,7 @@ format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format:
         TypeInfoSlice($ti) -> {
             ptr := <<cast(^[]void) data
             result += "["
-            for i : 0..ptr.length {
+            for i in 0..ptr.length {
                 if i > 0 {
                     result += ", "
                 }
@@ -245,7 +245,7 @@ format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format:
         TypeInfoArray($ti) -> {
             ptr := cast(^void) data
             result += "["
-            for i : 0..ti.count {
+            for i in 0..ti.count {
                 if i > 0 {
                     result += ", "
                 }
@@ -263,7 +263,7 @@ format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format:
             result += "("
             if tstruct.members.data != null {
                 comma := false
-                for i : 0..tstruct.members.length {
+                for i in 0..tstruct.members.length {
                     member_info := ^tstruct.members[i]
                     if member_info.has_attribute("fmt_ignore") then continue
 
@@ -297,7 +297,7 @@ format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format:
                 }
             }
 
-            for(by_ref=true) mem : tenum.members {
+            for(by_ref=true) mem in tenum.members {
                 if mem.tag == tag {
                     result += mem.name
 

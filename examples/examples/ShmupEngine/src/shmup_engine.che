@@ -51,7 +51,7 @@ PropertyEdit :: enum #copy {
 // impl PlayMode {
 //     initialize :: (&Self, edit_mode: &EditMode) {
 //         layer_stack.clear()
-//         for l : edit_mode.layer_stack {
+//         for l in edit_mode.layer_stack {
 //             match l.clone() {
 //                 Some($l) -> {
 //                     layer_stack.add(l)
@@ -256,7 +256,7 @@ impl ShmupEngine {
         editor_windows[2].get().base().enabled = false
         active_editor_window = editor_windows[0].clone()
 
-        for window : editor_windows {
+        for window in editor_windows {
             if !window.get().initialize(viewport_size_max) {
             }
         }
@@ -289,7 +289,7 @@ impl ShmupEngine {
                         match engine.current_mode {
                             EngineMode.Edit($data) -> {
                                 engine.console.get().log("Loading layers")
-                                for layer : data.layer_stack {
+                                for layer in data.layer_stack {
                                     layer.load_from_file(file.slice())
                                 }
                             }
@@ -310,7 +310,7 @@ impl ShmupEngine {
                             EngineMode.Edit($data) -> {
                                 engine.console.get().log("Saving layers")
                                 file_content := String.empty()
-                                for layer : data.layer_stack {
+                                for layer in data.layer_stack {
                                     layer.save_to_file(&file_content)
                                 }
                                 fs.write_file(file_name.slice(), file_content.slice())
@@ -348,7 +348,7 @@ impl ShmupEngine {
         self.register_builtin_components()
         
         { // initialize edit mode
-            for layer : edit_mode.layer_stack {
+            for layer in edit_mode.layer_stack {
                 if !layer.init() {
                     io.formatln("[ERROR] Failed to initialize layer {} when starting engine", [it_index])
                 }
@@ -433,7 +433,7 @@ impl ShmupEngine {
         render_editor()
 
         update(delta_time)
-        for window : editor_windows {
+        for window in editor_windows {
             if !window.get().base().enabled then continue
             window.get().render(world_size, <<renderer)
         }
@@ -443,7 +443,7 @@ impl ShmupEngine {
     }
 
     update :: (&Self, dt: f32) {
-        for window : editor_windows {
+        for window in editor_windows {
             if !window.get().base().enabled then continue
             window.get().update(world_size)
 
@@ -467,7 +467,7 @@ impl ShmupEngine {
                     current_mode = EngineMode.Pause(data)
                 }
 
-                for layer : data.layer_stack {
+                for layer in data.layer_stack {
                     layer.update(dt)
                 }
             }
@@ -551,7 +551,7 @@ impl ShmupEngine {
 
         { // values
             if ImGui.Begin("Values") {
-                for p : properties_to_edit {
+                for p in properties_to_edit {
                     match p {
                         PropertyEdit.EditInt($e) -> {
                             ImGui.InputScalar(e.name, ImGui.ImGuiDataType_.S64, e.ptr)
@@ -581,7 +581,7 @@ impl ShmupEngine {
         if data != null {
             { // layers
                 if ImGui.Begin("Layers") {
-                    for l : data.layer_stack {
+                    for l in data.layer_stack {
                         list_entry_size := ImGui.ImVec2(0, 0)
                         if ImGui.Selectable(l.get_name(), current_layer_index == i32(it_index), 0, list_entry_size) {
                             current_layer_index = i32(it_index)
@@ -714,14 +714,14 @@ impl ShmupEngine {
 
         { // initialize play mode
             play_mode.layer_stack.clear()
-            for l : edit_mode.layer_stack {
+            for l in edit_mode.layer_stack {
                 match l.clone() {
                     Some($l) -> {
                         play_mode.layer_stack.add(l)
                     }
                 }
             }
-            for layer : play_mode.layer_stack {
+            for layer in play_mode.layer_stack {
                 if !layer.init() {
                     io.formatln("[ERROR] Failed to initialize layer {} when entering play mode", [it_index])
                 }
@@ -731,7 +731,7 @@ impl ShmupEngine {
 
         set_editor_background_color(editor_play_mode_color)
 
-        for window : editor_windows {
+        for window in editor_windows {
             if !window.get().base().enabled then continue
             window.get().on_event(Event.EngineModeChanged(current_mode))
         }
@@ -750,7 +750,7 @@ impl ShmupEngine {
 
         set_editor_background_color(editor_edit_mode_color)
 
-        for window : editor_windows {
+        for window in editor_windows {
             if !window.get().base().enabled then continue
             window.get().on_event(Event.EngineModeChanged(current_mode))
         }
@@ -927,7 +927,7 @@ ShowExampleMenuFile :: () {
     //         size := ImGui.ImVec2(0, 60)
     //         ImGui.BeginChild("child", size, true)
 
-    //         for i : 0..10 {
+    //         for i in 0..10 {
     //             text := fmt.format("Scrolling Text {}", [i])
     //             ImGui.Text(text.as_cstring())
     //         }
@@ -944,7 +944,7 @@ ShowExampleMenuFile :: () {
     //     if (ImGui.BeginMenu("Colors"))
     //     {
     //         sz := ImGui.GetTextLineHeight()
-    //         for i : 0..int(ImGui.ImGuiCol_.COUNT) {
+    //         for i in 0..int(ImGui.ImGuiCol_.COUNT) {
     //             name := ImGui.GetStyleColorName(cast i)
     //             p := ImGui.GetCursorScreenPos()
     //             // ImGui.GetWindowDrawList().AddRectFilled(p, ImVec2(p.x+sz, p.y+sz), ImGui.GetColorU32((ImGuiCol)i))

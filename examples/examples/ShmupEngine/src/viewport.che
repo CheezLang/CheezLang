@@ -120,7 +120,7 @@ impl GameView for GameWindow {
         data := engine.current_mode_data()
 
         if data != null {
-            for(reverse=true) layer : data.layer_stack {
+            for(reverse=true) layer in data.layer_stack {
                 if layer.on_key_event(int(key), int(action)) {
                     break
                 }
@@ -174,11 +174,11 @@ impl GameView for GameWindow {
         find_camera :: (data: ^EngineModeData) -> Option[Ref[Camera]] {
             // io.println("Searching for camera...")
             if data != null {
-                for layer : data.layer_stack {
+                for layer in data.layer_stack {
                     match layer.get_base() {
                         EntityLayer($el) -> {
-                            for entity : el.entities {
-                                for component : entity.get().components {
+                            for entity in el.entities {
+                                for component in entity.get().components {
                                     match &component.get() {
                                         Camera($cam) -> {
                                             io.formatln("Found on entity ({}) {}", [entity.get().id, entity.get().name.slice()])
@@ -213,7 +213,7 @@ impl GameView for GameWindow {
 
         data := engine.current_mode_data()
         if data != null {
-            for layer : data.layer_stack {
+            for layer in data.layer_stack {
                 renderer.push_render_target()
                 renderer.clear()
                 // renderer.clear(vec4(1, 0 ,0, 0))
@@ -423,7 +423,7 @@ impl GameView for EditorWindow {
 
         // data := engine.current_mode_data()
         // if data != null {
-        //     for layer : data.layer_stack {
+        //     for layer in data.layer_stack {
         //         renderer.push_render_target()
         //         layer.render(renderer)
         //         layer.imgui_render()
@@ -600,7 +600,7 @@ impl GameView for GameAndEditorWindow {
         // renderer.set_target(Some(viewport.frame_buffer.clone()))
         // data := engine.current_mode_data()
         // if data != null {
-        //     for layer : data.layer_stack {
+        //     for layer in data.layer_stack {
         //         layer.render(renderer)
         //     }
         // }

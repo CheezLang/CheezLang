@@ -44,7 +44,7 @@ impl Shader {
         vertex_source   := String.empty()
         fragment_source := String.empty()
 
-        for line, line_index : shader_source.slice().lines() {
+        for line, line_index in shader_source.slice().lines() {
             if line.starts_with(SHADER_PREFIX) {
                 typ := line.sub_string(SHADER_PREFIX.bytes.length).trim()
                 if streq("shared", typ) {

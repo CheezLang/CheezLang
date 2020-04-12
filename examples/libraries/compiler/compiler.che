@@ -156,7 +156,7 @@ compile_files :: (files: []String, thread_count: int) {
         fn(^String) -> string)
     )
 
-    for(by_ref=true) file : files {
+    for(by_ref=true) file in files {
         compiler.get().add_job(compiler.get().create_job(LoadFileJob.new(file.clone())))
     }
 
@@ -243,7 +243,7 @@ Compiler :: struct {
 
 impl Drop for Compiler {
     drop :: (&Self) {
-        // for f : fibers {
+        // for f in fibers {
         //     Memory.drop(f.fiber)
         // }
     }
@@ -251,7 +251,7 @@ impl Drop for Compiler {
 
 impl TextProvider for Compiler {
     get_text :: (&Self, filename: string) -> string {
-        // for s : self.sources {
+        // for s in self.sources {
         //     g_logger.log("{}", [s.name])
         // }
         return match self.sources.get(filename) {
@@ -550,7 +550,6 @@ impl Compiler {
         }
 
         h := helper
-        g_logger.log("native function wrapper '{}': {}", [@typename(FuncType), <<cast(^^int)^h])
         if !native_function_wrappers.contains(type_wrapper) {
             native_function_wrappers[type_wrapper] = helper
         }
@@ -619,7 +618,7 @@ impl Compiler {
     }
 
     find_free_fiber :: (&Self) -> ^FiberContext {
-        for f : fibers {
+        for f in fibers {
             if f.job == null and f.thread == -1 {
                 return f
             }
@@ -717,7 +716,7 @@ impl Compiler {
         // cancel all fibers
         self.lock()
         defer self.release()
-        for fib : waiting_fibers {
+        for fib in waiting_fibers {
             if fib.job != null {
                 fib.job.cancelled = true
                 fib.fiber.resume()

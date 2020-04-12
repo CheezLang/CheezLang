@@ -492,6 +492,55 @@ impl Parser {
         ))
     }
 
+    parse_match :: (&Self, allow_comma: bool) -> ^AstNode {
+        location := consume(.KwMatch).location
+
+        lexer.skip_whitespace()
+        value_expr : ^AstNode = if check_token(.OpenBrace) then null else parse_expression(allow_comma, false)
+
+        lexer.skip_whitespace()
+        consume(.OpenBrace)
+
+        cases := Array[^AstMatchCase].create()
+        loop {
+            lexer.skip_whitespace()
+            next := lexer.peek_token()
+            if next.typ == .ClosingBrace or next.typ == .EOF {
+                break
+            }
+
+            pattern := try(parse_expression(true, false))
+
+            lexer.skip_whitespace()
+            condition : ^AstNode = if check_token(.KwIf) {
+                lexer.next_token()
+                try(parse_expression(true, false))
+            } else {
+                null
+            }
+
+            lexer.skip_whitespace()
+            consume(.Arrow)
+
+            body := try(parse_expression(true, false))
+
+            cases.add(allocate(AstMatchCase(
+                pattern     = <<pattern
+                condition   = condition
+                body        = <<body
+            )))
+        }
+
+        end := consume(.ClosingBrace).location
+
+        return allocate(AstMatch(
+            id          = next_id()
+            location    = location.to(end)
+            value_expr  = value_expr
+            cases       = cases
+        ))
+    }
+
     parse_if :: (&Self, allow_comma: bool) -> ^AstNode {
         id := next_id()
 
@@ -546,15 +595,38 @@ impl Parser {
 
         // @todo: parse names
 
-        collection := parse_expression(false, false)
+        it_pattern : ^AstNode = null
+        index_name : ^AstIdentifier = null
+        collection : ^AstNode = null
+
+        expr := parse_expression(false, false)
+
+        if check_token(.Comma) {
+            it_pattern = expr
+            lexer.next_token()
+            lexer.skip_whitespace()
+            index_name = try(parse_identifier())
+
+            lexer.skip_whitespace()
+            consume(.KwIn)
+            collection = parse_expression(false, false)
+        } else if check_token(.KwIn) {
+            it_pattern = expr
+            lexer.next_token()
+            lexer.skip_whitespace()
+            collection = parse_expression(false, false)
+        } else {
+            collection = expr
+        }
+
         body := parse_block()
 
         location = location.to(body.location)
         return allocate(AstFor(
             id          = id
             location    = location
-            it_name     = null
-            index_name  = null
+            it_pattern  = it_pattern
+            index_name  = index_name
             collection  = <<collection
             body        = <<body
         ))
@@ -623,7 +695,7 @@ impl Parser {
 
     values_to_params :: (&Self, values: Array[^AstNode]) -> Array[^AstDecl] {
         params := Array[^AstDecl].create()
-        for e : values {
+        for e in values {
             match &<<e {
                 AstDecl($decl) -> params.add(^decl)
                 _ -> {
@@ -738,6 +810,8 @@ impl Parser {
 
         beg := consume(.KwStruct).location
 
+        trait_expr : ^AstNode = if !check_token(.OpenBrace) then try(parse_expression(false, false)) else null
+
         lexer.skip_whitespace()
         consume(.OpenBrace)
 
@@ -758,7 +832,129 @@ impl Parser {
         return allocate(AstStruct(
             id          = next_id()
             location    = beg.to(end)
+            trait_expr  = trait_expr
             children    = nodes
+        ))
+    }
+
+    parse_enum :: (&Self) -> ^AstNode {
+        nodes := Array[^AstNode].create()
+
+        beg := consume(.KwEnum).location
+
+        lexer.skip_whitespace()
+        consume(.OpenBrace)
+
+        loop {
+            lexer.skip_whitespace()
+            next := lexer.peek_token()
+            if next.typ == .ClosingBrace or next.typ == .EOF {
+                break
+            }
+
+            node := parse_node()
+            if node == null then break
+            nodes.add(node)
+        }
+
+        end := consume(.ClosingBrace).location
+
+        return allocate(AstEnum(
+            id          = next_id()
+            location    = beg.to(end)
+            children    = nodes
+        ))
+    }
+
+    parse_trait :: (&Self) -> ^AstNode {
+        nodes := Array[^AstNode].create()
+
+        beg := consume(.KwTrait).location
+
+        lexer.skip_whitespace()
+        consume(.OpenBrace)
+
+        loop {
+            lexer.skip_whitespace()
+            next := lexer.peek_token()
+            if next.typ == .ClosingBrace or next.typ == .EOF {
+                break
+            }
+
+            node := parse_node()
+            if node == null then break
+            nodes.add(node)
+        }
+
+        end := consume(.ClosingBrace).location
+
+        return allocate(AstTrait(
+            id          = next_id()
+            location    = beg.to(end)
+            children    = nodes
+        ))
+    }
+
+    parse_impl :: (&Self) -> ^AstNode {
+        nodes := Array[^AstNode].create()
+        target_trait : ^AstNode = null
+
+        beg := consume(.KwImpl).location
+
+        lexer.skip_whitespace()
+        target := try(parse_expression(false, false))
+
+        lexer.skip_whitespace()
+        if check_token(.KwFor) {
+            lexer.next_token()
+            lexer.skip_whitespace()
+            target_trait = target
+            target = try(parse_expression(false, false))
+            lexer.skip_whitespace()
+        }
+
+        consume(.OpenBrace)
+
+        loop {
+            lexer.skip_whitespace()
+            next := lexer.peek_token()
+            if next.typ == .ClosingBrace or next.typ == .EOF {
+                break
+            }
+
+            node := parse_node()
+            if node == null then break
+            nodes.add(node)
+        }
+
+        end := consume(.ClosingBrace).location
+
+        return allocate(AstImpl(
+            id           = next_id()
+            location     = beg.to(end)
+            children     = nodes
+            target_expr  = <<target
+            trait_expr   = target_trait
+        ))
+    }
+
+    parse_use :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
+        beg := consume(.KwUse).location
+        value := try(parse_expression(allow_comma, allow_function))
+        return allocate(AstUse(
+            id          = next_id()
+            location    = beg.to(value.location)
+            value_expr  = <<value
+        ))
+    }
+
+    parse_import :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
+        beg := consume(.KwImport).location
+        path := try(parse_expression(allow_comma, allow_function))
+        return allocate(AstImport(
+            id          = next_id()
+            location    = beg.to(path.location)
+            path        = <<path
         ))
     }
 
@@ -769,13 +965,19 @@ impl Parser {
             .KwBreak        -> parse_break(allow_comma)
             .KwContinue     -> parse_continue(allow_comma)
             .KwDefer        -> parse_defer(allow_comma)
+            .KwEnum         -> parse_enum()
             .KwFalse        -> parse_bool()
             .KwFor          -> parse_for(allow_comma)
             .KwIf           -> parse_if(allow_comma)
+            .KwImpl         -> parse_impl()
+            .KwImport       -> parse_import(allow_comma, allow_function)
             .KwLoop         -> parse_loop(allow_comma)
+            .KwMatch        -> parse_match(allow_comma)
             .KwReturn       -> parse_return(allow_comma)
             .KwStruct       -> parse_struct()
+            .KwTrait        -> parse_trait()
             .KwTrue         -> parse_bool()
+            .KwUse          -> parse_use(allow_comma, allow_function)
             .NumberLiteral  -> parse_number()
             .OpenBrace      -> parse_block()
             .OpenBracket    -> parse_bracketed()
@@ -914,15 +1116,16 @@ impl Parser {
                 return args, beg, beg
             }
             args.add(arg)
-            lexer.skip_whitespace()
 
             next = lexer.peek_token()
             if next.typ == close or next.typ == .EOF {
                 break
+            } else if next.typ == .NewLine {
+                lexer.skip_whitespace()
+            } else {
+                consume(.Comma)
+                lexer.skip_whitespace()
             }
-            
-            consume(.Comma)
-            lexer.skip_whitespace()
         }
 
         end := consume(close).location

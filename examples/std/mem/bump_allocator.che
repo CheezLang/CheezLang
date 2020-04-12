@@ -36,7 +36,7 @@ impl BumpAllocator {
 
     dump :: (&Self, dump_buckets: bool = false) {
         io.printfln("BumpAllocator ({} buckets)", buckets.length)
-        for i : 0..buckets.length {
+        for i in 0..buckets.length {
             bucket : &BumpBucket = buckets[i]
 
             io.printfln("  BumpBucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))

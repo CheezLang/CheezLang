@@ -11,8 +11,8 @@ use import std.array
 Main :: () {
     graph := load_graph(graph_medium)
 
-    for r : {0 .. graph.length - 1}.reverse() {
-        for c : 0 ..= r {
+    for r in {0 .. graph.length - 1}.reverse() {
+        for c in 0 ..= r {
             graph[r][c] += max(graph[r+1][c], graph[r+1][c+1])
         }
     }

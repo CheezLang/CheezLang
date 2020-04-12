@@ -166,7 +166,7 @@ impl PathTracer {
     intersect :: (&Self, ray: Ray) -> Option[HitInfo] {
         nearest : Option[HitInfo] = None
 
-        for n : 0..objects.get_length() {
+        for n in 0..objects.get_length() {
             hit := objects[n].intersect(ray)
             nearest = match (nearest, hit) {
                 (None, Some($hit)) -> Some(hit)
@@ -291,9 +291,9 @@ RenderContext :: struct {
 pathtracer_thread :: (data: ^RenderContext) {
     data.active = true
     for 0..samples_per_block {
-        for current_y : data.min.y..data.max.y {
+        for current_y in data.min.y..data.max.y {
             // loop through current line
-            for current_x : data.min.x..data.max.x {
+            for current_x in data.min.x..data.max.x {
                 index := current_x + current_y * width
 
                 // x coordinate in range [-1; 1]
@@ -379,8 +379,8 @@ impl Game for PathTracer {
         self.add_object(Sphere(Vec3(0, size + 9.75, 10), 10, m_light))
 
         // setup render contexts
-        for y: 0..block_count_y {
-            for x: 0..block_count_x {
+        for y in 0..block_count_y {
+            for x in 0..block_count_x {
                 context := alloc(RenderContext)
                 <<context = RenderContext(
                     pt      = ^self
@@ -404,7 +404,7 @@ impl Game for PathTracer {
             return
         }
         tds : []^RenderContext = thread_datas
-        for context : tds {
+        for context in tds {
             thread_pool.enqueue(pathtracer_thread, context)
         }
     }
@@ -436,8 +436,8 @@ impl Game for PathTracer {
 
         //
         if !paused or thread_pool.count() > 0 {
-            for current_y : 0..height {
-                for current_x : 0..width {
+            for current_y in 0..height {
+                for current_x in 0..width {
                     index := current_x + current_y * width
                     thread_id_x := current_x / block_size
                     thread_id_y := current_y / block_size
@@ -471,7 +471,7 @@ impl Game for PathTracer {
                     size := it.max - it.min
                     col  := Pixel(255, 255, 255)
 
-                    for offset : 0..3 {
+                    for offset in 0..3 {
                         pge.draw_rect(it.min.x + offset, it.min.y + offset, size.x - 2*offset - 1, size.y - 2*offset - 1, col)
                     }
                 }
@@ -502,8 +502,8 @@ impl Game for PathTracer {
         data := alloc_raw(double, width * height * 3)
         defer free(data)
 
-        for current_y : 0..height {
-            for current_x : 0..width {
+        for current_y in 0..height {
+            for current_x in 0..width {
                 index := current_x + current_y * width
                 thread_id_x := current_x / block_size
                 thread_id_y := current_y / block_size

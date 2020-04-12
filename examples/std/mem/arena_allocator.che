@@ -35,14 +35,14 @@ impl ArenaAllocator {
     }
 
     clear :: (&Self) {
-        for i : 0..buckets.length {
+        for i in 0..buckets.length {
             buckets[i].filled = 0
         }
     }
 
     dump :: (&Self, dump_buckets: bool = false) {
         io.printfln("ArenaAllocator ({} buckets)", buckets.length)
-        for i : 0..buckets.length {
+        for i in 0..buckets.length {
             bucket : &Bucket = buckets[i]
 
             io.printfln("  Bucket {}: {}/{} bytes", (i, bucket.filled, bucket.memory.length))
@@ -76,7 +76,7 @@ impl Allocator for ArenaAllocator {
 
         // find bucket with enough room for required size
         free_bucket : ^Bucket = null
-        for i : 0..buckets.length {
+        for i in 0..buckets.length {
             bucket : &Bucket = buckets[i]
             if bucket.can_store(required_size, alignment) {
                 free_bucket = ^bucket

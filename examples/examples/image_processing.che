@@ -110,17 +110,17 @@ impl Game for ImageProcessingGame {
         self.pge = pge
 
         // clear images to black
-        for i : 0..num_images_x * num_images_y {
+        for i in 0..num_images_x * num_images_y {
             io.printfln("clearing frame {}", i)
-            for x : 0..image_width {
-                for y : 0..image_height {
+            for x in 0..image_width {
+                for y in 0..image_height {
                     frames[i].set(x, y, 0.9)
                 }
             }
         }
 
-        for x : 0..image_width {
-            for y : 0..image_height {
+        for x in 0..image_width {
+            for y in 0..image_height {
                 last_frame.set(x, y, 0)
             }
         }
@@ -144,8 +144,8 @@ impl Game for ImageProcessingGame {
     }
 
     draw_frame :: (&Self, slot_x: int, slot_y: int, frame: &Frame) {
-        for x : 0..image_width {
-            for y : 0..image_height {
+        for x in 0..image_width {
+            for y in 0..image_height {
                 col := frame.get_rgb(x, y)
 
                 offset_x := (slot_x + 1) * border_width + slot_x * image_width
@@ -161,8 +161,8 @@ impl Game for ImageProcessingGame {
         if res != null {
             xScale := (cast(double)image_width) / (cast(double)res.width)
             yScale := (cast(double)image_height) / (cast(double)res.height)
-            for x : 0i32..res.width {
-                for y : 0i32..res.height {
+            for x in 0i32..res.width {
+                for y in 0i32..res.height {
                     index := (x + y * res.width) * 3
                     col := Color(cast(double) res.imageData[index + 2], cast(double) res.imageData[index + 1], cast(double) res.imageData[index + 0]) / 255.0
                     targetX := cast(int) (cast(double)x) * xScale
@@ -176,8 +176,8 @@ impl Game for ImageProcessingGame {
     }
 
     move_detection :: (&Self, source_frame: &Frame, last_frame: &Frame, target_frame: &Frame) {
-        for x : 0..image_width {
-            for y : 0..image_height {
+        for x in 0..image_width {
+            for y in 0..image_height {
                 last := last_frame.get(x, y)
                 now := source_frame.get(x, y)
                 diff := last - now
@@ -192,8 +192,8 @@ impl Game for ImageProcessingGame {
     }
 
     temporal_low_pass_filter :: (&Self, source_frame: &Frame, target_frame: &Frame, activity_frame: &Frame) {
-        for x : 0..image_width {
-            for y : 0..image_height {
+        for x in 0..image_width {
+            for y in 0..image_height {
                 dl := source_frame.get_rgb(x, y) - activity_frame.get_rgb(x, y)
                 dl *= 0.2
                 activity_frame.set_rgb(x, y, dl + activity_frame.get_rgb(x, y))
@@ -205,8 +205,8 @@ impl Game for ImageProcessingGame {
     dilation_erosion :: (&Self, input: &Frame, last: &Frame, activity: &Frame, output: &Frame) {
         steps := 5.0
         // activity
-        for x : 0..image_width {
-            for y : 0..image_height {
+        for x in 0..image_width {
+            for y in 0..image_height {
                 i := input.get(x, y)
                 k := (cast(float) (cast(int)i * steps)) / steps
                 activity.set(x, y, k)
@@ -214,10 +214,10 @@ impl Game for ImageProcessingGame {
         }
 
         // dilation
-        for n : 1..1 {
+        for n in 1..1 {
             activity.copy_to(output)
-            for x : 0..image_width {
-                for y : 0..image_height {
+            for x in 0..image_width {
+                for y in 0..image_height {
                     if activity.get(x, y) > 0.5 {
                         output.set(x    , y    , 1)
                         output.set(x - 1, y    , 1)
@@ -230,11 +230,11 @@ impl Game for ImageProcessingGame {
         }
 
         // erorios
-        for n : 1..3 {
+        for n in 1..3 {
             activity.copy_to(output)
 
-            for x : 0..image_width {
-                for y : 0..image_height {
+            for x in 0..image_width {
+                for y in 0..image_height {
 
                     sum :=   activity.get(x - 1, y) +
                                 activity.get(x + 1, y) +
@@ -258,11 +258,11 @@ impl Game for ImageProcessingGame {
     adaptive_threshold :: (input: &Frame, output: &Frame) {
         adaptive_bias := 1.0
 
-        for x : 0..image_width {
-            for y : 0..image_height {
+        for x in 0..image_width {
+            for y in 0..image_height {
                 region_sum := 0.0
-                for(inclusive=true) xx : (x - 2)..(x + 2) {
-                    for(inclusive=true) yy : (y - 2)..(y + 2) {
+                for(inclusive=true) xx in (x - 2)..(x + 2) {
+                    for(inclusive=true) yy in (y - 2)..(y + 2) {
                         region_sum += input.get(xx, yy)
                     }
                 }
@@ -295,8 +295,8 @@ impl Game for ImageProcessingGame {
 
         webcam.copy_to(last_frame)
 
-        for x : 0..num_images_x {
-            for y : 0..num_images_y {
+        for x in 0..num_images_x {
+            for y in 0..num_images_y {
                 draw_frame(x, y, frames[x + y * num_images_x])
             }
         }

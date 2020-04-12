@@ -166,7 +166,7 @@ impl Debugger {
 
         match breakpoints.get(path) {
             Some($arr) -> {
-                for(by_ref=true) breakpoint : arr.slice() {
+                for(by_ref=true) breakpoint in arr.slice() {
                     if breakpoint.line == location.line {
                         return true
                     }
@@ -494,7 +494,7 @@ impl CommandHandler for CheezDebugAdapter {
 
     set_breakpoints :: (&Self, arguments: DapSetBreakpoints) -> Result[(), String] {
         breaks := Array[Breakpoint].create()
-        for br : arguments.breakpoints {
+        for br in arguments.breakpoints {
             breaks.add(Breakpoint(br.line))
         }
         debugger.get().breakpoints[arguments.source.path.slice()] = breaks
@@ -510,7 +510,7 @@ impl CommandHandler for CheezDebugAdapter {
         stack_frames := Array[DapStackFrame].create()
 
         use_prev_ip := false
-        for(by_ref=true, reverse=true) frame : frames {
+        for(by_ref=true, reverse=true) frame in frames {
             defer { use_prev_ip = true }
             ip := if use_prev_ip then frame.ip_prev else frame.ip
             location := frame.func.debug_info.get_location_for_ip(ip)
@@ -550,7 +550,7 @@ impl CommandHandler for CheezDebugAdapter {
         scopes_json := Array[DapScope].create()
 
         scopes := self.collect_scopes(frame_id)
-        for scope : scopes {
+        for scope in scopes {
             self.add_variable_ref(scope.clone().change_type(VariableRef))
 
             scopes_json.add(DapScope(
@@ -578,7 +578,7 @@ impl CommandHandler for CheezDebugAdapter {
 
         var_ref := &self.get_variable_reference(index)
         vars := var_ref.get_variables(start, count)
-        for var : vars {
+        for var in vars {
             var_index := self.add_variable_ref(var.clone())
 
             match &var.get() {
@@ -665,7 +665,7 @@ impl VariableRef for ArgumentsScope {
     get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
-        for param : stackframe.func.debug_info.params {
+        for param in stackframe.func.debug_info.params {
             var := Variable.new(
                 interp, frame, param.name.to_owned(), param.type_info, ^stackframe.stack[stackframe.bp + param.index])
             result.add(var.clone().change_type(VariableRef))
@@ -688,7 +688,7 @@ impl VariableRef for LocalsScope {
     get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
-        for local : stackframe.func.debug_info.locals {
+        for local in stackframe.func.debug_info.locals {
             var := Variable.new(
                 interp, frame, local.name.to_owned(), local.type_info, ^stackframe.stack[stackframe.bp + local.index])
             result.add(var.clone().change_type(VariableRef))

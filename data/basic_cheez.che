@@ -1,41 +1,46 @@
-_ :: Main()
-Main :: () {
-    arr : Bar
-    baz : Baz
+for uiae {}
+for i in uiae {}
+for i, j in uiae {}
+for (a, b), j in uiae {}
 
-    baz.a = 5
-    baz.b = "hi"
-}
+// _ :: Main()
+// Main :: () {
+//     arr : Bar
+//     baz : Baz
 
-sub :: (a: int, b: int) -> int {
-    return a - b
-}
-
-Bar :: Array[int, Add[5, 6]]
-
-Add :: (A: int, B: int) const A + B
-Array :: (T: type, Size: int) struct {
-    arr : [sub(Size, 2)]T
-}
-
-Foo :: (Body: string) struct {
-    Body
-}
-
-Baz :: Foo["a: int
-b: string"]
-
-
-// Foo :: struct {
-//     {
-//         str := new_string()
-//         append_string(str, "a")
-//         append_string(str, " : ")
-//         append_string(str, "int")
-//         append_string(str, "
-// ")
-//         append_string(str, "b : string")
-//         print(str)
-//         slice(str)
-//     }
+//     baz.a = 5
+//     baz.b = "hi"
 // }
+
+// sub :: (a: int, b: int) -> int {
+//     return a - b
+// }
+
+// Bar :: Array[int, Add[5, 6]]
+
+// Add :: (A: int, B: int) const A + B
+// Array :: (T: type, Size: int) struct {
+//     arr : [sub(Size, 2)]T
+// }
+
+// Foo :: (Body: string) struct {
+//     Body
+// }
+
+// Baz :: Foo["a: int
+// b: string"]
+
+
+// // Foo :: struct {
+// //     {
+// //         str := new_string()
+// //         append_string(str, "a")
+// //         append_string(str, " : ")
+// //         append_string(str, "int")
+// //         append_string(str, "
+// // ")
+// //         append_string(str, "b : string")
+// //         print(str)
+// //         slice(str)
+// //     }
+// // }

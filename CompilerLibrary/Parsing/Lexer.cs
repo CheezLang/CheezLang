@@ -112,6 +112,8 @@ namespace Cheez.Parsing
         KwMut,
         KwImport,
         KwGeneric,
+        KwIn,
+        KwIs,
     }
 
     public class Token
@@ -400,6 +402,8 @@ namespace Cheez.Parsing
                 case "mut":      token.type = TokenType.KwMut; break;
                 case "import":   token.type = TokenType.KwImport; break;
                 case "generic":  token.type = TokenType.KwGeneric; break;
+                case "in":       token.type = TokenType.KwIn; break;
+                case "is":       token.type = TokenType.KwIs; break;
             }
         }
 

@@ -8,7 +8,7 @@ impl PixelGameEngine {
     clear :: (&Self, p: Pixel = Pixel()) {
         count := draw_target.width * draw_target.height
         pixels := draw_target.get_data()
-        for i : 0..count {
+        for i in 0..count {
             pixels[i] = p
         }
     }
@@ -99,8 +99,8 @@ impl PixelGameEngine {
         if y2 < 0 { y2 = 0 }
         if y2 >= screen_height { y2 = screen_height }
 
-        for i : x..x2 {
-            for k : y..y2 {
+        for i in x..x2 {
+            for k in y..y2 {
                 draw(i, k, p)
             }
         }
@@ -129,7 +129,7 @@ impl PixelGameEngine {
             y1 = max(y1, 0)
             y2 = min(y2, screen_height - 1)
 
-            for y : y1 ..= y2 {
+            for y in y1 ..= y2 {
                 if rol(pattern) {
                     self.draw(x1, y, p)
                 }
@@ -149,7 +149,7 @@ impl PixelGameEngine {
             x1 = max(x1, 0)
             x2 = min(x2, screen_width - 1)
 
-            for x : x1 ..= x2 {
+            for x in x1 ..= x2 {
                 if rol(pattern) {
                     draw(x, y1, p)
                 }

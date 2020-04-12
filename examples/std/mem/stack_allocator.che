@@ -37,7 +37,7 @@ impl Drop for StackAllocator {
 impl Printable for StackAllocator {
     print :: (&Self, s: &String, format: string) {
         s += "( ["
-        for i : 0..allocations.length {
+        for i in 0..allocations.length {
             if i > 0 {
                 s += ", "
             }
@@ -85,7 +85,7 @@ impl StackAllocator {
     print_diagnostics :: (&Self) {
         s := String.empty()
         s += "( ["
-        for i : 0..allocations.length {
+        for i in 0..allocations.length {
             if i > 0 {
                 s += ", "
             }

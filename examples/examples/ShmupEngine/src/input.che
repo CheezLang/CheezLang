@@ -30,7 +30,7 @@ impl Input {
     }
 
     release_all_keys :: (&Self) {
-        for key : 0 ..= GLFW_KEY_LAST {
+        for key in 0 ..= GLFW_KEY_LAST {
             keys_released[key] = false
             keys_pressed[key] = false
             keys_down[key] = false
@@ -38,7 +38,7 @@ impl Input {
     }
 
     reset :: (&Self) {
-        for key : 0 ..= GLFW_KEY_LAST {
+        for key in 0 ..= GLFW_KEY_LAST {
             keys_pressed[key] = false
             keys_released[key] = false
         }

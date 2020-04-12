@@ -23,7 +23,7 @@ impl Sprite {
             height = h
             data = {
                 ptr := alloc_raw(Pixel, cast(uint) (w * h))
-                for i : 0..(w * h) {
+                for i in 0..(w * h) {
                     ptr[i] = Pixel()
                 }
                 ptr

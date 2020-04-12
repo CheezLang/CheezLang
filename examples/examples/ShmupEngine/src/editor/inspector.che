@@ -107,7 +107,7 @@ impl EntityInspector {
                         ImGui.CloseCurrentPopup()
                         // remove current component
                         // move all following components one slot down
-                        for k : index .. entity.components.get_length() - 1 {
+                        for k in index .. entity.components.get_length() - 1 {
                             entity.components[k] = entity.components[k + 1].clone()
                         }
                         // pop last component which is now in the second last slot
@@ -137,7 +137,7 @@ impl EntityInspector {
                         list_size := ImGui.ImVec2(150, 0)
                         list_entry_size := ImGui.ImVec2(0, 0)
                         ImGui.BeginChildStr("component list", list_size, true)
-                        for bi : component_infos {
+                        for bi in component_infos {
                             ImGui.PushIDInt(i32(it_index))
                             type_info := cast(^TypeInfoStruct) bi.type_info
                             name := String.from_string(type_info.name)
@@ -163,7 +163,7 @@ impl EntityInspector {
                             ImGui.Text(name.as_cstring())
                             ImGui.Separator()
 
-                            for(by_ref=true) m : @cast(^TypeInfoStruct, bi.type_info).members {
+                            for(by_ref=true) m in @cast(^TypeInfoStruct, bi.type_info).members {
                                 name := String.with_capacity(m.name.bytes.length + 1)
                                 name.append_string(m.name)
                                 imgui_input_property(name, util.pointer_add(@ptr_of_trait(bi.value), m.offset), m.typ, ^m)
@@ -215,7 +215,7 @@ impl EntityInspector {
             }
 
             // io.println("==")
-            for(by_ref=true) m : @cast(^TypeInfoStruct, ti).members {
+            for(by_ref=true) m in @cast(^TypeInfoStruct, ti).members {
                 name := String.with_capacity(m.name.bytes.length + 1)
                 name.append_string(m.name)
                 ptr := util.pointer_add(@ptr_of_trait(component.get()), m.offset)
