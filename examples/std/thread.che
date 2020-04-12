@@ -30,7 +30,7 @@ impl Thread {
     current :: () -> ^ThreadData {
         if current_thread_data == null {
             current_thread_data = alloc(ThreadData)
-            <<current_thread_data = ThreadData(
+            *current_thread_data = ThreadData(
                 handle  = GetCurrentThread()
                 user    = null
                 func    = null
@@ -231,7 +231,7 @@ ThreadPool :: struct {
 impl ThreadPool {
     create :: (num_threads: int) -> Self {
         data := alloc(ThreadPoolData)
-        <<data = ThreadPoolData(
+        *data = ThreadPoolData(
             threads = Array[Thread].create(num_threads)
             functions = RingQueue[ThreadPoolFunc].new(10)
             mutex = Mutex.new()

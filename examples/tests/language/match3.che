@@ -47,7 +47,7 @@ inc1 :: (a: &Option[int]) {
 
 inc2 :: (a: &Option[int]) {
     a_ref := get_ref(a)
-    match <<^a_ref {
+    match *^a_ref {
         Some($v) -> {
             v += 2
         }

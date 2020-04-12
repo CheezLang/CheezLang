@@ -197,9 +197,9 @@ impl BhvNode {
         } else {
             mid := l.length / 2
             a := alloc(BhvNode)
-            <<a = BhvNode.create(l[0..mid])
+            *a = BhvNode.create(l[0..mid])
             b := alloc(BhvNode)
-            <<b = BhvNode.create(l[mid..l.length])
+            *b = BhvNode.create(l[mid..l.length])
             (@cast(^Hittable, a), @cast(^Hittable, b))
         }
 

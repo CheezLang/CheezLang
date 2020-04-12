@@ -3170,12 +3170,12 @@ DebugCheckVersionAndDataLayout :: (_version_str: ^char8, _sz_io: size_t, _sz_sty
 GetIO :: () -> &ImGuiIO {
     result : ^ImGuiIO = default
     __c__GetIO(^result)
-    return <<result
+    return *result
 }
 GetStyle :: () -> &ImGuiStyle {
     result : ^ImGuiStyle = default
     __c__GetStyle(^result)
-    return <<result
+    return *result
 }
 NewFrame :: () {
     __c__NewFrame()
@@ -3445,7 +3445,7 @@ PopStyleVar :: (_count: i32 = 1) {
 GetStyleColorVec4 :: (_idx: ImGuiCol) -> &ImVec4 {
     result : ^ImVec4 = default
     __c__GetStyleColorVec4(^result, _idx)
-    return <<result
+    return *result
 }
 GetFont :: () -> ^ImFont {
     result : ^ImFont = default
@@ -4636,7 +4636,7 @@ MemFree :: (_ptr: ^void) {
 GetPlatformIO :: () -> &ImGuiPlatformIO {
     result : ^ImGuiPlatformIO = default
     __c__GetPlatformIO(^result)
-    return <<result
+    return *result
 }
 GetMainViewport :: () -> ^ImGuiViewport {
     result : ^ImGuiViewport = default

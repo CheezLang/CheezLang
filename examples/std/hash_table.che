@@ -224,7 +224,7 @@ impl(K: type, V: type) Clone for Table[K, V] if K : Clone, V : Clone {
     clone :: (&Self) -> Self {
         result := Table[K, V].create(self.comparer)
         result.adjust_capacity(cast self.entries.length)
-        for kv in <<^self {
+        for kv in *^self {
             result[kv.name.clone()] = kv.value.clone()
         }
         return result

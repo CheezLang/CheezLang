@@ -9,13 +9,13 @@ Box :: struct(T: type) {
 impl(T: type) Box[T] {
     // create :: (v: T) -> Box[T] {
     //     p := alloc(T)
-    //     <<p = v
+    //     *p = v
     //     return Box[T](p)
     // }
 
     new :: (v: $T2) -> Box[T] {
         p := alloc(T2)
-        <<p = v
+        *p = v
         return Box[T](cast p)
     }
 
@@ -29,12 +29,12 @@ impl(T: type) Box[T] {
 
     value :: (&Self) -> &T {
         @assert(_value != null)
-        return <<_value
+        return *_value
     }
 
     get :: (&Self) -> &T {
         @assert(_value != null)
-        return <<_value
+        return *_value
     }
 }
 

@@ -8,7 +8,7 @@
 // import examples.pathtracer
 // import examples.pathtracer2.main
 // import examples.command_line_parser
-import compiler.cli
+// import compiler.cli
 // import compiler.debugger
 // import examples.ShmupEngine.src.main
 
@@ -54,7 +54,7 @@ import compiler.cli
 //     helper :: (func: fn(), interp: ^Interpreter) {
 //         ArgTupleType :: @param_type_tuple(FuncType)
 //         slots : [(@sizeof(ArgTupleType) + 7) / 8]u64 = default
-//         args := &<<cast(^ArgTupleType)slots.data
+//         args := &*cast(^ArgTupleType)slots.data
 //         @for_function_parameters(FuncType, (ArgType, i) => {
 //             args[i] = interp.get_arg(ArgType, i)
 //             // io.formatln("{} : {} = {}", [i, @typename(ArgType), args[i]])
@@ -127,7 +127,7 @@ import compiler.cli
 //             loop {
 //                 decl := parser.parse_constant_declaration()
 //                 if decl == null then break
-//                 io.println(dump_ast(<<decl))
+//                 io.println(dump_ast(*decl))
 
 //                 funcs.add(decl)
 //             }
@@ -403,7 +403,7 @@ impl CustomParser for String {
     parse :: (args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken {
         // io.println("String.parse")
         result := mem.alloc(CustomExpr)
-        <<result = CustomExpr(@type_info(Self), loc, create_empty_expr(null, loc))
+        *result = CustomExpr(@type_info(Self), loc, create_empty_expr(null, loc))
         if args.length == 0 {
             return Some(Box[Expr].from_pointer(cast result)), args
         }
@@ -425,7 +425,7 @@ impl CustomParser for String {
         // io.println("String.get_value")
         match &expr.sub.get() {
             ValueExpr($v) -> {
-                <<cast(^String)result = v.raw.clone()
+                *cast(^String)result = v.raw.clone()
             }
 
             _ -> @assert(false)

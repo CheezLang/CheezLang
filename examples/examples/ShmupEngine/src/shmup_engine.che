@@ -120,7 +120,7 @@ ShmupEngine :: struct {
 impl ShmupEngine {
     new :: () -> ^ShmupEngine {
         ptr := mem.alloc(ShmupEngine)
-        <<ptr = ShmupEngine()
+        *ptr = ShmupEngine()
 
         // setup modes
         ptr.current_mode = EngineMode.Edit(^ptr.edit_mode)
@@ -410,7 +410,7 @@ impl ShmupEngine {
 
         // // render mode
         // renderer.begin_scene(projection_matrix)
-        // current_mode.render(<<renderer)
+        // current_mode.render(*renderer)
         // renderer.draw_quad(vec3(0, 0, 0), world_size, 0, 0.1)
         // // renderer.end_scene()
     }
@@ -435,7 +435,7 @@ impl ShmupEngine {
         update(delta_time)
         for window in editor_windows {
             if !window.get().base().enabled then continue
-            window.get().render(world_size, <<renderer)
+            window.get().render(world_size, *renderer)
         }
 
         // end frame
@@ -618,19 +618,19 @@ impl ShmupEngine {
 
     push_entity_layer :: (&Self, name: String, callbacks: ^EntityLayerCallbacks) {
         ptr := mem.alloc(EntityLayer)
-        <<ptr = EntityLayer.new(name, callbacks, self, <<Input.new())
+        *ptr = EntityLayer.new(name, callbacks, self, *Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
     push_lighting_layer :: (&Self, name: String) {
         ptr := mem.alloc(LightingLayer)
-        <<ptr = LightingLayer.new(name, self, <<Input.new())
+        *ptr = LightingLayer.new(name, self, *Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
     push_debug_layer :: (&Self, name: String) {
         ptr := mem.alloc(DebugLayer)
-        <<ptr = DebugLayer.new(name, self, <<Input.new())
+        *ptr = DebugLayer.new(name, self, *Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
@@ -665,7 +665,7 @@ impl ShmupEngine {
 
             Command.DeleteEntity($id) -> {
                 match hierarchy.get_layer() {
-                    Some($layer) -> match &<<layer {
+                    Some($layer) -> match &*layer {
                         EntityLayer($layer) -> match layer.find_entity(id) {
                             Some($entity) -> {
                                 T :: @typeof(layer)
@@ -678,7 +678,7 @@ impl ShmupEngine {
             }
 
             Command.NewEntity -> match hierarchy.get_layer() {
-                Some($layer) -> match &<<layer {
+                Some($layer) -> match &*layer {
                     EntityLayer($layer) -> {
                         e := layer.new_entity()
                     }

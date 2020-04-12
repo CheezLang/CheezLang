@@ -11,7 +11,7 @@ use import std.random.mt
 
 create_object :: ($T: type, val: $V) -> ^T {
     mem := alloc(V)
-    <<mem = val
+    *mem = val
     return mem
 }
 

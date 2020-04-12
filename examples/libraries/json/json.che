@@ -136,7 +136,7 @@ serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
         .JsonObject($map) -> {
             result += "{`n"
             body := String.empty()
-            for kv in <<^map {
+            for kv in *^map {
                 if it_index > 0 {
                     body += ",`n"
                 }
@@ -176,7 +176,7 @@ serialize_json_value_helper :: (result: &String, val: &JsonValue) {
         }
         .JsonObject($map) -> {
             result += "{"
-            for kv in <<^map {
+            for kv in *^map {
                 if it_index > 0 {
                     result += ","
                 }

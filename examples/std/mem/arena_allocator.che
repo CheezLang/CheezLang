@@ -50,7 +50,7 @@ impl ArenaAllocator {
                 current : uint = 0
 
                 while current < bucket.filled {
-                    len := <<cast(^uint)util.pointer_add(bucket.memory.data, cast(int)current)
+                    len := *cast(^uint)util.pointer_add(bucket.memory.data, cast(int)current)
                     if len == 0 {
                         current += 8
                         continue
@@ -100,7 +100,7 @@ impl Allocator for ArenaAllocator {
 
         ptr := free_bucket.allocate(required_size, alignment)
         len_ptr := cast(^uint)ptr
-        <<len_ptr = count * elementSize
+        *len_ptr = count * elementSize
         return util.pointer_add(ptr, 8)
     }
 
@@ -108,7 +108,7 @@ impl Allocator for ArenaAllocator {
         if mem == null {
             return allocate(count, elementSize, alignment)
         } else {
-            len := <<cast(^uint)util.pointer_add(mem, -8)
+            len := *cast(^uint)util.pointer_add(mem, -8)
 
             if len >= count * elementSize {
                 return mem

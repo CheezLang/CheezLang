@@ -255,7 +255,7 @@ impl string {
 
 impl(T: type) []T {
     get_index :: (Self, index: int) -> &T #operator("[]") {
-        return <<cast(^T) int(self.data) + index * @sizeof(T)
+        return *cast(^T) int(self.data) + index * @sizeof(T)
     }
 
     get_range :: (Self, range: Range[int]) -> []T #operator("[]") {
@@ -301,7 +301,7 @@ impl(T: type) []T {
 
 impl(T: type, Size: int) [Size]T {
     get_index :: (&Self, index: int) -> &T #operator("[]") {
-        return <<cast(^T) int(self.data) + index * @sizeof(T)
+        return *cast(^T) int(self.data) + index * @sizeof(T)
     }
 
     get_range :: (&Self, range: Range[int]) -> []T #operator("[]") {
@@ -415,7 +415,7 @@ __Trait :: struct {
 Traits :: struct {
     from_vtable_and_pointer :: ($T: type, vtable: ^void, value: ^void) -> ^T {
         t := __Trait(value, vtable)
-        return <<cast(^^T)^t
+        return *cast(^^T)^t
     }
 
     destructure :: (trait_ptr: $T) -> (ptr: ^void, vtable: ^void) {
@@ -433,7 +433,7 @@ __any :: struct {
 Any :: struct {
     from_pointers :: (value: ^void, type_info: ^TypeInfo) -> ^any {
         t := __any(value, type_info)
-        return <<cast(^^any)^t
+        return *cast(^^any)^t
     }
 
     destructure :: (trait_ptr: $T) -> (ptr: ^void, vtable: ^void) {
@@ -453,7 +453,7 @@ FatFunctions :: struct {
 impl FatFunctions {
     from_pointers :: ($T: type, func: ^void, data: ^void) -> T {
         t := __FatFunction(func, data)
-        return <<cast(^T)^t
+        return *cast(^T)^t
     }
     destructure :: (func: $T, $FuncType: type = ^void, $DataType: type = ^void) -> (FuncType, DataType) {
         fat := cast(^__FatFunction) ^func
@@ -625,7 +625,7 @@ impl TypeInfo {
         vtable := ti_impl.vtable
         func_info := ti_trait.get_function(func_name)
         @assert(func_info != null)
-        function := cast(F) <<cast(^fn()) int(vtable) + func_info.offset
+        function := cast(F) *cast(^fn()) int(vtable) + func_info.offset
         return function
     }
 }
@@ -667,7 +667,7 @@ impl TypeInfoAttribute {
         arg := self.args[index]
         @assert(@type_info(T) == @type_info_of_any(arg))
 
-        return <<cast(^T) arg
+        return *cast(^T) arg
     }
 }
 

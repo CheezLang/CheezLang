@@ -256,7 +256,7 @@ impl Renderer {
 
         //
         r := mem.alloc(Renderer)
-        <<r = Renderer(
+        *r = Renderer(
             quad_va         = quad_va
             line_va         = line_va
             single_quad_va  = single_quad_va
@@ -298,13 +298,13 @@ impl Renderer {
         match Shader.from_file(file) {
             Ok($s) -> {
                 shader_program := mem.alloc(Shader)
-                <<shader_program = s
+                *shader_program = s
 
-                if <<shader != null {
-                    Memory.drop(<<(<<shader))
-                    mem.free(<<shader)
+                if *shader != null {
+                    Memory.drop(*(*shader))
+                    mem.free(*shader)
                 }
-                <<shader = shader_program
+                *shader = shader_program
             }
 
             Err($msg) -> {
@@ -344,8 +344,8 @@ impl Renderer {
     }
 
     begin_scene :: (&Self, projection_matrix: &mat4, viewport_size: vec2) {
-        // @todo: <<& is a hack
-        self.projection_matrix = <<^projection_matrix
+        // @todo: *& is a hack
+        self.projection_matrix = *^projection_matrix
         self.projection_matrix_stack.clear()
 
         set_projection_matrix(projection_matrix)

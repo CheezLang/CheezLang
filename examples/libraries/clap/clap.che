@@ -177,7 +177,7 @@ parse_arguments :: ($T: type, args: []String) -> ^T {
     ok := parse_arguments_help(@type_info(T), args, result)
 
     if !ok {
-        Memory.drop(<<result)
+        Memory.drop(*result)
         free(result)
         return null
     }
@@ -217,11 +217,11 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
         return true
     }
 
-    return match &<<type_info {
+    return match &*type_info {
         // String
         _ if type_info == @type_info(String) -> {
             if !require_arg(args) { return false }
-            <<cast(^String) result = args[0].clone()
+            *cast(^String) result = args[0].clone()
             args = args[1..]
             true
         }
@@ -233,7 +233,7 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
         _ if type_info == @type_info(Option[String]) -> {
             temp := @alloca(String, 1)
             parse_arguments_help(@type_info(String), args, temp.data)
-            <<cast(^Option[String]) result = Some(<<temp.data)
+            *cast(^Option[String]) result = Some(*temp.data)
             true
         }
 
@@ -241,13 +241,13 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
         TypeInfoStruct($info) -> parse_arguments_struct(^info, args, result)
         TypeInfoInt(_)    -> {
             if !require_arg(args) { return false }
-            <<cast(^int) result = fmt.parse_int(args[0].slice())
+            *cast(^int) result = fmt.parse_int(args[0].slice())
             args = args[1..]
             true
         }
 
         TypeInfoBool(_) -> {
-            <<cast(^bool) result = true
+            *cast(^bool) result = true
             true
         }
         _ -> {
@@ -264,7 +264,7 @@ parse_arguments_string_array :: (args: &[]String, result: ^void) -> bool {
     }
 
     array := cast(^Array[String]) result
-    <<array = Array[String].create()
+    *array = Array[String].create()
 
     while args.length > 0 {
         arg := &args[0]
@@ -303,7 +303,7 @@ parse_arguments_enum :: (type_info: ^TypeInfoEnum, args: &[]String, result: ^voi
         if streq(command.slice(), mem_name) {
             // first store the tag
             tag_ptr := cast(^int) result
-            <<tag_ptr = mem.tag
+            *tag_ptr = mem.tag
 
             if mem.typ != null {
                 // parse remaining arguments into associated value
@@ -404,7 +404,7 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
 }
 
 get_help_message_helper :: (type_info: ^TypeInfo, result: &String, indent: int) {
-    match &<<type_info {
+    match &*type_info {
         _ if ^type_info == @type_info(String) -> {
             indent_string(result, indent)
             result += "String"
@@ -444,7 +444,7 @@ get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent:
         if help_text_att != null {
             @assert(help_text_att.args.length == 1)
             @assert(@type_info_of_any(help_text_att.args[0]) == @type_info(string))
-            text := String.from_string(<<cast(^string) @ptr_of_any(help_text_att.args[0]))
+            text := String.from_string(*cast(^string) @ptr_of_any(help_text_att.args[0]))
 
             lines := text.split_at_char('`n', true)
 
@@ -499,7 +499,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
         if help_text_att != null {
             @assert(help_text_att.args.length == 1)
             @assert(@type_info_of_any(help_text_att.args[0]) == @type_info(string))
-            text := String.from_string(<<cast(^string) @ptr_of_any(help_text_att.args[0]))
+            text := String.from_string(*cast(^string) @ptr_of_any(help_text_att.args[0]))
 
             lines := text.split_at_char('`n', true)
 
@@ -535,7 +535,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
 }
 
 get_help_message_member :: (result: &String, type_info: ^TypeInfo, name: string, format: string, indent: int, indent2: int) {
-    match &<<type_info {
+    match &*type_info {
         $_ if type_info == @type_info(String) -> {
             indent_string(result, indent)
             result.appendf(format, name)
@@ -613,7 +613,7 @@ get_display_name_for_member :: (mem: &$T) -> string {
 
     @assert(name_att.args.length == 1)
     @assert(@type_info_of_any(name_att.args[0]) == @type_info(string))
-    name := <<cast(^string) @ptr_of_any(name_att.args[0])
+    name := *cast(^string) @ptr_of_any(name_att.args[0])
     return name
 }
 

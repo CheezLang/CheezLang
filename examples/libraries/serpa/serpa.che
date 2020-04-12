@@ -86,7 +86,7 @@ impl Parser {
 
                     match self.parse(typ, lexer, error_handler) {
                         Some($v) -> {
-                            <<member_ptr = v
+                            *member_ptr = v
                             found_member = true
                         }
                         None -> {
@@ -127,7 +127,7 @@ impl Parser {
         if !parse_struct_into(result, lexer, error_handler) {
             return None
         }
-        return Some(<<result)
+        return Some(*result)
     }
 }
 

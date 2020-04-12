@@ -362,7 +362,7 @@ impl(T: type) Vector3[T] {
     }
 
     reflect :: (&Self, normal: Self) -> Self {
-        return normal * -Self.dot(self, normal) * T(2) + <<^self
+        return normal * -Self.dot(self, normal) * T(2) + *^self
     }
 
     refract :: (&Self, normal: Self, ior: T) -> Option[Self] {
@@ -572,7 +572,7 @@ impl(T: type) Vector4[T] {
     }
 
     reflect :: (&Self, normal: Self) -> Self {
-        return normal * -Self.dot(self, normal) * T(2) + <<^self
+        return normal * -Self.dot(self, normal) * T(2) + *^self
     }
 
     max_component :: (&Self) -> T {

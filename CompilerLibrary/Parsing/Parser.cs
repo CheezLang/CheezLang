@@ -1463,7 +1463,7 @@ namespace Cheez.Parsing
                 var sub = ParseUnaryExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
                 return new AstAddressOfExpr(sub, new Location(next.location, sub.End));
             }
-            else if (next.type == TokenType.LessLess)
+            else if (next.type == TokenType.Asterisk)
             {
                 NextToken();
                 SkipNewlines();

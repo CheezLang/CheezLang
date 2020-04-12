@@ -53,7 +53,7 @@ impl EntityInspector {
 
     register_component_info :: (&Self, default_value: $T) {
         ptr := mem.alloc(T)
-        <<ptr = default_value
+        *ptr = default_value
         component_infos.add(ComponentInfo(@type_info(T), ptr))
     }
 
@@ -227,7 +227,7 @@ impl EntityInspector {
     }
 
     imgui_input_property :: (&Self, name: &String, ptr: ^void, typ: ^TypeInfo, m: ^TypeInfoStructMember) {
-        match &<<typ {
+        match &*typ {
             TypeInfoFloat(_) -> {
                 match typ.size {
                     4 -> {
@@ -242,9 +242,9 @@ impl EntityInspector {
                             min := angle.get_arg(0, f32)
                             max := angle.get_arg(1, f32)
 
-                            rad := <<ptr / 180.0f * 3.1415f
+                            rad := *ptr / 180.0f * 3.1415f
                             ImGui.SliderAngle(name.as_cstring(), ^rad, min, max)
-                            <<ptr = rad * 180.0f / 3.1415f
+                            *ptr = rad * 180.0f / 3.1415f
                         } else if m.has_attribute("min") and m.has_attribute("max") {
                             min := m.get_attribute("min")
                             max := m.get_attribute("max")
@@ -330,7 +330,7 @@ impl EntityInspector {
             }
 
             _ if typ == @type_info(Array[vec3]) -> {
-                arr := &<<cast(^Array[vec3]) ptr
+                arr := &*cast(^Array[vec3]) ptr
                 open := true
                 ImGui.Text(name.as_cstring())
                 ImGui.SameLine()

@@ -105,7 +105,7 @@ impl VertexBuffer {
         GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
 
         buff := mem.alloc(VertexBuffer)
-        <<buff = VertexBuffer(vbo, BufferLayout())
+        *buff = VertexBuffer(vbo, BufferLayout())
         return buff
     }
 
@@ -117,7 +117,7 @@ impl VertexBuffer {
         GL(glBindBuffer(GL_ARRAY_BUFFER, 0))
 
         buff := mem.alloc(VertexBuffer)
-        <<buff = VertexBuffer(vbo, BufferLayout())
+        *buff = VertexBuffer(vbo, BufferLayout())
         return buff
     }
 
@@ -156,7 +156,7 @@ impl IndexBuffer {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
 
         buff := mem.alloc(IndexBuffer)
-        <<buff = IndexBuffer(vbo, i32(indices.length))
+        *buff = IndexBuffer(vbo, i32(indices.length))
         return buff
     }
 
@@ -190,7 +190,7 @@ impl VertexArray {
         glGenVertexArrays(1, ^vao)
 
         buff := mem.alloc(VertexArray)
-        <<buff = VertexArray(vao)
+        *buff = VertexArray(vao)
         return buff
     }
 

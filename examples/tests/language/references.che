@@ -80,14 +80,14 @@ test2 :: () {
 }
 
 help1 :: (a: &^int) {
-    b := <<^<<a
+    b := *^*a
 }
 
 test1 :: () {
     a := 5
     pa := ^a
-    b := <<pa
-    c := <<^<<^a
+    b := *pa
+    c := *^*^a
 
     help1(pa)
 }

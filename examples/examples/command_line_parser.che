@@ -98,7 +98,7 @@ test_args_slice :: ($T: type, args: []String) {
     io.println("====================================")
     my_args := parse_arguments(T, args)
     if my_args != null {
-        io.println(fmt.format_any(<<my_args))
+        io.println(fmt.format_any(*my_args))
     }
     io.println("====================================`n`n")
 }
@@ -109,7 +109,7 @@ test_args :: ($T: type, args: Array[String]) {
     io.println("====================================")
     my_args := parse_arguments(T, args.slice())
     if my_args != null {
-        io.println(fmt.format_any(<<my_args))
+        io.println(fmt.format_any(*my_args))
     }
     io.println("====================================`n`n")
 }

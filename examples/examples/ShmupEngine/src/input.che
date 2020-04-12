@@ -15,7 +15,7 @@ impl Input {
     new :: () -> ^Input {
 
         input := mem.alloc(Input)
-        <<input = Input()
+        *input = Input()
         return input
     }
 

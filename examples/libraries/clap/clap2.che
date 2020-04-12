@@ -162,13 +162,13 @@ impl Clap {
 
 create_empty_expr :: (ti: ^TypeInfo, loc: Location) -> Box[Expr] {
     result := mem.alloc(EmptyExpr)
-    <<result = EmptyExpr(ti, loc)
+    *result = EmptyExpr(ti, loc)
     return Box[Expr].from_pointer(cast result)
 }
 
 create_raw_expr :: (ti: ^TypeInfo, token: &ClapToken) -> Box[Expr] {
     result := mem.alloc(ValueExpr)
-    <<result = ValueExpr(ti, token.loc, token.raw.clone())
+    *result = ValueExpr(ti, token.loc, token.raw.clone())
     return Box[Expr].from_pointer(cast result)
 }
 
@@ -212,7 +212,7 @@ parse_args_enum :: (ti: ^TypeInfoEnum, args: []ClapToken, loc: Location) -> Opti
     }
 
     result := mem.alloc(EnumExpr)
-    <<result = EnumExpr(ti, loc)
+    *result = EnumExpr(ti, loc)
 
     current := &args[0]
     result.loc = current.loc
@@ -242,7 +242,7 @@ parse_args_enum :: (ti: ^TypeInfoEnum, args: []ClapToken, loc: Location) -> Opti
 
 parse_args_struct :: (ti: ^TypeInfoStruct, args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken {
     result := mem.alloc(StructExpr)
-    <<result = StructExpr(ti, loc)
+    *result = StructExpr(ti, loc)
 
     while args.length > 0 {
         current := &args[0]
@@ -287,7 +287,7 @@ parse_args_struct :: (ti: ^TypeInfoStruct, args: []ClapToken, loc: Location) -> 
 }
 
 parse_args_help :: (ti: ^TypeInfo, args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken {
-    return match &<<ti {
+    return match &*ti {
         TypeInfoEnum($info)    -> parse_args_enum(^info, args, loc)
         TypeInfoStruct($info)  -> {
             custom_parser := TypeInfo.get_trait_impl(info, CustomParser)
@@ -325,23 +325,23 @@ get_value :: ($T: type, expr: &Expr) -> Result[Box[T], ClapError] {
 
 get_value_raw :: (result: ^void, expr: &ValueExpr) {
     @assert(expr.typ != null)
-    match &<<expr.typ {
+    match &*expr.typ {
         TypeInfoInt($info) -> {
             num := fmt.parse_int(expr.raw.slice())
             match info.signed, expr.typ.size {
-                true, 1  -> { <<cast(^i8)  result = cast num }
-                true, 2  -> { <<cast(^i16) result = cast num }
-                true, 4  -> { <<cast(^i32) result = cast num }
-                true, 8  -> { <<cast(^i64) result = cast num }
-                false, 1 -> { <<cast(^u8)  result = cast num }
-                false, 2 -> { <<cast(^u16) result = cast num }
-                false, 4 -> { <<cast(^u32) result = cast num }
-                false, 8 -> { <<cast(^u64) result = cast num }
+                true, 1  -> { *cast(^i8)  result = cast num }
+                true, 2  -> { *cast(^i16) result = cast num }
+                true, 4  -> { *cast(^i32) result = cast num }
+                true, 8  -> { *cast(^i64) result = cast num }
+                false, 1 -> { *cast(^u8)  result = cast num }
+                false, 2 -> { *cast(^u16) result = cast num }
+                false, 4 -> { *cast(^u32) result = cast num }
+                false, 8 -> { *cast(^u64) result = cast num }
             }
         }
 
         TypeInfoString(_) -> {
-            <<cast(^string) result = expr.raw.slice()
+            *cast(^string) result = expr.raw.slice()
         }
 
         _ -> @assert(false)
@@ -361,7 +361,7 @@ get_value_help :: (result: ^void, expr: &Expr) {
 
             // copy tag
             tag_ptr := cast(^int) result
-            <<tag_ptr = member_info.tag
+            *tag_ptr = member_info.tag
 
             if member_info.typ != null {
                 sub : &Expr = match &v.sub {
@@ -402,7 +402,7 @@ get_value_help :: (result: ^void, expr: &Expr) {
 
         CustomExpr($v) -> {
             type_info := cast(^TypeInfoStruct) v.typ
-            custom_parser := TypeInfo.get_trait_impl(<<type_info, CustomParser)
+            custom_parser := TypeInfo.get_trait_impl(*type_info, CustomParser)
             @assert(custom_parser != null)
             get_value_func := custom_parser.get_function("get_value", fn(^void, &CustomExpr))
             @assert(get_value_func != null)
@@ -502,7 +502,7 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
 
         CustomExpr($v) -> {
             type_info := cast(^TypeInfoStruct) v.typ
-            custom_parser := TypeInfo.get_trait_impl(<<type_info, CustomParser)
+            custom_parser := TypeInfo.get_trait_impl(*type_info, CustomParser)
             @assert(custom_parser != null)
             validate_func := custom_parser.get_function("validate", fn(&CustomExpr) -> Result[(), ClapError])
             @assert(validate_func != null)
@@ -521,7 +521,7 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
 validate_raw :: (expr: &ValueExpr) -> Result[(), ClapError] {
     @assert(expr.typ != null)
 
-    match &<<expr.typ {
+    match &*expr.typ {
         TypeInfoInt($info) -> {
             // todo: check that the raw string is indeed a number
         }
@@ -686,7 +686,7 @@ get_auto_completions_at_enum :: (result: &Array[String], expr: &EnumExpr, pos: i
 }
 
 autocomplete_type_members :: (ti: ^TypeInfo, prefix: string, result: &Array[String]) {
-    match &<<ti {
+    match &*ti {
         TypeInfoEnum($info) -> {
             for(by_ref=true) mem in info.members {
                 name := get_display_name_for_member(mem)
@@ -734,7 +734,7 @@ get_display_name_for_member :: (mem: &$T) -> string {
 
     @assert(name_att.args.length == 1)
     @assert(@type_info_of_any(name_att.args[0]) == @type_info(string))
-    name := <<cast(^string) @ptr_of_any(name_att.args[0])
+    name := *cast(^string) @ptr_of_any(name_att.args[0])
     return name
 }
 

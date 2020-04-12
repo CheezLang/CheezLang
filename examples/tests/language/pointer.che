@@ -10,9 +10,9 @@
 C :: import std.c
 
 swap :: (pa: ^int, pb: ^int) {
-    a := <<pa
-    b := <<pb
-    (<<pa, <<pb) = (b, a)
+    a := *pa
+    b := *pb
+    (*pa, *pb) = (b, a)
 }
 
 Main :: () {
@@ -21,17 +21,17 @@ Main :: () {
         pa := ^a
 
         C.printf("%d`n", a)
-        C.printf("%d`n", <<pa)
+        C.printf("%d`n", *pa)
 
         a = 456
 
         C.printf("%d`n", a)
-        C.printf("%d`n", <<pa)
+        C.printf("%d`n", *pa)
 
-        <<pa = 789
+        *pa = 789
 
         C.printf("%d`n", a)
-        C.printf("%d`n", <<pa)
+        C.printf("%d`n", *pa)
     }
 
     {

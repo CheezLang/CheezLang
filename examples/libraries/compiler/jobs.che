@@ -121,7 +121,7 @@ impl CompilationJob for CompileStructMemberJob {
             function    = null
         )
 
-        match &<<node {
+        match &*node {
             AstDecl($decl) -> {
                 compile_node.compile_node(decl, CNContext())
                 structt.members.add(^decl)
@@ -133,9 +133,9 @@ impl CompilationJob for CompileStructMemberJob {
             }
 
             _ -> {
-                node = ^compile_node.evaluate_node(<<node, CNContext())
+                node = ^compile_node.evaluate_node(*node, CNContext())
                 if node.value == .Poison {
-                    poison(<<node)
+                    poison(*node)
                     return
                 }
 
@@ -152,11 +152,11 @@ impl CompilationJob for CompileStructMemberJob {
                             if node == null then break
 
                             if const DEBUG_ENABLED { if DUMP_AST {
-                                dump := dump_ast(<<node)
+                                dump := dump_ast(*node)
                                 g_logger.log("[{}] {}", [self.name, dump])
                             }}
                             if const DEBUG_ENABLED { if PRINT_AST {
-                                dump := pretty_print_ast(<<node)
+                                dump := pretty_print_ast(*node)
                                 g_logger.log("[{}] {}", [self.name, dump])
                             }}
 
@@ -197,7 +197,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             function    = null
         )
 
-        node = ^compile_node.compile_node(<<node, CNContext())
+        node = ^compile_node.compile_node(*node, CNContext())
 
         if node.value == .Poison {
             debug_log("Failed. Got poison")
@@ -206,14 +206,14 @@ impl CompilationJob for CompileGlobalNodeJob {
 
         if const VALIDATE_AST {
             debug_log("Validate node")
-            if !validate_node(<<node, compiler.error_handler) {
+            if !validate_node(*node, compiler.error_handler) {
                 debug_log("Validation failed")
                 return
             }
         }
 
         if const DEBUG_ENABLED { if PRINT_TYPED_AST {
-            dump := pretty_print_typed_ast(<<node)
+            dump := pretty_print_typed_ast(*node)
             g_logger.log("[{}] {}", [self.name, dump])
         }}
 
@@ -239,8 +239,8 @@ impl CompilationJob for RunCodeJob {
         }
         debug_log("Begin execution")
         context := Fiber.user_data(FiberContext)
-        context.interp.comp_call(<<function)
-        match compiler.code_runner.get().run(<<context.interp) {
+        context.interp.comp_call(*function)
+        match compiler.code_runner.get().run(*context.interp) {
             .Error($msg) -> {
                 frame := context.interp.top_frame()
                 location := frame.func.debug_info.get_location_for_ip(frame.ip)
@@ -289,11 +289,11 @@ impl CompilationJob for LoadFileJob {
                         if node == null then break
 
                         if const DEBUG_ENABLED { if DUMP_AST {
-                            dump := dump_ast(<<node)
+                            dump := dump_ast(*node)
                             g_logger.log("[{}] {}", [self.name, dump])
                         }}
                         if const DEBUG_ENABLED { if PRINT_AST {
-                            dump := pretty_print_ast(<<node)
+                            dump := pretty_print_ast(*node)
                              g_logger.log("[{}] {}", [self.name, dump])
                         }}
 
@@ -348,12 +348,12 @@ impl CompileNode {
 
 
         if node.value == .None {
-            code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
+            code_gen := ByteCodeGenerator.new(compiler.string_database, *compiler.error_handler, compiler.bc_allocator)
             code := code_gen.get().generate_code_for_expression(node)
             context := Fiber.user_data(FiberContext)
             context.interp.push_frame(code)
             defer context.interp.pop_frame()
-            match compiler.code_runner.get().run(<<context.interp) {
+            match compiler.code_runner.get().run(*context.interp) {
                 .Error($msg) -> {
                     frame := context.interp.top_frame()
                     location := frame.func.debug_info.get_location_for_ip(frame.ip)
@@ -365,7 +365,7 @@ impl CompileNode {
 
             frame := context.interp.top_frame()
 
-            node.value = match &<<node.typ {
+            node.value = match &*node.typ {
                 TypeInfoInt(_)      -> .Int(frame.get_local(0, int))
                 TypeInfoFloat(_)    -> .Float(frame.get_local(0, f64))
                 TypeInfoBool(_)     -> .Bool(frame.get_local(0, bool))
@@ -443,8 +443,8 @@ impl CompileNode {
 
         original_sub := dot.sub
         dot.sub.scope = dot.scope
-        dot.sub = ^compile_node(<<dot.sub, ctx)
-        handle_poison(dot, <<dot.sub)
+        dot.sub = ^compile_node(*dot.sub, ctx)
+        handle_poison(dot, *dot.sub)
 
         match dot.sub.typ {
             TypeInfoPointer($ti) -> {
@@ -452,11 +452,11 @@ impl CompileNode {
                     id          = -1
                     location    = dot.sub.location
                     scope       = dot.sub.scope
-                    sub         = <<dot.sub
+                    sub         = *dot.sub
                     operator    = .Deref
                 ))
-                dot.sub = ^compile_node(<<deref, ctx.with_expected(ti.target))
-                handle_poison(dot, <<dot.sub)
+                dot.sub = ^compile_node(*deref, ctx.with_expected(ti.target))
+                handle_poison(dot, *dot.sub)
             }
         }
         g_logger.log("{}", [dot.sub.typ])
@@ -517,15 +517,15 @@ impl CompileNode {
                 }
 
                 if func != null {
-                    g_logger.log("native function '{}': {}", [func.typ, <<cast(^^int)^func.pointer])
+                    g_logger.log("native function '{}': {}", [func.typ, *cast(^^int)^func.pointer])
                     match compiler.get_native_function_wrapper(cast func.typ) {
                         Some($wrapper) -> {
-                            return compile_node(<<compiler.new_ast(AstUfc(
+                            return compile_node(*compiler.new_ast(AstUfc(
                                 id          = -1
                                 location    = dot.location
                                 scope       = dot.scope
                                 typ         = func.typ
-                                value_expr  = <<original_sub
+                                value_expr  = *original_sub
                                 symbol      = .NativeFunc2(wrapper)
                                 value       = .NativeFunc2(wrapper, func.pointer)
                             )), ctx)
@@ -679,13 +679,13 @@ impl CompileNode {
         arr.typ = @type_info(void)
 
         expected : ^TypeInfo = null
-        if ctx.expected != null then match &<<ctx.expected {
+        if ctx.expected != null then match &*ctx.expected {
             TypeInfoArray($arr_type) -> { expected = arr_type.target }
         }
 
         for(by_ref=true) val in arr.values {
             val.scope = arr.scope
-            val = ^compile_node(<<val, ctx.with_expected(expected))
+            val = ^compile_node(*val, ctx.with_expected(expected))
             
             if val.value == .Poison {
                 poison(arr)
@@ -728,9 +728,9 @@ impl CompileNode {
             None
         } else {
             arr.count.scope = arr.scope
-            arr.count = ^evaluate_node(<<arr.count, ctx.with_expected(@type_info(int)))
+            arr.count = ^evaluate_node(*arr.count, ctx.with_expected(@type_info(int)))
 
-            handle_poison(arr, <<arr.count)
+            handle_poison(arr, *arr.count)
 
             if !TypeInfo.same(arr.count.typ, @type_info(int)) {
                 compiler.error_handler.report_error_at(arr.count.location, "Expected int, got '{}'", [arr.count.typ])
@@ -801,7 +801,7 @@ impl CompileNode {
         // check types
         if un.sub.typ == null { return un }
 
-        match &<<un.sub.typ {
+        match &*un.sub.typ {
             TypeInfoInt(_) -> {}
             TypeInfoFloat(_) -> {}
 
@@ -1070,7 +1070,7 @@ impl CompileNode {
             return iff
         }
 
-        match &<<iff.condition.typ {
+        match &*iff.condition.typ {
             TypeInfoBool(_) -> {}
             TypeInfoPointer(_) -> {}
 
@@ -1088,7 +1088,7 @@ impl CompileNode {
         if iff.false_case != null {
             // compile else
             iff.false_case.scope = iff.scope
-            compile_node(<<iff.false_case, ctx)
+            compile_node(*iff.false_case, ctx)
 
             // cal type of iff
             if iff.true_case.typ == iff.false_case.typ {
@@ -1120,7 +1120,7 @@ impl CompileNode {
                         param := &poly.params[it_index]
 
                         arg.scope = node.scope
-                        evaluate_node(<<arg, ctx.with_expected(param.var_type))
+                        evaluate_node(*arg, ctx.with_expected(param.var_type))
 
                         if arg.value == .Poison {
                             poison(node)
@@ -1152,7 +1152,7 @@ impl CompileNode {
                 }
 
                 clone.scope = scope
-                return evaluate_node(<<clone, ctx)
+                return evaluate_node(*clone, ctx)
             }
         }
 
@@ -1160,8 +1160,8 @@ impl CompileNode {
             TypeInfoArray($ti) -> {
                 for arg in node.arguments {
                     arg.scope = node.scope
-                    compile_node(<<arg, ctx)
-                    handle_poison(node, <<arg)
+                    compile_node(*arg, ctx)
+                    handle_poison(node, *arg)
                 }
                 node.index = node.arguments[0]
 
@@ -1221,7 +1221,7 @@ impl CompileNode {
         brake.typ = @type_info(void)
         if brake.value_expr != null {
             brake.value_expr.scope = brake.scope
-            compile_node(<<brake.value_expr, ctx)
+            compile_node(*brake.value_expr, ctx)
         }
         return brake
     }
@@ -1240,7 +1240,7 @@ impl CompileNode {
         ret.typ = @type_info(void)
         if ret.value_expr != null {
             ret.value_expr.scope = ret.scope
-            compile_node(<<ret.value_expr, ctx.with_expected(self.function.return_type))
+            compile_node(*ret.value_expr, ctx.with_expected(self.function.return_type))
 
             if !TypeInfo.same(ret.value_expr.typ, self.function.return_type) {
                 compiler.error_handler.report_error_at(
@@ -1279,9 +1279,9 @@ impl CompileNode {
             jobs.add(cast job)
             compiler.add_job(job)
 
-            // child = ^compile_node(<<child, ctx)
+            // child = ^compile_node(*child, ctx)
 
-            // match &<<child {
+            // match &*child {
             //     AstDecl($decl) -> {
             //         str.members.add(^decl)
             //     }
@@ -1385,8 +1385,8 @@ impl CompileNode {
 
         for param in poly.params {
             param.scope = poly.scope
-            compile_node(<<param, ctx.with_expected(null))
-            handle_poison(poly, <<param)
+            compile_node(*param, ctx.with_expected(null))
+            handle_poison(poly, *param)
         }
 
         poly.typ = @type_info(void)
@@ -1461,7 +1461,7 @@ impl CompileNode {
             return cst
         }
         cst.type_expr.scope = cst.scope
-        cst.type_expr = ^evaluate_node(<<cst.type_expr, ctx.with_expected(@type_info(type)))
+        cst.type_expr = ^evaluate_node(*cst.type_expr, ctx.with_expected(@type_info(type)))
 
         if cst.type_expr.value == .Poison {
             poison(cst)
@@ -1538,10 +1538,10 @@ impl CompileNode {
                     location    = call.location
                     scope       = call.scope
                     type_expr   = ^call.function
-                    value_expr  = &<<call.arguments[0]
+                    value_expr  = &*call.arguments[0]
                 ))
 
-                return compile_node(<<cast_ast, ctx)
+                return compile_node(*cast_ast, ctx)
             }
 
             .Function($func) -> {
@@ -1556,7 +1556,7 @@ impl CompileNode {
                         param := &func.params[it_index]
 
                         arg.scope = call.scope
-                        arg = cast ^compile_node(<<arg, ctx.with_expected(param.var_type))
+                        arg = cast ^compile_node(*arg, ctx.with_expected(param.var_type))
 
                         if arg.value == .Poison {
                             poison(call)
@@ -1588,7 +1588,7 @@ impl CompileNode {
                     for arg in call.arguments {
                         param_type := &func_type.param_types[it_index]
                         arg.scope = call.scope
-                        arg = cast ^compile_node(<<arg, ctx.with_expected(param_type))
+                        arg = cast ^compile_node(*arg, ctx.with_expected(param_type))
 
                         if arg.value == .Poison {
                             poison(call)
@@ -1618,7 +1618,7 @@ impl CompileNode {
                     for arg in call.arguments {
                         param_type := &func_type.param_types[it_index]
                         arg.scope = call.scope
-                        arg = cast ^compile_node(<<arg, ctx.with_expected(param_type))
+                        arg = cast ^compile_node(*arg, ctx.with_expected(param_type))
 
                         if arg.value == .Poison {
                             poison(call)
@@ -1651,7 +1651,7 @@ impl CompileNode {
             child.scope = block.sub_scope
 
             expected : ^TypeInfo = if it_index == block.children.count() - 1 then ctx.expected else null
-            child = ^compile_node(<<child, ctx.with_expected(expected))
+            child = ^compile_node(*child, ctx.with_expected(expected))
 
             if child.value == .Poison {
                 poison(block)
@@ -1700,7 +1700,7 @@ impl CompileNode {
             // compile type expression
             if param.type_expr != null {
                 param.type_expr.scope = param.scope
-                param.type_expr = ^compile_node(<<param.type_expr, ctx.with_expected(@type_info(type)))
+                param.type_expr = ^compile_node(*param.type_expr, ctx.with_expected(@type_info(type)))
                 
                 if param.type_expr.typ != @type_info(type) {
                     compiler.error_handler.report_error_at(param.type_expr.location, "Expected type, got {}", [param.type_expr.typ])
@@ -1713,7 +1713,7 @@ impl CompileNode {
 
             // default value
             if param.value_expr != null {
-                param.value_expr = ^compile_node(<<param.value_expr, ctx.with_expected(param.var_type))
+                param.value_expr = ^compile_node(*param.value_expr, ctx.with_expected(param.var_type))
                 if param.value_expr.typ == null { return func }
                 param.value = param.value_expr.value
 
@@ -1724,7 +1724,7 @@ impl CompileNode {
 
             // define param
             if param.name != "_" {
-                match param.scope.define_decl(param.name, <<param) {
+                match param.scope.define_decl(param.name, *param) {
                     Err() -> {
                         compiler.error_handler.report_error_at(param.pattern.location, "A parameter with this name already exists")
                     }
@@ -1738,7 +1738,7 @@ impl CompileNode {
         func.return_type = @type_info(void)
         if func.return_type_expr != null {
             func.return_type_expr.scope = func.param_scope
-            func.return_type_expr = ^compile_node(<<func.return_type_expr, ctx.with_expected(@type_info(type)))
+            func.return_type_expr = ^compile_node(*func.return_type_expr, ctx.with_expected(@type_info(type)))
 
             if func.return_type_expr.value == .Poison {
                 poison(func)
@@ -1765,7 +1765,7 @@ impl CompileNode {
 
         // compile body
         debug_log("compile_function '{}': Compile Body", [func.name])
-        func.body = ^compile_node(<<func.body, ctx.with_expected(null)) // @todo: use return type as expected?
+        func.body = ^compile_node(*func.body, ctx.with_expected(null)) // @todo: use return type as expected?
         if func.body.value == .Poison {
             poison(func)
             return func
@@ -1773,7 +1773,7 @@ impl CompileNode {
 
         // generate byte code
         debug_log("compile_function '{}': Generate Bytecode", [func.name])
-        code_gen := ByteCodeGenerator.new(compiler.string_database, <<compiler.error_handler, compiler.bc_allocator)
+        code_gen := ByteCodeGenerator.new(compiler.string_database, *compiler.error_handler, compiler.bc_allocator)
         code_gen.get().generate_code_for_function(^func)
 
         debug_log("compile_function '{}': End", [func.name])
@@ -1783,7 +1783,7 @@ impl CompileNode {
     compile_decl :: (&Self, decl: &AstDecl, ctx: CNContext) -> &AstNode {
         decl.typ = @type_info(void)
 
-        decl.name = match &<<decl.pattern {
+        decl.name = match &*decl.pattern {
             AstIdentifier($id) -> id.name
             _ -> {
                 compiler.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
@@ -1803,7 +1803,7 @@ impl CompileNode {
         // compile type expression
         if decl.type_expr != null {
             decl.type_expr.scope = decl.scope
-            decl.type_expr = ^compile_node(<<decl.type_expr, ctx.with_expected(@type_info(type)))
+            decl.type_expr = ^compile_node(*decl.type_expr, ctx.with_expected(@type_info(type)))
             
             // error handling
             if decl.type_expr.value == .Poison {
@@ -1824,7 +1824,7 @@ impl CompileNode {
         // compile value if present
         if decl.value_expr != null {
             decl.value_expr.scope = decl.scope
-            decl.value_expr = ^compile_node(<<decl.value_expr, ctx.with_expected(decl.var_type))
+            decl.value_expr = ^compile_node(*decl.value_expr, ctx.with_expected(decl.var_type))
             if decl.value_expr.typ == null { return decl }
             decl.value = decl.value_expr.value
 
@@ -1911,7 +1911,7 @@ impl CompileNode {
         // compile type expression
         if decl.type_expr != null {
             decl.type_expr.scope = decl.scope
-            decl.type_expr = ^compile_node(<<decl.type_expr, ctx.with_expected(@type_info(type)))
+            decl.type_expr = ^compile_node(*decl.type_expr, ctx.with_expected(@type_info(type)))
             
             if decl.type_expr.typ != @type_info(type) {
                 compiler.error_handler.report_error_at(decl.type_expr.location, "Expected type, got {}", [decl.type_expr.typ])

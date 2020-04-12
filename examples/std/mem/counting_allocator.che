@@ -33,7 +33,7 @@ impl Allocator for CountingAllocator {
 
         // store size before allocated memory
         sizePtr := cast(^u64)mem
-        <<sizePtr = size
+        *sizePtr = size
 
         return util.pointer_add(mem, @sizeof(u64))
     }
@@ -44,20 +44,20 @@ impl Allocator for CountingAllocator {
         
         {
             sizePtr := cast(^u64)actualMem
-            allocated += size - <<sizePtr
+            allocated += size - *sizePtr
         }
 
         mem = parent.reallocate(actualMem, size + @sizeof(u64), 1, alignment)
 
         sizePtr := cast(^u64)mem
-        <<sizePtr = size
+        *sizePtr = size
         return util.pointer_add(mem, @sizeof(u64))
     }
 
     free :: (&Self, mem: ^void) {
         actualMem := util.pointer_add(mem, -@sizeof(u64))
         sizePtr := cast(^u64)actualMem
-        freed += <<sizePtr
+        freed += *sizePtr
         parent.free(actualMem)
     }
 }

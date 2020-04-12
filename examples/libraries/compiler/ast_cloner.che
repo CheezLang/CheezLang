@@ -19,7 +19,7 @@ AstCloner :: struct {
 impl AstCloner {
     new_ast :: (&Self, ast: $T) -> ^T {
         result := mem.alloc(T, allocator)
-        <<result = ast
+        *result = ast
         result.id = _next_id
         _next_id += 1
         return result
@@ -56,7 +56,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstArray #{} ({})`n", [array.id, array.location])
             //     if recurse {
             //         for val in array.values {
-            //             clone_ast_helper(result, <<val, recurse, indent + 1)
+            //             clone_ast_helper(result, *val, recurse, indent + 1)
             //         }
             //     }
             // }
@@ -65,7 +65,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstArrayType #{} ({})`n", [array.id, array.location])
             //     if recurse {
             //         if array.count != null then
-            //             clone_ast_helper(result, <<array.count, recurse, indent + 1)
+            //             clone_ast_helper(result, *array.count, recurse, indent + 1)
             //         clone_ast_helper(result, array.target, recurse, indent + 1)
             //     }
             // }
@@ -74,7 +74,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstBlock #{} ({})`n", [block.id, block.location])
             //     if recurse {
             //         for child in block.children {
-            //             clone_ast_helper(result, <<child, recurse, indent + 1)
+            //             clone_ast_helper(result, *child, recurse, indent + 1)
             //         }
             //     }
             // }
@@ -86,17 +86,17 @@ impl AstCloner {
             AstBinary($node) -> new_ast(AstBinary(
                 location    = node.location
                 operator    = node.operator
-                left        = <<clone(^node.left)
-                right       = <<clone(^node.right)
+                left        = *clone(^node.left)
+                right       = *clone(^node.right)
             ))
 
             // AstBreak($brake) -> {
             //     fmt.format_into(result, "AstBreak #{} ({})`n", [brake.id, brake.location])
             //     if recurse {
             //         if brake.label != null then
-            //             clone_ast_helper(result, <<brake.label, recurse, indent + 1)
+            //             clone_ast_helper(result, *brake.label, recurse, indent + 1)
             //         if brake.value_expr != null then
-            //             clone_ast_helper(result, <<brake.value_expr, recurse, indent + 1)
+            //             clone_ast_helper(result, *brake.value_expr, recurse, indent + 1)
             //     }
             // }
 
@@ -104,7 +104,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstContinue #{} ({})`n", [cont.id, cont.location])
             //     if recurse {
             //         if cont.label != null then
-            //             clone_ast_helper(result, <<cont.label, recurse, indent + 1)
+            //             clone_ast_helper(result, *cont.label, recurse, indent + 1)
             //     }
             // }
 
@@ -113,7 +113,7 @@ impl AstCloner {
             //     if recurse {
             //         clone_ast_helper(result, decl.pattern, recurse, indent + 1)
             //         if decl.type_expr != null then
-            //             clone_ast_helper(result, <<decl.type_expr, recurse, indent + 1)
+            //             clone_ast_helper(result, *decl.type_expr, recurse, indent + 1)
             //         clone_ast_helper(result, decl.value_expr, recurse, indent + 1)
             //     }
             // }
@@ -123,7 +123,7 @@ impl AstCloner {
             //     if recurse {
             //         clone_ast_helper(result, call.function, recurse, indent + 1)
             //         for arg in call.arguments {
-            //             clone_ast_helper(result, <<arg, recurse, indent + 1)
+            //             clone_ast_helper(result, *arg, recurse, indent + 1)
             //         }
             //     }
             // }
@@ -132,7 +132,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstCast #{} ({})`n", [cst.id, cst.location])
             //     if recurse {
             //         if cst.type_expr != null then
-            //             clone_ast_helper(result, <<cst.type_expr, recurse, indent + 1)
+            //             clone_ast_helper(result, *cst.type_expr, recurse, indent + 1)
             //         clone_ast_helper(result, cst.value_expr, recurse, indent + 1)
             //     }
             // }
@@ -149,7 +149,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstDot #{} ({})`n", [dot.id, dot.location])
             //     if recurse {
             //         if dot.sub != null then
-            //             clone_ast_helper(result, <<dot.sub, recurse, indent + 1)
+            //             clone_ast_helper(result, *dot.sub, recurse, indent + 1)
             //         clone_ast_helper(result, dot.name, recurse, indent + 1)
             //     }
             // }
@@ -172,15 +172,15 @@ impl AstCloner {
             //     if recurse {
             //         print("params:`n", indent + 1)
             //         for param in func.params {
-            //             clone_ast_helper(result, <<param, recurse, indent + 2)
+            //             clone_ast_helper(result, *param, recurse, indent + 2)
             //         }
             //         if func.return_type_expr != null {
             //             print("return_type_expr:`n", indent + 1)
-            //             clone_ast_helper(result, <<func.return_type_expr, recurse, indent + 2)
+            //             clone_ast_helper(result, *func.return_type_expr, recurse, indent + 2)
             //         }
             //         if func.body != null {
             //             print("body:`n", indent + 1)
-            //             clone_ast_helper(result, <<func.body, recurse, indent + 2)
+            //             clone_ast_helper(result, *func.body, recurse, indent + 2)
             //         }
             //     }
             // }
@@ -189,9 +189,9 @@ impl AstCloner {
             //     fmt.format_into(result, "AstFor #{} ({})`n", [forr.id, forr.location])
             //     if recurse {
             //         if forr.it_name != null then
-            //             clone_ast_helper(result, <<forr.it_name, recurse, indent + 1)
+            //             clone_ast_helper(result, *forr.it_name, recurse, indent + 1)
             //         if forr.index_name != null then
-            //             clone_ast_helper(result, <<forr.index_name, recurse, indent + 1)
+            //             clone_ast_helper(result, *forr.index_name, recurse, indent + 1)
             //         clone_ast_helper(result, forr.collection, recurse, indent + 1)
             //         clone_ast_helper(result, forr.body, recurse, indent + 1)
             //     }
@@ -208,7 +208,7 @@ impl AstCloner {
             //         clone_ast_helper(result, iff.condition, recurse, indent + 1)
             //         clone_ast_helper(result, iff.true_case, recurse, indent + 1)
             //         if iff.false_case != null then
-            //             clone_ast_helper(result, <<iff.false_case, recurse, indent + 1)
+            //             clone_ast_helper(result, *iff.false_case, recurse, indent + 1)
             //     }
             // }
 
@@ -217,7 +217,7 @@ impl AstCloner {
             //     if recurse {
             //         clone_ast_helper(result, node.sub, recurse, indent + 1)
             //         for arg in node.arguments {
-            //             clone_ast_helper(result, <<arg, recurse, indent + 1)
+            //             clone_ast_helper(result, *arg, recurse, indent + 1)
             //         }
             //     }
             // }
@@ -260,7 +260,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstReturn #{} ({})`n", [ret.id, ret.location])
             //     if recurse {
             //         if ret.value_expr != null then
-            //             clone_ast_helper(result, <<ret.value_expr, recurse, indent + 1)
+            //             clone_ast_helper(result, *ret.value_expr, recurse, indent + 1)
             //     }
             // }
 
@@ -283,7 +283,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstPoly #{} ({})`n", [poly.id, poly.location])
             //     if recurse {
             //         for param in poly.params {
-            //             clone_ast_helper(result, <<param, recurse, indent + 2)
+            //             clone_ast_helper(result, *param, recurse, indent + 2)
             //         }
             //         clone_ast_helper(result, poly.value_expr, recurse, indent + 1)
             //     }
@@ -300,7 +300,7 @@ impl AstCloner {
             //     fmt.format_into(result, "AstTuple #{} ({})`n", [tuple.id, tuple.location])
             //     if recurse {
             //         for val in tuple.values {
-            //             clone_ast_helper(result, <<val, recurse, indent + 1)
+            //             clone_ast_helper(result, *val, recurse, indent + 1)
             //         }
             //     }
             // }
@@ -312,7 +312,7 @@ impl AstCloner {
             // }
 
             $node -> {
-                dump := dump_ast(<<node)
+                dump := dump_ast(*node)
                 g_logger.log("[ERROR] clone ast: node type not implemented: {}`n", [dump])
                 null
             }

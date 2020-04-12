@@ -123,7 +123,7 @@ compile_files :: (files: []String, thread_count: int) {
         cast(NativeFunction) (interp) => {
             frame := interp.top_frame()
             str := mem.alloc(String)
-            <<str = String.empty()
+            *str = String.empty()
             frame.set_return(str)
         },
         fn() -> ^String)
@@ -270,11 +270,11 @@ impl Compiler {
         scope_allocator     := mem.alloc(AllocatorType)
         type_allocator      := mem.alloc(AllocatorType)
 
-        <<ast_allocator     = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
-        <<bc_allocator      = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
-        <<job_allocator     = AllocatorType.new(1024 * 1024 * 1)    //  1 Mb
-        <<scope_allocator   = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
-        <<type_allocator    = AllocatorType.new(1024 * 1024 * 1)    //  1 Mb
+        *ast_allocator     = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
+        *bc_allocator      = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
+        *job_allocator     = AllocatorType.new(1024 * 1024 * 1)    //  1 Mb
+        *scope_allocator   = AllocatorType.new(1024 * 1024 * 10)   // 10 Mb
+        *type_allocator    = AllocatorType.new(1024 * 1024 * 1)    //  1 Mb
 
         comp := Rc[Compiler].new(Compiler(
             mutex           = Mutex.new()
@@ -293,7 +293,7 @@ impl Compiler {
         ))
         comp.get().error_handler.text_provider = ^comp.get()
         comp.get().global_scope = comp.get().new_scope()
-        comp.get().define_builtin_types(<<comp.get().global_scope)
+        comp.get().define_builtin_types(*comp.get().global_scope)
 
         comp.get().string_sources_file = match fs.get_full_path("d:\dev\CheezLang\gen\int\string_sources.che") {
             Ok($path) -> path
@@ -415,7 +415,7 @@ impl Compiler {
         defer self.release()
 
         ptr := mem.alloc(T, job_allocator)
-        <<ptr = job
+        *ptr = job
         ptr.compiler = ^self
         return ptr
     }
@@ -435,7 +435,7 @@ impl Compiler {
         defer self.release()
 
         scope := mem.alloc(Scope, scope_allocator)
-        <<scope = Scope(
+        *scope = Scope(
             parent      = parent
             constant    = constant
         )
@@ -447,7 +447,7 @@ impl Compiler {
         defer self.release()
 
         result := mem.alloc(T, type_allocator)
-        <<result = type_info
+        *result = type_info
         return result
     }
 
@@ -512,7 +512,7 @@ impl Compiler {
         defer self.release()
 
         result := mem.alloc(T, ast_allocator)
-        <<result = ast
+        *result = ast
         result.id = next_ast_id
         next_ast_id += 1
         return result
@@ -523,12 +523,12 @@ impl Compiler {
             frame := interp.top_frame()
             ArgTupleType :: @param_type_tuple(FuncType)
             slots : [(@sizeof(ArgTupleType) + 7) / 8]u64 = default
-            args := &<<cast(^ArgTupleType)slots.data
+            args := &*cast(^ArgTupleType)slots.data
             index := 0
             @for_function_parameters(FuncType, (ArgType, i) => {
                 // args[i] = frame.get(index, ArgType)
                 ptr := cast(^ArgType)^args[i]
-                <<ptr = frame.get(i, ArgType)
+                *ptr = frame.get(i, ArgType)
                 // io.formatln("{} : {} = {}", [i, @typename(ArgType), args[i]])
 
                 index += (@sizeof(ArgType) + 7) / 8
@@ -585,13 +585,13 @@ impl Compiler {
             g_logger.log("on_done: Done waiting for all threads")
             data.callback()
 
-            Memory.drop(<<data)
+            Memory.drop(*data)
             mem.free(data)
         }
 
         data := mem.alloc(Data)
         t := Thread.create(cast(Fn(^Data)) thread_func, data)
-        <<data = Data(
+        *data = Data(
             thread      = t
             callback    = callback
             compiler    = ^self
@@ -625,7 +625,7 @@ impl Compiler {
         }
         {
             new_fiber := mem.alloc(FiberContext)
-            <<new_fiber = FiberContext(
+            *new_fiber = FiberContext(
                 fiber   = Fiber.new(cast(Fn(^FiberContext)) self.fiber_func, new_fiber)
                 interp  = Interpreter.new(error_handler)
             )

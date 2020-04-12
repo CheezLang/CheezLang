@@ -227,7 +227,7 @@ impl(K: type, V: type) Clone for Map[K, V] if K : Clone, V : Clone {
     clone :: (&Self) -> Self {
         result := Map[K, V].new()
         result.adjust_capacity(cast self.entries.length)
-        for kv in <<^self {
+        for kv in *^self {
             result.set(kv.name.clone(), kv.value.clone())
         }
         return result

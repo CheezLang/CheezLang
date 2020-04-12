@@ -33,10 +33,10 @@ Main :: () {
 
     {
         a := alloc(int, ^sa)
-        <<a = 0
-        io.printfln("{}", <<a)
-        <<a = 5
-        io.printfln("{}", <<a)
+        *a = 0
+        io.printfln("{}", *a)
+        *a = 5
+        io.printfln("{}", *a)
     }
     sa.print_diagnostics()
     io.println("")

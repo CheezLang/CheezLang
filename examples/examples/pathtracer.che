@@ -38,7 +38,7 @@ pi                  :: 3.14159265359
 
 create :: (val: $T, allocator: ^Allocator) -> ^T {
     ptr := alloc(T, allocator)
-    <<ptr = val
+    *ptr = val
     return ptr
 }
 
@@ -159,7 +159,7 @@ impl PathTracer {
 
     add_object :: (&Self, obj: $T) {
         dyn := alloc(T, ^allocator)
-        <<dyn = obj
+        *dyn = obj
         objects.add(dyn)
     }
 
@@ -382,7 +382,7 @@ impl Game for PathTracer {
         for y in 0..block_count_y {
             for x in 0..block_count_x {
                 context := alloc(RenderContext)
-                <<context = RenderContext(
+                *context = RenderContext(
                     pt      = ^self
                     min     = Vector2[int](x * block_size, y * block_size)
                     max     = Vector2[int](min((x + 1) * block_size, width), min((y + 1) * block_size, height))

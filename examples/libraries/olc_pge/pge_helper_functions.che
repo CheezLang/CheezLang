@@ -72,7 +72,7 @@ impl PixelGameEngine {
         screen_height = y
 
         default_draw_target.dispose()
-        <<default_draw_target = Sprite.create(screen_width, screen_height)
+        *default_draw_target = Sprite.create(screen_width, screen_height)
 
         if opengl_initialized {
             // glViewport(0, 0, cast x/2, cast y/2)

@@ -48,7 +48,7 @@ impl Parser {
 
     allocate :: (&Self, value: $T) -> ^T {
         result := mem.alloc(T, allocator)
-        <<result = value
+        *result = value
         return result
     }
 
@@ -85,8 +85,8 @@ impl Parser {
             return allocate(AstAssignment(
                 id          = next_id()
                 location    = expr.location.to(value_expr.location)
-                pattern     = <<expr
-                value_expr  = <<value_expr
+                pattern     = *expr
+                value_expr  = *value_expr
             ))
         } else if check_token(.Colon) {
             lexer.next_token()
@@ -106,9 +106,9 @@ impl Parser {
                 return allocate(AstConstDecl(
                     id          = next_id()
                     location    = expr.location.to(value_expr.location)
-                    pattern     = <<expr
+                    pattern     = *expr
                     type_expr   = type_expr
-                    value_expr  = <<value_expr
+                    value_expr  = *value_expr
                 ))
             } else if check_token(.Equal) {
                 lexer.next_token()
@@ -263,8 +263,8 @@ impl Parser {
                 id          = id
                 location    = location
                 operator    = op
-                left        = <<expr
-                right       = <<right
+                left        = *expr
+                right       = *right
             ))
         }
 
@@ -282,7 +282,7 @@ impl Parser {
                     id          = next_id()
                     location    = beg.to(sub.location)
                     operator    = .Neg
-                    sub         = <<sub
+                    sub         = *sub
                 ))
             }
             .Bang -> {
@@ -293,7 +293,7 @@ impl Parser {
                     id          = next_id()
                     location    = beg.to(sub.location)
                     operator    = .Not
-                    sub         = <<sub
+                    sub         = *sub
                 ))
             }
             .Ampersand -> {
@@ -311,7 +311,7 @@ impl Parser {
                     id          = next_id()
                     location    = beg.to(sub.location)
                     operator    = if mutable then .RefMut else .Ref
-                    sub         = <<sub
+                    sub         = *sub
                 ))
             }
             .Hat -> {
@@ -329,7 +329,7 @@ impl Parser {
                     id          = next_id()
                     location    = beg.to(sub.location)
                     operator    = if mutable then .PtrMut else .Ptr
-                    sub         = <<sub
+                    sub         = *sub
                 ))
             }
             .Asterisk -> {
@@ -339,7 +339,7 @@ impl Parser {
                     id          = next_id()
                     location    = beg.to(sub.location)
                     operator    = .Deref
-                    sub         = <<sub
+                    sub         = *sub
                 ))
             }
         }
@@ -357,7 +357,7 @@ impl Parser {
                     expr = allocate(AstCall(
                         id          = next_id()
                         location    = expr.location.to(end)
-                        function    = <<expr
+                        function    = *expr
                         arguments   = args
                     ))
                 }
@@ -372,7 +372,7 @@ impl Parser {
                     expr = allocate(AstIndex(
                         id          = next_id()
                         location    = expr.location.to(end)
-                        sub         = <<expr
+                        sub         = *expr
                         arguments   = args
                         index       = index
                     ))
@@ -385,7 +385,7 @@ impl Parser {
                         id          = next_id()
                         location    = expr.location.to(name.location)
                         sub         = expr
-                        name        = <<name
+                        name        = *name
                     ))
                 }
 
@@ -442,7 +442,7 @@ impl Parser {
                 id          = next_id()
                 location    = beg.to(target.location)
                 count       = count
-                target      = <<target
+                target      = *target
             ))
         }
 
@@ -525,9 +525,9 @@ impl Parser {
             body := try(parse_expression(true, false))
 
             cases.add(allocate(AstMatchCase(
-                pattern     = <<pattern
+                pattern     = *pattern
                 condition   = condition
-                body        = <<body
+                body        = *body
             )))
         }
 
@@ -570,8 +570,8 @@ impl Parser {
         return allocate(AstIf(
             id          = id
             location    = location
-            condition   = <<condition
-            true_case   = <<true_case
+            condition   = *condition
+            true_case   = *true_case
             false_case  = false_case
         ))
     }
@@ -584,7 +584,7 @@ impl Parser {
         return allocate(AstLoop(
             id          = id
             location    = location
-            body        = <<body
+            body        = *body
         ))
     }
 
@@ -627,8 +627,8 @@ impl Parser {
             location    = location
             it_pattern  = it_pattern
             index_name  = index_name
-            collection  = <<collection
-            body        = <<body
+            collection  = *collection
+            body        = *body
         ))
     }
 
@@ -671,7 +671,7 @@ impl Parser {
         return allocate(AstDefer(
             id          = id
             location    = location
-            sub         = <<sub
+            sub         = *sub
         ))
     }
 
@@ -696,7 +696,7 @@ impl Parser {
     values_to_params :: (&Self, values: Array[^AstNode]) -> Array[^AstDecl] {
         params := Array[^AstDecl].create()
         for e in values {
-            match &<<e {
+            match &*e {
                 AstDecl($decl) -> params.add(^decl)
                 _ -> {
                     decl := allocate(AstDecl(
@@ -754,7 +754,7 @@ impl Parser {
                     location    = beg.to(body.location)
                     param_scope = null
                     params      = values_to_params(values)
-                    value_expr  = <<body
+                    value_expr  = *body
                 ))
             }
             if check_token(.KwStruct) or check_token(.KwEnum) or check_token(.KwTrait) {
@@ -764,7 +764,7 @@ impl Parser {
                     location    = beg.to(body.location)
                     param_scope = null
                     params      = values_to_params(values)
-                    value_expr  = <<body
+                    value_expr  = *body
                 ))
             }
             // @todo: parse function if return type '->'
@@ -933,7 +933,7 @@ impl Parser {
             id           = next_id()
             location     = beg.to(end)
             children     = nodes
-            target_expr  = <<target
+            target_expr  = *target
             trait_expr   = target_trait
         ))
     }
@@ -944,7 +944,7 @@ impl Parser {
         return allocate(AstUse(
             id          = next_id()
             location    = beg.to(value.location)
-            value_expr  = <<value
+            value_expr  = *value
         ))
     }
 
@@ -954,7 +954,7 @@ impl Parser {
         return allocate(AstImport(
             id          = next_id()
             location    = beg.to(path.location)
-            path        = <<path
+            path        = *path
         ))
     }
 
@@ -999,7 +999,7 @@ impl Parser {
             id              = next_id()
             location        = beg.to(name.location)
             sub             = null
-            name            = <<name
+            name            = *name
         ))
     }
 
@@ -1076,7 +1076,7 @@ impl Parser {
         expr := try(parse_expression(false, true))
 
         if check_token(.Equal) {
-            match &<<expr {
+            match &*expr {
                 AstIdentifier($id) -> {
                     name = ^id
                 }
@@ -1095,7 +1095,7 @@ impl Parser {
             id              = id
             location        = expr.location
             name            = name
-            value_expr      = <<expr
+            value_expr      = *expr
         ))
     }
 

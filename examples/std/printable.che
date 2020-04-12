@@ -148,7 +148,7 @@ impl(T: type) Printable for Array[T] if T: Printable {
 impl(K: type, V: type) Printable for Table[K, V] if K: Printable, V: Printable {
     print :: (&Self, str: &String, format: string) {
         str += "{"
-        for v in <<^self {
+        for v in *^self {
             if it_index > 0 {
                 str += ", "
             }

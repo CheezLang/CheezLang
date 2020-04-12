@@ -60,10 +60,10 @@ Main :: () {
 pathtracer2 :: () {
     profile_function()
     file_write_mutex    = alloc(Mutex)
-    <<file_write_mutex  = Mutex.new()
+    *file_write_mutex  = Mutex.new()
 
     global_random       = alloc(MTwister)
-    <<global_random     = MTwister.create(0)
+    *global_random     = MTwister.create(0)
 
     C.srand(C.time(null))
 
@@ -98,7 +98,7 @@ pathtracer2 :: () {
         for y in 0..h {
             for x in 0..w {
                 context := alloc(RenderContext)
-                <<context = RenderContext(
+                *context = RenderContext(
                     id    = id
                     min   = Vector2[int](x*size, y*size)
                     max   = Vector2[int](min((x+1)*size, width), min((y+1)*size, height))

@@ -69,7 +69,7 @@ LineShape :: struct {
 impl LineShape {
     create :: () -> ^Self {
         l := alloc(LineShape)
-        <<l = LineShape(BaseShape.create(2))
+        *l = LineShape(BaseShape.create(2))
         return l
     }
 }
@@ -99,7 +99,7 @@ BoxShape :: struct {
 impl BoxShape {
     create :: () -> ^Self {
         l := alloc(BoxShape)
-        <<l = BoxShape(BaseShape.create(2))
+        *l = BoxShape(BaseShape.create(2))
         return l
     }
 }
@@ -129,7 +129,7 @@ CircleShape :: struct {
 impl CircleShape {
     create :: () -> ^Self {
         l := alloc(CircleShape)
-        <<l = CircleShape(BaseShape.create(2))
+        *l = CircleShape(BaseShape.create(2))
         return l
     }
 }
@@ -170,7 +170,7 @@ CurveShape :: struct {
 impl CurveShape {
     create :: () -> ^Self {
         l := alloc(CurveShape)
-        <<l = CurveShape(BaseShape.create(3))
+        *l = CurveShape(BaseShape.create(3))
         return l
     }
 }

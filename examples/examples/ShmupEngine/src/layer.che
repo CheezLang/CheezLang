@@ -160,7 +160,7 @@ impl Layer for DebugLayer {
 
     clone :: (&Self) -> Option[^Layer] {
         result := mem.alloc(DebugLayer)
-        <<result = DebugLayer.new(name.clone(), engine, input)
+        *result = DebugLayer.new(name.clone(), engine, input)
         return Some(result)
     }
 
@@ -228,7 +228,7 @@ impl Layer for LightingLayer {
 
     clone :: (&Self) -> Option[^Layer] {
         result := mem.alloc(LightingLayer)
-        <<result = LightingLayer.new(name.clone(), engine, input)
+        *result = LightingLayer.new(name.clone(), engine, input)
         return Some(result)
     }
 
@@ -422,7 +422,7 @@ impl Layer for EntityLayer {
 
     clone :: (&Self) -> Option[^Layer] {
         result := mem.alloc(EntityLayer)
-        <<result = EntityLayer.new(name.clone(), callbacks, engine, input)
+        *result = EntityLayer.new(name.clone(), callbacks, engine, input)
 
         for e in entities {
             e_new := result.clone_entity_with_id(e.clone(), e.get().id)

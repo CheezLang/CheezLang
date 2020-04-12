@@ -1,0 +1,31 @@
+empty:
+Global variables: 19
+           Impls: 20
+       Functions: 123
+         Structs: 37
+           Enums: 1
+          Traits: 6
+
+compiler:
+Global variables: 35
+           Impls: 214
+       Functions: 2218
+         Structs: 227
+           Enums: 70
+          Traits: 23
+
+debugger:
+Global variables: 35
+           Impls: 240
+       Functions: 2948
+         Structs: 288
+           Enums: 102
+          Traits: 41
+
+shmup engine:
+Global variables: 753
+           Impls: 286
+       Functions: 5806
+         Structs: 334
+           Enums: 270
+          Traits: 131

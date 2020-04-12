@@ -110,5 +110,5 @@ print_value :: (e: $T, $VT: type) {
     ptr_raw := cast(^i8)^e
     ptr_val_raw := util.pointer_add(ptr_raw, 8)
     ptr_val := cast(^VT)ptr_val_raw
-    io.println(<<ptr_val)
+    io.println(*ptr_val)
 }

@@ -46,7 +46,7 @@ impl NativeFunctionWrapper {
             indices[it_index_rev] = slot_index
         }
 
-        <<wrapper = NativeFunctionWrapper(
+        *wrapper = NativeFunctionWrapper(
             function            = func
             function_type       = ti
             arg_slots           = -slot_index

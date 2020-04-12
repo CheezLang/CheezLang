@@ -28,10 +28,10 @@ impl(T: type) Rc[T] {
 
     from_pointer :: (ptr: ^$K, owned: bool) -> Rc[T] {
         data := mem.alloc(RcData)
-        <<data = RcData(1, 1)
+        *data = RcData(1, 1)
 
         // drop :: (ptr: ^K) {
-        //     Memory.drop(<<ptr)
+        //     Memory.drop(*ptr)
         // }
         drop_impl : fn(^T) = cast if const !@is_trait(K) and @type_has_trait(K, Drop) then ptr.drop else null
         return Rc[T](data, cast ptr, drop_impl, owned)
@@ -39,12 +39,12 @@ impl(T: type) Rc[T] {
 
     new :: (value: $K) -> Rc[T] {
         data    := mem.alloc(RcData)
-        <<data  = RcData(1, 1)
+        *data  = RcData(1, 1)
         ptr     := mem.alloc(K)
-        <<ptr   = value
+        *ptr   = value
 
         drop :: (ptr: ^K) {
-            Memory.drop(<<ptr)
+            Memory.drop(*ptr)
         }
         drop_impl : fn(^T) = cast if const !@is_trait(K) and @type_has_trait(K, Drop) then drop else null
         return Rc[T](data, cast ptr, drop_impl, true)
@@ -67,12 +67,12 @@ impl(T: type) Rc[T] {
     // try_get :: (&Self) -> Option[&T] {
     //     return if value == null
     //         then None
-    //         else Some(<<value)
+    //         else Some(*value)
     // }
 
     get :: (&Self) -> &T {
         @assert(value != null)
-        return <<value
+        return *value
     }
 
     change_type :: (Self, $R: type) -> Rc[R] {
@@ -115,12 +115,12 @@ impl(T: type) Ref[T] {
     try_get :: (&Self) -> Option[&T] {
         return if value == null
             then None
-            else Some(<<value)
+            else Some(*value)
     }
 
     get :: (&Self) -> &T {
         @assert(value != null)
-        return <<value
+        return *value
     }
 
     change_type :: (Self, $R: type) -> Ref[R] {

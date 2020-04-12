@@ -58,7 +58,7 @@ impl PseudoRandom {
     init :: () {
         if lcg == null {
             lcg = alloc(LinearCongruentialGenerator)
-            <<lcg = LinearCongruentialGenerator.create(cast get_time_microseconds())
+            *lcg = LinearCongruentialGenerator.create(cast get_time_microseconds())
             for 0..1000 do lcg.next()
         }
     }
@@ -120,8 +120,8 @@ for_extension_random :: (dist: ^IDistribution[$T], code: Code) #for {
 impl(T: type) IDistribution[T] {
     samples :: (&Self) -> Iterator[T] {
         it := alloc(DistributionIterator[T])
-        <<it = DistributionIterator[T](self)
-        return <<it
+        *it = DistributionIterator[T](self)
+        return *it
     }
 }
 

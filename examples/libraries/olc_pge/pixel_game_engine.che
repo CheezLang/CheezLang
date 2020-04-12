@@ -115,7 +115,7 @@ impl PixelGameEngine {
 
         pge := alloc(PixelGameEngine)
 
-        <<pge = PixelGameEngine(
+        *pge = PixelGameEngine(
             game = game
             screen_width = screen_w
             screen_height = screen_h
@@ -128,7 +128,7 @@ impl PixelGameEngine {
         )
 
         pge.default_draw_target = alloc(Sprite)
-        <<pge.default_draw_target = Sprite.create(screen_w, screen_h)
+        *pge.default_draw_target = Sprite.create(screen_w, screen_h)
 
         pge.set_draw_target(null)
 

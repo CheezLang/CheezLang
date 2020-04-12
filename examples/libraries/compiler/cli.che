@@ -34,9 +34,9 @@ Main :: () {
         return
     }
 
-    io.println(fmt.format_any(<<compiler_args))
+    io.println(fmt.format_any(*compiler_args))
 
-    match <<compiler_args {
+    match *compiler_args {
         MainCommand.Compile($options) -> command_compile(^options)
 
         MainCommand.Project($poptions) -> match poptions {

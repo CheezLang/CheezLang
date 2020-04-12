@@ -56,13 +56,13 @@ impl Instrumentor {
 
         m : ^Mutex = if thread_safe {
             m := alloc(Mutex)
-            <<m = Mutex.new()
+            *m = Mutex.new()
             m
         } else {
             null
         }
         global_instrumantor = alloc(Instrumentor)
-        <<global_instrumantor = Instrumentor("null", null, 0, m)
+        *global_instrumantor = Instrumentor("null", null, 0, m)
     }
 
     get :: () -> ^Instrumentor {

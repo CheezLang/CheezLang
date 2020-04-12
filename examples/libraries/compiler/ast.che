@@ -313,7 +313,7 @@ AstUfc :: struct AstNode {
 //                 AstIdentifier($)
 //             }
 //             if p.name.name == name {
-//                 return Some(<<p)
+//                 return Some(*p)
 //             }
 //         }
 //         return None

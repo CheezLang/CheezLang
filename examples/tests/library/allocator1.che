@@ -20,10 +20,10 @@ io :: import std.io
 Main :: () {
     {
         a := alloc(int)
-        <<a = 0
-        io.printf("{}`n", <<a)
-        <<a = 5
-        io.printf("{}`n`n", <<a)
+        *a = 0
+        io.printf("{}`n", *a)
+        *a = 5
+        io.printf("{}`n`n", *a)
         free(a)
     }
 

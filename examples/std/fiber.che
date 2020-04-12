@@ -26,7 +26,7 @@ impl Drop for Fiber {
 impl Fiber {
     init :: () {
         f := alloc(Fiber)
-        <<f = Fiber(
+        *f = Fiber(
             ptr     = ConvertThreadToFiber(f)
             parent  = null
             func    = null

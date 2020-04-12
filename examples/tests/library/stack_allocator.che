@@ -15,10 +15,10 @@ Main :: () {
     pa := alloc(int, ^sa)
     sa.print_diagnostics()
 
-    <<pa = 5
-    io.println(<<pa)
-    <<pa = 10
-    io.println(<<pa)
+    *pa = 5
+    io.println(*pa)
+    *pa = 10
+    io.println(*pa)
 
     for i in 0..100 {
         alloc(int, ^sa)

@@ -103,7 +103,7 @@ Main :: () {
         cheez_file = String.empty()
         c_file     = String.empty()
         buffer     = String.empty()
-        options    = <<options
+        options    = *options
     )
 
     {
@@ -116,7 +116,7 @@ Main :: () {
         // if (last == std::string::npos) last = 0;
         // else last += 1;
         // std::string header_name = header.substr(last);
-        // c_file << "#include \"" << header_name << "\"\n\n";
+        // c_file * "#include \"" * header_name * "\"\n\n";
         ctx.c_file.appendf("#include `"{}`"`n", options.input.sliceL(options.input.get_length() - 1))
     }
 
@@ -129,7 +129,7 @@ Main :: () {
 
         if ctx.options.no_includes and int(c.kind) != int(CXCursorKind.UnexposedDecl) {
             // skip functions from other files
-            source_location := clang_getCursorLocation(<<c)
+            source_location := clang_getCursorLocation(*c)
             if clang_Location_isFromMainFile(source_location) == 0 {
                 file, line, column, _ := clang_getFileLocation(source_location)
                 io.printfln("Skipping ({})`t`t{}`t`tfrom {}:{}:{}",
@@ -140,7 +140,7 @@ Main :: () {
 
         match c.kind {
             _ if debug_print_all -> {
-                source_location := clang_getCursorLocation(<<c)
+                source_location := clang_getCursorLocation(*c)
                 file, line, column, _ := clang_getFileLocation(source_location)
                 io.printfln("[ERROR] Unhandled cursor ({})`t`t'{}'`t`tat {}:{}:{}", (
                         clang_getCursorKindSpelling(c.kind),
@@ -150,18 +150,18 @@ Main :: () {
                     ))
             }
 
-            CXCursorKind.FunctionDecl -> emit_function_decl(<<ctx, c)
-            CXCursorKind.TypedefDecl  -> emit_typedef_decl(<<ctx, c)
+            CXCursorKind.FunctionDecl -> emit_function_decl(*ctx, c)
+            CXCursorKind.TypedefDecl  -> emit_typedef_decl(*ctx, c)
             CXCursorKind.StructDecl   -> {
                 name := clang_getCursorSpelling(c)
                 if name.get_length() != 0 {
-                    emit_struct_decl(<<ctx, c, clang_getCursorSpelling(c))
+                    emit_struct_decl(*ctx, c, clang_getCursorSpelling(c))
                 }
             }
             CXCursorKind.EnumDecl     -> {
                 name := clang_getCursorSpelling(c)
                 if name.get_length() != 0 {
-                    emit_enum_decl(<<ctx, c, clang_getCursorSpelling(c))
+                    emit_enum_decl(*ctx, c, clang_getCursorSpelling(c))
                 }
             }
 
@@ -183,7 +183,7 @@ Main :: () {
             CXCursorKind.Namespace -> {}
 
             _ -> {
-                source_location := clang_getCursorLocation(<<c)
+                source_location := clang_getCursorLocation(*c)
                 file, line, column, _ := clang_getFileLocation(source_location)
                 io.printfln("[ERROR] Unhandled cursor ({})`t`t'{}'`t`tat {}:{}:{}", (
                         clang_getCursorKindSpelling(c.kind),
@@ -218,7 +218,7 @@ Main :: () {
 }
 
 emit_typedef_decl :: (ctx: &GenContext, cursor: &CXCursor) {
-    elo          := clang_getTypedefDeclUnderlyingType(<<cursor)
+    elo          := clang_getTypedefDeclUnderlyingType(*cursor)
     actual_type  := clang_Type_getNamedType(elo)
     type_decl    := clang_getTypeDeclaration(actual_type)
 
@@ -280,7 +280,7 @@ emit_struct_decl :: (ctx: &GenContext, cursor: &CXCursor, name: CXString) {
     })
 
     if ctx.is_cpp_struct {
-        source_location := clang_getCursorLocation(<<cursor)
+        source_location := clang_getCursorLocation(*cursor)
         file, line, column, _ := clang_getFileLocation(source_location)
         io.printfln("Generating temporary struct for '{}' because it is probably a c++ type`t`t`t({}:{}:{}:)", (
             name_str, clang_getFileName(file), line, column
@@ -356,14 +356,14 @@ emit_enum_decl :: (ctx: &GenContext, cursor: &CXCursor, name: CXString) {
     }
 
     ctx.cheez_file.appendf("{} :: enum #copy #repr(`"C`") #tag_type(", name)
-    emit_c_type(ctx, clang_getEnumDeclIntegerType(<<cursor), false)
+    emit_c_type(ctx, clang_getEnumDeclIntegerType(*cursor), false)
     ctx.cheez_file.append_string(") {`n")
 
     visit_enum_members(cursor, ctx, {
         member_name   := clang_getCursorSpelling(c)
         member_name_c := clang_getCStringHelper(&member_name)
         member_type   := clang_getCursorType(c)
-        member_value  := clang_getEnumConstantDeclValue(<<c)
+        member_value  := clang_getEnumConstantDeclValue(*c)
 
         struct_name := clang_getCursorSpelling(parent)
         struct_name_c := clang_getCStringHelper(&struct_name)
@@ -775,7 +775,7 @@ emit_c_type :: (ctx: &GenContext, typ: CXType, is_func_param: bool, behind_point
         }
 
         _ -> {
-            // source_location := clang_getCursorLocation(<<c)
+            // source_location := clang_getCursorLocation(*c)
             // file, line, column, _ := clang_getFileLocation(source_location)
             // io.printfln("[ERROR] Unhandled type ({}) '{}' at {}:{}:{}", (
             //         clang_getTypeKindSpelling(typ.kind),
@@ -805,7 +805,7 @@ visit_parameters :: (cursor: Code, ctx: Code, code: Code) #macro {
             if int(c.kind) == int(CXCursorKind.ParmDecl) {
                 // typ := clang_getCursorType(c)
                 // io.printfln("+ {}: {}", (clang_getCursorSpelling(c), clang_getTypeSpelling(typ)))
-                ctx := &<<cast(&GenContext) client_data
+                ctx := &*cast(&GenContext) client_data
                 @insert(code, link=[c, parent, ctx])
                 ctx.param_index += 1
             } else {
@@ -823,7 +823,7 @@ visit_struct_members :: (cursor: Code, ctx: Code, code: Code) #macro {
         (c, parent, client_data) => {
             action := CXChildVisitResult.Continue
             if int(c.kind) == int(CXCursorKind.FieldDecl) {
-                ctx := &<<cast(&GenContext) client_data
+                ctx := &*cast(&GenContext) client_data
                 @insert(code, link=[c, parent, ctx])
                 ctx.param_index += 1
             }
@@ -837,7 +837,7 @@ visit_enum_members :: (cursor: Code, ctx: Code, code: Code) #macro {
     clang_visitChildrenHelper(@insert(cursor),
         (c, parent, client_data) => {
             if int(c.kind) == int(CXCursorKind.EnumConstantDecl) {
-                ctx := &<<cast(&GenContext) client_data
+                ctx := &*cast(&GenContext) client_data
                 @insert(code, link=[c, parent, ctx])
                 ctx.param_index += 1
             }

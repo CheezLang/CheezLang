@@ -25,7 +25,7 @@ evaluate :: (code: []OpCode, vars: &Variables) -> Option[Complex] {
             OpCode.Var($name) -> {
                 match vars.get(name) {
                     Some($v) -> {
-                        stack[sp] = <<^v
+                        stack[sp] = *^v
                         sp += 1
                     }
                     None -> {

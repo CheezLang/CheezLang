@@ -271,7 +271,7 @@ impl DebugAdapter {
 
             b := 0u8
             ReadFile(__std_in_handle, ^b, 1, ^read, null)
-            <<c = cast b
+            *c = cast b
             return read > 0
         }
 

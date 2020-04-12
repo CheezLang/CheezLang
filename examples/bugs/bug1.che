@@ -7,9 +7,9 @@ io :: import std.io
 Main :: () {
     {
         a := alloc(int)
-        io.printf("{}`n", <<a)
-        <<a = 5
-        io.printf("{}`n", <<a)
+        io.printf("{}`n", *a)
+        *a = 5
+        io.printf("{}`n", *a)
         free(a)
     }
 
