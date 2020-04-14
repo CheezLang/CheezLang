@@ -222,7 +222,7 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
         _ if type_info == @type_info(String) -> {
             if !require_arg(args) { return false }
             *cast(^String) result = args[0].clone()
-            args = args[1..]
+            *args = args[1..]
             true
         }
 
@@ -242,7 +242,7 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
         TypeInfoInt(_)    -> {
             if !require_arg(args) { return false }
             *cast(^int) result = fmt.parse_int(args[0].slice())
-            args = args[1..]
+            *args = args[1..]
             true
         }
 
@@ -275,7 +275,7 @@ parse_arguments_string_array :: (args: &[]String, result: ^void) -> bool {
         }
 
         array.add(arg.clone())
-        args = args[1..]
+        *args = args[1..]
     }
 
     return true
@@ -296,7 +296,7 @@ parse_arguments_enum :: (type_info: ^TypeInfoEnum, args: &[]String, result: ^voi
     }
 
     command := &args[0]
-    args = args[1..]
+    *args = args[1..]
 
     for(by_ref=true) mem in type_info.members {
         mem_name := get_display_name_for_member(mem)
@@ -358,7 +358,7 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
         arg := &args[0]
         @assert(arg.length > 0)
 
-        args = args[1..]
+        *args = args[1..]
 
         if arg[0] == '-' {
             name := arg.sliceF(1)

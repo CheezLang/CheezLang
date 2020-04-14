@@ -44,7 +44,7 @@ Foo :: struct {
 }
 
 test :: (a: &int) {
-    a = 5
+    *a = 5
 }
 
 Main :: () {

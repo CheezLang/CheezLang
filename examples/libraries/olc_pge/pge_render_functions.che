@@ -107,9 +107,9 @@ impl PixelGameEngine {
     }
 
     rol :: (pattern: &u32) -> bool {
-        p := pattern
-        pattern = @bin_or(@bin_lsl(p, 1u32), @bin_lsr(p, 31u32))
-        p = pattern
+        p := *pattern
+        *pattern = @bin_or(@bin_lsl(p, 1u32), @bin_lsr(p, 31u32))
+        p = *pattern
         return @bin_and(p, 1u32) != 0
     }
 

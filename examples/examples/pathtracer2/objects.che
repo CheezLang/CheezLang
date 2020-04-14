@@ -142,11 +142,11 @@ quick_sort :: (arr: []^Hittable, cmp: fn (^Hittable, ^Hittable) -> int) {
         pivot := arr[arr.length - 1]
         for i in 0..arr.length-1 {
             if cmp(arr[i], pivot) > 0 {
-                (arr[idx], arr[i]) = (arr[i], arr[idx])
+                (*arr[idx], *arr[i]) = (*arr[i], *arr[idx])
                 idx += 1
             }
         }
-        (arr[idx], arr[arr.length - 1]) = (arr[arr.length - 1], arr[idx])
+        (*arr[idx], *arr[arr.length - 1]) = (*arr[arr.length - 1], *arr[idx])
 
         quick_sort(arr[0..idx], cmp)
         quick_sort(arr[idx+1..arr.length], cmp)

@@ -247,7 +247,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
         for val in arr.values {
             builder.build_dup(1)
-            generate_expression(*val)
+            generate_expression(**val)
             builder.build_store(slots_for_size(val.typ.size))
 
             // increment pointer
@@ -510,7 +510,7 @@ impl CodeGenerator for ByteCodeGenerator {
     generate_block :: (&Self, block: &AstBlock) {
         builder.set_location(block.location)
         for child in block.children {
-            generate_expression(*child)
+            generate_expression(**child)
 
             // pop value if not last and type is not void
             if it_index < block.children.count() - 1 and child.typ != @type_info(void) {
@@ -600,7 +600,7 @@ impl CodeGenerator for ByteCodeGenerator {
         match call.function.value {
             .Function($func) -> {
                 for arg in call.arguments {
-                    generate_expression(*arg)
+                    generate_expression(**arg)
                 }
                 builder.set_location(call.location)
                 builder.build_comp_call(call.ast_function)
@@ -608,7 +608,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
             .NativeFunc($func) -> {
                 for arg in call.arguments {
-                    generate_expression(*arg)
+                    generate_expression(**arg)
                 }
                 builder.set_location(call.location)
                 builder.build_native_call(func)
@@ -616,7 +616,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
             .NativeFunc2($func) -> {
                 for arg in call.arguments {
-                    generate_expression(*arg)
+                    generate_expression(**arg)
                 }
                 builder.set_location(call.location)
                 builder.build_native_call2(func.wrapper, func.func, NativeFunctionWrapper.slots_for_type(cast call.function.typ))

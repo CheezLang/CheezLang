@@ -2120,9 +2120,10 @@ namespace Cheez
             {
                 if (expr.SubExpression.Type is ReferenceType r)
                 {
-                    expr.SubExpression = Deref(expr.SubExpression, context);
+                    expr.Type = r.TargetType;
+                    // expr.SubExpression = Deref(expr.SubExpression, context);
                 }
-                if (expr.SubExpression.Type is PointerType p)
+                else if (expr.SubExpression.Type is PointerType p)
                 {
                     expr.Type = p.TargetType;
                 }
@@ -4375,20 +4376,31 @@ namespace Cheez
             if (expr.Left.Type.IsErrorType)
                 return expr;
 
+            var subType = expr.Left.Type;
+
+            bool deref = false;
             if (expr.Left.Type is ReferenceType r)
             {
                 expr.Left = Deref(expr.Left, context);
+                subType = r.TargetType;
+                deref = true;
             }
-
+            
             while (expr.Left.Type is PointerType p)
+            // else if (expr.Left.Type is PointerType p)
             {
-                var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
+                                var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
                 newLeft.AttachTo(expr.Left);
                 expr.Left = InferType(newLeft, p.TargetType);
+                subType = p.TargetType;
+                deref = true;
+                //var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
+                //newLeft.AttachTo(expr.Left);
+                //expr.Left = InferType(newLeft, p.TargetType);
             }
 
             var sub = expr.Right.Name;
-            switch (expr.Left.Type)
+            switch (subType)
             {
                 case StringType str:
                     {
@@ -4396,16 +4408,18 @@ namespace Cheez
                         var name = expr.Right.Name;
                         if (name == "bytes")
                         {
+                            // if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = SliceType.GetSliceType(IntType.GetIntType(1, false));
                             return expr;
                         }
                         if (name == "ascii")
                         {
+                            // if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = SliceType.GetSliceType(CharType.GetCharType(1));
                             //expr.Type = CheezType.Void;
                             return expr;
                         }
-                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
+                        return GetImplFunctions(expr, subType, expr.Right.Name, context);
                     }
 
                 case EnumType @enum:
@@ -4416,7 +4430,7 @@ namespace Cheez
 
                         if (mem == null)
                         {
-                            return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
+                            return GetImplFunctions(expr, subType, expr.Right.Name, context);
                             // ReportError(expr, $"Type '{@enum}' has no member '{memName}'");
                             // return expr;
                         }
@@ -4443,7 +4457,7 @@ namespace Cheez
                             return expr;
                         }
 
-                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
+                        return GetImplFunctions(expr, subType, expr.Right.Name, context);
                     }
 
                 case SliceType slice:
@@ -4460,7 +4474,7 @@ namespace Cheez
                             expr.Type = IntType.GetIntType(8, true);
                             return expr;
                         }
-                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
+                        return GetImplFunctions(expr, subType, expr.Right.Name, context);
                     }
 
                 case ArrayType arr:
@@ -4477,7 +4491,7 @@ namespace Cheez
                             expr.Type = IntType.GetIntType(8, true);
                             return expr;
                         }
-                        return GetImplFunctions(expr, expr.Left.Type, expr.Right.Name, context);
+                        return GetImplFunctions(expr, subType, expr.Right.Name, context);
                     }
 
                 case StructType s:
@@ -4487,7 +4501,7 @@ namespace Cheez
                         var index = s.GetIndexOfMember(name);
                         if (index == -1)
                         {
-                            return GetImplFunctions(expr, s, name, context);
+                            return GetImplFunctions(expr, subType, name, context);
                         }
 
                         var member = s.Declaration.Members[index];
@@ -4555,7 +4569,7 @@ namespace Cheez
 
                             if (mem == null)
                             {
-                                return GetImplFunctions(expr, t, name, context);
+                                return GetImplFunctions(expr, subType, name, context);
                                 // ReportError(expr.Right, $"Trait '{t.Declaration.Name}' has no function or member '{name}'");
                                 // break;
                             }
@@ -4679,10 +4693,10 @@ namespace Cheez
                 case CheezType c:
                     {
                         var name = expr.Right.Name;
-                        return GetImplFunctions(expr, c, name, context);
+                        return GetImplFunctions(expr, subType, name, context);
                     }
 
-                default: ReportError(expr, $"Invalid expression on left side of '.' (type is {expr.Left.Type})"); break;
+                default: ReportError(expr, $"Invalid expression on left side of '.' (type is {subType})"); break;
             }
 
             return expr;
@@ -6209,6 +6223,17 @@ namespace Cheez
                 else
                     return InferTypeHelper(deref, null, context);
             }
+            //if (expr.Type is PointerType)
+            //{
+            //    var deref = new AstDereferenceExpr(expr, expr);
+            //    deref.AttachTo(expr);
+            //    deref.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
+
+            //    if (context == null)
+            //        return InferType(deref, null);
+            //    else
+            //        return InferTypeHelper(deref, null, context);
+            //}
             return expr;
         }
 
@@ -6341,6 +6366,30 @@ namespace Cheez
             }
             else
             {
+                // var left = expr.Left;
+                // switch (func.SelfType, expr.Left.Type)
+                // {
+                //     case (SelfParamType.Reference, PointerType p):
+                //         left = Ref(Deref(expr.Left, context), context);
+
+                //         break;
+                //     case (SelfParamType.Reference, ReferenceType r):
+                //         break;
+                //     case (SelfParamType.Reference, CheezType _):
+                //         left = Ref(expr.Left, context);
+                //         break;
+                        
+                //     case (SelfParamType.Value, PointerType p):
+                //         left = Deref(expr.Left, context);
+                //         break;
+                //     case (SelfParamType.Value, ReferenceType r):
+                //         left = Deref(expr.Left, context);
+                //         break;
+                //     case (SelfParamType.Value, CheezType _):
+                //         break;
+                // }
+
+                // var ufc = new AstUfcFuncExpr(left, func, expr);
                 var ufc = new AstUfcFuncExpr(expr.Left, func, expr);
                 ufc.Replace(expr);
                 ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));

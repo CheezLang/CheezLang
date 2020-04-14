@@ -416,7 +416,7 @@ impl Parser {
                 values.add(expr)
             }
 
-            next = lexer.peek_token()
+            next = *lexer.peek_token()
             if next.typ == .ClosingBracket or next.typ == .EOF {
                 break
             }
@@ -436,7 +436,7 @@ impl Parser {
 
             count : ^AstNode = null
             if values.count() > 0 {
-                count = values[0]
+                count = *values[0]
             }
             return allocate(AstArrayType(
                 id          = next_id()
@@ -472,7 +472,7 @@ impl Parser {
             child := try(parse_expression(true, true))
             children.add(child)
 
-            next = lexer.peek_token()
+            next = *lexer.peek_token()
             if next.typ == .ClosingBrace or next.typ == .EOF {
                 break
             }
@@ -696,8 +696,8 @@ impl Parser {
     values_to_params :: (&Self, values: Array[^AstNode]) -> Array[^AstDecl] {
         params := Array[^AstDecl].create()
         for e in values {
-            match &*e {
-                AstDecl($decl) -> params.add(^decl)
+            match *e {
+                AstDecl($decl) -> params.add(decl)
                 _ -> {
                     decl := allocate(AstDecl(
                         id          = next_id()
@@ -732,7 +732,7 @@ impl Parser {
                 values.add(expr)
             }
 
-            next = lexer.peek_token()
+            next = *lexer.peek_token()
             if next.typ == .ClosingParen or next.typ == .EOF {
                 break
             }
@@ -1117,7 +1117,7 @@ impl Parser {
             }
             args.add(arg)
 
-            next = lexer.peek_token()
+            next = *lexer.peek_token()
             if next.typ == close or next.typ == .EOF {
                 break
             } else if next.typ == .NewLine {

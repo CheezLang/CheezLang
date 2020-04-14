@@ -203,7 +203,7 @@ impl PixelGameEngine {
                         }
                     }
 
-                    pKeyOldState[i] = pKeyNewState[i]
+                    *pKeyOldState[i] = *pKeyNewState[i]
                 }
 
                 // Handle User Input - Mouse
@@ -223,7 +223,7 @@ impl PixelGameEngine {
                         }
                     }
 
-                    pMouseOldState[i] = pMouseNewState[i]
+                    *pMouseOldState[i] = *pMouseNewState[i]
                 }
 
                 // Cache mouse coordinates so they remain

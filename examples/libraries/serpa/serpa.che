@@ -281,7 +281,7 @@ impl(T: type) IParser[Array[T]] for Array[T] {
             }
 
             // expect comma, new_line, ] or EOF
-            token = lexer.peek_token()
+            token = *lexer.peek_token()
             match token.typ {
                 TokenType.Comma          -> lexer.next_token()
                 TokenType.NewLine        -> lexer.next_token()

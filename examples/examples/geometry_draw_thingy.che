@@ -283,22 +283,22 @@ impl Game for MyGame {
         if temp_shape == null {
             if pge.get_key(Key.F1).pressed {
                 shapes.add(LineShape.create())
-                temp_shape   = shapes[shapes.get_length() - 1]
+                temp_shape   = *shapes[shapes.get_length() - 1]
                 selectedNode = temp_shape.next_node(vCursor)
                 selectedNode = temp_shape.next_node(vCursor)
             } else if pge.get_key(Key.F2).pressed {
                 shapes.add(BoxShape.create())
-                temp_shape   = shapes[shapes.get_length() - 1]
+                temp_shape   = *shapes[shapes.get_length() - 1]
                 selectedNode = temp_shape.next_node(vCursor)
                 selectedNode = temp_shape.next_node(vCursor)
             } else if pge.get_key(Key.F3).pressed {
                 shapes.add(CircleShape.create())
-                temp_shape   = shapes[shapes.get_length() - 1]
+                temp_shape   = *shapes[shapes.get_length() - 1]
                 selectedNode = temp_shape.next_node(vCursor)
                 selectedNode = temp_shape.next_node(vCursor)
             } else if pge.get_key(Key.F4).pressed {
                 shapes.add(CurveShape.create())
-                temp_shape   = shapes[shapes.get_length() - 1]
+                temp_shape   = *shapes[shapes.get_length() - 1]
                 selectedNode = temp_shape.next_node(vCursor)
                 selectedNode = temp_shape.next_node(vCursor)
             } else if pge.get_key(Key.F5).pressed {

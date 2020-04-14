@@ -27,7 +27,7 @@ use_bhv     := true
 num_threads := 10
 grid_size   := 30
 
-scale  := 2
+scale  := 1
 width  := 192 * scale
 height := 108 * scale
 // width : int = 108 * scale
@@ -36,7 +36,7 @@ samples   := 100
 max_depth := 15
 
 scenes := [simple_light, cornell_box, basic_scene, random_scene, big_scene]
-scene  := 4
+scene  := 0
 
 file_write_mutex : ^Mutex = null
 
@@ -210,7 +210,7 @@ random_scene :: (cam: &Camera) -> ^Hittable {
     io.println("random_scene")
     cam_pos := vec3(20.0, 2.25, 5.0)
     lookat  := vec3(4.0, 1.0, 1.0)
-    cam = Camera.create(
+    *cam = Camera.create(
         cam_pos,
         lookat,
         10,
@@ -322,7 +322,7 @@ basic_scene :: (cam: &Camera) -> ^Hittable {
     io.println("basic_scene")
     cam_pos := vec3(20.0, 2.25, 5.0)
     lookat  := vec3(4.0, 1.0, 1.0)
-    cam = Camera.create(
+    *cam = Camera.create(
         cam_pos,
         lookat,
         10,
@@ -377,7 +377,7 @@ basic_scene :: (cam: &Camera) -> ^Hittable {
 
 simple_light :: (cam: &Camera) -> ^Hittable {
     io.println("simple_light")
-    cam = Camera.create(
+    *cam = Camera.create(
         vec3(20.0, 4.0, 5.0),
         vec3(4.0, 2.5, 1.0),
         20,
@@ -419,7 +419,7 @@ simple_light :: (cam: &Camera) -> ^Hittable {
 
 cornell_box :: (cam: &Camera) -> ^Hittable {
     io.println("cornell_box")
-    cam = Camera.create(
+    *cam = Camera.create(
         vec3(278, 278, -800),
         vec3(278, 278, 0),
         40,
@@ -469,7 +469,7 @@ big_scene :: (cam: &Camera) -> ^Hittable {
     // vec3(0, 150, 145),
     focus_dist := vec3.dot(vec3.normalized(look_at - cam_pos), focus_point - cam_pos) - 80
 
-    cam = Camera.create(
+    *cam = Camera.create(
         cam_pos,
         look_at,
         35,

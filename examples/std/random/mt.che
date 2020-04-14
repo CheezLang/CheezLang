@@ -43,13 +43,13 @@ impl MTwister {
     }
 
     unroll :: (&Self, y: &u32, i: &u64, expr: u64) {
-        y = @bin_or(m32(mt[int(i)]), l31(mt[int(i + 1)]))
+        *y = @bin_or(m32(mt[int(i)]), l31(mt[int(i + 1)]))
         mt[int(i)] = @bin_xor(
             mt[int(expr)],
             @bin_lsr(y, 1),
             @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31), 31)), 0x9908b0df)
         )
-        i += 1
+        *i += 1
     }
 
     generate_numbers :: (&Self) {
@@ -86,7 +86,7 @@ impl MTwister {
         }
 
         for i in 0..int(STATE_VECTOR_LENGTH) {
-            y = mt[i]
+            y = *mt[i]
             y = @bin_xor(y, @bin_lsr(y, 11))
             y = @bin_xor(y, @bin_and(@bin_lsl(y, 7), 0x9d2c5680))
             y = @bin_xor(y, @bin_and(@bin_lsl(y, 15), 0xefc60000))

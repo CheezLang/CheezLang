@@ -685,7 +685,7 @@ impl CompileNode {
 
         for(by_ref=true) val in arr.values {
             val.scope = arr.scope
-            val = ^compile_node(*val, ctx.with_expected(expected))
+            *val = ^compile_node(**val, ctx.with_expected(expected))
             
             if val.value == .Poison {
                 poison(arr)
@@ -1120,7 +1120,7 @@ impl CompileNode {
                         param := &poly.params[it_index]
 
                         arg.scope = node.scope
-                        evaluate_node(*arg, ctx.with_expected(param.var_type))
+                        evaluate_node(**arg, ctx.with_expected(param.var_type))
 
                         if arg.value == .Poison {
                             poison(node)
@@ -1160,10 +1160,10 @@ impl CompileNode {
             TypeInfoArray($ti) -> {
                 for arg in node.arguments {
                     arg.scope = node.scope
-                    compile_node(*arg, ctx)
-                    handle_poison(node, *arg)
+                    compile_node(**arg, ctx)
+                    handle_poison(node, **arg)
                 }
-                node.index = node.arguments[0]
+                node.index = *node.arguments[0]
 
                 if node.arguments.count() != 1 {
                     compiler.error_handler.report_error_at(node.location, "Wrong number of arguments. Expected 1")
@@ -1385,8 +1385,8 @@ impl CompileNode {
 
         for param in poly.params {
             param.scope = poly.scope
-            compile_node(*param, ctx.with_expected(null))
-            handle_poison(poly, *param)
+            compile_node(**param, ctx.with_expected(null))
+            handle_poison(poly, **param)
         }
 
         poly.typ = @type_info(void)
@@ -1538,7 +1538,7 @@ impl CompileNode {
                     location    = call.location
                     scope       = call.scope
                     type_expr   = ^call.function
-                    value_expr  = &*call.arguments[0]
+                    value_expr  = &**call.arguments[0]
                 ))
 
                 return compile_node(*cast_ast, ctx)
@@ -1556,7 +1556,7 @@ impl CompileNode {
                         param := &func.params[it_index]
 
                         arg.scope = call.scope
-                        arg = cast ^compile_node(*arg, ctx.with_expected(param.var_type))
+                        *arg = cast ^compile_node(**arg, ctx.with_expected(param.var_type))
 
                         if arg.value == .Poison {
                             poison(call)
@@ -1588,7 +1588,7 @@ impl CompileNode {
                     for arg in call.arguments {
                         param_type := &func_type.param_types[it_index]
                         arg.scope = call.scope
-                        arg = cast ^compile_node(*arg, ctx.with_expected(param_type))
+                        *arg = cast ^compile_node(**arg, ctx.with_expected(param_type))
 
                         if arg.value == .Poison {
                             poison(call)
@@ -1618,7 +1618,7 @@ impl CompileNode {
                     for arg in call.arguments {
                         param_type := &func_type.param_types[it_index]
                         arg.scope = call.scope
-                        arg = cast ^compile_node(*arg, ctx.with_expected(param_type))
+                        *arg = cast ^compile_node(**arg, ctx.with_expected(param_type))
 
                         if arg.value == .Poison {
                             poison(call)
@@ -1651,7 +1651,7 @@ impl CompileNode {
             child.scope = block.sub_scope
 
             expected : ^TypeInfo = if it_index == block.children.count() - 1 then ctx.expected else null
-            child = ^compile_node(*child, ctx.with_expected(expected))
+            *child = ^compile_node(**child, ctx.with_expected(expected))
 
             if child.value == .Poison {
                 poison(block)
@@ -1724,7 +1724,7 @@ impl CompileNode {
 
             // define param
             if param.name != "_" {
-                match param.scope.define_decl(param.name, *param) {
+                match param.scope.define_decl(param.name, **param) {
                     Err() -> {
                         compiler.error_handler.report_error_at(param.pattern.location, "A parameter with this name already exists")
                     }

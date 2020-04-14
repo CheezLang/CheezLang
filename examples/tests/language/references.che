@@ -40,7 +40,7 @@ test4 :: () {
     C.printf("%lld`n", b)
     C.printf("`n")
 
-    ra = 15
+    *ra = 15
     C.printf("%lld`n", a)
     C.printf("%lld`n", ra)
     C.printf("%lld`n", b)

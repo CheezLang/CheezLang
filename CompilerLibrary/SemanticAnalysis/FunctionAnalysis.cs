@@ -494,16 +494,11 @@ namespace Cheez
             ass.Pattern.SetFlag(ExprFlags.RequireInitializedSymbol, ass.Operator != null);
             ass.Pattern = InferType(ass.Pattern, null);
 
-            if (ass.Pattern.Type is ReferenceType)
-            {
-                ass.Pattern = Deref(ass.Pattern, null);
-            }
 
             ass.Value.SetFlag(ExprFlags.ValueRequired, true);
             ass.Value.AttachTo(ass);
             ass.Value = InferType(ass.Value, ass.Pattern.Type, typeOfExprContext: ass.Pattern.Type);
             ConvertLiteralTypeToDefaultType(ass.Value, ass.Pattern.Type);
-            ass.Value = HandleReference(ass.Value, ass.Pattern.Type, null);
             if (ass.Value.Type is TraitType)
             {
                 ReportError(ass.Value, $"Type {ass.Value.Type} can't be moved or copied");
@@ -596,8 +591,7 @@ namespace Cheez
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
-                        var val = HandleReference(ass.Value, ass.Pattern.Type, null);
-                        return CheckType(val, ass.Pattern.Type, $"Can't assign a value of type {val.Type} to a pattern of type {ass.Pattern.Type}");
+                        return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {ass.Value.Type} to a pattern of type {ass.Pattern.Type}");
                     }
 
                 case AstTupleExpr t:
@@ -666,10 +660,7 @@ namespace Cheez
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
-                        if (ass.Pattern.Type is ReferenceType)
-                            ass.Pattern = Deref(ass.Pattern, null);
 
-                        ass.Value = HandleReference(ass.Value, ass.Pattern.Type, null);
                         return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 
@@ -695,8 +686,6 @@ namespace Cheez
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
-                        if (ass.Pattern.Type is ReferenceType)
-                            ass.Pattern = Deref(ass.Pattern, null);
 
                         return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
@@ -722,8 +711,6 @@ namespace Cheez
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
 
-                        if (ass.Pattern.Type is ReferenceType)
-                            ass.Pattern = Deref(ass.Pattern, null);
 
                         return CheckType(ass.Value, ass.Pattern.Type, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
@@ -743,7 +730,6 @@ namespace Cheez
                         }
 
                         ConvertLiteralTypeToDefaultType(ass.Value, pattern.Type);
-                        ass.Value = HandleReference(ass.Value, r.TargetType, null);
                         return CheckType(ass.Value, r.TargetType, $"Can't assign a value of type {value.Type} to a pattern of type {pattern.Type}");
                     }
 

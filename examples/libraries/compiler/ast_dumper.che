@@ -48,7 +48,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstArray #{} ({})`n", [array.id, array.location])
             if recurse {
                 for val in array.values {
-                    dump_ast_helper(result, *val, recurse, indent + 1)
+                    dump_ast_helper(result, **val, recurse, indent + 1)
                 }
             }
         }
@@ -74,7 +74,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstBlock #{} ({})`n", [block.id, block.location])
             if recurse {
                 for child in block.children {
-                    dump_ast_helper(result, *child, recurse, indent + 1)
+                    dump_ast_helper(result, **child, recurse, indent + 1)
                 }
             }
         }
@@ -98,7 +98,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             if recurse {
                 dump_ast_helper(result, call.function, recurse, indent + 1)
                 for arg in call.arguments {
-                    dump_ast_helper(result, *arg, recurse, indent + 1)
+                    dump_ast_helper(result, **arg, recurse, indent + 1)
                 }
             }
         }
@@ -162,7 +162,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstEnum #{} ({})`n", [str.id, str.location])
             if recurse {
                 for child in str.children {
-                    dump_ast_helper(result, *child, recurse, indent + 1)
+                    dump_ast_helper(result, **child, recurse, indent + 1)
                 }
             }
         }
@@ -184,7 +184,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             if recurse {
                 print("params:`n", indent + 1)
                 for param in func.params {
-                    dump_ast_helper(result, *param, recurse, indent + 2)
+                    dump_ast_helper(result, **param, recurse, indent + 2)
                 }
                 if func.return_type_expr != null {
                     print("return_type_expr:`n", indent + 1)
@@ -218,7 +218,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
                     dump_ast_helper(result, *imp.trait_expr, recurse, indent + 1)
                 dump_ast_helper(result, imp.target_expr, recurse, indent + 1)
                 for child in imp.children {
-                    dump_ast_helper(result, *child, recurse, indent + 2)
+                    dump_ast_helper(result, **child, recurse, indent + 2)
                 } 
             }
         }
@@ -235,7 +235,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             if recurse {
                 dump_ast_helper(result, node.sub, recurse, indent + 1)
                 for arg in node.arguments {
-                    dump_ast_helper(result, *arg, recurse, indent + 1)
+                    dump_ast_helper(result, **arg, recurse, indent + 1)
                 }
             }
         }
@@ -279,7 +279,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstPoly #{} ({})`n", [poly.id, poly.location])
             if recurse {
                 for param in poly.params {
-                    dump_ast_helper(result, *param, recurse, indent + 2)
+                    dump_ast_helper(result, **param, recurse, indent + 2)
                 }
                 dump_ast_helper(result, poly.value_expr, recurse, indent + 1)
             }
@@ -304,7 +304,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
                     dump_ast_helper(result, *str.trait_expr, recurse, indent + 2)
                 print("children:", indent + 1)
                 for child in str.children {
-                    dump_ast_helper(result, *child, recurse, indent + 2)
+                    dump_ast_helper(result, **child, recurse, indent + 2)
                 }
             }
         }
@@ -313,7 +313,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstTrait #{} ({})`n", [str.id, str.location])
             if recurse {
                 for child in str.children {
-                    dump_ast_helper(result, *child, recurse, indent + 1)
+                    dump_ast_helper(result, **child, recurse, indent + 1)
                 }
             }
         }
@@ -322,7 +322,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstTuple #{} ({})`n", [tuple.id, tuple.location])
             if recurse {
                 for val in tuple.values {
-                    dump_ast_helper(result, *val, recurse, indent + 1)
+                    dump_ast_helper(result, **val, recurse, indent + 1)
                 }
             }
         }
