@@ -36,7 +36,7 @@ get_precedence :: (op: OpCode) -> int {
 
 impl TextProvider for string {
     get_text :: (&Self, filename: string) -> string {
-        return self
+        return *self
     }
 }
 

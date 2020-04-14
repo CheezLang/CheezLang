@@ -813,7 +813,6 @@ namespace Cheez
                 if (ret.ReturnValue.Type.IsErrorType)
                     return ret;
 
-                ret.ReturnValue = HandleReference(ret.ReturnValue, currentFunction.FunctionType.ReturnType, null);
                 ret.ReturnValue = CheckType(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
             }
             return ret;

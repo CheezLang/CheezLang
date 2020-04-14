@@ -104,7 +104,7 @@ impl MTwister {
         }
 
         index += 1
-        return mt_temp[int(index - 1)]
+        return *mt_temp[int(index - 1)]
     }
 
     next_uint :: (&Self, min: u64 = 0, max: u64 = cast u64.max) -> u64 {

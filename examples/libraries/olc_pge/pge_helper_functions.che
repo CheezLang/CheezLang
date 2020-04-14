@@ -19,11 +19,11 @@ impl PixelGameEngine {
     }
 
     get_key :: (&Self, key: Key) -> HWButton {
-        return pKeyboardState[cast(int)key]
+        return *pKeyboardState[cast(int)key]
     }
 
     get_mouse :: (&Self, b: int) -> HWButton {
-        return pMouseState[b]
+        return *pMouseState[b]
     }
 
     get_mouse_pos :: (&Self) -> (x: int, y: int) {

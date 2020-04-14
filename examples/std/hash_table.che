@@ -156,13 +156,13 @@ impl(K: type, V: type) Table[K, V] {
     get_unchecked :: (&Self, key: K) -> &V #operator("[]") {
         entry := find_entry(entries, key)
         @assert(entry.filled)
-        return entry.value.Some
+        return &entry.value.Some
     }
 
     at :: (&Self, key: K) -> &V {
         entry := find_entry(entries, key)
         @assert(entry.filled)
-        return entry.value.Some
+        return &entry.value.Some
     }
 
     delete :: (&Self, key: K) -> bool {

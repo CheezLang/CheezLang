@@ -68,7 +68,7 @@ impl Sprite {
     }
 
     acc_pixel_op :: (&Self, p: (int, int)) -> &Pixel #operator("[]") {
-        return data[mod_pos(p[0], width) + mod_pos(p[1], height) * width]
+        return &data[mod_pos(p[0], width) + mod_pos(p[1], height) * width]
     }
 
     sample :: (&Self, x: float, y: float) -> Pixel {

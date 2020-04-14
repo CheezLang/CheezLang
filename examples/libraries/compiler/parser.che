@@ -795,7 +795,7 @@ impl Parser {
         }
 
         if values.count() == 1 and !ends_in_comma {
-            return values[0]
+            return *values[0]
         }
 
         return allocate(AstTuple(

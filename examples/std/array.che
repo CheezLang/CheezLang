@@ -109,7 +109,7 @@ impl(T: type) Array[T] {
 
     peek_last :: (&Self) -> &T {
         @assert(length > 0, "Array is empty")
-        return data[length - 1]
+        return &data[length - 1]
     }
 
     get :: (&Self, index: int) -> Option[T] {
@@ -134,7 +134,7 @@ impl(T: type) Array[T] {
     }
 
     access_unchecked :: (&Self, index: int) -> &T {
-        return data[index]
+        return &data[index]
     }
 
     access :: (&Self, index: int) -> &T #operator("[]") {
@@ -142,7 +142,7 @@ impl(T: type) Array[T] {
             C.printf("%lld`n", index)
         }
         @assert(index >= 0 and index < length, "Index was out of range")
-        return data[index]
+        return &data[index]
     }
 
     sliceFL :: (&Self, from: int, len: int) -> []T {

@@ -45,12 +45,12 @@ impl Input {
     }
 
     key_down :: (&Self, key: int) -> bool {
-        return keys_down[key]
+        return *keys_down[key]
     }
     key_pressed :: (&Self, key: int) -> bool {
-        return keys_pressed[key]
+        return *keys_pressed[key]
     }
     key_released :: (&Self, key: int) -> bool {
-        return keys_released[key]
+        return *keys_released[key]
     }
 }

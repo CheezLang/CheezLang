@@ -165,13 +165,13 @@ impl(K: type, V: type) Map[K, V] {
     get_unchecked :: (&Self, key: $K2) -> &V #operator("[]") {
         entry := find_entry(entries, key)
         @assert(entry.filled)
-        return entry.value.Some
+        return &entry.value.Some
     }
 
     at :: (&Self, key: $K2) -> &V {
         entry := find_entry(entries, key)
         @assert(entry.filled)
-        return entry.value.Some
+        return &entry.value.Some
     }
 
     delete :: (&Self, key: $K2) -> bool {

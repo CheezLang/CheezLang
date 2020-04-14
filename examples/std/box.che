@@ -29,12 +29,12 @@ impl(T: type) Box[T] {
 
     value :: (&Self) -> &T {
         @assert(_value != null)
-        return *_value
+        return &*_value
     }
 
     get :: (&Self) -> &T {
         @assert(_value != null)
-        return *_value
+        return &*_value
     }
 }
 

@@ -120,7 +120,7 @@ impl Scope {
             wait_until(symbols.contains(name), {
                 return Symbol.NotFound
             }, self.release(), self.lock())
-            return symbols.at(name)
+            return *symbols.at(name)
         }
 
         @assert(self.mutex == .None)

@@ -770,7 +770,7 @@ impl ShmupEngine {
     }
 
     current_viewport :: (&Self) -> &Viewport {
-        return active_editor_window.get().base().viewport
+        return &active_editor_window.get().base().viewport
     }
 }
 

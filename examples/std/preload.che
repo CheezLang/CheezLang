@@ -150,7 +150,7 @@ Clone :: trait {
 
 impl Clone for string {
     clone :: (&Self) -> Self {
-        return self
+        return *self
     }
 }
 
@@ -255,7 +255,8 @@ impl string {
 
 impl(T: type) []T {
     get_index :: (Self, index: int) -> &T #operator("[]") {
-        return *cast(^T) int(self.data) + index * @sizeof(T)
+        return &*pointer_add_sized(self.data, index)
+        // return cast(^T) int(self.data) + index * @sizeof(T)
     }
 
     get_range :: (Self, range: Range[int]) -> []T #operator("[]") {
@@ -301,7 +302,8 @@ impl(T: type) []T {
 
 impl(T: type, Size: int) [Size]T {
     get_index :: (&Self, index: int) -> &T #operator("[]") {
-        return *cast(^T) int(self.data) + index * @sizeof(T)
+        return &*pointer_add_sized(self.data, index)
+        // return *cast(^T) int(self.data) + index * @sizeof(T)
     }
 
     get_range :: (&Self, range: Range[int]) -> []T #operator("[]") {
@@ -744,4 +746,12 @@ strings_equal :: (a: string, b: string) -> bool #operator("==") {
     }
 
     return true
+}
+
+pointer_add_sized :: (ptr: ^$T, amount: int) -> ^T {
+    return cast(^T)((cast(int) ptr) + amount * @sizeof(T))
+}
+
+pointer_add :: (ptr: ^$T, amount: int) -> ^T {
+    return cast(^T)((cast(int) ptr) + amount)
 }

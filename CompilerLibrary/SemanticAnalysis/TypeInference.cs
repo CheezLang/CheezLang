@@ -695,43 +695,6 @@ namespace Cheez
             expr.Replace(r);
             expr.Location = r.Location;
             return InferTypeHelper(expr, expected, context);
-
-            r.From.AttachTo(r);
-            r.To.AttachTo(r);
-
-            r.From.SetFlag(ExprFlags.ValueRequired, true);
-            r.From = InferTypeHelper(r.From, expected, context);
-            ConvertLiteralTypeToDefaultType(r.From, IntType.DefaultType);
-            r.From = Deref(r.From, context);
-
-            r.To.SetFlag(ExprFlags.ValueRequired, true);
-            r.To = InferTypeHelper(r.To, r.From.Type, context);
-            ConvertLiteralTypeToDefaultType(r.To, IntType.DefaultType);
-            r.To = Deref(r.To, context);
-
-            if (r.From.Type != r.To.Type)
-            {
-                ReportError(r, $"Types of start and end don't match, start: {r.From.Type}, end: {r.To.Type}");
-                return r;
-            }
-
-            if (r.From.Type is CheezTypeType)
-            {
-                r.Type = CheezType.Type;
-                r.Value = RangeType.GetRangeType(r.From.Value as CheezType);
-
-                ReportError(r, $"Please use Range[{r.From.Value}]");
-                return r;
-            }
-
-            if (!(r.From.Type is IntType))
-            {
-                ReportError(r, $"Types of start and end must be int");
-                return r;
-            }
-
-            r.Type = RangeType.GetRangeType(r.From.Type);
-            return r;
         }
 
         private AstExpression InferTypeContinue(AstContinueExpr cont)

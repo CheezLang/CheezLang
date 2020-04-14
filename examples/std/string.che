@@ -86,7 +86,7 @@ impl String {
         return data.data
     }
 
-    char_at :: (&Self, i: int) -> &char #operator("[]") {
+    char_at :: (&Self, i: int) -> char #operator("[]") {
         code_point, len := Utf8.decode(data[i..data.length])
         return code_point
     }

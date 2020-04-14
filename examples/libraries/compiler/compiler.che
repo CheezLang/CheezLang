@@ -620,7 +620,7 @@ impl Compiler {
     find_free_fiber :: (&Self) -> ^FiberContext {
         for f in fibers {
             if f.job == null and f.thread == -1 {
-                return f
+                return *f
             }
         }
         {

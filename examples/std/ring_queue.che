@@ -99,7 +99,7 @@ impl(T: type) RingQueue[T] {
     at :: (&Self, index: int) -> &T #operator("[]") {
         @assert(index >= 0 and index < count())
         index = (first + index) % capacity
-        return data[index]
+        return &data[index]
     }
 }
 

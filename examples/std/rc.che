@@ -72,7 +72,7 @@ impl(T: type) Rc[T] {
 
     get :: (&Self) -> &T {
         @assert(value != null)
-        return *value
+        return &*value
     }
 
     change_type :: (Self, $R: type) -> Rc[R] {
@@ -120,7 +120,7 @@ impl(T: type) Ref[T] {
 
     get :: (&Self) -> &T {
         @assert(value != null)
-        return *value
+        return &*value
     }
 
     change_type :: (Self, $R: type) -> Ref[R] {

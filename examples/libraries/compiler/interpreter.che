@@ -102,7 +102,7 @@ impl StackFrame {
     pop_int :: (&Self) -> int {
         @assert(sp > 0)
         sp -= 1
-        return stack[sp]
+        return *stack[sp]
     }
 
     get :: (&Self, index: int, $T: type) -> T {

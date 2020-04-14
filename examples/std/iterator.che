@@ -48,7 +48,7 @@ impl(It: type, T: type) It if It : Iterator[T] {
             self.next()
         }
 
-        return self
+        return *self
     }
 
     take :: (&Self, count: int) -> TakeIterator[T] {
