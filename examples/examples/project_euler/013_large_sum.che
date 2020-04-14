@@ -26,14 +26,15 @@ Main :: () {
 
     // reverse string
     len := res.get_length()
+    result := res.slice()
     for 0..len/2 {
-        (a, b) := (res[it], res[len-it-1])
-        res[len-it-1] = a
-        res[it] = b
+        (a, b) := (result[it], result[len-it-1])
+        result[len-it-1] = a
+        result[it] = b
     }
 
     // print first 10 digits
-    io.println(res.sliceL(10))
+    io.println(result[..10])
 }
 
 numbers : [100][50]char = [
