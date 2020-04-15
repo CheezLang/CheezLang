@@ -94,8 +94,8 @@ impl Clone for JsonValue {
     clone :: (&Self) -> Self {
         return match self {
             .JsonNull -> .JsonNull
-            .JsonBool($val) -> .JsonBool(val)
-            .JsonNumber($val) -> .JsonNumber(val)
+            .JsonBool($val) -> .JsonBool(*val)
+            .JsonNumber($val) -> .JsonNumber(*val)
             .JsonString($val) -> .JsonString(val.clone())
             .JsonArray($arr) -> .JsonArray(arr.clone())
             .JsonObject($obj) -> .JsonObject(obj.clone())
@@ -382,7 +382,7 @@ next_json_token :: (json: string) -> (string, JsonTokenType) {
 
     // skip whitespace and comments
     while json.bytes.length > 0 {
-        c := char(json[0])
+        c := char(*json[0])
 
         if json.starts_with("//") {
             nl := json.index_of('`n')
@@ -402,7 +402,7 @@ next_json_token :: (json: string) -> (string, JsonTokenType) {
         return json, EndOfFile
     }
 
-    token_type, len := match char(json[0]) {
+    token_type, len := match char(*json[0]) {
         '{' -> OpenBrace, 1
         '}' -> ClosingBrace, 1
         '[' -> OpenBracket, 1
@@ -417,7 +417,7 @@ next_json_token :: (json: string) -> (string, JsonTokenType) {
             len := 0
 
             while json.bytes.length > 0 {
-                c := char(json[0])
+                c := char(*json[0])
                 if c == '\' and json.bytes.length > 1 {
                     json = json[1..]
                     len += 1
@@ -485,20 +485,20 @@ next_json_token :: (json: string) -> (string, JsonTokenType) {
 next_json_token_number :: (json: string) -> (string, JsonTokenType) {
     str := json
 
-    if char(json[0]) == '-' {
+    if char(*json[0]) == '-' {
         json = json[1..]
     }
 
     int_digits := 0
     digits := json
     while json.bytes.length > 0 {
-        c := char(json[0])
+        c := char(*json[0])
         if !c.is_digit() then break
         json = json[1..]
         int_digits += 1
     }
 
-    if int_digits > 1 and char(digits[0]) == '0' {
+    if int_digits > 1 and char(*digits[0]) == '0' {
         io.println("[ERROR] first digit can't be zero")
         return json, JsonTokenType.Unknown("first digit can't be zero")
     }
@@ -508,12 +508,12 @@ next_json_token_number :: (json: string) -> (string, JsonTokenType) {
         return json, JsonTokenType.Unknown("expected digit")
     }
 
-    if json.bytes.length > 0 and char(json[0]) == '.' {
+    if json.bytes.length > 0 and char(*json[0]) == '.' {
         json = json[1..]
 
         float_digits := 0
         while json.bytes.length > 0 {
-            c := char(json[0])
+            c := char(*json[0])
             if !c.is_digit() then break
             json = json[1..]
             float_digits += 1
@@ -525,17 +525,17 @@ next_json_token_number :: (json: string) -> (string, JsonTokenType) {
         }
     }
 
-    if json.bytes.length > 0 and (char(json[0]) == 'e' or char(json[0]) == 'E') {
+    if json.bytes.length > 0 and (char(*json[0]) == 'e' or char(*json[0]) == 'E') {
         json = json[1..]
         
-        if char(json[0]) == '-' or char(json[0]) == '+' {
+        if char(*json[0]) == '-' or char(*json[0]) == '+' {
             json = json[1..]
         }
 
         exp_digits := 0
 
         while json.bytes.length > 0 {
-            c := char(json[0])
+            c := char(*json[0])
             if !c.is_digit() then break
             json = json[1..]
             exp_digits += 1

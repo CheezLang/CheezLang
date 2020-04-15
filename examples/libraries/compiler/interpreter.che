@@ -405,7 +405,7 @@ impl Interpreter {
 
         // fetch
         frame.ip_prev = frame.ip
-        opcode := frame.code[frame.ip]
+        opcode := *frame.code[frame.ip]
 
         if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
             g_logger.log("{}{}{}{}{}{}{}{}{}{}{}", [
@@ -997,7 +997,7 @@ impl Instruction {
             *cast(^T)^code[index + 1]
         }
 
-        return match Instruction(code[0]) {
+        return match Instruction(*code[0]) {
             .Noop           -> fmt.format("Noop")
 
             .Push           -> fmt.format("Push {}", [arg(int, 0)])

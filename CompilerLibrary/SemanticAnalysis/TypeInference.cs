@@ -1749,7 +1749,6 @@ namespace Cheez
                         type = r.TargetType;
                 }
 
-                expr.Values[i] = HandleReference(expr.Values[i], type, context);
                 expr.Values[i] = CheckType(expr.Values[i], type);
             }
 
@@ -1812,8 +1811,6 @@ namespace Cheez
 
             if (cast.SubExpression.Type == cast.Type)
                 return cast.SubExpression;
-
-            cast.SubExpression = HandleReference(cast.SubExpression, cast.Type, context);
 
             var to = cast.Type;
             var from = cast.SubExpression.Type;
@@ -2413,7 +2410,6 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(arg.Expr, e);
                 if (e != null)
                 {
-                    arg.Expr = HandleReference(arg.Expr, e, context);
                     arg.Expr = CheckType(arg.Expr, e);
                 }
 
@@ -4929,7 +4925,6 @@ namespace Cheez
                             e.Argument.AttachTo(e);
                             var earg = InferTypeHelper(e.Argument, assType, context);
                             ConvertLiteralTypeToDefaultType(earg, assType);
-                            earg = HandleReference(earg, assType, context);
                             earg = CheckType(earg, assType);
                             e.Argument = earg;
                         }

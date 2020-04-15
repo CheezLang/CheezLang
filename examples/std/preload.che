@@ -666,7 +666,7 @@ impl TypeInfoAttribute {
     get_arg :: (&Self, index: int, $T: type) -> T {
         @assert(index >= 0 and index < self.args.length)
 
-        arg := self.args[index]
+        arg := *self.args[index]
         @assert(@type_info(T) == @type_info_of_any(arg))
 
         return *cast(^T) arg

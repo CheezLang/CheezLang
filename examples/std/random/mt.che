@@ -43,11 +43,11 @@ impl MTwister {
     }
 
     unroll :: (&Self, y: &u32, i: &u64, expr: u64) {
-        *y = @bin_or(m32(*mt[int(i)]), l31(*mt[int(i + 1)]))
-        mt[int(i)] = @bin_xor(
+        *y = @bin_or(m32(*mt[int(*i)]), l31(*mt[int(i + 1)]))
+        mt[int(*i)] = @bin_xor(
             mt[int(expr)],
             @bin_lsr(y, 1),
-            @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31), 31)), 0x9908b0df)
+            @bin_and(u32(@bin_lsr(@bin_lsl(i32(*y), 31), 31)), 0x9908b0df)
         )
         *i += 1
     }

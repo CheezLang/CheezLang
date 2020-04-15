@@ -23,7 +23,7 @@ impl Hashable for string {
         h: u32 = 2166136261
 
         for i in 0..self.bytes.length {
-            h += cast(u32)self[i]
+            h += u32(*self[i])
             h *= 16777619
         }
 

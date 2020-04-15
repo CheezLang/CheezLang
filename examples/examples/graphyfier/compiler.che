@@ -66,7 +66,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 .Plus -> {
                     p := get_precedence(OpCode.Add)
                     while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
-                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        if op_stack.peek_last() == OpCode.Grp then break
                         res.add(op_stack.pop())
                     }
                     op_stack.push(OpCode.Add)
@@ -74,7 +74,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 .Minus -> {
                     p := get_precedence(OpCode.Sub)
                     while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
-                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        if op_stack.peek_last() == OpCode.Grp then break
                         res.add(op_stack.pop())
                     }
                     op_stack.push(OpCode.Sub)
@@ -82,7 +82,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 .Asterisk -> {
                     p := get_precedence(OpCode.Mul)
                     while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
-                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        if op_stack.peek_last() == OpCode.Grp then break
                         res.add(op_stack.pop())
                     }
                     op_stack.push(OpCode.Mul)
@@ -90,7 +90,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 .ForwardSlash -> {
                     p := get_precedence(OpCode.Div)
                     while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
-                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        if op_stack.peek_last() == OpCode.Grp then break
                         res.add(op_stack.pop())
                     }
                     op_stack.push(OpCode.Div)
@@ -98,7 +98,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 .Hat -> {
                     p := get_precedence(OpCode.Pow)
                     while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
-                        if int(op_stack.peek_last()) == int(OpCode.Grp) then break
+                        if op_stack.peek_last() == OpCode.Grp then break
                         res.add(op_stack.pop())
                     }
                     op_stack.push(OpCode.Pow)
@@ -201,7 +201,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
     }
 
     while op_stack.get_length() > 0 {
-        if int(op_stack.peek_last()) == int(OpCode.Grp) {
+        if op_stack.peek_last() == OpCode.Grp {
             io.println("[ERROR] Mismatched parenthesis")
             return None
         }

@@ -26,7 +26,7 @@ parse_int :: (str: string) -> int {
     val := 0
     sign := 1
 
-    if str.bytes.length > 0 and char(str[0]) == '-' {
+    if str.bytes.length > 0 and char(*str[0]) == '-' {
         sign = -1
         str = str[1..]
     }

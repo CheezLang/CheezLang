@@ -9,7 +9,7 @@
 // import examples.pathtracer2.main
 // import compiler.cli
 // import compiler.debugger
-import examples.ShmupEngine.src.main
+// import examples.ShmupEngine.src.main
 
 // examples which are not working currently
 // import examples.image_processing

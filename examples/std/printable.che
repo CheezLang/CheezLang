@@ -28,13 +28,13 @@ impl Printable for string {
 
 impl Printable for char8 {
     print :: (&Self, str: &String, format: string) {
-        str.append_char(cast self)
+        str.append_char(cast *self)
     }
 }
 
 impl Printable for char16 {
     print :: (&Self, str: &String, format: string) {
-        str.append_char(cast self)
+        str.append_char(cast *self)
     }
 }
 
@@ -47,7 +47,7 @@ impl Printable for char32 {
 impl Printable for float {
     print :: (&Self, str: &String, format: string) {
         buff : []char8 = @alloca(char8, 128)
-        buff.length = C.sprintf(buff.data, "%g", double(self))
+        buff.length = C.sprintf(buff.data, "%g", double(*self))
         str.append_cstring(buff.data)
     }
 }
