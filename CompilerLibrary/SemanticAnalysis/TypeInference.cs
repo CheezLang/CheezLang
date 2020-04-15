@@ -330,7 +330,6 @@ namespace Cheez
                 expr.IsReferenceReassignment = true;
                 expr.Source.AttachTo(expr);
                 expr.Source = InferTypeHelper(expr.Source, r.TargetType, context);
-                expr.Source = HandleReference(expr.Source, expr.Target.Type, context);
                 expr.Source = CheckType(expr.Source, expr.Target.Type);
 
                 if (!expr.Source.Type.IsErrorType && !expr.Source.GetFlag(ExprFlags.IsLValue))
@@ -881,7 +880,6 @@ namespace Cheez
 
                 if (at != null)
                 {
-                    expr.Argument = HandleReference(expr.Argument, at, context);
                     expr.Argument = CheckType(expr.Argument, at);
                 }
             }
@@ -1068,8 +1066,6 @@ namespace Cheez
 
                 if (expected != null)
                 {
-                    c.Body = HandleReference(c.Body, expected, context);
-
                     if (!c.Body.GetFlag(ExprFlags.Returns) && !c.Body.GetFlag(ExprFlags.Breaks))
                         c.Body = CheckType(c.Body, expected);
                 }

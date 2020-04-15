@@ -148,7 +148,7 @@ impl Lexer {
             None -> {
                 tok := next_token()
                 peek = Some(tok)
-                peek.Some
+                &peek.Some
             }
         }
     }

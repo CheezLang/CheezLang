@@ -115,7 +115,7 @@ impl(T: type) Ref[T] {
     try_get :: (&Self) -> Option[&T] {
         return if value == null
             then None
-            else Some(*value)
+            else Some(&*value)
     }
 
     get :: (&Self) -> &T {

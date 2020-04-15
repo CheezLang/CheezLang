@@ -405,7 +405,7 @@ impl Compiler {
         defer self.release()
 
         return match structs.get(int(typ)) {
-            Some($ast) -> Some(ast)
+            Some($ast) -> Some(*ast)
             None -> None
         }
     }
@@ -560,7 +560,7 @@ impl Compiler {
         defer self.release()
 
         return match native_function_wrappers.get(FunctionTypeWrapper(ti)) {
-            Some($wrapper) -> Some(wrapper)
+            Some($wrapper) -> Some(*wrapper)
             None -> None
         }
     }

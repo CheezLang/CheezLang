@@ -576,7 +576,7 @@ impl Renderer {
         // calculate texture index
         tex_index : i32 = match texture {
             Some($tex) -> match texture_map.get(int(^tex.get())) {
-                Some($idx) -> idx
+                Some($idx) -> *idx
                 None -> {
                     if used_textures.get_length() >= max_texture_slots {
                         flush_quads()

@@ -30,9 +30,7 @@ impl StringDatabase {
 
     intern :: (&Self, str: string) -> string {
         return match db.get(str) {
-            Some($s) -> {
-                s
-            }
+            Some($s) -> *s
             None -> {
                 // create string in pool
                 str_in_pool := {

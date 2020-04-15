@@ -46,11 +46,11 @@ height : double = 480.0
 
 action_to_dir :: (dir: &Direction, action: Direction) {
     *dir = match (*dir, action) {
-        (Direction.Up,      Direction.Down) -> dir
-        (Direction.Right,   Direction.Left) -> dir
-        (Direction.Down,    Direction.Up)   -> dir
-        (Direction.Left,    Direction.Right)-> dir
-        ($x, Direction.None)                -> dir
+        (Direction.Up,      Direction.Down) -> *dir
+        (Direction.Right,   Direction.Left) -> *dir
+        (Direction.Down,    Direction.Up)   -> *dir
+        (Direction.Left,    Direction.Right)-> *dir
+        ($x, Direction.None)                -> *dir
         (_, $a) -> a
     }
 }

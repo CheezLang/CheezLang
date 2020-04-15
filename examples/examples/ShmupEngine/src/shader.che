@@ -142,7 +142,7 @@ impl Shader {
 
     get_uniform_location :: (&Self, name: string) -> i32 {
         return match uniforms.get(name) {
-            Some($loc) -> loc
+            Some($loc) -> *loc
             None -> {
                 name_str := String.with_capacity(name.bytes.length + 1)
                 name_str.append_string(name)

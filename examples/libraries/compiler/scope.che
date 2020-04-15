@@ -126,7 +126,7 @@ impl Scope {
         @assert(self.mutex == .None)
 
         return match symbols.get(name) {
-            Some($sym)  -> sym
+            Some($sym)  -> *sym
             None        -> {
                 sym := parent.get_symbol(name)
                 if constant {

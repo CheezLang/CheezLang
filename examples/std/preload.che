@@ -141,7 +141,7 @@ impl From[()] for () {
 }
 
 convert :: (T: type, c: &$S) #macro {
-    if const T == S then c else c.into()
+    if const T == S then *c else c.into()
 }
 
 Clone :: trait {

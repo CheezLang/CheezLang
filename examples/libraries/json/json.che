@@ -24,7 +24,7 @@ JsonValue :: enum {
 impl JsonValue {
     to_number :: (&Self) -> double {
         return match self {
-            .JsonNumber($val) -> val
+            .JsonNumber($val) -> *val
             _ -> @assert(false)
         }
     }
