@@ -219,7 +219,7 @@ parse_args_enum :: (ti: ^TypeInfoEnum, args: []ClapToken, loc: Location) -> Opti
     args = args[1..args.length]
 
     for(by_ref=true) mem in ti.members {
-        display_name := get_display_name_for_member(mem)
+        display_name := get_display_name_for_member(&*mem)
         if streq(display_name, current.raw.slice()) {
             result.mem = Some(^mem)
             if mem.typ != null {
@@ -402,7 +402,7 @@ get_value_help :: (result: ^void, expr: &Expr) {
 
         CustomExpr($v) -> {
             type_info := cast(^TypeInfoStruct) v.typ
-            custom_parser := TypeInfo.get_trait_impl(*type_info, CustomParser)
+            custom_parser := TypeInfo.get_trait_impl(&*type_info, CustomParser)
             @assert(custom_parser != null)
             get_value_func := custom_parser.get_function("get_value", fn(^void, &CustomExpr))
             @assert(get_value_func != null)
@@ -477,12 +477,12 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
                 match &mem.sub {
                     Some($sub)  -> try(validate(sub.get()))
                     None        -> {
-                        return Err(ClapError(mem.loc, fmt.format("Missing value for argument '{}'", [get_display_name_for_member(mem.mem)])))
+                        return Err(ClapError(mem.loc, fmt.format("Missing value for argument '{}'", [get_display_name_for_member(&*mem.mem)])))
                     }
                 }
 
                 if members_set[mem.mem.index] {
-                    return Err(ClapError(mem.loc, fmt.format("Duplicate argument '{}'", [get_display_name_for_member(mem.mem)])))
+                    return Err(ClapError(mem.loc, fmt.format("Duplicate argument '{}'", [get_display_name_for_member(&*mem.mem)])))
                 }
                 members_set[mem.mem.index] = true
             }
@@ -502,7 +502,7 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
 
         CustomExpr($v) -> {
             type_info := cast(^TypeInfoStruct) v.typ
-            custom_parser := TypeInfo.get_trait_impl(*type_info, CustomParser)
+            custom_parser := TypeInfo.get_trait_impl(&*type_info, CustomParser)
             @assert(custom_parser != null)
             validate_func := custom_parser.get_function("validate", fn(&CustomExpr) -> Result[(), ClapError])
             @assert(validate_func != null)

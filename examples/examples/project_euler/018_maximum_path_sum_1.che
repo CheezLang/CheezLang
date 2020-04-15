@@ -13,12 +13,12 @@ Main :: () {
 
     for r in {0 .. graph.length - 1}.reverse() {
         for c in 0 ..= r {
-            graph[r][c] += max(graph[r+1][c], graph[r+1][c+1])
+            graph[r][c] += max(*graph[r+1][c], *graph[r+1][c+1])
         }
     }
 
     max_sum := graph[0][0]
-    io.println(max_sum)
+    io.println(*max_sum)
 }
 
 load_graph :: (str: string) -> Array[Array[int]] {

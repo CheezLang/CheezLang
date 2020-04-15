@@ -131,9 +131,9 @@ impl Printable for OpCode {
     print :: (&Self, str: &String, format: string) {
         use OpCode
         match self {
-            Real($v)    -> str.appendf("Real({})", v)
-            Im($v)      -> str.appendf("Im({})", v)
-            Var($name)  -> str.appendf("Var({})", name)
+            Real($v)    -> str.appendf("Real({})", *v)
+            Im($v)      -> str.appendf("Im({})", *v)
+            Var($name)  -> str.appendf("Var({})", *name)
             Neg         -> str.append_string("Neg")
             Con         -> str.append_string("Con")
             Add         -> str.append_string("Add")

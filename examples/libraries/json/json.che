@@ -113,8 +113,8 @@ serialize_json_value :: (val: &JsonValue, pretty: bool = false) -> String {
 serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
     match val {
         .JsonNull -> result.append_string("null")
-        .JsonBool($val) -> result.appendf("{}", val)
-        .JsonNumber($val) -> result.appendf("{}", val)
+        .JsonBool($val) -> result.appendf("{}", *val)
+        .JsonNumber($val) -> result.appendf("{}", *val)
         .JsonString($val) -> result.appendf("`"{}`"", escape_json_string(val.slice()))
         .JsonArray($arr) -> {
             result += "[`n"
@@ -161,8 +161,8 @@ serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
 serialize_json_value_helper :: (result: &String, val: &JsonValue) {
     match val {
         .JsonNull -> result.append_string("null")
-        .JsonBool($val) -> result.appendf("{}", val)
-        .JsonNumber($val) -> result.appendf("{}", val)
+        .JsonBool($val) -> result.appendf("{}", *val)
+        .JsonNumber($val) -> result.appendf("{}", *val)
         .JsonString($val) -> result.appendf("`"{}`"", escape_json_string(val.slice()))
         .JsonArray($arr) -> {
             result += "["

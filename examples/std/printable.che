@@ -74,49 +74,49 @@ impl Printable for bool {
 
 impl Printable for i8 {
     print :: (&Self, str: &String, format: string) {
-        printf_int_to_string(str, self, format)
+        printf_int_to_string(str, *self, format)
     }
 }
 
 impl Printable for i16 {
     print :: (&Self, str: &String, format: string) {
-        printf_int_to_string(str, self, format)
+        printf_int_to_string(str, *self, format)
     }
 }
 
 impl Printable for i32 {
     print :: (&Self, str: &String, format: string) {
-        printf_int_to_string(str, self, format)
+        printf_int_to_string(str, *self, format)
     }
 }
 
 impl Printable for i64 {
     print :: (&Self, str: &String, format: string) {
-        printf_int_to_string(str, self, format)
+        printf_int_to_string(str, *self, format)
     }
 }
 
 impl Printable for u8 {
     print :: (&Self, str: &String, format: string) {
-        printf_int_to_string(str, self, format)
+        printf_int_to_string(str, *self, format)
     }
 }
 
 impl Printable for u16 {
     print :: (&Self, str: &String, format: string) {
-        printf_int_to_string(str, self, format)
+        printf_int_to_string(str, *self, format)
     }
 }
 
 impl Printable for u32 {
     print :: (&Self, str: &String, format: string) {
-        printf_int_to_string(str, self, format)
+        printf_int_to_string(str, *self, format)
     }
 }
 
 impl Printable for u64 {
     print :: (&Self, str: &String, format: string) {
-        printf_int_to_string(str, self, format)
+        printf_int_to_string(str, *self, format)
     }
 }
 

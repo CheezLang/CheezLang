@@ -102,7 +102,7 @@ Main :: () {
     t1[4] = "four"
     t1[5] = "five"
 
-    test(t1, t2)
+    test(&t1, &t2)
 
     io.println("`n--------------------------`n")
 
@@ -110,7 +110,7 @@ Main :: () {
     t1.delete(3)
     t1.delete(5)
 
-    test(t1, t2)
+    test(&t1, &t2)
     io.println("`n--------------------------`n")
 
     t2["first name"] = "Markenikon"
@@ -124,5 +124,5 @@ Main :: () {
     t1[4] = "quat..."
     t1[5] = "fuennef"
 
-    test(t1, t2)
+    test(&t1, &t2)
 }

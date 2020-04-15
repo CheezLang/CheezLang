@@ -174,7 +174,7 @@ parse_arguments_from_string :: ($T: type, str: string) -> ^T {
 
 parse_arguments :: ($T: type, args: []String) -> ^T {
     result := alloc(T)
-    ok := parse_arguments_help(@type_info(T), args, result)
+    ok := parse_arguments_help(@type_info(T), &args, result)
 
     if !ok {
         Memory.drop(*result)

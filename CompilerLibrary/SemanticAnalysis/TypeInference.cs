@@ -5574,7 +5574,6 @@ namespace Cheez
                 if (a.Type.IsErrorType)
                     continue;
 
-                a.Expr = HandleReference(a.Expr, p.Type, context);
                 a.Type = a.Expr.Type;
 
                 a.Expr = CheckType(a.Expr, p.Type, $"Type of argument '{a.Type}' does not match type of parameter '{p.Type}'");

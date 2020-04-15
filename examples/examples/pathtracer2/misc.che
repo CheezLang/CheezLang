@@ -147,8 +147,8 @@ impl AABB {
         if inv_d < real(0.0) {
             (t0, t1) = (t1, t0)
         }
-        *t_min = max(t0, t_min)
-        *t_max = min(t1, t_max)
+        *t_min = max(t0, *t_min)
+        *t_max = min(t1, *t_max)
         return t_max <= t_min
     }
 

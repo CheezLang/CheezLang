@@ -65,7 +65,7 @@ impl(K: type, V: type) Map[K, V] {
 
     contains :: (&Self, key: $K2) -> bool {
         if _count == 0 or entries.data == null { return false }
-        entry := find_entry(entries, key)
+        entry := find_entry(entries, &key)
         if !entry.filled { return false }
         return true
     }
@@ -112,9 +112,9 @@ impl(K: type, V: type) Map[K, V] {
             adjust_capacity(cast(uint) entries.length * 2)
         }
 
-        entry := find_entry(entries, key)
+        entry := find_entry(entries, &key)
         is_new_key := !entry.filled
-        entry.key = Some(convert(K, key))
+        entry.key = Some(convert(K, &key))
         entry.value = Some(value)
         entry.filled = true
         entry.is_tombstone = false
@@ -131,7 +131,7 @@ impl(K: type, V: type) Map[K, V] {
             return None
         }
         
-        entry := find_entry(entries, key)
+        entry := find_entry(entries, &key)
         if !entry.filled {
             return None
         }
@@ -163,13 +163,13 @@ impl(K: type, V: type) Map[K, V] {
     }
 
     get_unchecked :: (&Self, key: $K2) -> &V #operator("[]") {
-        entry := find_entry(entries, key)
+        entry := find_entry(entries, &key)
         @assert(entry.filled)
         return &entry.value.Some
     }
 
     at :: (&Self, key: $K2) -> &V {
-        entry := find_entry(entries, key)
+        entry := find_entry(entries, &key)
         @assert(entry.filled)
         return &entry.value.Some
     }
@@ -204,7 +204,7 @@ impl(K: type, V: type) Map[K, V] {
             for i in 0..entries.length {
                 entry := ^entries[i]
                 if entry.filled {
-                    dest := find_entry(entries_new, entry.key.Some)
+                    dest := find_entry(entries_new, &entry.key.Some)
                     dest.key = entry.key <- None
                     dest.value = entry.value <- None
                     dest.filled = true

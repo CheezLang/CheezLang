@@ -133,7 +133,7 @@ impl StackFrame {
             if i > 0 {
                 str += ", "
             }
-            str.appendf("{}", stack[i])
+            str.appendf("{}", *stack[i])
         }
 
         // locals
@@ -145,7 +145,7 @@ impl StackFrame {
 
         if sp >= bp {
             for i in max(bp, sp - 10) .. sp {
-                str.appendf("{}", stack[i])
+                str.appendf("{}", *stack[i])
                 if i < sp - 1 {
                     str += ", "
                 }

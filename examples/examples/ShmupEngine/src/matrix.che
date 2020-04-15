@@ -167,7 +167,7 @@ impl(T: type) Printable for Matrix4[T] {
             if r > 0 then str.append_string("`n")
             for c in 0..4 {
                 if c > 0 then str.append_string(" | ")
-                str.appendf("{}", values[c + r * 4])
+                str.appendf("{}", *values[c + r * 4])
             }
         }
     }
