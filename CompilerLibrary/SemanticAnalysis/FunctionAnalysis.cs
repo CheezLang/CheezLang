@@ -329,13 +329,13 @@ namespace Cheez
             if (matches.Count == 0)
             {
                 var candidates = fors.Select(f => ("Tried this candidate:", f.ParameterLocation));
-                ReportError(fo, $"No for extension matches this for loop", candidates);
+                ReportError(fo.Collection, $"No for extension matches type '{fo.Collection.Type}'", candidates);
                 return fo;
             }
             else if (matches.Count > 1)
             {
                 var candidates = matches.Select(f => ("This matches:", f.func.ParameterLocation));
-                ReportError(fo, $"Multible for extensions match this for loop", candidates);
+                ReportError(fo.Collection, $"Multible for extensions match type '{fo.Collection.Type}'", candidates);
                 return fo;
             }
             else
@@ -534,9 +534,12 @@ namespace Cheez
                 }
                 else if (ops.Count == 1)
                 {
+                    arr.SubExpression = HandleReference(arr.SubExpression, ops[0].ArgTypes[0], null);
                     var args = new List<AstExpression>
                     {
-                        arr.SubExpression, arr.Arguments[0], value
+                        arr.SubExpression,
+                        arr.Arguments[0],
+                        value
                     };
                     var opCall = new AstNaryOpExpr("set[]", args, value.Location);
                     opCall.ActualOperator = ops[0];

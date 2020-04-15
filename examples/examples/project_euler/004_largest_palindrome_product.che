@@ -31,7 +31,7 @@ Main :: () {
             str.clear()
             str.appendf("{}", product)
 
-            if is_palindrome(str) {
+            if is_palindrome(&str) {
                 longest = product
             }
         }

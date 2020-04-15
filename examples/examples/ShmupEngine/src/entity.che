@@ -31,19 +31,19 @@ Entity :: struct {
 
 impl Entity {
     init :: (&Self) {
-        for components {
+        for &components {
             it.get().init()
         }
     }
 
     update :: (&Self, layer: &EntityLayer, dt: float) {
-        for components {
+        for &components {
             it.get().update(self, layer, dt)
         }
     }
 
     render :: (&Self, engine: &ShmupEngine, renderer: &Renderer) {
-        for components {
+        for &components {
             it.get().render(self, engine, renderer)
         }
     }
@@ -54,7 +54,7 @@ impl Entity {
     }
 
     get_component :: (&Self, $T: type) -> Option[Rc[T]] {
-        for components {
+        for &components {
             match &it.get() {
                 T($comp) -> {
                     return Some(it.clone().change_type(T))

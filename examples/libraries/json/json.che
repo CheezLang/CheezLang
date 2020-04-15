@@ -105,8 +105,8 @@ impl Clone for JsonValue {
 
 serialize_json_value :: (val: &JsonValue, pretty: bool = false) -> String {
     result := String.empty()
-    if pretty then serialize_json_value_helper_pretty(result, val)
-    else serialize_json_value_helper(result, val)
+    if pretty then serialize_json_value_helper_pretty(&result, val)
+    else serialize_json_value_helper(&result, val)
     return result
 }
 
@@ -124,7 +124,7 @@ serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
                 if it_index > 0 {
                     body += ",`n"
                 }
-                serialize_json_value_helper_pretty(body, v)
+                serialize_json_value_helper_pretty(&body, v)
             }
             for line in body.slice().split_at_char('`n') {
                 result += "    "
@@ -136,7 +136,7 @@ serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
         .JsonObject($map) -> {
             result += "{`n"
             body := String.empty()
-            for kv in *^map {
+            for kv in map {
                 if it_index > 0 {
                     body += ",`n"
                 }
@@ -146,7 +146,7 @@ serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
                 body += '"'
                 body += ": "
 
-                serialize_json_value_helper_pretty(body, kv.value)
+                serialize_json_value_helper_pretty(&body, kv.value)
             }
             for line in body.slice().split_at_char('`n') {
                 result += "    "
@@ -176,7 +176,7 @@ serialize_json_value_helper :: (result: &String, val: &JsonValue) {
         }
         .JsonObject($map) -> {
             result += "{"
-            for kv in *^map {
+            for kv in map {
                 if it_index > 0 {
                     result += ","
                 }

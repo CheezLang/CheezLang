@@ -1,5 +1,5 @@
 // examples which should be working
-// import examples.trait_function_call_performance
+import examples.trait_function_call_performance
 // import examples.glfw3_example
 // import examples.graphyfier.graphyfier
 // import examples.geometry_draw_thingy

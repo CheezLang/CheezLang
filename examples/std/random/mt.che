@@ -43,7 +43,7 @@ impl MTwister {
     }
 
     unroll :: (&Self, y: &u32, i: &u64, expr: u64) {
-        *y = @bin_or(m32(mt[int(i)]), l31(mt[int(i + 1)]))
+        *y = @bin_or(m32(*mt[int(i)]), l31(*mt[int(i + 1)]))
         mt[int(i)] = @bin_xor(
             mt[int(expr)],
             @bin_lsr(y, 1),
@@ -57,26 +57,26 @@ impl MTwister {
         y : u32 = 0
 
         while i < STATE_VECTOR_DIFF {
-            unroll(y, i, i + STATE_VECTOR_M)
-            unroll(y, i, i + STATE_VECTOR_M)
+            unroll(&y, &i, i + STATE_VECTOR_M)
+            unroll(&y, &i, i + STATE_VECTOR_M)
         }
 
         while i < STATE_VECTOR_LENGTH - 1 {
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
-            unroll(y, i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
+            unroll(&y, &i, i - STATE_VECTOR_DIFF)
         }
 
         {
-            y = @bin_or(m32(mt[STATE_VECTOR_LENGTH - 1]), l31(mt[0]))
+            y = @bin_or(m32(*mt[STATE_VECTOR_LENGTH - 1]), l31(*mt[0]))
             mt[STATE_VECTOR_LENGTH - 1] = @bin_xor(
                 mt[STATE_VECTOR_M - 1],
                 @bin_lsr(y, 1),

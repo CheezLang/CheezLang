@@ -106,7 +106,7 @@ impl Hittable for Array[^Hittable] {
 
         for self.sliceF(1) {
             box = match it.bounding_box() {
-                Some($aabb) -> AABB.surrounding_box(box, aabb)
+                Some($aabb) -> AABB.surrounding_box(&box, &aabb)
                 None -> {
                     return None
                     AABB(default, default)
@@ -139,9 +139,9 @@ quick_sort :: (arr: []^Hittable, cmp: fn (^Hittable, ^Hittable) -> int) {
         }
 
         idx := 0
-        pivot := arr[arr.length - 1]
+        pivot := *arr[arr.length - 1]
         for i in 0..arr.length-1 {
-            if cmp(arr[i], pivot) > 0 {
+            if cmp(*arr[i], pivot) > 0 {
                 (*arr[idx], *arr[i]) = (*arr[i], *arr[idx])
                 idx += 1
             }
@@ -188,7 +188,7 @@ box_compare_z :: (a: ^Hittable, b: ^Hittable) -> int {
 impl BhvNode {
     create :: (l: []^Hittable) -> BhvNode {
         compare_funcs := [box_compare_x, box_compare_y, box_compare_z]
-        quick_sort(l, compare_funcs[int(global_random.random_real() * 3)])
+        quick_sort(l, *compare_funcs[int(global_random.random_real() * 3)])
 
         left, right : ^Hittable, ^Hittable = if l.length == 1 {
             (cast l[0], cast l[0])
@@ -204,7 +204,7 @@ impl BhvNode {
         }
 
         aabb := match (left.bounding_box(), right.bounding_box()) {
-            (Some($a), Some($b)) -> AABB.surrounding_box(a, b)
+            (Some($a), Some($b)) -> AABB.surrounding_box(&a, &b)
             $_ -> {
                 io.println("no bounding box in BhvNode constructor")
                 AABB(default, default)
@@ -387,7 +387,7 @@ Box :: struct {
 impl Box {
     create :: (p0: vec3, p1: vec3, mat: ^Material) -> Box {
         arr := Array[^Hittable].create(6)
-        create_faces(p0, p1, mat, arr)
+        create_faces(p0, p1, mat, &arr)
         return Box(p0, p1, arr)
     }
 

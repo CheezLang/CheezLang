@@ -156,7 +156,7 @@ format_into :: (result: &String, text: string, args: []^any = []) {
 
 format :: (text: string, args: []^any = []) -> String {
     result := String.empty()
-    format_into(result, text, args)
+    format_into(&result, text, args)
     return result
 }
 

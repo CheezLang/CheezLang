@@ -139,7 +139,7 @@ impl Console {
                 } else if completions.get_length() > 1 {
                     to_complete := text.sub_string(0, cast data.CursorPos)
                     add_entry(MessageType.Command, fmt.format("?{}", [to_complete]))
-                    for c in completions {
+                    for c in &completions {
                         add_entry(MessageType.Log, fmt.format(" {}{}", [to_complete, c.slice()]))
                     }
                 }
@@ -191,7 +191,7 @@ impl Console {
     render :: (&Self) {
         {
             initial_size := ImGui.ImVec2(520, 600)
-            ImGui.SetNextWindowSize(initial_size, ImGui.ImGuiCond_.FirstUseEver)
+            ImGui.SetNextWindowSize(&initial_size, ImGui.ImGuiCond_.FirstUseEver)
         }
 
         if force_focus then ImGui.SetNextWindowFocus()
@@ -203,10 +203,10 @@ impl Console {
         { // text area
             footer_height_to_reserve := ImGui.GetStyle().ItemSpacing.y + ImGui.GetFrameHeightWithSpacing() // 1 separator, 1 input text
             size := ImGui.ImVec2(0, -footer_height_to_reserve)
-            ImGui.BeginChildStr("ScrollingRegion", size, false, ImGui.ImGuiWindowFlags_.HorizontalScrollbar)
+            ImGui.BeginChildStr("ScrollingRegion", &size, false, ImGui.ImGuiWindowFlags_.HorizontalScrollbar)
 
             line_spacing := ImGui.ImVec2(4,1)
-            ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.ItemSpacing, line_spacing)
+            ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.ItemSpacing, &line_spacing)
             for i in 0 .. items.count() {
                 item := &items.at(i)
 
@@ -216,7 +216,7 @@ impl Console {
                     MessageType.Command -> ImGui.ImVec4(1, 0.8, 0.6, 1), true
                     _ -> ImGui.ImVec4(1, 1, 1, 1), false
                 }
-                if has_color then ImGui.PushStyleColorVec(ImGui.ImGuiCol_.Text, color)
+                if has_color then ImGui.PushStyleColorVec(ImGui.ImGuiCol_.Text, &color)
                 ImGui.Text(item.message.as_cstring())
                 if has_color then ImGui.PopStyleColor()
             }
@@ -246,7 +246,7 @@ impl Console {
         reclaim_focus := false
 
         padding := ImGui.ImVec2(7, 3)
-        ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.FramePadding, padding)
+        ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.FramePadding, &padding)
         if ImGui.InputText("Input", m_buffer.data, cast m_buffer.length, input_flags, auto_complete_callback, ^self) {
             text := string(cast m_buffer.data, cast C.strlen(m_buffer.data))
             text = text.trim()

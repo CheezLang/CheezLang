@@ -13,7 +13,7 @@ Main :: () {
     for 0..1000 {
         carry := 0
         for i in 0 ..= leftmost_digit {
-            d := digits[i]
+            d := *digits[i]
             d = d * 2 + carry
             digits[i] = d % 10
             carry = d / 10

@@ -28,9 +28,9 @@ Main :: () {
     len := res.get_length()
     result := res.slice()
     for 0..len/2 {
-        (a, b) := (result[it], result[len-it-1])
-        result[len-it-1] = a
-        result[it] = b
+        (a, b) := (*result[it], *result[len-it-1])
+        *result[len-it-1] = a
+        *result[it] = b
     }
 
     // print first 10 digits

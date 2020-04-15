@@ -1676,7 +1676,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateDerefExpr(AstDereferenceExpr de, bool deref)
         {
-            if (de.Beginning?.line == 149)
+            if (de.Beginning?.line == 123)
             {
 
             }
@@ -2150,6 +2150,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var type = expr.Left.Type;
             var value = GenerateExpression(expr.Left, false);
 
+            //switch (type)
+            //{
+
+            //}
+
             while (type is PointerType p)
             {
                 type = p.TargetType;
@@ -2508,6 +2513,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             if (deref)
                 v = builder.CreateLoad(v, "");
+                //v = Deref(v, expr.Type);
 
             return v;
         }

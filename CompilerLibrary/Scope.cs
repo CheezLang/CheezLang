@@ -222,8 +222,6 @@ namespace Cheez
                 foreach (var func in mForExtensions)
                 {
                     var paramType = func.Parameters[0].Type;
-                    if (paramType is ReferenceType r)
-                        paramType = r.TargetType;
                     if (CheezType.TypesMatch(paramType, type))
                         result.Add(func);
                 }

@@ -81,7 +81,7 @@ pathtracer2 :: () {
         0.0,
         vec3.mag(cam_pos - lookat))
 
-    world := scenes[scene](cam)
+    world := scenes[scene](&cam)
 
     for 0..(get_time_milliseconds()%100) {
         global_random.next_double()
@@ -162,8 +162,8 @@ render_loop :: (context: ^RenderContext) {
             for s in 0..samples {
                 u := (real(px) + context.random.random_real()) / real(width)
                 v := (real(height - py - 1) + context.random.random_real()) / real(height)
-                r := context.cam.get_ray(u, v, context.random)
-                col += color(r, context.world, context.random)
+                r := context.cam.get_ray(u, v, &context.random)
+                col += color(r, context.world, &context.random)
             }
 
             col /= real(samples)
@@ -186,9 +186,9 @@ render_loop :: (context: ^RenderContext) {
 }
 
 color :: (r: Ray, world: ^Hittable, random: &Random, depth: int = 0) -> vec3 {
-    return match world.hit(r, 0.001, 1000000.0, random) {
+    return match world.hit(&r, 0.001, 1000000.0, random) {
         Some($hit) -> {
-            match hit.m.scatter(r, hit, random) {
+            match hit.m.scatter(&r, &hit, random) {
                 Scatter.ColorReflection($m) if depth < max_depth -> color(m.scattered, world, random, depth + 1) * m.att
                 Scatter.Reflection($ray) if depth < max_depth -> color(ray, world, random, depth + 1)
                 Scatter.Color($col) -> col
@@ -444,8 +444,8 @@ cornell_box :: (cam: &Camera) -> ^Hittable {
     // list.add(FlipNormals.create(create_object(Hittable, XYRect(  0, 555,   0, 555, 555, white))))  // back
 
     // objects
-    Box.create_faces(vec3(130, 0, 65), vec3(295, 165, 230), white, list)
-    Box.create_faces(vec3(265, 0, 295), vec3(430, 330, 460), white, list)
+    Box.create_faces(vec3(130, 0, 65), vec3(295, 165, 230), white, &list)
+    Box.create_faces(vec3(265, 0, 295), vec3(430, 330, 460), white, &list)
 
     if use_bhv {
         bhv := BhvNode.create(list.slice())

@@ -41,7 +41,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
 
         AstArrayType($node) -> {
             assert("AstArray", node.typ != null)
-            if node.count != null and !validate_node(*node.count, error_handler) {
+            if node.count != null and !validate_node(&*node.count, error_handler) {
                 return false
             }
             if !validate_node(node.target, error_handler) {
@@ -74,8 +74,8 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
         AstBlock($node) -> {
             assert("AstBlock", node.typ != null)
 
-            for child in node.children {
-                if !validate_node(**child, error_handler) {
+            for child in &node.children {
+                if !validate_node(&**child, error_handler) {
                     return false
                 }
             }
@@ -87,10 +87,10 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
 
         AstBreak($node) -> {
             assert("AstBreak", node.typ != null)
-            if node.label != null and !validate_node(*node.label, error_handler) {
+            if node.label != null and !validate_node(&*node.label, error_handler) {
                 return false
             }
-            if node.value_expr != null and !validate_node(*node.value_expr, error_handler) {
+            if node.value_expr != null and !validate_node(&*node.value_expr, error_handler) {
                 return false
             }
         }
@@ -102,8 +102,8 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
                 return false
             }
 
-            for arg in node.arguments {
-                if !validate_node(**arg, error_handler) {
+            for arg in &node.arguments {
+                if !validate_node(&**arg, error_handler) {
                     return false
                 }
             }
@@ -112,7 +112,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
         AstCast($node) -> {
             assert("AstCast", node.typ != null)
 
-            if node.type_expr != null and !validate_node(*node.type_expr, error_handler) {
+            if node.type_expr != null and !validate_node(&*node.type_expr, error_handler) {
                 return false
             }
 
@@ -125,7 +125,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             assert("AstConstDecl", node.typ == @type_info(void))
             assert("AstConstDecl", node.var_type != null)
 
-            if node.type_expr != null and !validate_node(*node.type_expr, error_handler) {
+            if node.type_expr != null and !validate_node(&*node.type_expr, error_handler) {
                 return false
             }
 
@@ -136,7 +136,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
 
         AstContinue($node) -> {
             assert("AstContinue", node.typ != null)
-            if node.label != null and !validate_node(*node.label, error_handler) {
+            if node.label != null and !validate_node(&*node.label, error_handler) {
                 return false
             }
         }
@@ -145,11 +145,11 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             assert("AstDecl", node.typ == @type_info(void))
             assert("AstDecl", node.var_type != null)
 
-            if node.type_expr != null and !validate_node(*node.type_expr, error_handler) {
+            if node.type_expr != null and !validate_node(&*node.type_expr, error_handler) {
                 return false
             }
 
-            if node.value_expr != null and !validate_node(*node.value_expr, error_handler) {
+            if node.value_expr != null and !validate_node(&*node.value_expr, error_handler) {
                 return false
             }
         }
@@ -163,7 +163,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
 
         AstDot($node) -> {
             assert("AstDot", node.typ != null)
-            if node.sub != null and !validate_node(*node.sub, error_handler) {
+            if node.sub != null and !validate_node(&*node.sub, error_handler) {
                 return false
             }
         }
@@ -175,7 +175,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
 
             // @todo: type of node is function type
 
-            if node.body != null and !validate_node(*node.body, error_handler) {
+            if node.body != null and !validate_node(&*node.body, error_handler) {
                 return false
             }
         }
@@ -192,7 +192,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             if !validate_node(node.true_case, error_handler) {
                 return false
             }
-            if node.false_case != null and !validate_node(*node.false_case, error_handler) {
+            if node.false_case != null and !validate_node(&*node.false_case, error_handler) {
                 return false
             }
         }
@@ -203,8 +203,8 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
                 return false
             }
 
-            for arg in node.arguments {
-                if !validate_node(**arg, error_handler) {
+            for arg in &node.arguments {
+                if !validate_node(&**arg, error_handler) {
                     return false
                 }
             }
@@ -228,7 +228,7 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
 
         AstReturn($node) -> {
             assert("AstReturn", node.typ != null)
-            if node.value_expr != null and !validate_node(*node.value_expr, error_handler) {
+            if node.value_expr != null and !validate_node(&*node.value_expr, error_handler) {
                 return false
             }
         }
@@ -239,8 +239,8 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
 
         AstStruct($node) -> {
             assert("AstStruct", node.typ != null)
-            for child in node.children {
-                if !validate_node(**child, error_handler) {
+            for child in &node.children {
+                if !validate_node(&**child, error_handler) {
                     return false
                 }
             }

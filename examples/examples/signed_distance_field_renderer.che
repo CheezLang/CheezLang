@@ -603,7 +603,7 @@ renderImage :: (film: &Film) {
         backgroundDistance = 15
     )
 
-    film.trigger(camera, raymarcher)
+    film.trigger(&camera, &raymarcher)
 }
 
 Main :: () {
@@ -620,7 +620,7 @@ Main :: () {
     film := Film(width, height, imageArr.slice(), antiAliasingSteps)
 
     start := get_time_milliseconds()
-    renderImage(film)
+    renderImage(&film)
     end := get_time_milliseconds()
     dur := (cast(double) end - start) / 1000.0
 

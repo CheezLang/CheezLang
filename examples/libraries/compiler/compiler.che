@@ -293,7 +293,7 @@ impl Compiler {
         ))
         comp.get().error_handler.text_provider = ^comp.get()
         comp.get().global_scope = comp.get().new_scope()
-        comp.get().define_builtin_types(*comp.get().global_scope)
+        comp.get().define_builtin_types(&*comp.get().global_scope)
 
         comp.get().string_sources_file = match fs.get_full_path("d:\dev\CheezLang\gen\int\string_sources.che") {
             Ok($path) -> path
@@ -369,7 +369,7 @@ impl Compiler {
         string_sources.append_string(content)
         fs.append_file(string_sources_file.slice(), content)
 
-        lexer := Lexer.from_string(content, string_database)
+        lexer := Lexer.from_string(content, &string_database)
         lexer.get().location = string_location
         lexer.get().offset = string_location.byte_index
         string_location.byte_index = string_sources.get_length()
@@ -568,7 +568,7 @@ impl Compiler {
 
 impl Compiler {
     start_compilation :: (&Self) {
-        for threads {
+        for &threads {
             it.start()
         }
     }
@@ -602,7 +602,7 @@ impl Compiler {
     wait_for_threads :: (&Self) {
         handles := mem.alloc_raw(HANDLE, cast threads.get_length())
 
-        for threads {
+        for &threads {
             handles[it_index] = it.data.handle
         }
         WaitForMultipleObjects(cast threads.get_length(), handles, 1, INFINITE)
@@ -618,7 +618,7 @@ impl Compiler {
     }
 
     find_free_fiber :: (&Self) -> ^FiberContext {
-        for f in fibers {
+        for f in &fibers {
             if f.job == null and f.thread == -1 {
                 return *f
             }
@@ -716,7 +716,7 @@ impl Compiler {
         // cancel all fibers
         self.lock()
         defer self.release()
-        for fib in waiting_fibers {
+        for fib in &waiting_fibers {
             if fib.job != null {
                 fib.job.cancelled = true
                 fib.fiber.resume()

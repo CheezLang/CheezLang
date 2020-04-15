@@ -289,7 +289,7 @@ impl ThreadPool {
 impl Drop for ThreadPool {
     drop :: (&Self) {
         data.running = false
-        for data.threads {
+        for &data.threads {
             it.join()
         }
     }

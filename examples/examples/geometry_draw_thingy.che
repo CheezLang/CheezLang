@@ -303,7 +303,7 @@ impl Game for MyGame {
                 selectedNode = temp_shape.next_node(vCursor)
             } else if pge.get_key(Key.F5).pressed {
                 for i in 0..shapes.get_length() {
-                    selectedNode = shapes[i].hit_node(vCursor)
+                    selectedNode = (*shapes[i]).hit_node(vCursor)
                     if selectedNode != null then break
                 }
             }
@@ -325,8 +325,8 @@ impl Game for MyGame {
             }
         }
 
-        for shapes {
-            it.draw(self)
+        for &shapes {
+            (*it).draw(self)
         }
 
         // draw grid

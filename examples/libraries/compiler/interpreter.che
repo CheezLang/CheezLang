@@ -60,7 +60,7 @@ CBCDebugInfo :: struct {
 impl CBCDebugInfo {
     get_location_for_ip :: (&Self, ip: int) -> Location {
         i := 0
-        for self.locations {
+        for &self.locations {
             if it.count == 0 then continue
             i += it.count
             if i > ip {

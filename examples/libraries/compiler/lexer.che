@@ -236,78 +236,78 @@ impl Lexer {
         }
 
         match curr, next {
-            '<', '-' -> simple_token(token, TokenType.ReverseArrow,   curr_len + next_len, 2)
-            '-', '>' -> simple_token(token, TokenType.Arrow,          curr_len + next_len, 2)
-            '=', '>' -> simple_token(token, TokenType.DoubleArrow,    curr_len + next_len, 2)
-            '=', '=' -> simple_token(token, TokenType.DoubleEqual,    curr_len + next_len, 2)
-            '!', '=' -> simple_token(token, TokenType.NotEqual,       curr_len + next_len, 2)
-            '<', '=' -> simple_token(token, TokenType.LessEqual,      curr_len + next_len, 2)
-            '<', '<' -> simple_token(token, TokenType.LessLess,       curr_len + next_len, 2)
-            '>', '=' -> simple_token(token, TokenType.GreaterEqual,   curr_len + next_len, 2)
-            '+', '=' -> simple_token(token, TokenType.AddEq,          curr_len + next_len, 2)
-            '-', '=' -> simple_token(token, TokenType.SubEq,          curr_len + next_len, 2)
-            '*', '=' -> simple_token(token, TokenType.MulEq,          curr_len + next_len, 2)
-            '/', '=' -> simple_token(token, TokenType.DivEq,          curr_len + next_len, 2)
-            '%', '=' -> simple_token(token, TokenType.ModEq,          curr_len + next_len, 2)
-            '.', '.' if next2 == '=' -> simple_token(token, TokenType.PeriodPeriodEq, curr_len + next_len + next_len2, 3)
-            '.', '.' -> simple_token(token, TokenType.PeriodPeriod,   curr_len + next_len, 2)
-            ':', _   -> simple_token(token, TokenType.Colon,          curr_len, 1)
-            ';', _   -> simple_token(token, TokenType.Semicolon,      curr_len, 1)
-            '.', _   -> simple_token(token, TokenType.Period,         curr_len, 1)
-            '=', _   -> simple_token(token, TokenType.Equal,          curr_len, 1)
-            '(', _   -> simple_token(token, TokenType.OpenParen,      curr_len, 1)
-            ')', _   -> simple_token(token, TokenType.ClosingParen,   curr_len, 1)
-            '{', _   -> simple_token(token, TokenType.OpenBrace,      curr_len, 1)
-            '}', _   -> simple_token(token, TokenType.ClosingBrace,   curr_len, 1)
-            '[', _   -> simple_token(token, TokenType.OpenBracket,    curr_len, 1)
-            ']', _   -> simple_token(token, TokenType.ClosingBracket, curr_len, 1)
-            ',', _   -> simple_token(token, TokenType.Comma,          curr_len, 1)
-            '&', _   -> simple_token(token, TokenType.Ampersand,      curr_len, 1)
-            '^', _   -> simple_token(token, TokenType.Hat,            curr_len, 1)
-            '*', _   -> simple_token(token, TokenType.Asterisk,       curr_len, 1)
-            '/', _   -> simple_token(token, TokenType.ForwardSlash,   curr_len, 1)
-            '+', _   -> simple_token(token, TokenType.Plus,           curr_len, 1)
-            '%', _   -> simple_token(token, TokenType.Percent,        curr_len, 1)
-            '-', _   -> simple_token(token, TokenType.Minus,          curr_len, 1)
-            '<', _   -> simple_token(token, TokenType.Less,           curr_len, 1)
-            '>', _   -> simple_token(token, TokenType.Greater,        curr_len, 1)
-            '!', _   -> simple_token(token, TokenType.Bang,           curr_len, 1)
-            '|', _   -> simple_token(token, TokenType.Pipe,           curr_len, 1)
+            '<', '-' -> simple_token(&token, TokenType.ReverseArrow,   curr_len + next_len, 2)
+            '-', '>' -> simple_token(&token, TokenType.Arrow,          curr_len + next_len, 2)
+            '=', '>' -> simple_token(&token, TokenType.DoubleArrow,    curr_len + next_len, 2)
+            '=', '=' -> simple_token(&token, TokenType.DoubleEqual,    curr_len + next_len, 2)
+            '!', '=' -> simple_token(&token, TokenType.NotEqual,       curr_len + next_len, 2)
+            '<', '=' -> simple_token(&token, TokenType.LessEqual,      curr_len + next_len, 2)
+            '<', '<' -> simple_token(&token, TokenType.LessLess,       curr_len + next_len, 2)
+            '>', '=' -> simple_token(&token, TokenType.GreaterEqual,   curr_len + next_len, 2)
+            '+', '=' -> simple_token(&token, TokenType.AddEq,          curr_len + next_len, 2)
+            '-', '=' -> simple_token(&token, TokenType.SubEq,          curr_len + next_len, 2)
+            '*', '=' -> simple_token(&token, TokenType.MulEq,          curr_len + next_len, 2)
+            '/', '=' -> simple_token(&token, TokenType.DivEq,          curr_len + next_len, 2)
+            '%', '=' -> simple_token(&token, TokenType.ModEq,          curr_len + next_len, 2)
+            '.', '.' if next2 == '=' -> simple_token(&token, TokenType.PeriodPeriodEq, curr_len + next_len + next_len2, 3)
+            '.', '.' -> simple_token(&token, TokenType.PeriodPeriod,   curr_len + next_len, 2)
+            ':', _   -> simple_token(&token, TokenType.Colon,          curr_len, 1)
+            ';', _   -> simple_token(&token, TokenType.Semicolon,      curr_len, 1)
+            '.', _   -> simple_token(&token, TokenType.Period,         curr_len, 1)
+            '=', _   -> simple_token(&token, TokenType.Equal,          curr_len, 1)
+            '(', _   -> simple_token(&token, TokenType.OpenParen,      curr_len, 1)
+            ')', _   -> simple_token(&token, TokenType.ClosingParen,   curr_len, 1)
+            '{', _   -> simple_token(&token, TokenType.OpenBrace,      curr_len, 1)
+            '}', _   -> simple_token(&token, TokenType.ClosingBrace,   curr_len, 1)
+            '[', _   -> simple_token(&token, TokenType.OpenBracket,    curr_len, 1)
+            ']', _   -> simple_token(&token, TokenType.ClosingBracket, curr_len, 1)
+            ',', _   -> simple_token(&token, TokenType.Comma,          curr_len, 1)
+            '&', _   -> simple_token(&token, TokenType.Ampersand,      curr_len, 1)
+            '^', _   -> simple_token(&token, TokenType.Hat,            curr_len, 1)
+            '*', _   -> simple_token(&token, TokenType.Asterisk,       curr_len, 1)
+            '/', _   -> simple_token(&token, TokenType.ForwardSlash,   curr_len, 1)
+            '+', _   -> simple_token(&token, TokenType.Plus,           curr_len, 1)
+            '%', _   -> simple_token(&token, TokenType.Percent,        curr_len, 1)
+            '-', _   -> simple_token(&token, TokenType.Minus,          curr_len, 1)
+            '<', _   -> simple_token(&token, TokenType.Less,           curr_len, 1)
+            '>', _   -> simple_token(&token, TokenType.Greater,        curr_len, 1)
+            '!', _   -> simple_token(&token, TokenType.Bang,           curr_len, 1)
+            '|', _   -> simple_token(&token, TokenType.Pipe,           curr_len, 1)
 
             '"', _  -> {
-                parse_string_literal(token, TokenType.StringLiteral, '"')
-                parse_suffix(token)
+                parse_string_literal(&token, TokenType.StringLiteral, '"')
+                parse_suffix(&token)
             }
             '`'', _ -> {
-                parse_string_literal(token, TokenType.CharLiteral, '`'')
-                parse_suffix(token)
+                parse_string_literal(&token, TokenType.CharLiteral, '`'')
+                parse_suffix(&token)
             }
 
             // identifiers and keywords
             '$', _ -> {
                 location.byte_index += curr_len
                 location.column += 1
-                parse_identifier(token, TokenType.DollarIdentifier)
+                parse_identifier(&token, TokenType.DollarIdentifier)
             }
             '#', _ ->  {
                 location.byte_index += curr_len
                 location.column += 1
-                parse_identifier(token, TokenType.HashIdentifier)
+                parse_identifier(&token, TokenType.HashIdentifier)
             }
             '@', _ ->  {
                 location.byte_index += curr_len
                 location.column += 1
-                parse_identifier(token, TokenType.AtSignIdentifier)
+                parse_identifier(&token, TokenType.AtSignIdentifier)
             }
             $x, _ if is_ident_begin(x) -> {
-                parse_identifier(token, TokenType.Identifier)
-                check_keywords(token)
+                parse_identifier(&token, TokenType.Identifier)
+                check_keywords(&token)
             }
 
             // number literal
             $x, _ if is_digit(x) -> {
-                parse_number_literal(token)
-                parse_suffix(token)
+                parse_number_literal(&token)
+                parse_suffix(&token)
             }
 
             _, _ -> {

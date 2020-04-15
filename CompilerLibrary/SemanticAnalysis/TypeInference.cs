@@ -4344,17 +4344,24 @@ namespace Cheez
             bool deref = false;
             if (expr.Left.Type is ReferenceType r)
             {
-                expr.Left = Deref(expr.Left, context);
+                //expr.Left = Deref(expr.Left, context);
                 subType = r.TargetType;
                 deref = true;
+
+                if (subType is PointerType p)
+                {
+                    expr.Left = Deref(expr.Left, context);
+                    subType = p.TargetType;
+                }
             }
-            
-            while (expr.Left.Type is PointerType p)
-            // else if (expr.Left.Type is PointerType p)
+
+            //while (expr.Left.Type is PointerType p)
+            else if (expr.Left.Type is PointerType p)
             {
-                                var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
-                newLeft.AttachTo(expr.Left);
-                expr.Left = InferType(newLeft, p.TargetType);
+                //var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
+                //newLeft.AttachTo(expr.Left);
+                //expr.Left = InferType(newLeft, p.TargetType);
+                //expr.Left = Deref(expr.Left, context, derefPointer: true);
                 subType = p.TargetType;
                 deref = true;
                 //var newLeft = new AstDereferenceExpr(expr.Left, expr.Left.Location);
@@ -4371,15 +4378,14 @@ namespace Cheez
                         var name = expr.Right.Name;
                         if (name == "bytes")
                         {
-                            // if (deref) expr.Left = Deref(expr.Left, context);
+                            if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = SliceType.GetSliceType(IntType.GetIntType(1, false));
                             return expr;
                         }
                         if (name == "ascii")
                         {
-                            // if (deref) expr.Left = Deref(expr.Left, context);
+                            if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = SliceType.GetSliceType(CharType.GetCharType(1));
-                            //expr.Type = CheezType.Void;
                             return expr;
                         }
                         return GetImplFunctions(expr, subType, expr.Right.Name, context);
@@ -4404,6 +4410,7 @@ namespace Cheez
                             return expr;
                         }
 
+                        if (deref) expr.Left = Deref(expr.Left, context);
                         expr.Type = mem.AssociatedTypeExpr.Value as CheezType;
                         expr.SetFlag(ExprFlags.IsLValue, true);
                         break;
@@ -4415,6 +4422,7 @@ namespace Cheez
                         var memberIndex = tuple.Members.IndexOf(m => m.name == memName);
                         if (memberIndex >= 0)
                         {
+                            if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = tuple.Members[memberIndex].type;
                             expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
                             return expr;
@@ -4429,11 +4437,13 @@ namespace Cheez
                         var name = expr.Right.Name;
                         if (name == "data")
                         {
+                            if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = slice.ToPointerType();
                             return expr;
                         }
                         if (name == "length")
                         {
+                            if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = IntType.GetIntType(8, true);
                             return expr;
                         }
@@ -4445,12 +4455,14 @@ namespace Cheez
                         var name = expr.Right.Name;
                         if (name == "data")
                         {
+                            if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = arr.ToPointerType();
                             expr.SetFlag(ExprFlags.IsLValue, true);
                             return expr;
                         }
                         if (name == "length")
                         {
+                            if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = IntType.GetIntType(8, true);
                             return expr;
                         }
@@ -4497,6 +4509,7 @@ namespace Cheez
                             }
                         }
 
+                        if (deref) expr.Left = Deref(expr.Left, context);
                         expr.Type = member.Type;
 
                         expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
@@ -4537,6 +4550,7 @@ namespace Cheez
                                 // break;
                             }
 
+                            if (deref) expr.Left = Deref(expr.Left, context);
                             expr.Type = mem.Type;
                             expr.SetFlag(ExprFlags.IsLValue, expr.Left.GetFlag(ExprFlags.IsLValue));
                             return expr;
@@ -5563,7 +5577,7 @@ namespace Cheez
                 a.Expr = HandleReference(a.Expr, p.Type, context);
                 a.Type = a.Expr.Type;
 
-                a.Expr = CheckType(a.Expr, p.Type, $"Type of argument ({a.Type}) does not match type of parameter ({p.Type})");
+                a.Expr = CheckType(a.Expr, p.Type, $"Type of argument '{a.Type}' does not match type of parameter '{p.Type}'");
             }
 
             expr.Declaration = instance;
@@ -5625,8 +5639,8 @@ namespace Cheez
                 }
                 else
                 {
-                    arg.Expr = HandleReference(arg.Expr, type, context);
-                    arg.Expr = CheckType(arg.Expr, type, $"Type of argument ({arg.Expr.Type}) does not match type of parameter ({type})");
+                    //arg.Expr = HandleReference(arg.Expr, type, context);
+                    arg.Expr = CheckType(arg.Expr, type, $"Type of argument '{arg.Expr.Type}' does not match type of parameter '{type}'");
                     arg.Type = arg.Expr.Type;
                 }
             }
@@ -6172,7 +6186,7 @@ namespace Cheez
             return expr;
         }
 
-        private AstExpression Deref(AstExpression expr, TypeInferenceContext context)
+        private AstExpression Deref(AstExpression expr, TypeInferenceContext context, bool derefPointer = true)
         {
             if (expr.Type is ReferenceType)
             {
@@ -6186,17 +6200,17 @@ namespace Cheez
                 else
                     return InferTypeHelper(deref, null, context);
             }
-            //if (expr.Type is PointerType)
-            //{
-            //    var deref = new AstDereferenceExpr(expr, expr);
-            //    deref.AttachTo(expr);
-            //    deref.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
+            if (derefPointer && expr.Type is PointerType)
+            {
+                var deref = new AstDereferenceExpr(expr, expr);
+                deref.AttachTo(expr);
+                deref.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
 
-            //    if (context == null)
-            //        return InferType(deref, null);
-            //    else
-            //        return InferTypeHelper(deref, null, context);
-            //}
+                if (context == null)
+                    return InferType(deref, null);
+                else
+                    return InferTypeHelper(deref, null, context);
+            }
             return expr;
         }
 
@@ -6291,7 +6305,7 @@ namespace Cheez
                 return InferType(cast, to);
             }
 
-            ReportError(expr, errorMsg ?? $"Can't implicitly convert {from} to {to}");
+            ReportError(expr, errorMsg ?? $"Can't implicitly convert '{from}' to '{to}'");
             return expr;
         }
 
@@ -6329,31 +6343,31 @@ namespace Cheez
             }
             else
             {
-                // var left = expr.Left;
-                // switch (func.SelfType, expr.Left.Type)
-                // {
-                //     case (SelfParamType.Reference, PointerType p):
-                //         left = Ref(Deref(expr.Left, context), context);
+                var left = expr.Left;
+                switch (func.SelfType, expr.Left.Type)
+                {
+                    case (SelfParamType.Reference, PointerType p):
+                        left = Ref(Deref(expr.Left, context, derefPointer: true), context);
 
-                //         break;
-                //     case (SelfParamType.Reference, ReferenceType r):
-                //         break;
-                //     case (SelfParamType.Reference, CheezType _):
-                //         left = Ref(expr.Left, context);
-                //         break;
-                        
-                //     case (SelfParamType.Value, PointerType p):
-                //         left = Deref(expr.Left, context);
-                //         break;
-                //     case (SelfParamType.Value, ReferenceType r):
-                //         left = Deref(expr.Left, context);
-                //         break;
-                //     case (SelfParamType.Value, CheezType _):
-                //         break;
-                // }
+                        break;
+                    case (SelfParamType.Reference, ReferenceType r):
+                        break;
+                    case (SelfParamType.Reference, CheezType _):
+                        left = Ref(expr.Left, context);
+                        break;
 
-                // var ufc = new AstUfcFuncExpr(left, func, expr);
-                var ufc = new AstUfcFuncExpr(expr.Left, func, expr);
+                    case (SelfParamType.Value, PointerType p):
+                        left = Deref(expr.Left, context, derefPointer: true);
+                        break;
+                    case (SelfParamType.Value, ReferenceType r):
+                        left = Deref(expr.Left, context);
+                        break;
+                    case (SelfParamType.Value, CheezType _):
+                        break;
+                }
+
+                var ufc = new AstUfcFuncExpr(left, func, expr);
+                //var ufc = new AstUfcFuncExpr(expr.Left, func, expr);
                 ufc.Replace(expr);
                 ufc.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
                 return InferTypeHelper(ufc, null, context);

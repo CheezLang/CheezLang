@@ -103,7 +103,7 @@ impl EntityInspector {
                     ImGui.Text("Are you sure you want to remove this component?")
                     ImGui.Separator()
                     button_size := ImGui.ImVec2(120, 0)
-                    if ImGui.Button("Yes", button_size) {
+                    if ImGui.Button("Yes", &button_size) {
                         ImGui.CloseCurrentPopup()
                         // remove current component
                         // move all following components one slot down
@@ -115,7 +115,7 @@ impl EntityInspector {
                         io.println(last.count())
                     }
                     ImGui.SameLine()
-                    if ImGui.Button("Cancel", button_size) {
+                    if ImGui.Button("Cancel", &button_size) {
                         ImGui.CloseCurrentPopup()
                     }
                     ImGui.EndPopup()
@@ -126,23 +126,23 @@ impl EntityInspector {
 
             { // add component
                 button_size := ImGui.ImVec2(0, 0)
-                if ImGui.Button("Add Component", button_size) {
+                if ImGui.Button("Add Component", &button_size) {
                     ImGui.OpenPopup("Add Component")
                 }
 
                 popup_size := ImGui.ImVec2(500, 440)
-                ImGui.SetNextWindowSize(popup_size, ImGui.ImGuiCond_.FirstUseEver)
+                ImGui.SetNextWindowSize(&popup_size, ImGui.ImGuiCond_.FirstUseEver)
                 if ImGui.BeginPopupModal("Add Component") {
                     { // list of components
                         list_size := ImGui.ImVec2(150, 0)
                         list_entry_size := ImGui.ImVec2(0, 0)
-                        ImGui.BeginChildStr("component list", list_size, true)
-                        for bi in component_infos {
+                        ImGui.BeginChildStr("component list", &list_size, true)
+                        for bi in &component_infos {
                             ImGui.PushIDInt(i32(it_index))
                             type_info := cast(^TypeInfoStruct) bi.type_info
                             name := String.from_string(type_info.name)
 
-                            if ImGui.Selectable(name.as_cstring(), i32(it_index) == current_selected_component, 0, list_entry_size) {
+                            if ImGui.Selectable(name.as_cstring(), i32(it_index) == current_selected_component, 0, &list_entry_size) {
                                 current_selected_component = i32(it_index)
                             }
                             ImGui.PopID()
@@ -155,7 +155,7 @@ impl EntityInspector {
                     ImGui.BeginGroup()
                     { // info about selected component
                         info_size := ImGui.ImVec2(0, -ImGui.GetFrameHeightWithSpacing())
-                        ImGui.BeginChildStr("component info", info_size, true)
+                        ImGui.BeginChildStr("component info", &info_size, true)
 
                         if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
                             bi := &component_infos.access(current_selected_component)
@@ -166,7 +166,7 @@ impl EntityInspector {
                             for(by_ref=true) m in @cast(^TypeInfoStruct, bi.type_info).members {
                                 name := String.with_capacity(m.name.bytes.length + 1)
                                 name.append_string(m.name)
-                                imgui_input_property(name, util.pointer_add(@ptr_of_trait(bi.value), m.offset), m.typ, ^m)
+                                imgui_input_property(&name, util.pointer_add(@ptr_of_trait(bi.value), m.offset), m.typ, ^m)
                             }
                         }
 
@@ -175,7 +175,7 @@ impl EntityInspector {
 
                     { // ok - cancel - buttons
                         button_size := ImGui.ImVec2(120, 0)
-                        if ImGui.Button("Ok", button_size) {
+                        if ImGui.Button("Ok", &button_size) {
                             if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
                                 // add component
                                 bi := &component_infos[int(current_selected_component)]
@@ -187,7 +187,7 @@ impl EntityInspector {
                             ImGui.CloseCurrentPopup()
                         }
                         ImGui.SameLine()
-                        if ImGui.Button("Cancel", button_size) {
+                        if ImGui.Button("Cancel", &button_size) {
                             ImGui.CloseCurrentPopup()
                         }
                     }
@@ -219,7 +219,7 @@ impl EntityInspector {
                 name := String.with_capacity(m.name.bytes.length + 1)
                 name.append_string(m.name)
                 ptr := util.pointer_add(@ptr_of_trait(component.get()), m.offset)
-                imgui_input_property(name, ptr, m.typ, ^m)
+                imgui_input_property(&name, ptr, m.typ, ^m)
             }
         }
 
@@ -340,7 +340,7 @@ impl EntityInspector {
                         str := String.empty()
                         str.appendf("{}", i)
                         ImGui.PushIDPtr(^v)
-                        imgui_input_property(str, ^v, @type_info(vec3), m)
+                        imgui_input_property(&str, ^v, @type_info(vec3), m)
                         ImGui.SameLine()
 
                         if ImGui.SmallButton("-") {

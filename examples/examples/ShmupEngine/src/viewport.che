@@ -120,7 +120,7 @@ impl GameView for GameWindow {
         data := engine.current_mode_data()
 
         if data != null {
-            for(reverse=true) layer in data.layer_stack {
+            for(reverse=true) layer in &data.layer_stack {
                 if layer.on_key_event(int(key), int(action)) {
                     break
                 }
@@ -174,11 +174,11 @@ impl GameView for GameWindow {
         find_camera :: (data: ^EngineModeData) -> Option[Ref[Camera]] {
             // io.println("Searching for camera...")
             if data != null {
-                for layer in data.layer_stack {
+                for layer in &data.layer_stack {
                     match layer.get_base() {
                         EntityLayer($el) -> {
-                            for entity in el.entities {
-                                for component in entity.get().components {
+                            for entity in &el.entities {
+                                for component in &entity.get().components {
                                     match &component.get() {
                                         Camera($cam) -> {
                                             io.formatln("Found on entity ({}) {}", [entity.get().id, entity.get().name.slice()])
@@ -213,7 +213,7 @@ impl GameView for GameWindow {
 
         data := engine.current_mode_data()
         if data != null {
-            for layer in data.layer_stack {
+            for layer in &data.layer_stack {
                 renderer.push_render_target()
                 renderer.clear()
                 // renderer.clear(vec4(1, 0 ,0, 0))
@@ -244,7 +244,7 @@ impl GameView for GameWindow {
 
             // uv0     = ImGui.ImVec2(0, 1)
             // uv1     = ImGui.ImVec2(1, 0)
-            ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, size, uv0, uv1, tint, border)
+            ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, &size, &uv0, &uv1, &tint, &border)
             // ImGui.Image(cast tmp_frame_buff1.get().render_texture.get().id, size, uv0, uv1, tint, border)
         }
         ImGui.End()
@@ -268,13 +268,13 @@ impl GameView for GameWindow {
                 viewport.set_scale(1)
                 viewport.update_projection_matrix(vec3(cam.get().size.x, cam.get().size.y))
                 view_proj := viewport.projection_matrix * viewport.view_matrix
-                renderer.begin_scene(view_proj, viewport.size.xy())
+                renderer.begin_scene(&view_proj, viewport.size.xy())
                 renderer.set_projection_inv(viewport.view_projection_inv)
             }
 
             None -> {
                 viewport.update_projection_matrix(world_size)
-                renderer.begin_scene(viewport.projection_matrix, viewport.size.xy())
+                renderer.begin_scene(&viewport.projection_matrix, viewport.size.xy())
             }
         }
 
@@ -446,7 +446,7 @@ impl GameView for EditorWindow {
             uv1     := ImGui.ImVec2(size.x / viewport.size_max.x, 0)
             tint    := ImGui.ImVec4(1, 1, 1, 1)
             border  := ImGui.ImVec4(0, 0, 0, 0)
-            ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, size, uv0, uv1, tint, border)
+            ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, &size, &uv0, &uv1, &tint, &border)
         }
         ImGui.End()
 
@@ -455,7 +455,7 @@ impl GameView for EditorWindow {
 
         // render mode
         view_projection := viewport.projection_matrix * viewport.view_matrix
-        renderer.begin_scene(view_projection, viewport.size.xy())
+        renderer.begin_scene(&view_projection, viewport.size.xy())
 
         return true
     }
@@ -637,7 +637,7 @@ impl GameView for GameAndEditorWindow {
 
         // render mode
         view_projection := viewport.projection_matrix * viewport.view_matrix
-        renderer.begin_scene(view_projection, viewport.size.xy())
+        renderer.begin_scene(&view_projection, viewport.size.xy())
 
         return false
     }
@@ -654,7 +654,7 @@ impl GameView for GameAndEditorWindow {
             uv1     := ImGui.ImVec2(size.x / viewport.size_max.x, 0)
             tint    := ImGui.ImVec4(1, 1, 1, 1)
             border  := ImGui.ImVec4(0, 0, 0, 0)
-            ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, size, uv0, uv1, tint, border)
+            ImGui.Image(cast viewport.frame_buffer.get().render_texture.get().id, &size, &uv0, &uv1, &tint, &border)
         }
         ImGui.End()
     }
@@ -760,7 +760,7 @@ impl Viewport {
     }
 
     project_dir :: (&Self, projection_matrix: mat4, pos: vec2) -> vec2 {
-        clip_pos    := mat4.mulv(projection_matrix, vec3(pos.x, pos.y, 0), 0)
+        clip_pos    := mat4.mulv(&projection_matrix, vec3(pos.x, pos.y, 0), 0)
         ndc_pos     := clip_pos * vec3(1, -1) * 0.5f
         screen_pos  := ndc_pos * size
         return screen_pos.xy()

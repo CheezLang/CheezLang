@@ -256,7 +256,7 @@ impl ShmupEngine {
         editor_windows[2].get().base().enabled = false
         active_editor_window = editor_windows[0].clone()
 
-        for window in editor_windows {
+        for window in &editor_windows {
             if !window.get().initialize(viewport_size_max) {
             }
         }
@@ -289,7 +289,7 @@ impl ShmupEngine {
                         match engine.current_mode {
                             EngineMode.Edit($data) -> {
                                 engine.console.get().log("Loading layers")
-                                for layer in data.layer_stack {
+                                for layer in &data.layer_stack {
                                     layer.load_from_file(file.slice())
                                 }
                             }
@@ -310,7 +310,7 @@ impl ShmupEngine {
                             EngineMode.Edit($data) -> {
                                 engine.console.get().log("Saving layers")
                                 file_content := String.empty()
-                                for layer in data.layer_stack {
+                                for layer in &data.layer_stack {
                                     layer.save_to_file(&file_content)
                                 }
                                 fs.write_file(file_name.slice(), file_content.slice())
@@ -348,7 +348,7 @@ impl ShmupEngine {
         self.register_builtin_components()
         
         { // initialize edit mode
-            for layer in edit_mode.layer_stack {
+            for layer in &edit_mode.layer_stack {
                 if !layer.init() {
                     io.formatln("[ERROR] Failed to initialize layer {} when starting engine", [it_index])
                 }
@@ -433,9 +433,9 @@ impl ShmupEngine {
         render_editor()
 
         update(delta_time)
-        for window in editor_windows {
+        for window in &editor_windows {
             if !window.get().base().enabled then continue
-            window.get().render(world_size, *renderer)
+            window.get().render(world_size, &*renderer)
         }
 
         // end frame
@@ -443,7 +443,7 @@ impl ShmupEngine {
     }
 
     update :: (&Self, dt: f32) {
-        for window in editor_windows {
+        for window in &editor_windows {
             if !window.get().base().enabled then continue
             window.get().update(world_size)
 
@@ -467,7 +467,7 @@ impl ShmupEngine {
                     current_mode = EngineMode.Pause(data)
                 }
 
-                for layer in data.layer_stack {
+                for layer in &data.layer_stack {
                     layer.update(dt)
                 }
             }
@@ -551,7 +551,7 @@ impl ShmupEngine {
 
         { // values
             if ImGui.Begin("Values") {
-                for p in properties_to_edit {
+                for p in &properties_to_edit {
                     match p {
                         PropertyEdit.EditInt($e) -> {
                             ImGui.InputScalar(e.name, ImGui.ImGuiDataType_.S64, e.ptr)
@@ -581,9 +581,9 @@ impl ShmupEngine {
         if data != null {
             { // layers
                 if ImGui.Begin("Layers") {
-                    for l in data.layer_stack {
+                    for l in &data.layer_stack {
                         list_entry_size := ImGui.ImVec2(0, 0)
-                        if ImGui.Selectable(l.get_name(), current_layer_index == i32(it_index), 0, list_entry_size) {
+                        if ImGui.Selectable(l.get_name(), current_layer_index == i32(it_index), 0, &list_entry_size) {
                             current_layer_index = i32(it_index)
                         }
                     }
@@ -592,7 +592,7 @@ impl ShmupEngine {
             }
 
             if current_layer_index >= 0 and current_layer_index < i32(data.layer_stack.get_length()) {
-                hierarchy.set_layer(data.layer_stack[int(current_layer_index)])
+                hierarchy.set_layer(*data.layer_stack[int(current_layer_index)])
             }
         }
 
@@ -618,19 +618,19 @@ impl ShmupEngine {
 
     push_entity_layer :: (&Self, name: String, callbacks: ^EntityLayerCallbacks) {
         ptr := mem.alloc(EntityLayer)
-        *ptr = EntityLayer.new(name, callbacks, self, *Input.new())
+        *ptr = EntityLayer.new(name, callbacks, self, &*Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
     push_lighting_layer :: (&Self, name: String) {
         ptr := mem.alloc(LightingLayer)
-        *ptr = LightingLayer.new(name, self, *Input.new())
+        *ptr = LightingLayer.new(name, self, &*Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
     push_debug_layer :: (&Self, name: String) {
         ptr := mem.alloc(DebugLayer)
-        *ptr = DebugLayer.new(name, self, *Input.new())
+        *ptr = DebugLayer.new(name, self, &*Input.new())
         self.current_mode_data().layer_stack.add(ptr)
     }
 
@@ -666,7 +666,7 @@ impl ShmupEngine {
             Command.DeleteEntity($id) -> {
                 match hierarchy.get_layer() {
                     Some($layer) -> match &*layer {
-                        EntityLayer($layer) -> match layer.find_entity(id) {
+                        EntityLayer($layer) -> match layer.find_entity(*id) {
                             Some($entity) -> {
                                 T :: @typeof(layer)
                                 entity.get().dead = true
@@ -714,14 +714,14 @@ impl ShmupEngine {
 
         { // initialize play mode
             play_mode.layer_stack.clear()
-            for l in edit_mode.layer_stack {
+            for l in &edit_mode.layer_stack {
                 match l.clone() {
                     Some($l) -> {
                         play_mode.layer_stack.add(l)
                     }
                 }
             }
-            for layer in play_mode.layer_stack {
+            for layer in &play_mode.layer_stack {
                 if !layer.init() {
                     io.formatln("[ERROR] Failed to initialize layer {} when entering play mode", [it_index])
                 }
@@ -731,7 +731,7 @@ impl ShmupEngine {
 
         set_editor_background_color(editor_play_mode_color)
 
-        for window in editor_windows {
+        for window in &editor_windows {
             if !window.get().base().enabled then continue
             window.get().on_event(Event.EngineModeChanged(current_mode))
         }
@@ -750,7 +750,7 @@ impl ShmupEngine {
 
         set_editor_background_color(editor_edit_mode_color)
 
-        for window in editor_windows {
+        for window in &editor_windows {
             if !window.get().base().enabled then continue
             window.get().on_event(Event.EngineModeChanged(current_mode))
         }
@@ -849,8 +849,8 @@ create_dock_space :: () {
         pivot := ImGui.ImVec2(0, 0)
 
         viewport := ImGui.GetMainViewport()
-        ImGui.SetNextWindowPos(viewport.Pos, 0, pivot)
-        ImGui.SetNextWindowSize(viewport.Size)
+        ImGui.SetNextWindowPos(&viewport.Pos, 0, &pivot)
+        ImGui.SetNextWindowSize(&viewport.Size)
         ImGui.SetNextWindowViewport(viewport.ID)
         ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowRounding, 0.0f)
         ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowBorderSize, 0.0f)
@@ -877,7 +877,7 @@ create_dock_space :: () {
     // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
     // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
     window_padding := ImGui.ImVec2(0.0f, 0.0f)
-    ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.WindowPadding, window_padding)
+    ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.WindowPadding, &window_padding)
 
     open := true
     ImGui.Begin("DockSpace Demo", ^open, window_flags)
@@ -890,7 +890,7 @@ create_dock_space :: () {
     if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.DockingEnable)) != 0 {
         dockspace_id := ImGui.GetID("MyDockSpace")
         size := ImGui.ImVec2(0.0f, 0.0f)
-        ImGui.DockSpace(dockspace_id, size, dockspace_flags)
+        ImGui.DockSpace(dockspace_id, &size, dockspace_flags)
     } else {
         @assert(false)
     }

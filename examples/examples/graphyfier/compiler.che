@@ -45,7 +45,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
 
     error_handler := ConsoleErrorHandler.new(null)
     string_db := StringDatabase.new()
-    lexer := Lexer.from_string(expr, string_db)
+    lexer := Lexer.from_string(expr, &string_db)
     error_handler.text_provider = ^lexer.get()
 
     op_stack := Array[OpCode].create()
@@ -65,7 +65,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
             match tok.typ {
                 .Plus -> {
                     p := get_precedence(OpCode.Add)
-                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                    while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
                         if int(op_stack.peek_last()) == int(OpCode.Grp) then break
                         res.add(op_stack.pop())
                     }
@@ -73,7 +73,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 }
                 .Minus -> {
                     p := get_precedence(OpCode.Sub)
-                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                    while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
                         if int(op_stack.peek_last()) == int(OpCode.Grp) then break
                         res.add(op_stack.pop())
                     }
@@ -81,7 +81,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 }
                 .Asterisk -> {
                     p := get_precedence(OpCode.Mul)
-                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                    while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
                         if int(op_stack.peek_last()) == int(OpCode.Grp) then break
                         res.add(op_stack.pop())
                     }
@@ -89,7 +89,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 }
                 .ForwardSlash -> {
                     p := get_precedence(OpCode.Div)
-                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                    while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
                         if int(op_stack.peek_last()) == int(OpCode.Grp) then break
                         res.add(op_stack.pop())
                     }
@@ -97,7 +97,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 }
                 .Hat -> {
                     p := get_precedence(OpCode.Pow)
-                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) <= p {
+                    while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) <= p {
                         if int(op_stack.peek_last()) == int(OpCode.Grp) then break
                         res.add(op_stack.pop())
                     }
@@ -105,7 +105,7 @@ compile :: (expr: string, var_name_allocator: ^Allocator) -> Option[Array[OpCode
                 }
                 .ClosingParen -> {
                     p := get_precedence(OpCode.Grp)
-                    while op_stack.get_length() > 0 and get_precedence(op_stack.peek_last()) > p {
+                    while op_stack.get_length() > 0 and get_precedence(*op_stack.peek_last()) > p {
                         res.add(op_stack.pop())
                     }
                     if op_stack.get_length() == 0 {

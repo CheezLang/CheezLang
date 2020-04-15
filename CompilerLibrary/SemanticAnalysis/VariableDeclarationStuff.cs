@@ -53,7 +53,7 @@ namespace Cheez
 
                 if (v.TypeExpr != null)
                 {
-                    v.Initializer = HandleReference(v.Initializer, v.Type, null);
+                    //v.Initializer = HandleReference(v.Initializer, v.Type, null);
                     v.Initializer = CheckType(v.Initializer, v.Type);
                 }
                 else if (v.Initializer is AstAddressOfExpr add && add.Reference)
@@ -62,7 +62,7 @@ namespace Cheez
                 }
                 else if (v.Initializer.Type is ReferenceType)
                 {
-                    v.Initializer = Deref(v.Initializer, null);
+                    //v.Initializer = Deref(v.Initializer, null);
                 }
             }
 

@@ -312,7 +312,7 @@ impl AstCloner {
             // }
 
             $node -> {
-                dump := dump_ast(*node)
+                dump := dump_ast(&*node)
                 g_logger.log("[ERROR] clone ast: node type not implemented: {}`n", [dump])
                 null
             }

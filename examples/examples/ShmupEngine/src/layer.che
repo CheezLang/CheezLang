@@ -253,7 +253,7 @@ impl EntityLayer {
     }
 
     find_entity :: (&Self, id: int) -> Option[Rc[Entity]] {
-        for e in entities {
+        for e in &entities {
             if e.get().id == id {
                 return Some(e.clone())
             }
@@ -349,7 +349,7 @@ impl Layer for EntityLayer {
             return false
         }
 
-        for e in entities {
+        for e in &entities {
             e.get().init()
         }
 
@@ -396,7 +396,7 @@ impl Layer for EntityLayer {
         // io.println(fmt.format("{}", [engine.game_viewport.projection_matrix]))
         callbacks.render(renderer)
 
-        for e in entities {
+        for e in &entities {
             if e.get().active {
                 e.get().render(engine, renderer)
             }
@@ -424,7 +424,7 @@ impl Layer for EntityLayer {
         result := mem.alloc(EntityLayer)
         *result = EntityLayer.new(name.clone(), callbacks, engine, input)
 
-        for e in entities {
+        for e in &entities {
             e_new := result.clone_entity_with_id(e.clone(), e.get().id)
         }
 
@@ -443,7 +443,7 @@ impl Layer for EntityLayer {
         e_new.get().size        = template.get().size
         e_new.get().angle       = template.get().angle
 
-        for template.get().components {
+        for &template.get().components {
             template := &it.get()
             component := self.new_component2(template.get_type_info(), @vtable_of_trait(template))
             C.memcpy(@ptr_of_trait(component.get()), @ptr_of_trait(template), cast template.get_type_info().size)
@@ -458,7 +458,7 @@ impl Layer for EntityLayer {
         string_db := StringDatabase.new()
 
         lexer := try_with(
-            Lexer.from_file(file, string_db)
+            Lexer.from_file(file, &string_db)
             {
                 io.println("Failed to read layer from file")
                 return
@@ -474,11 +474,11 @@ impl Layer for EntityLayer {
 
                 // find max entity id
                 self.next_entity_id = 0
-                for e in self.entities {
+                for e in &self.entities {
                     self.next_entity_id = max(self.next_entity_id, e.get().id + 1)
 
                     // set entity pointer in components
-                    for c in e.get().components {
+                    for c in &e.get().components {
                         c.get().base().entity = ^e.get()
                     }
                 }
@@ -491,7 +491,7 @@ impl Layer for EntityLayer {
 
     save_to_file :: (&Self, file: &String) {
         file.append_string("[`n")
-        for rc in entities {
+        for rc in &entities {
             e := &rc.get()
             file.append_string("    {`n")
             file.appendf("        id          = {}`n", e.id)
@@ -503,7 +503,7 @@ impl Layer for EntityLayer {
             file.appendf("        angle       = {}`n", e.angle)
             file.appendf("        components  = [`n", ())
 
-            for cd in e.components {
+            for cd in &e.components {
                 file.appendf("            {} ``{`n", @cast(^TypeInfoStruct, cd.get().get_type_info()).name)
                 cd.get().serialize(file)
                 file.append_string("            }`n")

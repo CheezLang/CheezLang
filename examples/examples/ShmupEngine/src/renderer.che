@@ -323,14 +323,14 @@ impl Renderer {
         line_shader.set_uniform_mat4("m_projection", projection_matrix)
         point_light_shader.bind()
         point_light_shader.set_uniform_mat4("m_projection", projection_matrix)
-        point_light_shader.set_uniform_mat4("m_projection_inv", projection_inv)
+        point_light_shader.set_uniform_mat4("m_projection_inv", &projection_inv)
         area_light_shader.bind()
         area_light_shader.set_uniform_mat4("m_projection", projection_matrix)
     }
 
     set_projection_inv :: (&Self, projection_inv: mat4) {
         point_light_shader.bind()
-        point_light_shader.set_uniform_mat4("m_projection_inv", projection_inv)
+        point_light_shader.set_uniform_mat4("m_projection_inv", &projection_inv)
     }
 
     push_proj   :: (&Self, projection_matrix: &mat4) {
@@ -340,7 +340,7 @@ impl Renderer {
 
     pop_proj    :: (&Self) {
         projection_matrix = projection_matrix_stack.pop()
-        set_projection_matrix(projection_matrix)
+        set_projection_matrix(&projection_matrix)
     }
 
     begin_scene :: (&Self, projection_matrix: &mat4, viewport_size: vec2) {
@@ -692,7 +692,7 @@ impl Renderer {
     draw_text :: (&Self, pos: vec3, text: string, color: vec3 = vec3(1, 1, 1), size: float = 16) {
         pos : ImGui.ImVec2 = pos.into()
         font := ImGui.GetFont()
-        ImGui.GetForegroundDrawList().AddText_2(font, size, pos, color.to_color32(), text)
+        ImGui.GetForegroundDrawList().AddText_2(font, size, &pos, color.to_color32(), text)
     }
 
     flush_quads :: (&Self) {
@@ -708,7 +708,7 @@ impl Renderer {
         quad_va.bind()
         quad_va.index_buffer.bind()
 
-        for tex in used_textures {
+        for tex in &used_textures {
             tex.get().bind(it_index)
         }
 

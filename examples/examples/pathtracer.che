@@ -167,7 +167,7 @@ impl PathTracer {
         nearest : Option[HitInfo] = None
 
         for n in 0..objects.get_length() {
-            hit := objects[n].intersect(ray)
+            hit := (*objects[n]).intersect(ray)
             nearest = match (nearest, hit) {
                 (None, Some($hit)) -> Some(hit)
                 (Some($n), Some($hit)) if hit.distance < n.distance -> Some(hit)
@@ -448,7 +448,7 @@ impl Game for PathTracer {
                         continue
                     }
 
-                    sample := thread_datas[thread_id].samples
+                    sample := (*thread_datas[thread_id]).samples
 
                     if sample > 0 {
                         // calculate color of pixel by taking the average of the color
@@ -467,7 +467,7 @@ impl Game for PathTracer {
 
             tds : []^RenderContext = thread_datas
             for tds {
-                if it.active {
+                if (*it).active {
                     size := it.max - it.min
                     col  := Pixel(255, 255, 255)
 
@@ -488,7 +488,7 @@ impl Game for PathTracer {
             total_seconds := int(total_t + 0.1)
             s := String.format("{}, FPS: {}, Samples: {}, Total: {}s, Samples per second: {}", 
                 (if paused then "paused" else "running", fps, thread_datas[0].samples, total_seconds, sps))
-            pge.set_window_title(s)
+            pge.set_window_title(&s)
 
             sample_t -= 1
         }
@@ -514,7 +514,7 @@ impl Game for PathTracer {
                     continue
                 }
 
-                sample := thread_datas[thread_id].samples
+                sample := (*thread_datas[thread_id]).samples
 
                 if sample > 0 {
                     // calculate color of pixel by taking the average of the color

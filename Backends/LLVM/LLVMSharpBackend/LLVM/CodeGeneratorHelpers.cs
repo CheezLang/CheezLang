@@ -1574,5 +1574,16 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         {
             return builder.CreateExtractValue(value, 1, "type_info");
         }
+
+        private LLVMValueRef Deref(LLVMValueRef value, CheezType type)
+        {
+            return type switch
+            {
+                PointerType p when p.IsFatPointer => throw new Exception(),
+                ReferenceType p when p.IsFatReference => throw new Exception(),
+
+                _ => builder.CreateLoad(value, "")
+            };
+        }
     }
 }

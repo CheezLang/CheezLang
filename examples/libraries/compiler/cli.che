@@ -169,7 +169,7 @@ find_tokens_of_type :: (options: ^CommandFindToken) {
     string_db := StringDatabase.new()
     lexer := try_with(
         Lexer.from_file(
-            options.file.slice(), string_db),
+            options.file.slice(), &string_db),
             {
                 io.printfln("Failed to open file '{}'", options.file.slice())
                 return

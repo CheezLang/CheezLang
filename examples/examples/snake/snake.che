@@ -148,7 +148,7 @@ Main :: () {
 
         if timer >= timePerStep {
             timer -= timePerStep
-            action_to_dir(dir, action)
+            action_to_dir(&dir, action)
             action = Direction.None
 
             // move snake
@@ -171,7 +171,7 @@ Main :: () {
             if head.pos.y >= yMax { head.pos.y = 0 }
 
             if head.pos == target.pos {
-                snake.add(snake[snake.length - 1])
+                snake.add(*snake[snake.length - 1])
                 target.pos.x = rand.next_int(max=xMax)
                 target.pos.y = rand.next_int(max=yMax)
             }

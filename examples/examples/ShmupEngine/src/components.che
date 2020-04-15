@@ -121,10 +121,10 @@ impl Component for PathFollowComponent {
         next    := (curr + 1) % points.get_length()
         pos_01  := pos % 1.0f
 
-        p0 := points[curr]
-        p3 := points[next]
-        d0 := dirs[curr]
-        d1 := dirs[next]
+        p0 := *points[curr]
+        p3 := *points[next]
+        d0 := *dirs[curr]
+        d1 := *dirs[next]
         p1 := p0 + d0
         p2 := p3 - d1
 
@@ -212,12 +212,12 @@ impl Component for PathFollowComponent {
         stream.appendf("                loops  = {}`n", loops)
         stream.appendf("                pos    = {}`n", pos)
         stream.append_string("                points = [`n")
-        for p in points {
+        for p in &points {
             stream.appendf("                    ``{x={}, y={}, z={}}`n", (p.x, p.y, p.z))
         }
         stream.append_string("                ]`n", )
         stream.append_string("                dirs = [`n")
-        for p in dirs {
+        for p in &dirs {
             stream.appendf("                    ``{x={}, y={}, z={}}`n", (p.x, p.y, p.z))
         }
         stream.append_string("                ]`n", )

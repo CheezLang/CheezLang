@@ -949,8 +949,8 @@ namespace Cheez.Visitors
         public override string VisitDerefExpr(AstDereferenceExpr deref, int data = 0)
         {
             if (deref.Reference)
-                return $"<<{deref.SubExpression.Accept(this)}";
-            return "<<" + deref.SubExpression.Accept(this);
+                return $"*{deref.SubExpression.Accept(this)}";
+            return "*" + deref.SubExpression.Accept(this);
         }
 
         public override string VisitArrayAccessExpr(AstArrayAccessExpr arr, int data = 0)
@@ -974,7 +974,7 @@ namespace Cheez.Visitors
 
         public override string VisitDotExpr(AstDotExpr dot, int data = 0)
         {
-            return $"{dot.Left?.Accept(this, 0)}.{dot.Right.Accept(this)}";
+            return $"({dot.Left?.Accept(this, 0)}).{dot.Right.Accept(this)}";
         }
 
         public override string VisitStructValueExpr(AstStructValueExpr str, int data = 0)

@@ -212,13 +212,13 @@ impl Equatable[String] for String {
 impl Equatable[string] for String {
     equal :: (&Self, other: &string) -> bool {
         str := self.slice()
-        return streq_string(str, other)
+        return streq_string(str, *other)
     }
 }
 
 impl Equatable[string] for string {
     equal :: (&Self, b: &string) -> bool {
-        return streq_string(self, b)
+        return streq_string(*self, *b)
     }
 }
 
@@ -312,7 +312,7 @@ impl String {
                         return
                     }
 
-                    args[argIndex].print(self, format)
+                    (*args[argIndex]).print(self, format)
                     argIndex += 1
                     formatSpecifier.length = 0
 

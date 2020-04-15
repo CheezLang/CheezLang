@@ -78,9 +78,9 @@ impl Hierarchy {
                 ImGui.DragFloat(str.as_cstring(), ^layer.uiae[it_index], 0.01f)
             }
 
-            for l in data.layer_stack {
+            for l in &data.layer_stack {
                 if l == ^layer then break
-                ImGui.PushIDPtr(l)
+                ImGui.PushIDPtr(*l)
                 defer ImGui.PopID()
 
                 ImGui.Text(l.get_name())
@@ -131,12 +131,12 @@ impl Hierarchy {
             ImGui.Separator()
 
             entity_index := current_entity_index
-            for e, i in layer.entities {
+            for e, i in &layer.entities {
                 ImGui.PushIDInt(i32(i))
                 ImGui.BeginGroup()
 
                 list_entry_size := ImGui.ImVec2(0, 0)
-                if ImGui.Selectable(e.get().name.as_cstring(), i32(i) == entity_index, 0, list_entry_size) {
+                if ImGui.Selectable(e.get().name.as_cstring(), i32(i) == entity_index, 0, &list_entry_size) {
                     entity_index = i32(i)
                 }
 
@@ -149,7 +149,7 @@ impl Hierarchy {
                     rmin := ImGui.GetItemRectMin()
                     rmax := ImGui.GetItemRectMax()
                     height := i32(rmax.y - rmin.y)
-                    if ImGui.IsMouseHoveringRect(rmin, rmax) {
+                    if ImGui.IsMouseHoveringRect(&rmin, &rmax) {
                         cursor_pos := POINT()
                         GetCursorPos(^cursor_pos)
 

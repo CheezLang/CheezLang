@@ -83,7 +83,7 @@ impl DebugAdapter {
             match handler.threads() {
                 Ok($arr) -> {
                     threads_json := Array[JsonValue].create()
-                    for thread in arr {
+                    for thread in &arr {
                         thread_json := Table[string, JsonValue].create(strings_equal)
                         thread_json["id"] = JsonValue.JsonNumber(cast(double) thread.id)
                         thread_json["name"] = JsonValue.JsonString(thread.name.clone())
@@ -213,7 +213,7 @@ impl DebugAdapter {
             match json {
                 Some($val) -> {
                     {
-                        request_pretty := serialize_json_value(val, pretty = true)
+                        request_pretty := serialize_json_value(&val, pretty = true)
                         g_logger.log("{}", [request_pretty], "-> (C) ")
                     }
                     request := val.to_map()
@@ -246,7 +246,7 @@ impl DebugAdapter {
                     _seq_counter += 1
 
                     response_obj := JsonValue.JsonObject(response)
-                    response_string := serialize_json_value(response_obj, pretty = true)
+                    response_string := serialize_json_value(&response_obj, pretty = true)
                     g_logger.log("{}", [response_string], "<- (R) ")
 
                     send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
@@ -318,7 +318,7 @@ impl DebugAdapter {
         _seq_counter += 1
 
         response_obj := JsonValue.JsonObject(response)
-        response_string := serialize_json_value(response_obj, pretty = true)
+        response_string := serialize_json_value(&response_obj, pretty = true)
         g_logger.log("{}", [response_string], "<- (E) ")
 
         send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])

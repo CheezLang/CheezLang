@@ -38,7 +38,7 @@ try :: (code: Code) #macro {
                 ErrorType :: @typeof(err)
 
                 if const @type_has_trait(ErrorType, Into[TargetType]) {
-                    ReturnType.Err(cast(TargetType) @typeof(err).into(err))
+                    ReturnType.Err(cast(TargetType) @typeof(err).into(&err))
                 } else {
                     ReturnType.Err(err)
                 }
@@ -307,14 +307,14 @@ impl(T: type, Size: int) [Size]T {
     }
 
     get_range :: (&Self, range: Range[int]) -> []T #operator("[]") {
-        result : []T = self
+        result : []T = *self
         result.data = cast int(result.data) + range.start * @sizeof(T)
         result.length = range.end - range.start
         return result
     }
 
     get_range_inclusive :: (&Self, range: RangeInclusive[int]) -> []T #operator("[]") {
-        result : []T = self
+        result : []T = *self
         result.data = cast int(result.data) + range.start * @sizeof(T)
         result.length = range.end - range.start + 1
         return result
@@ -322,28 +322,28 @@ impl(T: type, Size: int) [Size]T {
 
     get_range_to :: (&Self, range: RangeTo[int]) -> []T #operator("[]") {
         @assert(range.end >= 0 and range.end <= self.length)
-        result : []T = self
+        result : []T = *self
         result.length = range.end
         return result
     }
 
     get_range_to_incl :: (&Self, range: RangeToInclusive[int]) -> []T #operator("[]") {
         @assert(range.end >= 0 and range.end < self.length)
-        result : []T = self
+        result : []T = *self
         result.length = range.end + 1
         return result
     }
 
     get_range_from :: (&Self, range: RangeFrom[int]) -> []T #operator("[]") {
         @assert(range.start >= 0 and range.start <= self.length)
-        result : []T = self
+        result : []T = *self
         result.data = cast int(result.data) + range.start * @sizeof(T)
         result.length = self.length - range.start
         return result
     }
 
     get_range_full :: (&Self, range: RangeFull) -> []T #operator("[]") {
-        return cast([]T) self
+        return cast([]T) *self
     }
 }
 
@@ -386,10 +386,10 @@ for_extension_slice :: (arr: []$T, code: Code, reverse: bool = false, by_ref: bo
     while it_index := 0, it_index < arr.length, it_index += 1 {
         if const reverse {
             it_index_rev := arr.length - it_index - 1
-            it := if const by_ref then &arr[it_index_rev] else arr[it_index_rev]
+            it := if const by_ref then arr[it_index_rev] else *arr[it_index_rev]
             @insert(code, link=[it_index_rev], _break=break, _continue=continue)
         } else {
-            it := &if const by_ref then &arr[it_index] else arr[it_index]
+            it := if const by_ref then arr[it_index] else *arr[it_index]
             @insert(code, _break=break, _continue=continue)
         }
     }

@@ -20,26 +20,26 @@ format :: (format: ^any, args: []^any = []) {
 println :: (v: $T) {
     s := String.empty()
     s.appendf("{}`n", v)
-    print_string(s)
+    print_string(&s)
 }
 
 print :: (v: $T) {
     s := String.empty()
     s.appendf("{}", v)
-    print_string(s)
+    print_string(&s)
 }
 
 printf :: (format: string, args: $T) {
     s := String.empty()
     s.appendf(format, args)
-    print_string(s)
+    print_string(&s)
 }
 
 printfln :: (format: string, args: $T) {
     s := String.empty()
     s.appendf(format, args)
     s += '`n'
-    print_string(s)
+    print_string(&s)
 }
 
 ConsoleColor :: enum #copy #flags {

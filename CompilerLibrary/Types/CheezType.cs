@@ -136,6 +136,9 @@ namespace Cheez.Types
 
             switch (a, b)
             {
+                case (ReferenceType ra, ReferenceType rb): return TypesMatch(ra.TargetType, rb.TargetType);
+                case (PointerType ra, PointerType rb): return TypesMatch(ra.TargetType, rb.TargetType);
+
                 case (SliceType aa, SliceType bb): return TypesMatch(aa.TargetType, bb.TargetType);
                 case (ArrayType aa, ArrayType bb): return Workspace.CheezValuesMatch((null, aa.Length), (null, bb.Length)) && TypesMatch(aa.TargetType, bb.TargetType);
                 case (RangeType aa, RangeType bb): return TypesMatch(aa.TargetType, bb.TargetType);
@@ -197,7 +200,6 @@ namespace Cheez.Types
 
                         return true;
                     }
-
 
                 case (StructType bb, GenericStructType aa):
                     return TypesMatch(aa, bb);

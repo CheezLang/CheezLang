@@ -78,14 +78,14 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.begin_function(cbc_func)
 
         slot_index := 0
-        for(reverse=true) param in func.params {
+        for(reverse=true) param in &func.params {
             slot_index -= slots_for_size(param.var_type.size)
             variables[param.id] = slot_index
             cbc_func.debug_info.params.add(VariableInfo(param.id, param.name, slot_index, param.var_type))
         }
         cbc_func.parameter_slots = -slot_index
 
-        generate_expression(*func.body)
+        generate_expression(&*func.body)
         builder.set_location(func.body.location)
         builder.build_return_void()
 
@@ -153,7 +153,7 @@ impl CodeGenerator for ByteCodeGenerator {
                     // @todo: figure out if this is a local variable or a global
                     generate_expression(ass.value_expr)
                     builder.set_location(ass.location)
-                    builder.build_store_local(self.variables[decl.id], slots_for_size(ass.value_expr.typ.size))
+                    builder.build_store_local(*self.variables[decl.id], slots_for_size(ass.value_expr.typ.size))
                 }
                 
                 _ -> {
@@ -168,7 +168,7 @@ impl CodeGenerator for ByteCodeGenerator {
                         TypeInfoInt(_) -> {
                             // address
                             generate_expression(node.sub, deref = false)
-                            generate_expression(*node.index)
+                            generate_expression(&*node.index)
                             // @todo: cast index to i64
 
                             if self.build_range_checks {
@@ -209,7 +209,7 @@ impl CodeGenerator for ByteCodeGenerator {
                 member := dot.symbol.StructMember
                 
                 // struct ptr
-                generate_expression(*dot.sub, deref = false)
+                generate_expression(&*dot.sub, deref = false)
                 // @todo: deal with non l-values
                 builder.build_const_int(member.offset)
                 builder.build_add(.I64)
@@ -245,9 +245,9 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.build_push(slots_for_size(arr.typ.size))
         builder.build_load_address()
 
-        for val in arr.values {
+        for val in &arr.values {
             builder.build_dup(1)
-            generate_expression(**val)
+            generate_expression(&**val)
             builder.build_store(slots_for_size(val.typ.size))
 
             // increment pointer
@@ -266,7 +266,7 @@ impl CodeGenerator for ByteCodeGenerator {
         variables[decl.id] = index
 
         if decl.value_expr != null {
-            generate_expression(*decl.value_expr)
+            generate_expression(&*decl.value_expr)
             builder.build_store_local(index, slots_for_size(decl.var_type.size))
         }
     }
@@ -354,7 +354,7 @@ impl CodeGenerator for ByteCodeGenerator {
 
         // else case
         if iff.false_case != null {
-            generate_expression(*iff.false_case)
+            generate_expression(&*iff.false_case)
         } else {
             builder.set_location(iff.location)
             builder.build_const_int(0)
@@ -380,7 +380,7 @@ impl CodeGenerator for ByteCodeGenerator {
             TypeInfoArray($ti) -> match node.index.typ {
                 TypeInfoInt(_) -> {
                     generate_expression(node.sub, deref = false)
-                    generate_expression(*node.index)
+                    generate_expression(&*node.index)
                     // @todo: cast index to i64
 
                     if self.build_range_checks {
@@ -439,7 +439,7 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.set_location(ret.location)
 
         if ret.value_expr != null {
-            generate_expression(*ret.value_expr)
+            generate_expression(&*ret.value_expr)
             builder.set_location(ret.location)
             builder.build_return()
         } else {
@@ -466,7 +466,7 @@ impl CodeGenerator for ByteCodeGenerator {
                 member := dot.symbol.StructMember
                 
                 // struct ptr
-                generate_expression(*dot.sub, deref = false)
+                generate_expression(&*dot.sub, deref = false)
                 // @todo: deal with non l-values
                 builder.build_const_int(member.offset)
                 builder.build_add(.I64)
@@ -509,8 +509,8 @@ impl CodeGenerator for ByteCodeGenerator {
 
     generate_block :: (&Self, block: &AstBlock) {
         builder.set_location(block.location)
-        for child in block.children {
-            generate_expression(**child)
+        for child in &block.children {
+            generate_expression(&**child)
 
             // pop value if not last and type is not void
             if it_index < block.children.count() - 1 and child.typ != @type_info(void) {
@@ -599,24 +599,24 @@ impl CodeGenerator for ByteCodeGenerator {
 
         match call.function.value {
             .Function($func) -> {
-                for arg in call.arguments {
-                    generate_expression(**arg)
+                for arg in &call.arguments {
+                    generate_expression(&**arg)
                 }
                 builder.set_location(call.location)
                 builder.build_comp_call(call.ast_function)
             }
 
             .NativeFunc($func) -> {
-                for arg in call.arguments {
-                    generate_expression(**arg)
+                for arg in &call.arguments {
+                    generate_expression(&**arg)
                 }
                 builder.set_location(call.location)
                 builder.build_native_call(func)
             }
 
             .NativeFunc2($func) -> {
-                for arg in call.arguments {
-                    generate_expression(**arg)
+                for arg in &call.arguments {
+                    generate_expression(&**arg)
                 }
                 builder.set_location(call.location)
                 builder.build_native_call2(func.wrapper, func.func, NativeFunctionWrapper.slots_for_type(cast call.function.typ))
@@ -666,9 +666,9 @@ impl CodeGenerator for ByteCodeGenerator {
             .Decl($decl) -> match self.variables.get(decl.id) {
                 Some($index) -> {
                     if deref {
-                        builder.build_load_local(index, slots_for_size(decl.var_type.size))
+                        builder.build_load_local(*index, slots_for_size(decl.var_type.size))
                     } else {
-                        builder.build_address_of(index)
+                        builder.build_address_of(*index)
                     }
                 }
                 None -> {

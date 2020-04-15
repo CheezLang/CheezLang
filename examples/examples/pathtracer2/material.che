@@ -32,7 +32,7 @@ impl Material for Lambertian {
     scatter :: (&Self, r: &Ray, hit: &HitRecord, random: &Random) -> Scatter {
         target := hit.p + hit.n + random.random_in_unit_sphere()
         ray := Ray.from_to(hit.p, target)
-        color := albedo.value(0, 0, hit.p)
+        color := albedo.value(0, 0, &hit.p)
         return Scatter.ColorReflection(MaterialRecord(color, ray))
     }
 }
@@ -130,7 +130,7 @@ Isotropic :: struct {
 impl Material for Isotropic {
     scatter :: (&Self, r: &Ray, hit: &HitRecord, random: &Random) -> Scatter {
         return Scatter.ColorReflection(MaterialRecord(
-            att         = albedo.value(hit.u, hit.v, hit.p)
+            att         = albedo.value(hit.u, hit.v, &hit.p)
             scattered   = Ray.from_dir(hit.p, random.random_in_unit_sphere())
         ))
     }

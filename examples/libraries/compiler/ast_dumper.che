@@ -9,7 +9,7 @@ fmt :: import std.fmt
 
 dump_ast :: (node: &AstNode, recurse: bool = true) -> String {
     result := String.empty()
-    dump_ast_helper(result, node, recurse, 0)
+    dump_ast_helper(&result, node, recurse, 0)
     return result
 }
 
@@ -31,7 +31,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstArgument #{} ({})`n", [arg.id, arg.location])
             if recurse {
                 if arg.name != null then
-                    dump_ast_helper(result, *arg.name, recurse, indent + 1)
+                    dump_ast_helper(result, &*arg.name, recurse, indent + 1)
                 dump_ast_helper(result, arg.value_expr, recurse, indent + 1)
             }
         }
@@ -47,8 +47,8 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         AstArray($array) -> {
             fmt.format_into(result, "AstArray #{} ({})`n", [array.id, array.location])
             if recurse {
-                for val in array.values {
-                    dump_ast_helper(result, **val, recurse, indent + 1)
+                for val in &array.values {
+                    dump_ast_helper(result, &**val, recurse, indent + 1)
                 }
             }
         }
@@ -57,7 +57,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstArrayType #{} ({})`n", [array.id, array.location])
             if recurse {
                 if array.count != null then
-                    dump_ast_helper(result, *array.count, recurse, indent + 1)
+                    dump_ast_helper(result, &*array.count, recurse, indent + 1)
                 dump_ast_helper(result, array.target, recurse, indent + 1)
             }
         }
@@ -73,8 +73,8 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         AstBlock($block) -> {
             fmt.format_into(result, "AstBlock #{} ({})`n", [block.id, block.location])
             if recurse {
-                for child in block.children {
-                    dump_ast_helper(result, **child, recurse, indent + 1)
+                for child in &block.children {
+                    dump_ast_helper(result, &**child, recurse, indent + 1)
                 }
             }
         }
@@ -87,9 +87,9 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstBreak #{} ({})`n", [brake.id, brake.location])
             if recurse {
                 if brake.label != null then
-                    dump_ast_helper(result, *brake.label, recurse, indent + 1)
+                    dump_ast_helper(result, &*brake.label, recurse, indent + 1)
                 if brake.value_expr != null then
-                    dump_ast_helper(result, *brake.value_expr, recurse, indent + 1)
+                    dump_ast_helper(result, &*brake.value_expr, recurse, indent + 1)
             }
         }
 
@@ -97,8 +97,8 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstCall #{} ({})`n", [call.id, call.location])
             if recurse {
                 dump_ast_helper(result, call.function, recurse, indent + 1)
-                for arg in call.arguments {
-                    dump_ast_helper(result, **arg, recurse, indent + 1)
+                for arg in &call.arguments {
+                    dump_ast_helper(result, &**arg, recurse, indent + 1)
                 }
             }
         }
@@ -107,7 +107,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstCast #{} ({})`n", [cst.id, cst.location])
             if recurse {
                 if cst.type_expr != null then
-                    dump_ast_helper(result, *cst.type_expr, recurse, indent + 1)
+                    dump_ast_helper(result, &*cst.type_expr, recurse, indent + 1)
                 dump_ast_helper(result, cst.value_expr, recurse, indent + 1)
             }
         }
@@ -117,7 +117,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             if recurse {
                 dump_ast_helper(result, decl.pattern, recurse, indent + 1)
                 if decl.type_expr != null then
-                    dump_ast_helper(result, *decl.type_expr, recurse, indent + 1)
+                    dump_ast_helper(result, &*decl.type_expr, recurse, indent + 1)
                 dump_ast_helper(result, decl.value_expr, recurse, indent + 1)
             }
         }
@@ -126,7 +126,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstContinue #{} ({})`n", [cont.id, cont.location])
             if recurse {
                 if cont.label != null then
-                    dump_ast_helper(result, *cont.label, recurse, indent + 1)
+                    dump_ast_helper(result, &*cont.label, recurse, indent + 1)
             }
         }
 
@@ -134,11 +134,11 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstDecl #{} ({}) {}`n", [decl.id, decl.location, if decl.mutable then "mut" else ""])
             if recurse {
                 if decl.pattern != null then
-                    dump_ast_helper(result, *decl.pattern, recurse, indent + 1)
+                    dump_ast_helper(result, &*decl.pattern, recurse, indent + 1)
                 if decl.type_expr != null then
-                    dump_ast_helper(result, *decl.type_expr, recurse, indent + 1)
+                    dump_ast_helper(result, &*decl.type_expr, recurse, indent + 1)
                 if decl.value_expr != null then
-                    dump_ast_helper(result, *decl.value_expr, recurse, indent + 1)
+                    dump_ast_helper(result, &*decl.value_expr, recurse, indent + 1)
             }
         }
 
@@ -153,7 +153,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstDot #{} ({})`n", [dot.id, dot.location])
             if recurse {
                 if dot.sub != null then
-                    dump_ast_helper(result, *dot.sub, recurse, indent + 1)
+                    dump_ast_helper(result, &*dot.sub, recurse, indent + 1)
                 dump_ast_helper(result, dot.name, recurse, indent + 1)
             }
         }
@@ -161,8 +161,8 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         AstEnum($str) -> {
             fmt.format_into(result, "AstEnum #{} ({})`n", [str.id, str.location])
             if recurse {
-                for child in str.children {
-                    dump_ast_helper(result, **child, recurse, indent + 1)
+                for child in &str.children {
+                    dump_ast_helper(result, &**child, recurse, indent + 1)
                 }
             }
         }
@@ -171,9 +171,9 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstFor #{} ({})`n", [forr.id, forr.location])
             if recurse {
                 if forr.it_pattern != null then
-                    dump_ast_helper(result, *forr.it_pattern, recurse, indent + 1)
+                    dump_ast_helper(result, &*forr.it_pattern, recurse, indent + 1)
                 if forr.index_name != null then
-                    dump_ast_helper(result, *forr.index_name, recurse, indent + 1)
+                    dump_ast_helper(result, &*forr.index_name, recurse, indent + 1)
                 dump_ast_helper(result, forr.collection, recurse, indent + 1)
                 dump_ast_helper(result, forr.body, recurse, indent + 1)
             }
@@ -183,16 +183,16 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstFunction #{} ({})`n", [func.id, func.location])
             if recurse {
                 print("params:`n", indent + 1)
-                for param in func.params {
-                    dump_ast_helper(result, **param, recurse, indent + 2)
+                for param in &func.params {
+                    dump_ast_helper(result, &**param, recurse, indent + 2)
                 }
                 if func.return_type_expr != null {
                     print("return_type_expr:`n", indent + 1)
-                    dump_ast_helper(result, *func.return_type_expr, recurse, indent + 2)
+                    dump_ast_helper(result, &*func.return_type_expr, recurse, indent + 2)
                 }
                 if func.body != null {
                     print("body:`n", indent + 1)
-                    dump_ast_helper(result, *func.body, recurse, indent + 2)
+                    dump_ast_helper(result, &*func.body, recurse, indent + 2)
                 }
             }
         }
@@ -207,7 +207,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
                 dump_ast_helper(result, iff.condition, recurse, indent + 1)
                 dump_ast_helper(result, iff.true_case, recurse, indent + 1)
                 if iff.false_case != null then
-                    dump_ast_helper(result, *iff.false_case, recurse, indent + 1)
+                    dump_ast_helper(result, &*iff.false_case, recurse, indent + 1)
             }
         }
 
@@ -215,10 +215,10 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstImpl #{} ({})`n", [imp.id, imp.location])
             if recurse {
                 if imp.trait_expr != null then
-                    dump_ast_helper(result, *imp.trait_expr, recurse, indent + 1)
+                    dump_ast_helper(result, &*imp.trait_expr, recurse, indent + 1)
                 dump_ast_helper(result, imp.target_expr, recurse, indent + 1)
-                for child in imp.children {
-                    dump_ast_helper(result, **child, recurse, indent + 2)
+                for child in &imp.children {
+                    dump_ast_helper(result, &**child, recurse, indent + 2)
                 } 
             }
         }
@@ -234,8 +234,8 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstIndex #{} ({})`n", [node.id, node.location])
             if recurse {
                 dump_ast_helper(result, node.sub, recurse, indent + 1)
-                for arg in node.arguments {
-                    dump_ast_helper(result, **arg, recurse, indent + 1)
+                for arg in &node.arguments {
+                    dump_ast_helper(result, &**arg, recurse, indent + 1)
                 }
             }
         }
@@ -251,15 +251,15 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstMatch #{} ({})`n", [mat.id, mat.location])
             if recurse {
                 if mat.value_expr != null then
-                    dump_ast_helper(result, *mat.value_expr, recurse, indent + 1)
+                    dump_ast_helper(result, &*mat.value_expr, recurse, indent + 1)
                     
                 print("cases:`n", indent + 1)
-                for case in mat.cases {
+                for case in &mat.cases {
                     print("pattern:`n", indent + 2)
                     dump_ast_helper(result, case.pattern, recurse, indent + 3)
                     if case.condition != null {
                         print("condition:`n", indent + 2)
-                        dump_ast_helper(result, *case.condition, recurse, indent + 3)
+                        dump_ast_helper(result, &*case.condition, recurse, indent + 3)
                     }
                     print("body:`n", indent + 2)
                     dump_ast_helper(result, case.body, recurse, indent + 3)
@@ -278,8 +278,8 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         AstPoly($poly) -> {
             fmt.format_into(result, "AstPoly #{} ({})`n", [poly.id, poly.location])
             if recurse {
-                for param in poly.params {
-                    dump_ast_helper(result, **param, recurse, indent + 2)
+                for param in &poly.params {
+                    dump_ast_helper(result, &**param, recurse, indent + 2)
                 }
                 dump_ast_helper(result, poly.value_expr, recurse, indent + 1)
             }
@@ -289,7 +289,7 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstReturn #{} ({})`n", [ret.id, ret.location])
             if recurse {
                 if ret.value_expr != null then
-                    dump_ast_helper(result, *ret.value_expr, recurse, indent + 1)
+                    dump_ast_helper(result, &*ret.value_expr, recurse, indent + 1)
             }
         }
 
@@ -301,10 +301,10 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
             fmt.format_into(result, "AstStruct #{} ({})`n", [str.id, str.location])
             if recurse {
                 if str.trait_expr != null then
-                    dump_ast_helper(result, *str.trait_expr, recurse, indent + 2)
+                    dump_ast_helper(result, &*str.trait_expr, recurse, indent + 2)
                 print("children:", indent + 1)
-                for child in str.children {
-                    dump_ast_helper(result, **child, recurse, indent + 2)
+                for child in &str.children {
+                    dump_ast_helper(result, &**child, recurse, indent + 2)
                 }
             }
         }
@@ -312,8 +312,8 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         AstTrait($str) -> {
             fmt.format_into(result, "AstTrait #{} ({})`n", [str.id, str.location])
             if recurse {
-                for child in str.children {
-                    dump_ast_helper(result, **child, recurse, indent + 1)
+                for child in &str.children {
+                    dump_ast_helper(result, &**child, recurse, indent + 1)
                 }
             }
         }
@@ -321,8 +321,8 @@ dump_ast_helper :: (result: &String, node: &AstNode, recurse: bool, indent: int)
         AstTuple($tuple) -> {
             fmt.format_into(result, "AstTuple #{} ({})`n", [tuple.id, tuple.location])
             if recurse {
-                for val in tuple.values {
-                    dump_ast_helper(result, **val, recurse, indent + 1)
+                for val in &tuple.values {
+                    dump_ast_helper(result, &**val, recurse, indent + 1)
                 }
             }
         }

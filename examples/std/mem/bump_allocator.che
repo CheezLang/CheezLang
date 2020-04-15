@@ -18,7 +18,7 @@ BumpAllocator :: struct {
 
 impl Drop for BumpAllocator {
     drop :: (&Self) {
-        for buckets {
+        for &buckets {
             parent.free(it.memory.data)
         }
     }

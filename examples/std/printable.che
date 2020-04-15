@@ -22,7 +22,7 @@ impl Printable for () {
 
 impl Printable for string {
     print :: (&Self, str: &String, format: string) {
-        str.append_string(self)
+        str.append_string(*self)
     }
 }
 
@@ -40,7 +40,7 @@ impl Printable for char16 {
 
 impl Printable for char32 {
     print :: (&Self, str: &String, format: string) {
-        str.append_char(self)
+        str.append_char(*self)
     }
 }
 
@@ -125,7 +125,7 @@ impl(T: type) Printable for Option[T] if T: Printable {
         match self {
             Some($v) -> {
                 v_str := fmt.format("Some({})", [^v])
-                str.append(v_str)
+                str.append(&v_str)
             }
             None -> str.append_string("None")
         }
@@ -148,7 +148,7 @@ impl(T: type) Printable for Array[T] if T: Printable {
 impl(K: type, V: type) Printable for Table[K, V] if K: Printable, V: Printable {
     print :: (&Self, str: &String, format: string) {
         str += "{"
-        for v in *^self {
+        for v in self {
             if it_index > 0 {
                 str += ", "
             }
@@ -163,7 +163,7 @@ impl(K: type, V: type) Printable for Table[K, V] if K: Printable, V: Printable {
 impl(T: type) Printable for Box[T] {
     print :: (&Self, str: &String, format: string) {
         msg := fmt.format("Box({})", [_value])
-        str.append(msg)
+        str.append(&msg)
     }
 }
 

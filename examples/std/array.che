@@ -179,7 +179,7 @@ impl(T: type) Array[T] {
         pivot := data[to]
 
         for i in from..to {
-            if cmp(data[i], pivot) > 0 {
+            if cmp(&data[i], &pivot) > 0 {
                 (data[idx], data[i]) = (data[i], data[idx])
                 idx += 1
             }

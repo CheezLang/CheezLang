@@ -77,7 +77,7 @@ impl BufferLayout {
 
         { // calculate offsets and stride
             offset := 0
-            for e in arr {
+            for e in &arr {
                 size := e.get_size()
                 e.offset = offset
                 offset += int(size)
@@ -212,7 +212,7 @@ impl VertexArray {
         glBindVertexArray(vao)
         vb.bind()
 
-        for element in vb.layout.elements {
+        for element in &vb.layout.elements {
             glEnableVertexAttribArray(vertex_attrib_array_index)
             glVertexAttribPointer(
                 vertex_attrib_array_index

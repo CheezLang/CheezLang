@@ -494,7 +494,7 @@ impl CommandHandler for CheezDebugAdapter {
 
     set_breakpoints :: (&Self, arguments: DapSetBreakpoints) -> Result[(), String] {
         breaks := Array[Breakpoint].create()
-        for br in arguments.breakpoints {
+        for br in &arguments.breakpoints {
             breaks.add(Breakpoint(br.line))
         }
         debugger.get().breakpoints[arguments.source.path.slice()] = breaks
@@ -550,7 +550,7 @@ impl CommandHandler for CheezDebugAdapter {
         scopes_json := Array[DapScope].create()
 
         scopes := self.collect_scopes(frame_id)
-        for scope in scopes {
+        for scope in &scopes {
             self.add_variable_ref(scope.clone().change_type(VariableRef))
 
             scopes_json.add(DapScope(
@@ -578,7 +578,7 @@ impl CommandHandler for CheezDebugAdapter {
 
         var_ref := &self.get_variable_reference(index)
         vars := var_ref.get_variables(start, count)
-        for var in vars {
+        for var in &vars {
             var_index := self.add_variable_ref(var.clone())
 
             match &var.get() {
@@ -665,7 +665,7 @@ impl VariableRef for ArgumentsScope {
     get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
-        for param in stackframe.func.debug_info.params {
+        for param in &stackframe.func.debug_info.params {
             var := Variable.new(
                 interp, frame, param.name.to_owned(), param.type_info, ^stackframe.stack[stackframe.bp + param.index])
             result.add(var.clone().change_type(VariableRef))
@@ -688,7 +688,7 @@ impl VariableRef for LocalsScope {
     get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
         stackframe := &interp.get_stackframes()[self.frame]
-        for local in stackframe.func.debug_info.locals {
+        for local in &stackframe.func.debug_info.locals {
             var := Variable.new(
                 interp, frame, local.name.to_owned(), local.type_info, ^stackframe.stack[stackframe.bp + local.index])
             result.add(var.clone().change_type(VariableRef))

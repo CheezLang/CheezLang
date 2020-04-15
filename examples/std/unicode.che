@@ -66,21 +66,21 @@ impl Utf8 {
             byte_count = 1
         } else if @bin_lsr(b0, 5) == 0b110 {
             format := &utf8_formats[2]
-            code_point = bytes[0] | mask(format) |
-                        @bin_lsl(_, 6) | @bin_or(mask(ext, bytes[1]))
+            code_point = *bytes[0] | mask(format) |
+                        @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[1]))
             byte_count = 2
         } else if @bin_lsr(b0, 4) == 0b1110 {
             format := &utf8_formats[3]
-            code_point = bytes[0] | mask(format) |
-                        @bin_lsl(_, 6) | @bin_or(mask(ext, bytes[1])) |
-                        @bin_lsl(_, 6) | @bin_or(mask(ext, bytes[2]))
+            code_point = *bytes[0] | mask(format) |
+                        @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[1])) |
+                        @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[2]))
             byte_count = 3
         } else if @bin_lsr(b0, 3) == 0b11110 {
             format := &utf8_formats[4]
-            code_point = bytes[0] | @bin_and(format.mask) | u32() |
-                        @bin_lsl(_, 6) | @bin_or(mask(ext, bytes[1])) |
-                        @bin_lsl(_, 6) | @bin_or(mask(ext, bytes[2])) |
-                        @bin_lsl(_, 6) | @bin_or(mask(ext, bytes[3]))
+            code_point = *bytes[0] | @bin_and(format.mask) | u32() |
+                        @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[1])) |
+                        @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[2])) |
+                        @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[3]))
             byte_count = 4
         }
 

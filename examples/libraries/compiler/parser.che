@@ -405,7 +405,7 @@ impl Parser {
 
         values := Array[^AstNode].create()
         loop {
-            next := lexer.peek_token()
+            next := *lexer.peek_token()
             if next.typ == .ClosingBracket or next.typ == .EOF {
                 break
             }
@@ -464,7 +464,7 @@ impl Parser {
         lexer.skip_whitespace()
 
         loop {
-            next := lexer.peek_token()
+            next := *lexer.peek_token()
             if next.typ == .ClosingBrace or next.typ == .EOF {
                 break
             }
@@ -695,7 +695,7 @@ impl Parser {
 
     values_to_params :: (&Self, values: Array[^AstNode]) -> Array[^AstDecl] {
         params := Array[^AstDecl].create()
-        for e in values {
+        for e in &values {
             match *e {
                 AstDecl($decl) -> params.add(decl)
                 _ -> {
@@ -720,7 +720,7 @@ impl Parser {
         ends_in_comma := false
         values := Array[^AstNode].create()
         loop {
-            next := lexer.peek_token()
+            next := *lexer.peek_token()
             if next.typ == .ClosingParen or next.typ == .EOF {
                 break
             }
@@ -1106,7 +1106,7 @@ impl Parser {
         lexer.skip_whitespace()
 
         loop {
-            next := lexer.peek_token()
+            next := *lexer.peek_token()
             if next.typ == close or next.typ == .EOF {
                 break
             }
@@ -1180,7 +1180,7 @@ impl Parser {
 
             error_handler.report_error_at(tok.location, "Unexpeted token {}, expected {}", [tok, typ])
             lexer.skip_line()
-            return tok
+            return *tok
         }
 
         return lexer.next_token()

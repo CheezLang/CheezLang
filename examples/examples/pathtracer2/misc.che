@@ -94,8 +94,8 @@ impl Camera {
 
         up := vec3(0, 1, 0)
         w := vec3.normalized(pos - lookat)
-        u := vec3.cross(up, w).normalized()
-        v := vec3.cross(w, u)
+        u := vec3.cross(&up, w).normalized()
+        v := vec3.cross(&w, u)
 
         if focus_dist < 0.0 {
             focus_dist = vec3.mag(pos - lookat)
@@ -153,13 +153,13 @@ impl AABB {
     }
 
     hit :: (&Self, r: &Ray, t_min: real, t_max: real) -> bool {
-        if help(_min.x, _max.x, r.origin.x, r.direction.x, t_min, t_max) {
+        if help(_min.x, _max.x, r.origin.x, r.direction.x, &t_min, &t_max) {
             return false
         }
-        if help(_min.y, _max.y, r.origin.y, r.direction.y, t_min, t_max) {
+        if help(_min.y, _max.y, r.origin.y, r.direction.y, &t_min, &t_max) {
             return false
         }
-        if help(_min.z, _max.z, r.origin.z, r.direction.z, t_min, t_max) {
+        if help(_min.z, _max.z, r.origin.z, r.direction.z, &t_min, &t_max) {
             return false
         }
 

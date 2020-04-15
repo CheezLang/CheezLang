@@ -12,13 +12,13 @@ use import ast_dumper
 
 pretty_print_ast :: (node: &AstNode) -> String {
     result := String.empty()
-    pretty_print_ast_helper(result, node)
+    pretty_print_ast_helper(&result, node)
     return result
 }
 
 pretty_print_typed_ast :: (node: &AstNode) -> String {
     result := String.empty()
-    pretty_print_typed_ast_helper(result, node)
+    pretty_print_typed_ast_helper(&result, node)
     return result
 }
 
@@ -40,10 +40,10 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             fmt.format_into(result, "struct {} ``{`n", [node.name])
 
             r := String.empty()
-            for child in node.children {
+            for child in &node.children {
                 r.clear()
-                pretty_print_ast_helper(r, **child)
-                append_indented(result, r, 4)
+                pretty_print_ast_helper(&r, &**child)
+                append_indented(result, &r, 4)
             }
 
             fmt.format_into(result, "``}")
@@ -53,10 +53,10 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             fmt.format_into(result, "trait {} ``{`n", [node.name])
 
             r := String.empty()
-            for child in node.children {
+            for child in &node.children {
                 r.clear()
-                pretty_print_ast_helper(r, **child)
-                append_indented(result, r, 4)
+                pretty_print_ast_helper(&r, &**child)
+                append_indented(result, &r, 4)
             }
 
             fmt.format_into(result, "``}")
@@ -66,10 +66,10 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             fmt.format_into(result, "enum {} ``{`n", [node.name])
 
             r := String.empty()
-            for child in node.children {
+            for child in &node.children {
                 r.clear()
-                pretty_print_ast_helper(r, **child)
-                append_indented(result, r, 4)
+                pretty_print_ast_helper(&r, &**child)
+                append_indented(result, &r, 4)
             }
 
             fmt.format_into(result, "``}")
@@ -79,7 +79,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += "impl "
 
             if imp.trait_expr != null {
-                pretty_print_ast_helper(result, *imp.trait_expr)
+                pretty_print_ast_helper(result, &*imp.trait_expr)
                 result += " for "
             }
             pretty_print_ast_helper(result, imp.target_expr)
@@ -87,10 +87,10 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += " {`n"
 
             r := String.empty()
-            for child in imp.children {
+            for child in &imp.children {
                 r.clear()
-                pretty_print_ast_helper(r, **child)
-                append_indented(result, r, 4)
+                pretty_print_ast_helper(&r, &**child)
+                append_indented(result, &r, 4)
             }
 
             fmt.format_into(result, "``}")
@@ -98,24 +98,24 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
 
         AstFunction($func) -> {
             result += "("
-            for param in func.params {
+            for param in &func.params {
                 if it_index > 0 then result.append_string(", ")
-                pretty_print_ast_helper(result, **param)
+                pretty_print_ast_helper(result, &**param)
             }
             result += ") "
             if func.return_type_expr != null {
-                pretty_print_ast_helper(result, *func.return_type_expr)
+                pretty_print_ast_helper(result, &*func.return_type_expr)
             }
             if func.body != null {
-                pretty_print_ast_helper(result, *func.body)
+                pretty_print_ast_helper(result, &*func.body)
             }
         }
 
         AstTuple($tuple) -> {
             result += "("
-            for value in tuple.values {
+            for value in &tuple.values {
                 if it_index > 0 then result.append_string(", ")
-                pretty_print_ast_helper(result, **value)
+                pretty_print_ast_helper(result, &**value)
             }
             result += ")"
         }
@@ -125,7 +125,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += " :"
             if decl.type_expr != null then {
                 result += " "
-                pretty_print_ast_helper(result, *decl.type_expr)
+                pretty_print_ast_helper(result, &*decl.type_expr)
                 result += " "
             }
             result += ": "
@@ -137,14 +137,14 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
                 result += "mut "
             }
             if decl.pattern != null {
-                pretty_print_ast_helper(result, *decl.pattern)
+                pretty_print_ast_helper(result, &*decl.pattern)
             } else {
                 result += "_"
             }
             result += " :"
             if decl.type_expr != null then {
                 result += " "
-                pretty_print_ast_helper(result, *decl.type_expr)
+                pretty_print_ast_helper(result, &*decl.type_expr)
 
                 if decl.value_expr != null {
                     result += " "
@@ -152,7 +152,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             }
             if decl.value_expr != null {
                 result += "= "
-                pretty_print_ast_helper(result, *decl.value_expr)
+                pretty_print_ast_helper(result, &*decl.value_expr)
             }
         }
 
@@ -166,10 +166,10 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             r := String.empty()
 
             result += "{`n"
-            for child in block.children {
+            for child in &block.children {
                 r.clear()
-                pretty_print_ast_helper(r, **child)
-                append_indented(result, r, 4)
+                pretty_print_ast_helper(&r, &**child)
+                append_indented(result, &r, 4)
             }
             result += "}"
         }
@@ -220,7 +220,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
 
         AstArgument($arg) -> {
             if arg.name != null {
-                pretty_print_ast_helper(result, *arg.name)
+                pretty_print_ast_helper(result, &*arg.name)
                 result += " = "
             }
             pretty_print_ast_helper(result, arg.value_expr)
@@ -229,11 +229,11 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         AstCall($call) -> {
             pretty_print_ast_helper(result, call.function)
             result += "("
-            for arg in call.arguments {
+            for arg in &call.arguments {
                 if it_index > 0 {
                     result += ", "
                 }
-                pretty_print_ast_helper(result, **arg)
+                pretty_print_ast_helper(result, &**arg)
             }
             result += ")"
         }
@@ -242,7 +242,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += "cast"
             if cst.type_expr != null {
                 result += "("
-                pretty_print_ast_helper(result, *cst.type_expr)
+                pretty_print_ast_helper(result, &*cst.type_expr)
                 result += ")"
             }
             result += " "
@@ -257,18 +257,18 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
 
             if iff.false_case != null {
                 result += " else "
-                pretty_print_ast_helper(result, *iff.false_case)
+                pretty_print_ast_helper(result, &*iff.false_case)
             }
         }
 
         AstIndex($node) -> {
             pretty_print_ast_helper(result, node.sub)
             result += "["
-            for arg in node.arguments {
+            for arg in &node.arguments {
                 if it_index > 0 {
                     result += ", "
                 }
-                pretty_print_ast_helper(result, **arg)
+                pretty_print_ast_helper(result, &**arg)
             }
             result += "]"
         }
@@ -281,12 +281,12 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         AstFor($forr) -> {
             result += "for "
             if forr.it_pattern != null then
-                pretty_print_ast_helper(result, *forr.it_pattern)
+                pretty_print_ast_helper(result, &*forr.it_pattern)
             if forr.index_name != null {
                 if forr.it_pattern != null {
                     result += ", "
                 }
-                pretty_print_ast_helper(result, *forr.index_name)
+                pretty_print_ast_helper(result, &*forr.index_name)
             }
 
             if forr.it_pattern != null or forr.index_name != null {
@@ -301,11 +301,11 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += "break"
             if brake.label != null {
                 result += " "
-                pretty_print_ast_helper(result, *brake.label)
+                pretty_print_ast_helper(result, &*brake.label)
             }
             if brake.value_expr != null {
                 result += " with "
-                pretty_print_ast_helper(result, *brake.value_expr)
+                pretty_print_ast_helper(result, &*brake.value_expr)
             }
         }
 
@@ -313,7 +313,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += "continue"
             if cont.label != null {
                 result += " "
-                pretty_print_ast_helper(result, *cont.label)
+                pretty_print_ast_helper(result, &*cont.label)
             }
         }
 
@@ -321,7 +321,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
             result += "return"
             if ret.value_expr != null {
                 result += " "
-                pretty_print_ast_helper(result, *ret.value_expr)
+                pretty_print_ast_helper(result, &*ret.value_expr)
             }
         }
 
@@ -338,32 +338,32 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         AstMatch($mat) -> {
             result += "match "
             if mat.value_expr != null then
-                pretty_print_ast_helper(result, *mat.value_expr)
+                pretty_print_ast_helper(result, &*mat.value_expr)
             result += " {`n"
             r := String.empty()
-            for case in mat.cases {
+            for case in &mat.cases {
                 r.clear()
-                pretty_print_ast_helper(r, case.pattern)
+                pretty_print_ast_helper(&r, case.pattern)
 
                 if case.condition != null {
                     r += " if"
-                    pretty_print_ast_helper(r, *case.condition)
+                    pretty_print_ast_helper(&r, &*case.condition)
                 }
 
                 r += " -> "
-                pretty_print_ast_helper(r, case.body)
-                append_indented(result, r, 4)
+                pretty_print_ast_helper(&r, case.body)
+                append_indented(result, &r, 4)
             }
             result += "}"
         }
 
         AstPoly($poly) -> {
             result += "("
-            for param in poly.params {
+            for param in &poly.params {
                 if it_index > 0 {
                     result += ", "
                 }
-                pretty_print_ast_helper(result, **param)
+                pretty_print_ast_helper(result, &**param)
             }
             result += ") "
             match poly.value_expr {
@@ -379,19 +379,19 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
 
         AstTuple($tuple) -> {
             result += "("
-            for v in tuple.values {
-                pretty_print_ast_helper(result, **v)
+            for v in &tuple.values {
+                pretty_print_ast_helper(result, &**v)
             }
             result += ")"
         }
 
         AstArray($array) -> {
             result += "["
-            for v in array.values {
+            for v in &array.values {
                 if it_index > 0 {
                     result += ", "
                 }
-                pretty_print_ast_helper(result, **v)
+                pretty_print_ast_helper(result, &**v)
             }
             result += "]"
         }
@@ -399,7 +399,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
         AstArrayType($array_type) -> {
             result += "["
             if array_type.count != null {
-                pretty_print_ast_helper(result, *array_type.count)
+                pretty_print_ast_helper(result, &*array_type.count)
             }
             result += "]"
             pretty_print_ast_helper(result, array_type.target)
@@ -407,7 +407,7 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
 
         AstDot($dot) -> {
             if dot.sub != null then
-                pretty_print_ast_helper(result, *dot.sub)
+                pretty_print_ast_helper(result, &*dot.sub)
             result += "."
             pretty_print_ast_helper(result, dot.name)
         }
@@ -426,10 +426,10 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
             // @todo
 
             r := String.empty()
-            for mem in str.members {
+            for mem in &str.members {
                 r.clear()
-                pretty_print_typed_ast_helper(r, **mem)
-                append_indented(result, r, 4)
+                pretty_print_typed_ast_helper(&r, &**mem)
+                append_indented(result, &r, 4)
             }
             fmt.format_into(result, "``}")
         }
@@ -448,22 +448,22 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
 
         AstFunction($func) -> {
             result += "("
-            for param in func.params {
+            for param in &func.params {
                 if it_index > 0 then result.append_string(", ")
-                pretty_print_typed_ast_helper(result, **param)
+                pretty_print_typed_ast_helper(result, &**param)
             }
             result += ") "
             if func.return_type != null {
                 fmt.format_into(result, "-> {} ", [func.return_type])
             }
-            pretty_print_typed_ast_helper(result, *func.body)
+            pretty_print_typed_ast_helper(result, &*func.body)
         }
 
         AstTuple($tuple) -> {
             result += "("
-            for value in tuple.values {
+            for value in &tuple.values {
                 if it_index > 0 then result.append_string(", ")
-                pretty_print_typed_ast_helper(result, **value)
+                pretty_print_typed_ast_helper(result, &**value)
             }
             result += ")"
         }
@@ -486,14 +486,14 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
                 result += "mut "
             }
             if decl.pattern != null {
-                pretty_print_typed_ast_helper(result, *decl.pattern)
+                pretty_print_typed_ast_helper(result, &*decl.pattern)
             } else {
                 result += "_"
             }
             fmt.format_into(result, " : {}", [decl.var_type])
             if decl.value_expr != null {
                 result += " = "
-                pretty_print_typed_ast_helper(result, *decl.value_expr)
+                pretty_print_typed_ast_helper(result, &*decl.value_expr)
             }
         }
 
@@ -507,10 +507,10 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
             r := String.empty()
 
             result += "{`n"
-            for child in block.children {
+            for child in &block.children {
                 r.clear()
-                pretty_print_typed_ast_helper(r, **child)
-                append_indented(result, r, 4)
+                pretty_print_typed_ast_helper(&r, &**child)
+                append_indented(result, &r, 4)
             }
             result += "}"
         }
@@ -562,7 +562,7 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
 
         AstArgument($arg) -> {
             if arg.name != null {
-                pretty_print_typed_ast_helper(result, *arg.name)
+                pretty_print_typed_ast_helper(result, &*arg.name)
                 result += " = "
             }
             pretty_print_typed_ast_helper(result, arg.value_expr)
@@ -571,11 +571,11 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
         AstCall($call) -> {
             pretty_print_typed_ast_helper(result, call.function)
             result += "("
-            for arg in call.arguments {
+            for arg in &call.arguments {
                 if it_index > 0 {
                     result += ", "
                 }
-                pretty_print_typed_ast_helper(result, **arg)
+                pretty_print_typed_ast_helper(result, &**arg)
             }
             result += ")"
         }
@@ -593,18 +593,18 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
 
             if iff.false_case != null {
                 result += " else "
-                pretty_print_typed_ast_helper(result, *iff.false_case)
+                pretty_print_typed_ast_helper(result, &*iff.false_case)
             }
         }
 
         AstIndex($node) -> {
             pretty_print_typed_ast_helper(result, node.sub)
             result += "["
-            for arg in node.arguments {
+            for arg in &node.arguments {
                 if it_index > 0 {
                     result += ", "
                 }
-                pretty_print_typed_ast_helper(result, **arg)
+                pretty_print_typed_ast_helper(result, &**arg)
             }
             result += "]"
         }
@@ -617,12 +617,12 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
         AstFor($forr) -> {
             result += "for "
             if forr.it_pattern != null then
-                pretty_print_typed_ast_helper(result, *forr.it_pattern)
+                pretty_print_typed_ast_helper(result, &*forr.it_pattern)
             if forr.index_name != null {
                 if forr.it_pattern != null {
                     result += ", "
                 }
-                pretty_print_typed_ast_helper(result, *forr.index_name)
+                pretty_print_typed_ast_helper(result, &*forr.index_name)
             }
 
             if forr.it_pattern != null or forr.index_name != null {
@@ -637,11 +637,11 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
             result += "break"
             if brake.label != null {
                 result += " "
-                pretty_print_typed_ast_helper(result, *brake.label)
+                pretty_print_typed_ast_helper(result, &*brake.label)
             }
             if brake.value_expr != null {
                 result += " with "
-                pretty_print_typed_ast_helper(result, *brake.value_expr)
+                pretty_print_typed_ast_helper(result, &*brake.value_expr)
             }
         }
 
@@ -649,7 +649,7 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
             result += "continue"
             if cont.label != null {
                 result += " "
-                pretty_print_typed_ast_helper(result, *cont.label)
+                pretty_print_typed_ast_helper(result, &*cont.label)
             }
         }
 
@@ -657,7 +657,7 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
             result += "return"
             if ret.value_expr != null {
                 result += " "
-                pretty_print_typed_ast_helper(result, *ret.value_expr)
+                pretty_print_typed_ast_helper(result, &*ret.value_expr)
             }
         }
 
@@ -674,33 +674,33 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
         AstMatch($mat) -> {
             result += "match "
             if mat.value_expr != null then
-                pretty_print_typed_ast_helper(result, *mat.value_expr)
+                pretty_print_typed_ast_helper(result, &*mat.value_expr)
             result += " {`n"
 
             r := String.empty()
-            for case in mat.cases {
+            for case in &mat.cases {
                 r.clear()
-                pretty_print_typed_ast_helper(r, case.pattern)
+                pretty_print_typed_ast_helper(&r, case.pattern)
 
                 if case.condition != null {
                     r += " if"
-                    pretty_print_typed_ast_helper(r, *case.condition)
+                    pretty_print_typed_ast_helper(&r, &*case.condition)
                 }
 
                 r += " -> "
-                pretty_print_typed_ast_helper(r, case.body)
-                append_indented(result, r, 4)
+                pretty_print_typed_ast_helper(&r, case.body)
+                append_indented(result, &r, 4)
             }
             result += "}"
         }
 
         AstPoly($poly) -> {
             result += "("
-            for param in poly.params {
+            for param in &poly.params {
                 if it_index > 0 {
                     result += ", "
                 }
-                pretty_print_typed_ast_helper(result, **param)
+                pretty_print_typed_ast_helper(result, &**param)
             }
             result += ") "
             match poly.value_expr {
@@ -716,19 +716,19 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
 
         AstTuple($tuple) -> {
             result += "("
-            for v in tuple.values {
-                pretty_print_typed_ast_helper(result, **v)
+            for v in &tuple.values {
+                pretty_print_typed_ast_helper(result, &**v)
             }
             result += ")"
         }
 
         AstArray($array) -> {
             result += "["
-            for v in array.values {
+            for v in &array.values {
                 if it_index > 0 {
                     result += ", "
                 }
-                pretty_print_typed_ast_helper(result, **v)
+                pretty_print_typed_ast_helper(result, &**v)
             }
             result += "]"
         }
@@ -739,7 +739,7 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
 
         AstDot($dot) -> {
             if dot.sub != null then
-                pretty_print_typed_ast_helper(result, *dot.sub)
+                pretty_print_typed_ast_helper(result, &*dot.sub)
             result += "."
             pretty_print_typed_ast_helper(result, dot.name)
         }

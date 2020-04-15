@@ -10,14 +10,14 @@ C :: import std.c
 Main :: () {
     a := Some(1)
 
-    inc1(a)
-    print_a(a)
-    inc2(a)
-    print_a(a)
+    inc1(&a)
+    print_a(&a)
+    inc2(&a)
+    print_a(&a)
     inc3(a)
-    print_a(a)
+    print_a(&a)
     inc4(a)
-    print_a(a)
+    print_a(&a)
 }
 
 print_a :: (a: &Option[int]) {

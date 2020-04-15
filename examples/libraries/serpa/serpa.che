@@ -268,7 +268,7 @@ impl(T: type) IParser[Array[T]] for Array[T] {
         
         loop {
             lexer.skip_newlines_and_comments()
-            token := lexer.peek_token()
+            token := *lexer.peek_token()
 
             match token.typ {
                 TokenType.EOF -> break

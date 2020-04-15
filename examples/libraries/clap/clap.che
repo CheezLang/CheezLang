@@ -195,7 +195,7 @@ get_help_message :: (type_info: ^TypeInfo) -> String {
     result := String.empty()
     result += "Usage:`n"
 
-    get_help_message_helper(type_info, result, indent_size)
+    get_help_message_helper(type_info, &result, indent_size)
 
     return result
 }
@@ -220,7 +220,7 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
     return match &*type_info {
         // String
         _ if type_info == @type_info(String) -> {
-            if !require_arg(args) { return false }
+            if !require_arg(*args) { return false }
             *cast(^String) result = args[0].clone()
             *args = args[1..]
             true
@@ -240,7 +240,7 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
         TypeInfoEnum($info)   -> parse_arguments_enum(^info, args, result)
         TypeInfoStruct($info) -> parse_arguments_struct(^info, args, result)
         TypeInfoInt(_)    -> {
-            if !require_arg(args) { return false }
+            if !require_arg(*args) { return false }
             *cast(^int) result = fmt.parse_int(args[0].slice())
             *args = args[1..]
             true
@@ -362,7 +362,7 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
 
         if arg[0] == '-' {
             name := arg.sliceF(1)
-            mem_info := get_member(members, name)
+            mem_info := get_member(&members, name)
 
             if mem_info == null {
                 io.printfln("[ERROR] unknown argument '{}'", name)
@@ -386,7 +386,7 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
     }
 
     // check if all members were set or have a default value
-    for(by_ref=true) mem_info in members {
+    for(by_ref=true) mem_info in &members {
         if mem_info.set then continue
 
         default_value := mem_info.mem.value
@@ -448,7 +448,7 @@ get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent:
 
             lines := text.split_at_char('`n', true)
 
-            for line in lines {
+            for line in &lines {
                 if it_index == 0 {
                     indent_string(result, description_indent - mem_name.bytes.length - 1)
                 } else {
@@ -503,7 +503,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
 
             lines := text.split_at_char('`n', true)
 
-            for line in lines {
+            for line in &lines {
                 if it_index == 0 {
                     indent_string(result, description_indent - mem_name.bytes.length)
                 } else {

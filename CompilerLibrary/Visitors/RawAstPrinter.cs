@@ -474,8 +474,8 @@ namespace Cheez.Visitors
         public override string VisitDerefExpr(AstDereferenceExpr deref, int data = 0)
         {
             if (deref.Reference)
-                return $"<<{deref.SubExpression.Accept(this)}";
-            return "<<" + deref.SubExpression.Accept(this);
+                return $"*{deref.SubExpression.Accept(this)}";
+            return "*" + deref.SubExpression.Accept(this);
         }
 
         public override string VisitArrayAccessExpr(AstArrayAccessExpr arr, int data = 0)

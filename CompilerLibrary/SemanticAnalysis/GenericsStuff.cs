@@ -100,7 +100,7 @@ namespace Cheez
                 if (arg.Type.IsErrorType)
                     continue;
 
-                arg.Expr = HandleReference(arg.Expr, paramType, context);
+                //arg.Expr = HandleReference(arg.Expr, paramType, context);
                 arg.Expr = CheckType(arg.Expr, paramType, $"Type of argument ({arg.Expr.Type}) does not match type of parameter ({paramType})");
                 arg.Type = arg.Expr.Type;
             }

@@ -202,7 +202,7 @@ impl Game for MyGame {
         //return functions[func_index % functions.length](x)
         variables["x"] = Complex(x, 0.0)
         return match &function {
-            Some($f)    -> evaluate(f.slice(), variables)
+            Some($f)    -> evaluate(f.slice(), &variables)
             None        -> None
         }
     }

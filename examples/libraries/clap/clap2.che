@@ -176,7 +176,7 @@ get_completions_at :: ($T: type, args: string, pos: int) -> Array[String] {
     tokens := Clap.tokenize(args)
     result := parse_args(@type_info(T), tokens.slice())
 
-    return get_auto_completions_at(@type_info(T), result, pos)
+    return get_auto_completions_at(@type_info(T), &result, pos)
 }
 
 /////////////
@@ -377,7 +377,7 @@ get_value_help :: (result: ^void, expr: &Expr) {
             members_set := @alloca(bool, type_info.members.length)
             C.memset(members_set.data, 0, cast members_set.length * @sizeof(bool))
 
-            for mem in v.subs {
+            for mem in &v.subs {
                 @assert(mem.mem != null)
                 offset := mem.mem.offset
                 match &mem.sub {
@@ -459,7 +459,7 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
             members_set := @alloca(bool, type_info.members.length)
             C.memset(members_set.data, 0, cast members_set.length * @sizeof(bool))
 
-            for mem in v.subs {
+            for mem in &v.subs {
                 if mem.mem == null {
                     match &mem.sub {
                         Some($sub) -> {
@@ -539,8 +539,8 @@ get_auto_completions_at :: (ti: ^TypeInfo, expr: &Option[Box[Expr]], pos: int) -
     result := Array[String].create()
 
     match expr {
-        Some($expr) -> get_auto_completions_at_helper(result, expr.get(), pos)
-        None        -> autocomplete_type_members(ti, "", result)
+        Some($expr) -> get_auto_completions_at_helper(&result, expr.get(), pos)
+        None        -> autocomplete_type_members(ti, "", &result)
     }
 
     return result
@@ -558,7 +558,7 @@ get_auto_completions_at_helper :: (result: &Array[String], expr: &Expr, pos: int
 get_auto_completions_at_struct :: (result: &Array[String], expr: &StructExpr, pos: int) {
     // find sub from back
     found_sub := false
-    for(reverse=true) sub in expr.subs {
+    for(reverse=true) sub in &expr.subs {
         if pos >= sub.loc.start {
             if sub.mem != null {
                 match &sub.sub {
