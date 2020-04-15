@@ -452,7 +452,7 @@ impl CompileNode {
                     id          = -1
                     location    = dot.sub.location
                     scope       = dot.sub.scope
-                    sub         = *dot.sub
+                    sub         = &*dot.sub
                     operator    = .Deref
                 ))
                 dot.sub = ^compile_node(&*deref, ctx.with_expected(ti.target))
@@ -525,7 +525,7 @@ impl CompileNode {
                                 location    = dot.location
                                 scope       = dot.scope
                                 typ         = func.typ
-                                value_expr  = *original_sub
+                                value_expr  = &*original_sub
                                 symbol      = .NativeFunc2(wrapper)
                                 value       = .NativeFunc2(wrapper, func.pointer)
                             )), ctx)

@@ -5733,7 +5733,6 @@ namespace Cheez
                     mi.Index = mem.Index;
 
                     if (mi.Value.Type.IsErrorType) continue;
-                    mi.Value = HandleReference(mi.Value, mem.Type, context);
                     mi.Value = CheckType(mi.Value, mem.Type);
                 }
 
@@ -5771,7 +5770,6 @@ namespace Cheez
                     ConvertLiteralTypeToDefaultType(mi.Value, mem.Type);
 
                     if (mi.Value.Type.IsErrorType) continue;
-                    mi.Value = HandleReference(mi.Value, mem.Type, context);
                     mi.Value = CheckType(mi.Value, mem.Type);
                 }
             }

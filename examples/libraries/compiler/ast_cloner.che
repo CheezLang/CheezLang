@@ -86,8 +86,8 @@ impl AstCloner {
             AstBinary($node) -> new_ast(AstBinary(
                 location    = node.location
                 operator    = node.operator
-                left        = *clone(^node.left)
-                right       = *clone(^node.right)
+                left        = &*clone(^node.left)
+                right       = &*clone(^node.right)
             ))
 
             // AstBreak($brake) -> {

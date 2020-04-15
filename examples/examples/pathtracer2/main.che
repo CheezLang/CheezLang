@@ -104,7 +104,7 @@ pathtracer2 :: () {
                     max   = Vector2[int](min((x+1)*size, width), min((y+1)*size, height))
                     image = image
                     world = world
-                    cam   = cam
+                    cam   = &cam
                     // random = Random.create(0)
                     random = Random.create(cast C.rand()) // crashes with seed not 0, wtf?
                 )
@@ -562,7 +562,7 @@ big_scene :: (cam: &Camera) -> ^Hittable {
                 165.0 * global_random.random_real() + 270.0
                 165.0 * global_random.random_real() + 395.0
             )
-            m := mats[int(global_random.random_real() * real(mats.length))]
+            m := *mats[int(global_random.random_real() * real(mats.length))]
             list.add(create_object(Hittable, Sphere(pos, 10, m)))
         }
 
