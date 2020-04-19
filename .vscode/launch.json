@@ -3,14 +3,6 @@
     // List of configurations. Add new configurations or edit existing ones.
     "configurations": [
         {
-            "name": "Cheez Bitcode Debugger",
-            "type": "cheezbc",
-            "request": "launch",
-            "program": "${file}",
-            "args": [],
-            "internalConsoleOptions": "openOnSessionStart"
-        },
-        {
             "name": "Cheez Debugger",
             "type": "cheez",
             "request": "launch",
