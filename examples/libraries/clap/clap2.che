@@ -481,7 +481,7 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
                     }
                 }
 
-                if members_set[mem.mem.index] {
+                if *members_set[mem.mem.index] {
                     return Err(ClapError(mem.loc, fmt.format("Duplicate argument '{}'", [get_display_name_for_member(&*mem.mem)])))
                 }
                 *members_set[mem.mem.index] = true

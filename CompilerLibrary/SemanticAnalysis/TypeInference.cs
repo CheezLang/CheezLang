@@ -1052,8 +1052,6 @@ namespace Cheez
                     c.Condition.Scope = c.SubScope;
                     c.Condition = InferTypeHelper(c.Condition, CheezType.Bool, context);
                     ConvertLiteralTypeToDefaultType(c.Condition, CheezType.Bool);
-                    if (c.Condition.Type is ReferenceType)
-                        c.Condition = Deref(c.Condition, context);
                     c.Condition = CheckType(c.Condition, CheezType.Bool);
                 }
 
@@ -2098,9 +2096,6 @@ namespace Cheez
             expr.Condition.AttachTo(expr, expr.SubScope);
             expr.Condition = InferTypeHelper(expr.Condition, CheezType.Bool, context);
             ConvertLiteralTypeToDefaultType(expr.Condition, CheezType.Bool);
-
-            if (expr.Condition.Type is ReferenceType)
-                expr.Condition = Deref(expr.Condition, context);
 
             expr.Condition = CheckType(expr.Condition, CheezType.Bool, $"Condition of if statement must be either a bool or a pointer but is {expr.Condition.Type}");
 
@@ -4182,80 +4177,6 @@ namespace Cheez
                         }
                         break;
                     }
-
-                // case StringType _:
-                //     {
-                //         var indexExpr = InferSingleIndex(null);
-                //         if (indexExpr.Type.IsErrorType)
-                //             return expr;
-
-                //         expr.Arguments[0] = indexExpr = Deref(indexExpr, context);
-                //         if (indexExpr.Type is IntType)
-                //         {
-                //             expr.SetFlag(ExprFlags.IsLValue, true);
-                //             expr.Type = IntType.GetIntType(1, false);
-                //         }
-                //         else if (indexExpr.Type is RangeType r && r.TargetType is IntType)
-                //         {
-                //             expr.SetFlag(ExprFlags.IsLValue, false);
-                //             expr.Type = CheezType.String;
-                //         }
-                //         else
-                //         {
-                //             ReportError(indexExpr, $"The index into a slice can't be '{indexExpr.Type}'");
-                //         }
-                //         break;
-                //     }
-
-                // case SliceType slice:
-                //     {
-                //         var indexExpr = InferSingleIndex(null);
-                //         if (indexExpr.Type.IsErrorType)
-                //             return expr;
-
-                //         expr.Arguments[0] = indexExpr = Deref(indexExpr, context);
-                //         if (indexExpr.Type is IntType)
-                //         {
-                //             expr.SetFlag(ExprFlags.IsLValue, true);
-                //             expr.Type = slice.TargetType;
-                //         }
-                //         else if (indexExpr.Type is RangeType r && r.TargetType is IntType)
-                //         {
-                //             expr.SetFlag(ExprFlags.IsLValue, false);
-                //             expr.Type = slice;
-                //         }
-                //         else
-                //         {
-                //             ReportError(indexExpr, $"The index into a slice can't be '{indexExpr.Type}'");
-                //         }
-                //         break;
-                //     }
-
-                // case ArrayType arr:
-                //     {
-                //         var indexExpr = InferSingleIndex(null);
-                //         if (indexExpr.Type.IsErrorType)
-                //             return expr;
-
-                //         expr.Arguments[0] = indexExpr = Deref(indexExpr, context);
-                //         if (indexExpr.Type is IntType)
-                //         {
-                //             expr.SetFlag(ExprFlags.IsLValue, true);
-                //             expr.Type = arr.TargetType;
-
-                //             if (indexExpr.IsCompTimeValue)
-                //             {
-                //                 var val = (NumberData)indexExpr.Value;
-                //                 if (val < 0 || val >= arr.Length)
-                //                     ReportError(indexExpr, $"The index is out of range. Must be in [0, {arr.Length-1}]");
-                //             }
-                //         }
-                //         else
-                //         {
-                //             ReportError(indexExpr, $"The index into an array must be an int but is '{indexExpr.Type}'", ($"'{expr.SubExpression}' is of type '{arr}'", null));
-                //         }
-                //         break;
-                //     }
 
                 case GenericType g:
                     return InferTypeGenericCallExpr(g, expr, expected, context);

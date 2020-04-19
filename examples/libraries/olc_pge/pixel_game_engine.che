@@ -196,7 +196,7 @@ impl PixelGameEngine {
                     pKeyboardState[i].released = false
 
                     if *pKeyNewState[i] != *pKeyOldState[i] {
-                        if (*pKeyNewState[i]) {
+                        if *pKeyNewState[i] {
                             pKeyboardState[i].pressed = !pKeyboardState[i].held
                             pKeyboardState[i].held = true
                         } else {
@@ -213,10 +213,8 @@ impl PixelGameEngine {
                     pMouseState[i].pressed = false
                     pMouseState[i].released = false
 
-                    if (*pMouseNewState[i] != *pMouseOldState[i])
-                    {
-                        if (pMouseNewState[i])
-                        {
+                    if *pMouseNewState[i] != *pMouseOldState[i] {
+                        if *pMouseNewState[i] {
                             pMouseState[i].pressed = !pMouseState[i].held
                             pMouseState[i].held = true
                         } else {

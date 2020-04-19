@@ -7,9 +7,9 @@
 // import examples.snake.snake
 // import examples.pathtracer
 // import examples.pathtracer2.main
-// import compiler.cli
-// import compiler.debugger // not working
-// import examples.ShmupEngine.src.main // not working
+import compiler.cli
+// import compiler.debugger
+// import examples.ShmupEngine.src.main // crashes sometimes
 
 // examples which are not working currently
 // import examples.image_processing

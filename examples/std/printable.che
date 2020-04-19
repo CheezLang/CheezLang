@@ -63,11 +63,11 @@ impl Printable for double {
 impl Printable for bool {
     print :: (&Self, str: &String, format: string) {
         str.append_string(if streq(format, "b") {
-            if self {"1"} else {"0"}
+            if *self {"1"} else {"0"}
         } else if streq(format, "s") {
-            if self {"t"} else {"f"}
+            if *self {"t"} else {"f"}
         } else {
-            if self {"true"} else {"false"}
+            if *self {"true"} else {"false"}
         })
     }
 }
