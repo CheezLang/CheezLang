@@ -249,9 +249,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 return;
             var v = valueMap[ass];
 
-            bool deref = ass.Pattern.Type is ReferenceType;
-            var ptr = GenerateExpression(ass.Pattern, deref);
-
+            var ptr = GenerateExpression(ass.Pattern, false);
             builder.CreateStore(v, ptr);
         }
 

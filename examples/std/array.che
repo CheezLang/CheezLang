@@ -82,7 +82,7 @@ impl(T: type) Array[T] {
         length = 0
     }
 
-    add :: (&Self, val: T) #operator("+=") {
+    add :: (&Self, val: T) {
         if get_capacity() <= get_length() {
             reserve(get_capacity() * 2)
         }
@@ -263,16 +263,16 @@ for_extension_array_T :: (arr: &Array[$T], code: Code, reverse: bool = false,
         if const reverse {
             it_index_rev := arr.length - it_index - 1
             if const by_ref {
-                it := &arr[it_index_rev]
-            } else {
                 it := arr[it_index_rev]
+            } else {
+                it := *arr[it_index_rev]
             }
             @insert(code, link=[it_index_rev], _break=break, _continue=continue)
         } else {
             if const by_ref {
-                it := &arr[it_index]
-            } else {
                 it := arr[it_index]
+            } else {
+                it := *arr[it_index]
             }
             @insert(code, _break=break, _continue=continue)
         }

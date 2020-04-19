@@ -961,12 +961,12 @@ impl Parser {
     parse_atomic_expression :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
         token := lexer.peek_token()
         return match token.typ {
-            .Identifier     -> parse_identifier()
+            .Identifier     -> cast(^AstNode) parse_identifier()
             .KwBreak        -> parse_break(allow_comma)
             .KwContinue     -> parse_continue(allow_comma)
             .KwDefer        -> parse_defer(allow_comma)
             .KwEnum         -> parse_enum()
-            .KwFalse        -> parse_bool()
+            .KwFalse        -> cast(^AstNode) parse_bool()
             .KwFor          -> parse_for(allow_comma)
             .KwIf           -> parse_if(allow_comma)
             .KwImpl         -> parse_impl()
@@ -976,18 +976,18 @@ impl Parser {
             .KwReturn       -> parse_return(allow_comma)
             .KwStruct       -> parse_struct()
             .KwTrait        -> parse_trait()
-            .KwTrue         -> parse_bool()
+            .KwTrue         -> cast(^AstNode) parse_bool()
             .KwUse          -> parse_use(allow_comma, allow_function)
             .NumberLiteral  -> parse_number()
             .OpenBrace      -> parse_block()
             .OpenBracket    -> parse_bracketed()
             .OpenParen      -> parse_parenthesized(allow_comma, allow_function)
             .Period         -> parse_anonymous_dot()
-            .StringLiteral  -> parse_string()
+            .StringLiteral  -> cast(^AstNode) parse_string()
 
             _ -> {
                 error_handler.report_error_at(token.location, "Unexpected token {} in expression", [token])
-                null
+                cast(^AstNode) null
             }
         }
     }
@@ -1078,7 +1078,7 @@ impl Parser {
         if check_token(.Equal) {
             match &*expr {
                 AstIdentifier($id) -> {
-                    name = ^id
+                    name = ^*id
                 }
 
                 _ -> {

@@ -126,7 +126,7 @@ impl Layer for DebugLayer {
 
         renderer.apply_light_shader.bind()
 
-        viewport := &engine.current_viewport()
+        viewport := engine.current_viewport()
         if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Right) {
             mouse_screen := ImGui.GetMousePos()
             mouse := viewport.screen_to_local(mouse_screen.into()) / viewport.size.xy()
@@ -293,7 +293,7 @@ impl EntityLayer {
 
     remove_dead_entities :: (&Self) {
         while i := 0, i < entities.get_length(), i += 1 {
-            e := &entities[i].get()
+            e := entities[i].get()
             if !e.dead then continue
 
             // try to delete e
@@ -312,7 +312,7 @@ impl EntityLayer {
                     // deleting entity somewhere in the middle
                     last := entities.pop()
                     // entities[i].drop()a
-                    entities[i] = last
+                    *entities[i] = last
                 }
 
                 // next iteration of loop on same index
@@ -325,8 +325,8 @@ impl EntityLayer {
         @assert(i0 != i1 and i0 >= 0 and i0 < entities.get_length() and i1 >= 0 and i1 < entities.get_length())
         e0 := entities[i0].clone()
         e1 := entities[i1].clone()
-        entities[i1] = e0
-        entities[i0] = e1
+        *entities[i1] = e0
+        *entities[i0] = e1
     }
 }
 
@@ -360,7 +360,7 @@ impl Layer for EntityLayer {
         callbacks.update(dt)
 
         while i := 0, i < entities.get_length(), i += 1 {
-            e := &entities[i].get()
+            e := entities[i].get()
             if e.active {
                 e.update(self, dt)
             }
@@ -382,7 +382,7 @@ impl Layer for EntityLayer {
                         // deleting entity somewhere in the middle
                         last := entities.pop()
                         // entities[i].drop()a
-                        entities[i] = last
+                        *entities[i] = last
                     }
 
                     // next iteration of loop on same index
@@ -444,7 +444,7 @@ impl Layer for EntityLayer {
         e_new.get().angle       = template.get().angle
 
         for &template.get().components {
-            template := &it.get()
+            template := it.get()
             component := self.new_component2(template.get_type_info(), @vtable_of_trait(template))
             C.memcpy(@ptr_of_trait(component.get()), @ptr_of_trait(template), cast template.get_type_info().size)
             e_new.get().add_component(component)
@@ -463,7 +463,7 @@ impl Layer for EntityLayer {
                 io.println("Failed to read layer from file")
                 return
             })
-        console_error_handler.text_provider = ^lexer.get()
+        console_error_handler.text_provider = ^*lexer.get()
 
         parser := serpa.Parser(expect_struct_name=false)
         result := parser.parse(Array[Rc[Entity]], lexer.get(), ^console_error_handler)
@@ -479,7 +479,7 @@ impl Layer for EntityLayer {
 
                     // set entity pointer in components
                     for c in &e.get().components {
-                        c.get().base().entity = ^e.get()
+                        c.get().base().entity = e.get()
                     }
                 }
             }
@@ -492,7 +492,7 @@ impl Layer for EntityLayer {
     save_to_file :: (&Self, file: &String) {
         file.append_string("[`n")
         for rc in &entities {
-            e := &rc.get()
+            e := rc.get()
             file.append_string("    {`n")
             file.appendf("        id          = {}`n", e.id)
             file.appendf("        name        = `"{}`"`n", e.name.slice())

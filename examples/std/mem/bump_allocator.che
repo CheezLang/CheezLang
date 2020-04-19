@@ -70,7 +70,7 @@ impl Allocator for BumpAllocator {
 
         // find bucket with enough room for required size
         free_bucket : ^BumpBucket = if buckets.count() > 0 and buckets.peek_last().can_store(required_size, alignment) {
-            ^buckets.peek_last()
+            ^*buckets.peek_last()
         } else {
             null
         }
@@ -86,7 +86,7 @@ impl Allocator for BumpAllocator {
             new_mem.length = cast new_bucket_size
             buckets.add(BumpBucket(memory = new_mem, filled = 0))
 
-            free_bucket = ^buckets[buckets.length - 1]
+            free_bucket = ^*buckets[buckets.length - 1]
         }
 
         ptr := free_bucket.allocate(required_size, alignment)

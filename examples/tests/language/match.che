@@ -47,8 +47,8 @@ test1 :: () {
     newStr := string(alloc_raw(u8, cast str.bytes.length), str.bytes.length)
 
 
-    if str[0] >= u8('a') and str[0] <= u8('z') {
-        newStr[0] = str[0] - u8('a') + u8('A')
+    if *str[0] >= u8('a') and *str[0] <= u8('z') {
+        *newStr[0] = *str[0] - u8('a') + u8('A')
     }
 
     for i in 1..str.bytes.length {
@@ -58,7 +58,7 @@ test1 :: () {
             $x -> x[1]
         }
 
-        newStr[i] = u8(c)
+        *newStr[i] = u8(c)
     }
 
     io.println(str)

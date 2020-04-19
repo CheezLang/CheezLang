@@ -15,17 +15,17 @@ evaluate :: (code: []OpCode, vars: &Variables) -> Option[Complex] {
     for op in code {
         match op {
             OpCode.Real($val) -> {
-                stack[sp] = Complex(val, 0.0)
+                *stack[sp] = Complex(val, 0.0)
                 sp += 1
             }
             OpCode.Im($val) -> {
-                stack[sp] = Complex(0.0, val)
+                *stack[sp] = Complex(0.0, val)
                 sp += 1
             }
             OpCode.Var($name) -> {
                 match vars.get(name) {
                     Some($v) -> {
-                        stack[sp] = *^v
+                        *stack[sp] = *v
                         sp += 1
                     }
                     None -> {
@@ -34,31 +34,31 @@ evaluate :: (code: []OpCode, vars: &Variables) -> Option[Complex] {
                 }
             }
             OpCode.Neg -> {
-                stack[sp - 1] = Complex.neg(*stack[sp - 1])
+                *stack[sp - 1] = Complex.neg(*stack[sp - 1])
             }
             OpCode.Con -> {
-                stack[sp - 1] = Complex.conj(*stack[sp - 1])
+                *stack[sp - 1] = Complex.conj(*stack[sp - 1])
             }
             OpCode.Add -> {
-                stack[sp - 2] = stack[sp - 2] + stack[sp - 1]
+                *stack[sp - 2] = *stack[sp - 2] + *stack[sp - 1]
                 sp -= 1
             }
             OpCode.Sub -> {
-                stack[sp - 2] = stack[sp - 2] - stack[sp - 1]
+                *stack[sp - 2] = *stack[sp - 2] - *stack[sp - 1]
                 sp -= 1
             }
             OpCode.Mul -> {
-                stack[sp - 2] = stack[sp - 2] * stack[sp - 1]
+                *stack[sp - 2] = *stack[sp - 2] * *stack[sp - 1]
                 sp -= 1
             }
             OpCode.Div -> {
-                x := stack[sp - 1]
+                x := *stack[sp - 1]
 
                 if (x.r * x.r + x.i * x.i) < 0.0001 {
                     return None
                 }
 
-                stack[sp - 2] = stack[sp - 2] / x
+                *stack[sp - 2] = *stack[sp - 2] / x
                 sp -= 1
             }
             OpCode.Pow -> {
@@ -72,7 +72,7 @@ evaluate :: (code: []OpCode, vars: &Variables) -> Option[Complex] {
                     res_r := exp(v.r * ln_r - v.i * p)
                     res_p := v.i * ln_r + v.r * p
 
-                    stack[sp - 2] = Complex.from_polar(res_r, res_p)
+                    *stack[sp - 2] = Complex.from_polar(res_r, res_p)
                 }
 
                 sp -= 1
@@ -82,18 +82,18 @@ evaluate :: (code: []OpCode, vars: &Variables) -> Option[Complex] {
                 if r == 0 {
                     return None
                 }
-                stack[sp - 1] = Complex(log(r), p)
+                *stack[sp - 1] = Complex(log(r), p)
             }
             OpCode.Sin -> {
                 u := stack[sp - 1]
-                stack[sp - 1] = Complex(
+                *stack[sp - 1] = Complex(
                     r = sin(u.r) * cosh(u.i)
                     i = cos(u.r) * sinh(u.i)
                 )
             }
             OpCode.Cos -> {
                 u := stack[sp - 1]
-                stack[sp - 1] = Complex(
+                *stack[sp - 1] = Complex(
                     r =  cos(u.r) * cosh(u.i)
                     i = -sin(u.r) * sinh(u.i)
                 )

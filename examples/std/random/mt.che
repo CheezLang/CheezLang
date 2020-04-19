@@ -27,9 +27,9 @@ impl PseudoRandomGen for MTwister {
 impl MTwister {
     create :: (seed: u32) -> Self {
         result := MTwister(index = STATE_VECTOR_LENGTH)
-        result.mt[0] = seed
+        *result.mt[0] = seed
         for i in 1..int(STATE_VECTOR_LENGTH) {
-            result.mt[i] = 0x6c078965 * @bin_xor(result.mt[i - 1], @bin_lsr(result.mt[i - 1], 30)) + u32(i)
+            *result.mt[i] = 0x6c078965 * @bin_xor(result.mt[i - 1], @bin_lsr(result.mt[i - 1], 30)) + u32(i)
         }
         return result
     }
@@ -43,8 +43,8 @@ impl MTwister {
     }
 
     unroll :: (&Self, y: &u32, i: &u64, expr: u64) {
-        *y = @bin_or(m32(*mt[int(*i)]), l31(*mt[int(i + 1)]))
-        mt[int(*i)] = @bin_xor(
+        *y = @bin_or(m32(*mt[int(*i)]), l31(*mt[int(*i + 1)]))
+        *mt[int(*i)] = @bin_xor(
             mt[int(expr)],
             @bin_lsr(y, 1),
             @bin_and(u32(@bin_lsr(@bin_lsl(i32(*y), 31), 31)), 0x9908b0df)
@@ -77,7 +77,7 @@ impl MTwister {
 
         {
             y = @bin_or(m32(*mt[STATE_VECTOR_LENGTH - 1]), l31(*mt[0]))
-            mt[STATE_VECTOR_LENGTH - 1] = @bin_xor(
+            *mt[STATE_VECTOR_LENGTH - 1] = @bin_xor(
                 mt[STATE_VECTOR_M - 1],
                 @bin_lsr(y, 1),
                 @bin_and(u32(@bin_lsr(@bin_lsl(i32(y), 31), 31)), 0x9908b0df)
@@ -91,7 +91,7 @@ impl MTwister {
             y = @bin_xor(y, @bin_and(@bin_lsl(y, 7), 0x9d2c5680))
             y = @bin_xor(y, @bin_and(@bin_lsl(y, 15), 0xefc60000))
             y = @bin_xor(y, @bin_lsr(y, 18))
-            mt_temp[i] = y
+            *mt_temp[i] = y
         }
 
         index = 0

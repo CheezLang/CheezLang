@@ -79,21 +79,21 @@ impl(K: type, V: type) Map[K, V] {
         tombstone : ^Entry[K, V] = null
 
         while true {
-            entry := ^the_entries[int(index)]
+            entry := the_entries[int(index)]
 
             if !entry.filled {
                 if !entry.is_tombstone {
                     if tombstone != null {
                         return tombstone
                     } else {
-                        return entry
+                        return ^*entry
                     }
                 } else if tombstone == null {
-                    tombstone = entry
+                    tombstone = ^*entry
                 }
             } else {
                 if @impl(K, Equatable[K2]).equal(&entry.key.Some, key) {
-                    return entry
+                    return ^*entry
                 }
             }
 
@@ -202,7 +202,7 @@ impl(K: type, V: type) Map[K, V] {
         if entries.data != null {
             _count = 0
             for i in 0..entries.length {
-                entry := ^entries[i]
+                entry := entries[i]
                 if entry.filled {
                     dest := find_entry(entries_new, &entry.key.Some)
                     dest.key = entry.key <- None

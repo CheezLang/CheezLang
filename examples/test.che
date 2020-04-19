@@ -8,8 +8,8 @@
 // import examples.pathtracer
 // import examples.pathtracer2.main
 // import compiler.cli
-// import compiler.debugger
-// import examples.ShmupEngine.src.main
+// import compiler.debugger // not working
+// import examples.ShmupEngine.src.main // not working
 
 // examples which are not working currently
 // import examples.image_processing
@@ -20,7 +20,7 @@
 // tests
 // import "tests/language/match"
 // import tests.language.match3
-// import tests.library.hash_table1
+// import tests.library.allocator1
 // import tests.other.test1
 // import "examples/project_euler/018_maximum_path_sum_1"
 // import bugs.bug1
@@ -34,65 +34,17 @@
 // C :: import std.c
 // mem :: import std.mem.allocator
 
-// Interpreter :: struct {}
-// impl Interpreter {
-//     get_arg :: (&Self, $T: type, index: int) -> T {
-//         return match T {
-//             string -> "lol"
-//             int -> 125
-//             _ -> default
-//         }
-//     }
-
-//     set_return :: (&Self, value: $T) {
-//         io.formatln("set_return: {}", [value])
-//     }
-// }
-
-// register_native_type :: ($FuncType: type) -> fn(fn(), ^Interpreter) {
-//     helper :: (func: fn(), interp: ^Interpreter) {
-//         ArgTupleType :: @param_type_tuple(FuncType)
-//         slots : [(@sizeof(ArgTupleType) + 7) / 8]u64 = default
-//         args := &*cast(^ArgTupleType)slots.data
-//         @for_function_parameters(FuncType, (ArgType, i) => {
-//             args[i] = interp.get_arg(ArgType, i)
-//             // io.formatln("{} : {} = {}", [i, @typename(ArgType), args[i]])
-//         })
-
-//         if const FuncType.return_type == void {
-//             @call_with_tuple_args(cast(FuncType) func, args)
-//         } else {
-//             result := @call_with_tuple_args(cast(FuncType) func, args)
-//             interp.set_return(result)
-//         }
-//     }
-
-//     return helper
-// }
-
-// foo :: (a: int, b: string) -> bool {
-//     return a % 2 == 0 or b == "lol"
-// }
-
-// bar :: (s: string) {
-//     io.formatln("bar: {}", [s])
-// }
-
-// uiae :: (s: string) {
-//     io.formatln("uiae: {}", [s])
+// get_ref :: (r: &int) -> &int {
+//     return r
 // }
 
 // Main :: () {
-//     f1 := register_native_type(@typeof(foo))
-//     f2 := register_native_type(@typeof(bar))
-
-//     interp := Interpreter()
-
-//     f1(cast foo, ^interp)
-//     io.println("=====")
-//     f2(cast bar, ^interp)
-//     io.println("=====")
-//     f2(cast uiae, ^interp)
+//     a := 5
+//     b := 10
+//     r := get_ref(&a)
+//     io.println(*r)
+//     r = get_ref(&b)
+//     io.println(*r)
 // }
 
 // use import std.mem.allocator

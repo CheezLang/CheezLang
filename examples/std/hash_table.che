@@ -72,20 +72,20 @@ impl(K: type, V: type) Table[K, V] {
         tombstone : ^Entry[K, V] = null
 
         while true {
-            entry := ^the_entries[int(index)]
+            entry := the_entries[int(index)]
 
             if !entry.filled {
                 if !entry.is_tombstone {
                     if tombstone != null {
                         return tombstone
                     } else {
-                        return entry
+                        return ^*entry
                     }
                 } else if tombstone == null {
-                    tombstone = entry
+                    tombstone = ^*entry
                 }
             } else if comparer(entry.key, key) {
-                return entry
+                return ^*entry
             }
 
             index = (index + 1) % cast(uint) the_entries.length
@@ -192,7 +192,7 @@ impl(K: type, V: type) Table[K, V] {
         if entries.data != null {
             count = 0
             for i in 0..entries.length {
-                entry := ^entries[i]
+                entry := entries[i]
                 if entry.filled {
                     dest := find_entry(entries_new, entry.key)
                     dest.key = entry.key

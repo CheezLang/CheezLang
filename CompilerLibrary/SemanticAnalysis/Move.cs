@@ -12,11 +12,11 @@ namespace Cheez
     {
         private bool Move(CheezType targetType, AstExpression expr, SymbolStatusTable symStatTable, ILocation location)
         {
-            if (!(targetType is ReferenceType) && expr.Type is ReferenceType r && !r.TargetType.IsCopy)
-            {
-                ReportError(location, $"Can't move out of reference, the type '{r.TargetType}' can't be copied");
-                return false;
-            }
+            //if (!(targetType is ReferenceType) && expr.Type is ReferenceType r && !r.TargetType.IsCopy)
+            //{
+            //    ReportError(location, $"Can't move out of reference, the type '{r.TargetType}' can't be copied");
+            //    return false;
+            //}
 
             switch (expr)
             {

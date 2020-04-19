@@ -52,11 +52,11 @@ impl(It: type, T: type) It if It : Iterator[T] {
     }
 
     take :: (&Self, count: int) -> TakeIterator[T] {
-        return TakeIterator[T](^self, count)
+        return TakeIterator[T](^*self, count)
     }
 
     map :: (&Self, mapFunc: fn (T) -> $X) -> MapIterator[T, X] {
-        return MapIterator[T, X](^self, mapFunc)
+        return MapIterator[T, X](^*self, mapFunc)
     }
 
     foreach :: (&Self, func: fn (T)) {

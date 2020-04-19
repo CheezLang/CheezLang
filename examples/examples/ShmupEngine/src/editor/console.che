@@ -62,7 +62,7 @@ impl Drop for Console {
 impl Console {
     new :: (on_command: Fn(&Command)) -> Console {
         buff := mem.alloc_n(char8, 1024)
-        buff[0] = char8(0)
+        *buff[0] = char8(0)
 
         return Console(
             m_buffer   = buff
@@ -96,7 +96,7 @@ impl Console {
         match cmd {
             Ok($cmd) -> {
                 add_entry(MessageType.Command, fmt.format("> {}", [cmd_string.slice()]))
-                match &cmd.get() {
+                match cmd.get() {
                     Command.Help -> {
                         // add_entry(MessageType.Log, clap.get_help_message(@type_info(Command)))
                     }
@@ -208,7 +208,7 @@ impl Console {
             line_spacing := ImGui.ImVec2(4,1)
             ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.ItemSpacing, &line_spacing)
             for i in 0 .. items.count() {
-                item := &items.at(i)
+                item := items.at(i)
 
                 color, has_color := match item.typ {
                     MessageType.Log     -> ImGui.ImVec4(1, 1, 1, 1), true
@@ -253,7 +253,7 @@ impl Console {
             if text.bytes.length > 0 {
                 execute_command(String.from_string(text))
             }
-            m_buffer[0] = char8(0)
+            *m_buffer[0] = char8(0)
             reclaim_focus = true
         }
         ImGui.PopStyleVar()

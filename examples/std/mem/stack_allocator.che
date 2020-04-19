@@ -41,7 +41,7 @@ impl Printable for StackAllocator {
             if i > 0 {
                 s += ", "
             }
-            s.append_printables("{}", [^allocations[i]])
+            s.append_printables("{}", [^*allocations[i]])
         }
         s += "]"
 
@@ -84,14 +84,14 @@ impl StackAllocator {
 
     print_diagnostics :: (&Self) {
         s := String.empty()
-        s += "( ["
+        &s += "( ["
         for i in 0..allocations.length {
             if i > 0 {
-                s += ", "
+                &s += ", "
             }
-            s.append_printables("{}", [^allocations[i]])
+            s.append_printables("{}", [^*allocations[i]])
         }
-        s += "]"
+        &s += "]"
 
         free : u64 = capacity
 
@@ -106,7 +106,7 @@ impl StackAllocator {
         if allocations.length == 0 {
             return null
         } else {
-            return ^allocations[allocations.length - 1]
+            return ^*allocations[allocations.length - 1]
         }
     }
 

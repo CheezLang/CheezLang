@@ -73,7 +73,7 @@ impl EntityInspector {
             // name
             {
                 buff : [256] char8 = default
-                buff[0] = char8(0)
+                *buff[0] = char8(0)
                 C.memcpy(buff.data, entity.name.get_raw(), cast entity.name.get_length())
                 ImGui.InputText("Name", buff.data, cast buff.length)
                 entity.name.clear()
@@ -108,7 +108,7 @@ impl EntityInspector {
                         // remove current component
                         // move all following components one slot down
                         for k in index .. entity.components.get_length() - 1 {
-                            entity.components[k] = entity.components[k + 1].clone()
+                            *entity.components[k] = entity.components[k + 1].clone()
                         }
                         // pop last component which is now in the second last slot
                         last := entity.components.pop()
@@ -158,7 +158,7 @@ impl EntityInspector {
                         ImGui.BeginChildStr("component info", &info_size, true)
 
                         if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
-                            bi := &component_infos.access(current_selected_component)
+                            bi := component_infos.access(current_selected_component)
                             name := String.from_string(@cast(^TypeInfoStruct, bi.type_info).name)
                             ImGui.Text(name.as_cstring())
                             ImGui.Separator()
@@ -166,7 +166,7 @@ impl EntityInspector {
                             for(by_ref=true) m in @cast(^TypeInfoStruct, bi.type_info).members {
                                 name := String.with_capacity(m.name.bytes.length + 1)
                                 name.append_string(m.name)
-                                imgui_input_property(&name, util.pointer_add(@ptr_of_trait(bi.value), m.offset), m.typ, ^m)
+                                imgui_input_property(&name, util.pointer_add(@ptr_of_trait(bi.value), m.offset), m.typ, m)
                             }
                         }
 
@@ -178,7 +178,7 @@ impl EntityInspector {
                         if ImGui.Button("Ok", &button_size) {
                             if current_selected_component >= 0 and current_selected_component < i32(component_infos.get_length()) {
                                 // add component
-                                bi := &component_infos[int(current_selected_component)]
+                                bi := component_infos[int(current_selected_component)]
                                 component := EntityLayer.alloc_component(bi.type_info, @vtable_of_trait(bi.value))
                                 C.memcpy(@ptr_of_trait(component.get()), @ptr_of_trait(bi.value), cast bi.type_info.size)
                                 entity.add_component(component)
@@ -219,7 +219,7 @@ impl EntityInspector {
                 name := String.with_capacity(m.name.bytes.length + 1)
                 name.append_string(m.name)
                 ptr := util.pointer_add(@ptr_of_trait(component.get()), m.offset)
-                imgui_input_property(&name, ptr, m.typ, ^m)
+                imgui_input_property(&name, ptr, m.typ, m)
             }
         }
 
@@ -336,7 +336,7 @@ impl EntityInspector {
                 ImGui.SameLine()
                 if ImGui.CollapsingHeader_2(name.as_cstring(), ^open) {
                     while i := 0, i < arr.get_length(), i += 1 {
-                        v := &arr[i]
+                        v := arr[i]
                         str := String.empty()
                         str.appendf("{}", i)
                         ImGui.PushIDPtr(^v)

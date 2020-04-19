@@ -11,17 +11,17 @@ Main :: () {
     carry := 0
     for c in {0..50}.reverse() {
         for r in 0..100 {
-            digit := int(numbers[r][c] - '0')
+            digit := int(*numbers[r][c] - '0')
             carry += digit
         }
 
         lsd := carry % 10
         carry /= 10
-        res += char(lsd) + '0'
+        &res += char(lsd) + '0'
     }
 
     while carry > 0, carry /= 10 {
-        res += char(carry % 10) + '0'
+        &res += char(carry % 10) + '0'
     }
 
     // reverse string

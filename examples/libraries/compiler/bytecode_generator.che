@@ -80,7 +80,7 @@ impl CodeGenerator for ByteCodeGenerator {
         slot_index := 0
         for(reverse=true) param in &func.params {
             slot_index -= slots_for_size(param.var_type.size)
-            variables[param.id] = slot_index
+            variables.set(param.id, slot_index)
             cbc_func.debug_info.params.add(VariableInfo(param.id, param.name, slot_index, param.var_type))
         }
         cbc_func.parameter_slots = -slot_index
@@ -263,7 +263,7 @@ impl CodeGenerator for ByteCodeGenerator {
         builder.build_noop()
 
         index := builder.add_local(decl.id, decl.name, decl.var_type)
-        variables[decl.id] = index
+        variables.set(decl.id, index)
 
         if decl.value_expr != null {
             generate_expression(&*decl.value_expr)
@@ -745,7 +745,7 @@ impl InstructionBuilder {
     }
 
     fix_branch :: (&Self, branch: int, address: int) {
-        function.instructions[branch] = u64(address)
+        *function.instructions[branch] = u64(address)
     }
 
     set_location :: (&Self, location: Location) {

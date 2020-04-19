@@ -10,7 +10,7 @@ height: int : 20
 cache : [width][height]int = @dup(@dup(0))
 
 count_routes :: (w: int, h: int) -> int {
-    if w > 0 and h > 0 and w <= width and h <= height and cache[w-1][h-1] > 0 {
+    if w > 0 and h > 0 and w <= width and h <= height and *cache[w-1][h-1] > 0 {
         return *cache[w-1][h-1]
     }
 
@@ -19,7 +19,7 @@ count_routes :: (w: int, h: int) -> int {
     }
 
     count := count_routes(w - 1, h) + count_routes(w, h - 1)
-    cache[w-1][h-1] = count
+    *cache[w-1][h-1] = count
     return count
 }
 

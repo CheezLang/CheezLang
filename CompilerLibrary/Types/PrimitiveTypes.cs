@@ -285,9 +285,6 @@ namespace Cheez.Types.Primitive
 
         public static ReferenceType GetRefType(CheezType targetType)
         {
-            if (targetType is ReferenceType r)
-                return r;
-
             if (targetType == null)
                 return null;
 
@@ -309,9 +306,10 @@ namespace Cheez.Types.Primitive
 
         public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
-            if (concrete is ReferenceType p)
-                return this.TargetType.Match(p.TargetType, polyTypes);
-            return TargetType.Match(concrete, polyTypes);
+            if (concrete is ReferenceType r)
+                return this.TargetType.Match(r.TargetType, polyTypes);
+
+            return -1;
         }
 
         public override bool Equals(object obj)

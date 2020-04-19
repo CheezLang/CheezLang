@@ -163,7 +163,7 @@ render_loop :: (context: ^RenderContext) {
                 u := (real(px) + context.random.random_real()) / real(width)
                 v := (real(height - py - 1) + context.random.random_real()) / real(height)
                 r := context.cam.get_ray(u, v, &context.random)
-                col += color(r, context.world, &context.random)
+                &col += color(r, context.world, &context.random)
             }
 
             col /= real(samples)
@@ -171,9 +171,9 @@ render_loop :: (context: ^RenderContext) {
             // gamma correction
             col = vec3(real(sqrt(col.x)), real(sqrt(col.y)), real(sqrt(col.z)))
 
-            context.image[(px + py * width) * 3 + 0] = double(col.x)
-            context.image[(px + py * width) * 3 + 1] = double(col.y)
-            context.image[(px + py * width) * 3 + 2] = double(col.z)
+            *context.image[(px + py * width) * 3 + 0] = double(col.x)
+            *context.image[(px + py * width) * 3 + 1] = double(col.y)
+            *context.image[(px + py * width) * 3 + 2] = double(col.z)
         }
     }
     io.printfln("block {}: finished", context.id)

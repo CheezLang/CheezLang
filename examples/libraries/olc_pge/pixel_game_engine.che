@@ -1,23 +1,25 @@
 #lib("OpenGL32.lib")
 
-use import pixel
-use import key
-use import sprite
-use import olc_win
-use import pge_render_functions
-use import pge_helper_functions
-
-use import std.mem.allocator
 use import std.hash_table
-use import std.time
-use import std.string
+use import std.mem.allocator
 use import std.os.windows
+use import std.os.windows_constants
 use import std.os.windows_functions
 use import std.os.windows_types
-use import std.os.windows_constants
+use import std.string
+use import std.time
+
 io :: import std.io
 
+use import logging.logger
 use import opengl.glad_binding
+
+use import key
+use import olc_win
+use import pge_helper_functions
+use import pge_render_functions
+use import pixel
+use import sprite
 
 #export_scope
 
@@ -165,7 +167,7 @@ impl PixelGameEngine {
 
 
         // Create user resources as part of this thread
-        if !game.on_create(^self) {
+        if !game.on_create(self) {
             active = false
         }
 
@@ -193,8 +195,8 @@ impl PixelGameEngine {
                     pKeyboardState[i].pressed = false
                     pKeyboardState[i].released = false
 
-                    if pKeyNewState[i] != pKeyOldState[i] {
-                        if (pKeyNewState[i]) {
+                    if *pKeyNewState[i] != *pKeyOldState[i] {
+                        if (*pKeyNewState[i]) {
                             pKeyboardState[i].pressed = !pKeyboardState[i].held
                             pKeyboardState[i].held = true
                         } else {
@@ -211,7 +213,7 @@ impl PixelGameEngine {
                     pMouseState[i].pressed = false
                     pMouseState[i].released = false
 
-                    if (pMouseNewState[i] != pMouseOldState[i])
+                    if (*pMouseNewState[i] != *pMouseOldState[i])
                     {
                         if (pMouseNewState[i])
                         {
@@ -288,7 +290,7 @@ impl PixelGameEngine {
                     if auto_title {
                         fps_string.resize(0)
                         fps_string.appendf("OneLoneCoder.com - Pixel Game Engine - FPS: {}", nFrameCount)
-                        fps_string += cast(char) 0
+                        &fps_string += cast(char) 0
 
                         match fps_string.slice().to_utf16() {
                             Ok($title) -> {

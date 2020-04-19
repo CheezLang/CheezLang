@@ -43,7 +43,7 @@ impl NativeFunctionWrapper {
         slot_index := 0
         for(reverse=true) typ in ti.param_types {
             slot_index -= (typ.size + 7) / 8
-            indices[it_index_rev] = slot_index
+            *indices[it_index_rev] = slot_index
         }
 
         *wrapper = NativeFunctionWrapper(

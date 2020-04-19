@@ -149,7 +149,7 @@ impl AABB {
         }
         *t_min = max(t0, *t_min)
         *t_max = min(t1, *t_max)
-        return t_max <= t_min
+        return *t_max <= *t_min
     }
 
     hit :: (&Self, r: &Ray, t_min: real, t_max: real) -> bool {

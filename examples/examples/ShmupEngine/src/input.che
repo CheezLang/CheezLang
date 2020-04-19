@@ -21,26 +21,26 @@ impl Input {
 
     set_key_state :: (&Self, key: int, state: bool) {
         if state {
-            keys_pressed[key] = true
-            keys_down[key] = true
+            *keys_pressed[key] = true
+            *keys_down[key] = true
         } else {
-            keys_released[key] = true
-            keys_down[key] = false
+            *keys_released[key] = true
+            *keys_down[key] = false
         }
     }
 
     release_all_keys :: (&Self) {
         for key in 0 ..= GLFW_KEY_LAST {
-            keys_released[key] = false
-            keys_pressed[key] = false
-            keys_down[key] = false
+            *keys_released[key] = false
+            *keys_pressed[key] = false
+            *keys_down[key] = false
         }
     }
 
     reset :: (&Self) {
         for key in 0 ..= GLFW_KEY_LAST {
-            keys_pressed[key] = false
-            keys_released[key] = false
+            *keys_pressed[key] = false
+            *keys_released[key] = false
         }
     }
 

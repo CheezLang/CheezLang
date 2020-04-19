@@ -364,10 +364,10 @@ impl Lexer {
 
                 Init  -> {
                     if c == '0' {
-                        str += c
+                        &str += c
                         state = Z
                     } else if is_digit(c) {
-                        str += c
+                        &str += c
                         state = DecDigit
                     }
                 }
@@ -384,11 +384,11 @@ impl Lexer {
                         state = B
                     }
                     '.' if next != '.' -> {
-                        str += c
+                        &str += c
                         state = FloatPoint
                     }
                     $x if is_digit(x) -> {
-                        str += x
+                        &str += x
                         state = DecDigit
                     }
                     '_' -> {
@@ -401,14 +401,14 @@ impl Lexer {
 
                 DecDigit -> match c {
                     '.' if next != '.' -> {
-                        str += c
+                        &str += c
                         state = FloatPoint
                     }
                     '_' -> {
                         state = Dec_
                     }
                     $x if is_digit(x) -> {
-                        str += c
+                        &str += c
                     }
                     _ -> {
                         state = Done
@@ -417,7 +417,7 @@ impl Lexer {
 
                 Dec_ -> match c {
                     $x if is_digit(x) -> {
-                        str += c
+                        &str += c
                         state = DecDigit
                     }
                     _ -> {
@@ -428,7 +428,7 @@ impl Lexer {
                 FloatPoint -> {
                     is_float = true
                     if is_digit(c) {
-                        str += c
+                        &str += c
                         state = FloatDigit
                     } else {
                         state = Error
@@ -437,7 +437,7 @@ impl Lexer {
 
                 FloatDigit -> match c {
                     $c if is_digit(c) -> {
-                        str += c
+                        &str += c
                     }
                     '_' -> {
                         state = Float_
@@ -449,7 +449,7 @@ impl Lexer {
 
                 Float_ -> match c {
                     $x if is_digit(x) -> {
-                        str += c
+                        &str += c
                         state = FloatDigit
                     }
                     _ -> {
@@ -459,7 +459,7 @@ impl Lexer {
 
                 X -> match c {
                     $c if is_hex_digit(c) -> {
-                        str += c
+                        &str += c
                         state = HexDigit
                     }
                     $_ -> {
@@ -469,7 +469,7 @@ impl Lexer {
 
                 HexDigit -> match c {
                     $c if is_hex_digit(c) -> {
-                        str += c
+                        &str += c
                     }
                     '_' -> {
                         state = Hex_
@@ -481,7 +481,7 @@ impl Lexer {
 
                 Hex_ -> match c {
                     $x if is_hex_digit(x) -> {
-                        str += c
+                        &str += c
                         state = HexDigit
                     }
                     _ -> {
@@ -491,7 +491,7 @@ impl Lexer {
 
                 B -> match c {
                     $c if is_binary_digit(c) -> {
-                        str += c
+                        &str += c
                         state = BinDigit
                     }
                     $_ -> {
@@ -501,7 +501,7 @@ impl Lexer {
 
                 BinDigit -> match c {
                     $c if is_binary_digit(c) -> {
-                        str += c
+                        &str += c
                     }
                     '_' -> {
                         state = Bin_
@@ -513,7 +513,7 @@ impl Lexer {
 
                 Bin_ -> match c {
                     $x if is_binary_digit(x) -> {
-                        str += c
+                        &str += c
                         state = BinDigit
                     }
                     _ -> {
@@ -540,7 +540,7 @@ impl Lexer {
             }
         }
 
-        str += '`0'
+        &str += '`0'
 
         if is_float {
             d := C.strtod(cast str.get_raw(), null)

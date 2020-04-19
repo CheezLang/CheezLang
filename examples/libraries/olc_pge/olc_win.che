@@ -1,15 +1,17 @@
-use import pixel_game_engine
-use import pixel
-use import key
-use import std.string
 use import std.hash_table
 use import std.os.windows
+use import std.os.windows_constants
 use import std.os.windows_functions
 use import std.os.windows_types
-use import std.os.windows_constants
+use import std.string
+
 io :: import std.io
 
+use import logging.logger
 
+use import key
+use import pixel
+use import pixel_game_engine
 
 #export_scope
 
@@ -45,7 +47,16 @@ impl PixelGameEngine {
         width : i32 = rWndRect.right - rWndRect.left
         height : i32 = rWndRect.bottom - rWndRect.top
 
-        olc_hWnd = CreateWindowExA(dwExStyle, "OLC_PIXEL_GAME_ENGINE", "Window Title", dwStyle, 30, 30, width, height, null, null, GetModuleHandleA(null), cast ^self)
+        olc_hWnd = CreateWindowExA(
+            dwExStyle,
+            "OLC_PIXEL_GAME_ENGINE",
+            "Window Title",
+            dwStyle,
+            30, 30,
+            width, height,
+            null, null,
+            GetModuleHandleA(null),
+            cast ^*self)
 
         // Create Keyboard Mapping
         mapKeys[0x00] = Key.NONE
@@ -190,17 +201,17 @@ olc_window_event :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> L
         WM_SETFOCUS     -> { pixel_game_engine_ptr.bHasInputFocus = true }
         WM_KILLFOCUS    -> { pixel_game_engine_ptr.bHasInputFocus = false }
 
-        WM_LBUTTONDOWN  -> { pixel_game_engine_ptr.pMouseNewState[0] = true }
-        WM_LBUTTONUP    -> { pixel_game_engine_ptr.pMouseNewState[0] = false }
-        WM_RBUTTONDOWN  -> { pixel_game_engine_ptr.pMouseNewState[1] = true }
-        WM_RBUTTONUP    -> { pixel_game_engine_ptr.pMouseNewState[1] = false }
-        WM_MBUTTONDOWN  -> { pixel_game_engine_ptr.pMouseNewState[2] = true }
-        WM_MBUTTONUP    -> { pixel_game_engine_ptr.pMouseNewState[2] = false }
+        WM_LBUTTONDOWN  -> { *pixel_game_engine_ptr.pMouseNewState[0] = true }
+        WM_LBUTTONUP    -> { *pixel_game_engine_ptr.pMouseNewState[0] = false }
+        WM_RBUTTONDOWN  -> { *pixel_game_engine_ptr.pMouseNewState[1] = true }
+        WM_RBUTTONUP    -> { *pixel_game_engine_ptr.pMouseNewState[1] = false }
+        WM_MBUTTONDOWN  -> { *pixel_game_engine_ptr.pMouseNewState[2] = true }
+        WM_MBUTTONUP    -> { *pixel_game_engine_ptr.pMouseNewState[2] = false }
 
         WM_KEYDOWN      -> {
             match pixel_game_engine_ptr.mapKeys.get(int(wparam)) {
                 Some($key) -> {
-                    pixel_game_engine_ptr.pKeyNewState[int(*key)] = true
+                    *pixel_game_engine_ptr.pKeyNewState[int(*key)] = true
                 }
                 None -> io.printf("[WNDPROC] failed to get key {} from keymap´`n", wparam)
             }
@@ -208,7 +219,7 @@ olc_window_event :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> L
         WM_KEYUP        -> {
             match pixel_game_engine_ptr.mapKeys.get(int(wparam)) {
                 Some($key) -> {
-                    pixel_game_engine_ptr.pKeyNewState[int(*key)] = false
+                    *pixel_game_engine_ptr.pKeyNewState[int(*key)] = false
                 }
                 None -> io.printf("[WNDPROC] failed to get key {} from keymap´`n", wparam)
             }

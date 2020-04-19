@@ -40,11 +40,11 @@ Main :: () {
 
     {
         a := alloc_n(int, 5)
-        for i in 0..a.length { a[i] = 0 }
+        for i in 0..a.length { *a[i] = 0 }
         io.printf("{}, {}, {}, {}, {}`n", (a[0], a[1], a[2], a[3], a[4]))
 
         for i in 0..a.length {
-            a[i] = i + 1
+            *a[i] = i + 1
         }
         io.printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
         free_n(a)
@@ -52,11 +52,11 @@ Main :: () {
 
     {
         a := alloc_n(int, 3)
-        for i in 0..a.length { a[i] = i + 1 }
+        for i in 0..a.length { *a[i] = i + 1 }
         io.printf("{}, {}, {}`n", (a[0], a[1], a[2]))
 
         a = realloc_n(a, 5)
-        for i in 3..a.length { a[i] = 0 }
+        for i in 3..a.length { *a[i] = 0 }
         io.printf("{}, {}, {}, {}, {}`n`n", (a[0], a[1], a[2], a[3], a[4]))
         free_n(a)
     }

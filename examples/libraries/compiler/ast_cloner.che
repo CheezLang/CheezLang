@@ -17,7 +17,7 @@ AstCloner :: struct {
 }
 
 impl AstCloner {
-    new_ast :: (&Self, ast: $T) -> ^T {
+    new_ast :: (&Self, ast: $T) -> ^AstNode {
         result := mem.alloc(T, allocator)
         *result = ast
         result.id = _next_id
@@ -86,8 +86,8 @@ impl AstCloner {
             AstBinary($node) -> new_ast(AstBinary(
                 location    = node.location
                 operator    = node.operator
-                left        = &*clone(^node.left)
-                right       = &*clone(^node.right)
+                left        = &*clone(^*node.left)
+                right       = &*clone(^*node.right)
             ))
 
             // AstBreak($brake) -> {
@@ -314,7 +314,7 @@ impl AstCloner {
             $node -> {
                 dump := dump_ast(&*node)
                 g_logger.log("[ERROR] clone ast: node type not implemented: {}`n", [dump])
-                null
+                cast(^AstNode) null
             }
         }
     }

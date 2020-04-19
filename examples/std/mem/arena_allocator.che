@@ -79,7 +79,7 @@ impl Allocator for ArenaAllocator {
         for i in 0..buckets.length {
             bucket : &Bucket = buckets[i]
             if bucket.can_store(required_size, alignment) {
-                free_bucket = ^bucket
+                free_bucket = ^*bucket
                 break
             }
         }
@@ -95,7 +95,7 @@ impl Allocator for ArenaAllocator {
             new_mem.length = cast new_bucket_size
             buckets.add(Bucket(memory = new_mem, filled = 0))
 
-            free_bucket = ^buckets[buckets.length - 1]
+            free_bucket = ^*buckets[buckets.length - 1]
         }
 
         ptr := free_bucket.allocate(required_size, alignment)

@@ -13,7 +13,7 @@ Main :: () {
 
     for r in {0 .. graph.length - 1}.reverse() {
         for c in 0 ..= r {
-            graph[r][c] += max(*graph[r+1][c], *graph[r+1][c+1])
+            *graph[r][c] += max(*graph[r+1][c], *graph[r+1][c+1])
         }
     }
 
@@ -30,14 +30,14 @@ load_graph :: (str: string) -> Array[Array[int]] {
 
         while i < str.bytes.length {
             start := i
-            while i < str.bytes.length and str[i] >= u8('0') and str[i] <= u8('9'), i += 1 {}
+            while i < str.bytes.length and *str[i] >= u8('0') and *str[i] <= u8('9'), i += 1 {}
             end := i
             num_str := str[start..end]
             num := fmt.parse_int(num_str)
             line.add(num)
 
-            while i < str.bytes.length and str[i] == u8(' '), i += 1 {}
-            if str[i] == u8('`n') then break
+            while i < str.bytes.length and *str[i] == u8(' '), i += 1 {}
+            if *str[i] == u8('`n') then break
         }
 
         res.add(line)

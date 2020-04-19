@@ -1066,8 +1066,8 @@ namespace Cheez
 
                 if (expected != null)
                 {
-                    if (!c.Body.GetFlag(ExprFlags.Returns) && !c.Body.GetFlag(ExprFlags.Breaks))
-                        c.Body = CheckType(c.Body, expected);
+                    //if (!c.Body.GetFlag(ExprFlags.Returns) && !c.Body.GetFlag(ExprFlags.Breaks))
+                    //    c.Body = CheckType(c.Body, expected);
                 }
 
                 if (!(c.Pattern is AstNumberExpr || c.Pattern is AstCharLiteral) || c.Condition != null)
@@ -1170,7 +1170,7 @@ namespace Cheez
                             sub = InferTypeHelper(sub, null, context);
 
                             if (matchingReference)
-                                sub = HandleReference(sub, ReferenceType.GetRefType(e.Member.AssociatedType), null);
+                                sub = Ref(sub, null);
 
                             e.Argument.AttachTo(e);
                             e.Argument = MatchPatternWithType(cas, e.Argument, sub, matchingReference, context);
@@ -1520,7 +1520,6 @@ namespace Cheez
 
                 for (int i = 0; i < expr.Arguments.Count; i++)
                 {
-                    expr.Arguments[i] = HandleReference(expr.Arguments[i], op.ArgTypes[i], context);
                     expr.Arguments[i] = CheckType(expr.Arguments[i], op.ArgTypes[i]);
                 }
 
@@ -1902,6 +1901,10 @@ namespace Cheez
                     when t.TargetType is StructType ts && f.TargetType is StructType fs
                     && ts.Declaration.Extends == fs:
                     return cast;
+
+                case (PointerType t, ReferenceType f)
+                    when CheezType.TypesMatch(t.TargetType, f.TargetType):
+                    return cast;
             }
 
             // check for trait cast
@@ -2061,32 +2064,17 @@ namespace Cheez
             expr.SubExpression.SetFlag(ExprFlags.ValueRequired, true);
             expr.SubExpression = InferTypeHelper(expr.SubExpression, subExpect, context);
 
-            if (expr.Reference)
+            if (expr.SubExpression.Type is ReferenceType r)
             {
-                if (expr.SubExpression.Type is ReferenceType r)
-                {
-                    expr.Type = r.TargetType;
-                }
-                else
-                {
-                    ReportError(expr, $"Can't dereference non reference type {expr.SubExpression.Type}");
-                }
+                expr.Type = r.TargetType;
             }
-            else
+            else if (expr.SubExpression.Type is PointerType p)
             {
-                if (expr.SubExpression.Type is ReferenceType r)
-                {
-                    expr.Type = r.TargetType;
-                    // expr.SubExpression = Deref(expr.SubExpression, context);
-                }
-                else if (expr.SubExpression.Type is PointerType p)
-                {
-                    expr.Type = p.TargetType;
-                }
-                else if (!expr.SubExpression.Type.IsErrorType)
-                {
-                    ReportError(expr, $"Can't dereference non pointer type {expr.SubExpression.Type}");
-                }
+                expr.Type = p.TargetType;
+            }
+            else if (!expr.SubExpression.Type.IsErrorType)
+            {
+                ReportError(expr, $"Can't dereference non pointer type {expr.SubExpression.Type}");
             }
 
 
@@ -2198,6 +2186,8 @@ namespace Cheez
             CheezType subExpected = null;
             if (expected is PointerType p)
                 subExpected = p.TargetType;
+            else if (expected is ReferenceType r)
+                subExpected = r.TargetType;
             else if (expected == CheezType.Type)
                 subExpected = expected;
 
@@ -2233,26 +2223,15 @@ namespace Cheez
             {
                 if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
-                    // create temp variable
-                    //var tmpVar = new AstTempVarExpr(expr.SubExpression);
-                    //tmpVar.AttachTo(expr);
-                    //expr.SubExpression = InferType(tmpVar, null);
-
                     ReportError(expr, $"Can't create a reference to non l-value of type '{expr.SubExpression.Type}'");
                     expr.Type = CheezType.Error;
                     return expr;
                 }
 
                 expr.Type = ReferenceType.GetRefType(expr.SubExpression.Type);
-                expr.SetFlag(ExprFlags.IsLValue, true);
             }
             else
             {
-                if (expr.SubExpression.Type is ReferenceType)
-                {
-                    expr.SubExpression = Deref(expr.SubExpression, context);
-                }
-
                 if (!expr.SubExpression.GetFlag(ExprFlags.IsLValue))
                 {
                     ReportError(expr, $"Can't take the address of non l-value of type '{expr.SubExpression.Type}'");
@@ -3692,6 +3671,32 @@ namespace Cheez
                         break;
                     }
 
+                case "types_match":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr, $"@types_match takes one argument");
+                            return expr;
+                        }
+
+                        var typeExpr = InferArg(0, CheezType.Type);
+                        if (typeExpr.Type.IsErrorType)
+                            return expr;
+                        var polyExpr = InferArg(1, CheezType.Type);
+                        if (polyExpr.Type.IsErrorType)
+                            return expr;
+
+                        var type = typeExpr.Value as CheezType;
+                        var poly = polyExpr.Value as CheezType;
+
+                        var polyTypes = new Dictionary<string, (CheezType type, object value)>();
+                        int match = poly.Match(type, polyTypes);
+
+                        expr.Type = CheezType.Bool;
+                        expr.Value = match != -1;
+                        return expr;
+                    }
+
                 case "typeof":
                     {
                         if (expr.Arguments.Count != 1)
@@ -4288,15 +4293,43 @@ namespace Cheez
                         if (ops.Count == 0)
                         {
                             UpdateTypeImplMap();
-                            ops = expr.Scope.GetBinaryOperators("[]", PointerType.GetPointerType(left.Type), right.Type);
-                            left = new AstAddressOfExpr(left, left);
+                            ops = expr.Scope.GetBinaryOperators("[]", ReferenceType.GetRefType(left.Type), right.Type);
+                            left = Ref(left, context);
                         }
 
                         if (ops.Count == 1)
                         {
-                            var opCall = new AstBinaryExpr("[]", left, right, expr);
-                            opCall.Scope = expr.Scope;
-                            return InferType(opCall, expected);
+                            switch (ops[0])
+                            {
+                                case UserDefinedBinaryOperator user:
+                                    {
+                                        if (user.LhsType is ReferenceType && !(left.Type is ReferenceType))
+                                            left = Ref(left, context);
+                                        var args = new List<AstArgument>() {
+                                            new AstArgument(left, Location: left.Location),
+                                            new AstArgument(right, Location: right.Location)
+                                        };
+                                        var func = new AstSymbolExpr(user.Declaration);
+                                        var call = new AstCallExpr(func, args, expr.Location);
+                                        call.Replace(expr);
+                                        return InferType(call, expected);
+                                    }
+                                case UserDefinedNaryOperator user:
+                                    {
+                                        if (user.ArgTypes[0] is ReferenceType && !(left.Type is ReferenceType))
+                                            left = Ref(left, context);
+                                        var args = new List<AstArgument>() {
+                                            new AstArgument(left, Location: left.Location),
+                                            new AstArgument(right, Location: right.Location)
+                                        };
+                                        var func = new AstSymbolExpr(user.Declaration);
+                                        var call = new AstCallExpr(func, args, expr.Location);
+                                        call.Replace(expr);
+                                        return InferType(call, expected);
+                                    }
+                                default:
+                                    throw new NotImplementedException();
+                            }
                         }
                         else if (ops.Count > 1)
                         {
@@ -5636,7 +5669,6 @@ namespace Cheez
             }
 
             // :hack
-            expr.SetFlag(ExprFlags.IsLValue, func.ReturnType is ReferenceType);
             expr.Type = func.ReturnType;
             expr.FunctionType = func;
 
@@ -5818,7 +5850,6 @@ namespace Cheez
 
                 var op = ops[0];
 
-                expr.SubExpr = HandleReference(expr.SubExpr, op.SubExprType, context);
                 if (!op.SubExprType.IsPolyType)
                     expr.SubExpr = CheckType(expr.SubExpr, op.SubExprType);
 
@@ -5891,13 +5922,8 @@ namespace Cheez
                 if (expr.Right.Type is StructType || expr.Right.Type is EnumType)
                     GetImplsForType(expr.Right.Type);
 
-                var leftType = expr.Left.Type is ReferenceType r ? r.TargetType : expr.Left.Type;
-                var rightType = expr.Right.Type is ReferenceType r2 ? r2.TargetType : expr.Right.Type;
-
-                if (expr.Operator == "and" && leftType is EnumType)
-                {
-
-                }
+                var leftType = expr.Left.Type;
+                var rightType = expr.Right.Type;
 
                 var ops = expr.Scope.GetBinaryOperators(expr.Operator, leftType, rightType);
 
@@ -5915,8 +5941,6 @@ namespace Cheez
 
                 var op = ops[0];
 
-                expr.Left = HandleReference(expr.Left, op.LhsType, context);
-                expr.Right = HandleReference(expr.Right, op.RhsType, context);
                 if (!op.LhsType?.IsPolyType ?? false)
                     expr.Left = CheckType(expr.Left, op.LhsType);
                 if (!op.RhsType?.IsPolyType ?? false)
@@ -6261,6 +6285,10 @@ namespace Cheez
 
                 // cast(ref any) ref T
                 case (ReferenceType t, ReferenceType _) when t.TargetType is AnyType:
+                    return InferType(cast, to);
+
+                // cast(^) &
+                case (PointerType t, ReferenceType f) when CheezType.TypesMatch(t.TargetType, f.TargetType):
                     return InferType(cast, to);
             }
 

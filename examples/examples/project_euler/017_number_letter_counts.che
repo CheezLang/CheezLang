@@ -45,40 +45,40 @@ number_to_english :: (n: int) -> String {
 
     result := String.empty()
     if _1000 != 0 {
-        result += number_to_english_1(_1000)
-        result += "thousand"
+        &result += number_to_english_1(_1000)
+        &result += "thousand"
         if _100 == 0 and (_10 != 0 or _1 != 0) {
-            result += "and"
+            &result += "and"
         }
     }
 
     if _100 != 0 {
-        result += number_to_english_1(_100)
-        result += "hundred"
+        &result += number_to_english_1(_100)
+        &result += "hundred"
         if _10 != 0 or _1 != 0 {
-            result += "and"
+            &result += "and"
         }
     }
 
     if _10 == 1 {
         match _1 {
-            0 -> { result += "ten"         }
-            1 -> { result += "eleven"      }
-            2 -> { result += "twelve"      }
-            3 -> { result += "thirteen"    }
-            4 -> { result += "fourteen"    }
-            5 -> { result += "fifteen"     }
-            6 -> { result += "sixteen"     }
-            7 -> { result += "seventeen"   }
-            8 -> { result += "eighteen"    }
-            9 -> { result += "nineteen"    }
+            0 -> { &result += "ten"         }
+            1 -> { &result += "eleven"      }
+            2 -> { &result += "twelve"      }
+            3 -> { &result += "thirteen"    }
+            4 -> { &result += "fourteen"    }
+            5 -> { &result += "fifteen"     }
+            6 -> { &result += "sixteen"     }
+            7 -> { &result += "seventeen"   }
+            8 -> { &result += "eighteen"    }
+            9 -> { &result += "nineteen"    }
         }
     } else if _10 != 0 {
-        result += number_to_english_10(_10)
+        &result += number_to_english_10(_10)
     }
 
     if _1 != 0 and _10 != 1 {
-        result += number_to_english_1(_1)
+        &result += number_to_english_1(_1)
     }
 
     return result

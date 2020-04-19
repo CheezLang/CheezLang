@@ -54,10 +54,10 @@ Main :: () {
 
     {
         a := alloc_n(int, 5, ^sa)
-        for i in 0..a.length { a[i] = 0 }
+        for i in 0..a.length { *a[i] = 0 }
         io.printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
 
-        for i in 0..a.length { a[i] = i + 1 }
+        for i in 0..a.length { *a[i] = i + 1 }
         io.printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
     }
     sa.print_diagnostics()
@@ -65,12 +65,12 @@ Main :: () {
 
     {
         a := alloc_n(int, 3, ^sa)
-        for i in 0..a.length { a[i] = i + 1 }
+        for i in 0..a.length { *a[i] = i + 1 }
         io.printfln("{}, {}, {}", (a[0], a[1], a[2]))
         sa.print_diagnostics()
 
         a = realloc_n(a, 5, ^sa)
-        for i in 3..a.length { a[i] = 0 }
+        for i in 3..a.length { *a[i] = 0 }
         io.printfln("{}, {}, {}, {}, {}", (a[0], a[1], a[2], a[3], a[4]))
     }
     sa.print_diagnostics()

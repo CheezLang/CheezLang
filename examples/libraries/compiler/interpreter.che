@@ -95,7 +95,7 @@ StackFrame :: struct {
 
 impl StackFrame {
     push_int :: (&Self, val: int) {
-        stack[sp] = val
+        *stack[sp] = val
         sp += 1
     }
 
@@ -106,53 +106,53 @@ impl StackFrame {
     }
 
     get :: (&Self, index: int, $T: type) -> T {
-        return *cast(^T)^stack[index]
+        return *cast(^T)^*stack[index]
     }
 
     get_local :: (&Self, index: int, $T: type) -> T {
-        return *cast(^T)^stack[bp + index]
+        return *cast(^T)^*stack[bp + index]
     }
 
     get_arg :: (&Self, index: int, $T: type) -> T {
         @assert(index >= 0 and index < parameter_indices.length)
-        return *cast(^T)^stack[bp + parameter_indices[index]]
+        return *cast(^T)^*stack[bp + *parameter_indices[index]]
     }
 
     set_return :: (&Self, v: $T) {
-        *cast(^T)^stack[0] = v
+        *cast(^T)^*stack[0] = v
         return_value_slots = (@sizeof(T) + 7) / 8
     }
 
     dump_stack :: (&Self) -> String {
         str := String.with_capacity(128)
 
-        str += "[ "
+        &str += "[ "
 
         // parameters
         for i in 0..bp {
             if i > 0 {
-                str += ", "
+                &str += ", "
             }
             str.appendf("{}", *stack[i])
         }
 
         // locals
-        str += " | "
+        &str += " | "
 
         if sp - bp > 10 {
-            str += "... "
+            &str += "... "
         }
 
         if sp >= bp {
             for i in max(bp, sp - 10) .. sp {
                 str.appendf("{}", *stack[i])
                 if i < sp - 1 {
-                    str += ", "
+                    &str += ", "
                 }
             }
         }
 
-        str += " ]"
+        &str += " ]"
 
         return str
     }
@@ -193,7 +193,7 @@ impl Interpreter {
 
     top_frame :: (&Self) -> ^StackFrame {
         @assert(fp >= 0)
-        return ^frames[fp]
+        return ^*frames[fp]
     }
 
     get_stackframes :: (&Self) -> []StackFrame {
@@ -206,7 +206,7 @@ impl Interpreter {
 
     push_frame :: (&Self, func: ^CBCFunction) -> bool {
         if fp + 1 >= frames.length {
-            frame := &frames[fp]
+            frame := frames[fp]
             location := frame.func.debug_info.get_location_for_ip(frame.ip_prev)
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
                 frame.func.debug_info.path.slice()
@@ -222,7 +222,7 @@ impl Interpreter {
         }
 
         if sp + func.local_slots >= stack.length {
-            frame := &frames[fp]
+            frame := frames[fp]
             location := frame.func.debug_info.get_location_for_ip(frame.ip_prev)
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}, required={}) {}           {}", [
                 frame.func.debug_info.path.slice()
@@ -267,7 +267,7 @@ impl Interpreter {
             return_value_slots = (func.ast_function.return_type.size + 7) / 8
         }
 
-        frames[fp] = StackFrame(
+        *frames[fp] = StackFrame(
             ip                  = 0
             sp                  = func.parameter_slots + func.local_slots
             bp                  = func.parameter_slots
@@ -287,7 +287,7 @@ impl Interpreter {
 
     push_native_frame :: (&Self, wrapper: ^NativeFunctionWrapper) -> ^StackFrame {
         if fp + 1 >= frames.length {
-            frame := &frames[fp]
+            frame := frames[fp]
             location := frame.func.debug_info.get_location_for_ip(frame.ip_prev)
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
                 frame.func.debug_info.path.slice()
@@ -299,7 +299,7 @@ impl Interpreter {
                 Instruction.pretty_print(frame.code[frame.ip_prev..])
                 frame.dump_stack()
             ], "stdout")
-            return ^frames[fp]
+            return ^*frames[fp]
         }
 
         _fp, _sp := fp, sp
@@ -309,7 +309,7 @@ impl Interpreter {
             sp += frames[fp].sp - frames[fp].bp
         }
         fp += 1
-        frames[fp] = StackFrame(
+        *frames[fp] = StackFrame(
             ip = 0
             sp = wrapper.arg_slots
             bp = wrapper.arg_slots
@@ -319,12 +319,12 @@ impl Interpreter {
             parameter_indices = wrapper.parameter_indices
         )
 
-        return ^frames[fp]
+        return ^*frames[fp]
     }
 
     push_native_frame2 :: (&Self, arg_slots: int) -> ^StackFrame {
         if fp + 1 >= frames.length {
-            frame := &frames[fp]
+            frame := frames[fp]
             location := frame.func.debug_info.get_location_for_ip(frame.ip_prev)
             g_logger.log("[INTERP] {}:{}:{}: StackOverflow at (fp={}, sp={}, ip={}) {}           {}", [
                 frame.func.debug_info.path.slice()
@@ -336,7 +336,7 @@ impl Interpreter {
                 Instruction.pretty_print(frame.code[frame.ip_prev..])
                 frame.dump_stack()
             ], "stdout")
-            return ^frames[fp]
+            return ^*frames[fp]
         }
 
         _fp, _sp := fp, sp
@@ -346,7 +346,7 @@ impl Interpreter {
             sp += frames[fp].sp - frames[fp].bp
         }
         fp += 1
-        frames[fp] = StackFrame(
+        *frames[fp] = StackFrame(
             ip = 0
             sp = arg_slots
             bp = arg_slots
@@ -356,7 +356,7 @@ impl Interpreter {
             parameter_indices = []
         )
 
-        return ^frames[fp]
+        return ^*frames[fp]
     }
 
     pop_frame :: (&Self) {
@@ -366,40 +366,40 @@ impl Interpreter {
         fp -= 1
         if fp >= 0 {
             sp -= frames[fp].sp - frames[fp].bp
-            (^frames[fp]).sp -= frames[fp + 1].bp
+            frames[fp].sp -= frames[fp + 1].bp
         }
     }
 
     step :: (&Self) -> InterpStepResult {
         @assert(fp >= 0)
-        frame := ^frames[fp]
+        frame := frames[fp]
         arg :: (T: type) #macro {
-            val := *cast(^T)^frame.code[frame.ip]
+            val := *cast(^T)^*frame.code[frame.ip]
             frame.ip += 1
             val
         }
 
         push :: (val: $T) #macro {
-            frame.stack[frame.sp] = *cast(^int)^val
+            *frame.stack[frame.sp] = *cast(^int)^val
             frame.sp += 1
         }
 
         pop :: (T: type) #macro {
             @assert(frame.sp > 0)
             frame.sp -= 1
-            *cast(^T)^frame.stack[frame.sp]
+            *cast(^T)^*frame.stack[frame.sp]
         }
 
         peek :: (T: type, offset: int) #macro {
             @assert(frame.sp > 0)
             @assert(offset <= 0)
-            *cast(^T)^frame.stack[frame.sp + offset - 1]
+            *cast(^T)^*frame.stack[frame.sp + offset - 1]
         }
 
         set :: ($T: type, offset: int, val: T) #macro {
             @assert(frame.sp > 0)
             @assert(offset <= 0)
-            *cast(^T)^frame.stack[frame.sp + offset - 1] = val
+            *cast(^T)^*frame.stack[frame.sp + offset - 1] = val
         }
 
 
@@ -444,7 +444,7 @@ impl Interpreter {
             }
             .Dup -> {
                 slots := arg(int)
-                C.memcpy(^frame.stack[frame.sp], ^frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
+                C.memcpy(^*frame.stack[frame.sp], ^*frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
                 frame.sp += slots
             }
 
@@ -459,18 +459,18 @@ impl Interpreter {
 
             .LoadAddress -> {
                 index := pop(int)
-                address := cast(int) ^frame.stack[frame.bp + index]
+                address := cast(int) ^*frame.stack[frame.bp + index]
                 push(address)
             }
             .AddressOf -> {
                 index := arg(int)
-                address := cast(int) ^frame.stack[frame.bp + index]
+                address := cast(int) ^*frame.stack[frame.bp + index]
                 push(address)
             }
             .Load -> {
                 slots  := arg(int)
                 address := pop(^int)
-                C.memcpy(^frame.stack[frame.sp], address, cast slots * @sizeof(u64))
+                C.memcpy(^*frame.stack[frame.sp], address, cast slots * @sizeof(u64))
                 frame.sp += slots
             }
             .Store -> {
@@ -478,24 +478,24 @@ impl Interpreter {
                 frame.sp -= slots
                 address := pop(^void)
 
-                C.memcpy(address, ^frame.stack[frame.sp + 1], cast slots * @sizeof(u64))
+                C.memcpy(address, ^*frame.stack[frame.sp + 1], cast slots * @sizeof(u64))
             }
             .LoadLocal -> {
                 index := arg(int)
                 slots  := arg(int)
-                C.memmove(^frame.stack[frame.sp], ^frame.stack[frame.bp + index], cast slots * @sizeof(u64))
+                C.memmove(^*frame.stack[frame.sp], ^*frame.stack[frame.bp + index], cast slots * @sizeof(u64))
                 frame.sp += slots
             }
             .StoreLocal -> {
                 index := arg(int)
                 slots  := arg(int)
-                C.memmove(^frame.stack[frame.bp + index], ^frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
+                C.memmove(^*frame.stack[frame.bp + index], ^*frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
                 frame.sp -= slots
             }
             .StoreStack -> {
                 index := arg(int)
                 slots  := arg(int)
-                C.memmove(^frame.stack[index], ^frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
+                C.memmove(^*frame.stack[index], ^*frame.stack[frame.sp - slots], cast slots * @sizeof(u64))
                 frame.sp -= slots
             }
 
@@ -797,7 +797,7 @@ impl Interpreter {
                         fmt.align(35), frame.dump_stack()
                     ], "stdout")
                 }}
-                wrapper(func, ^self)
+                wrapper(func, ^*self)
                 if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
                     frame := top_frame()
                     g_logger.log("ret_slots: {}{}{}{}{}{}{}{}{}", [
@@ -814,7 +814,7 @@ impl Interpreter {
                     // increment sp by one for return value
                     // @todo: needs to work with return values bigger than 8 bytes (1 stack slot)
                     // @fixme frames[fp].sp += 1 // fails to compile
-                    (^frames[fp]).sp += native_frame.return_value_slots
+                    frames[fp].sp += native_frame.return_value_slots
                 } else {
                     return .Done
                 }
@@ -834,7 +834,7 @@ impl Interpreter {
                         fmt.align(35), frame.dump_stack()
                     ], "stdout")
                 }}
-                wrapper.function(^self)
+                wrapper.function(^*self)
                 if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
                     frame := top_frame()
                     g_logger.log("ret_slots: {}{}{}{}{}{}{}{}{}", [
@@ -851,7 +851,7 @@ impl Interpreter {
                     // increment sp by one for return value
                     // @todo: needs to work with return values bigger than 8 bytes (1 stack slot)
                     // @fixme frames[fp].sp += 1 // fails to compile
-                    (^frames[fp]).sp += native_frame.return_value_slots
+                    frames[fp].sp += native_frame.return_value_slots
                 } else {
                     return .Done
                 }
@@ -877,13 +877,13 @@ impl Interpreter {
 
             .Return -> {
                 @assert(frame.sp > 0)
-                C.memmove(^frame.stack[0], ^frame.stack[frame.sp - frame.return_value_slots], cast frame.return_value_slots * @sizeof(u64))
+                C.memmove(^*frame.stack[0], ^*frame.stack[frame.sp - frame.return_value_slots], cast frame.return_value_slots * @sizeof(u64))
                 pop_frame()
                 if fp >= 0 {
                     // increment sp by one for return value
                     // @todo: needs to work with return values bigger than 8 bytes (1 stack slot)
                     // @fixme frames[fp].sp += 1 // fails to compile
-                    (^frames[fp]).sp += frame.return_value_slots
+                    frames[fp].sp += frame.return_value_slots
                 } else {
                     return .Done
                 }
@@ -994,7 +994,7 @@ impl Instruction {
         @assert(code.length > 0)
 
         arg :: (T: type, index: int) #macro {
-            *cast(^T)^code[index + 1]
+            *cast(^T)^*code[index + 1]
         }
 
         return match Instruction(*code[0]) {

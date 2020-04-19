@@ -276,7 +276,7 @@ impl Shader for LambertianShader {
             shadow = 0.3
         }
 
-        c *= fmax(i, 0.1)
+        &c *= fmax(i, 0.1)
         return c * shadow
     }
 }
@@ -425,12 +425,12 @@ impl Film {
                     for i in 0..antiAliasingSteps {
                         ray := camera.project((fx + r.next_double()) * fw, (fy + r.next_double()) * fh)
                         c := scene.project(ray)
-                        color += c
+                        &color += c
                     }
                     color = color * (1 / cast(double) antiAliasingSteps)
                 }
 
-                pixels[x + y * width] = color
+                *pixels[x + y * width] = color
             }
         }
     }
@@ -541,7 +541,7 @@ impl SDFAllocator {
 
 renderImage :: (film: &Film) {
     for i in 0..film.pixels.length {
-        film.pixels[i] = Vec3(0, 0, 0)
+        *film.pixels[i] = Vec3(0, 0, 0)
     }
 
     as := (cast(double) film.width) / (cast(double) film.height)

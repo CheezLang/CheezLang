@@ -61,17 +61,17 @@ Main :: () {
     a.resize(15)
     print_array(&a)
 
-    a[0] = 5
-    a[5] = 3
+    *a[0] = 5
+    *a[5] = 3
 
     a.add(1)
     a.add(2)
     a.add(3)
     print_array(&a)
 
-    a += 1 + 5
-    a += 2 + 5
-    a += 3 + 5
+    a.add(1 + 5)
+    a.add(2 + 5)
+    a.add(3 + 5)
     print_array(&a)
 
     match a.get(-1) { Some($value)  -> C.printf("a[%lld] = %lld`n", -1, value) }

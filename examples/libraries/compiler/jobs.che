@@ -115,25 +115,25 @@ impl CompilationJob for CompileStructMemberJob {
         debug_log("Begin compilation")
 
         compile_node := CompileNode(
-            job         = ^self
+            job         = ^*self
             compiler    = compiler
             node        = node
             function    = null
         )
 
-        match &*node {
+        match node {
             AstDecl($decl) -> {
-                compile_node.compile_node(decl, CNContext())
-                structt.members.add(^decl)
+                compile_node.compile_node(&*decl, CNContext())
+                structt.members.add(decl)
             }
 
             AstConstDecl($decl) -> {
-                compile_node.compile_node(decl, CNContext())
-                structt.constants.add(^decl)
+                compile_node.compile_node(&*decl, CNContext())
+                structt.constants.add(decl)
             }
 
             _ -> {
-                node = ^compile_node.evaluate_node(&*node, CNContext())
+                node = ^*compile_node.evaluate_node(&*node, CNContext())
                 if node.value == .Poison {
                     poison(&*node)
                     return
@@ -191,13 +191,13 @@ impl CompilationJob for CompileGlobalNodeJob {
         debug_log("Begin compilation")
 
         compile_node := CompileNode(
-            job         = ^self
+            job         = ^*self
             compiler    = compiler
             node        = node
             function    = null
         )
 
-        node = ^compile_node.compile_node(&*node, CNContext())
+        node = ^*compile_node.compile_node(&*node, CNContext())
 
         if node.value == .Poison {
             debug_log("Failed. Got poison")
@@ -339,13 +339,15 @@ impl CompileNode {
     }
 
     evaluate_node :: (&Self, node: &AstNode, ctx: CNContext) -> &AstNode {
-        debug_log("evaluate_node")
+        // {
+        //     dump := dump_ast(node, recurse = false)
+        //     debug_log("evaluate_node: {}", [dump])
+        // }
         if node.typ != null {
             return node
         }
         node.scope = compiler.new_scope(node.scope, constant = true)
-        node <- compile_node(node, ctx)
-
+        node = compile_node(node, ctx)
 
         if node.value == .None {
             code_gen := ByteCodeGenerator.new(&compiler.string_database, &*compiler.error_handler, compiler.bc_allocator)
@@ -443,7 +445,7 @@ impl CompileNode {
 
         original_sub := dot.sub
         dot.sub.scope = dot.scope
-        dot.sub = ^compile_node(&*dot.sub, ctx)
+        dot.sub = ^*compile_node(&*dot.sub, ctx)
         handle_poison(dot, *dot.sub)
 
         match dot.sub.typ {
@@ -455,7 +457,7 @@ impl CompileNode {
                     sub         = &*dot.sub
                     operator    = .Deref
                 ))
-                dot.sub = ^compile_node(&*deref, ctx.with_expected(ti.target))
+                dot.sub = ^*compile_node(&*deref, ctx.with_expected(ti.target))
                 handle_poison(dot, *dot.sub)
             }
         }
@@ -493,7 +495,7 @@ impl CompileNode {
 
                 // check if member with this name exists
                 member : ^TypeInfoStructMember = null
-                for(by_ref=true) mem in ti.members {
+                for mem in ti.members {
                     if mem.name == name {
                         member = ^mem
                         break
@@ -511,7 +513,7 @@ impl CompileNode {
                 func : ^TypeInfoImplFunction = null
                 for(by_ref=true) ti.impl_funcs {
                     if it.name == name {
-                        func = ^it
+                        func = ^*it
                         break
                     }
                 }
@@ -565,13 +567,13 @@ impl CompileNode {
         // in that case turn it into @typeof(<expr>)."[]set"(<expr>, <index>, <value>)
 
         ass.pattern.scope = ass.scope
-        ass.pattern <- compile_node(ass.pattern, ctx)
+        ass.pattern = compile_node(ass.pattern, ctx)
         handle_poison(ass, ass.pattern)
 
         // @todo: check if pattern is lvalue
 
         ass.value_expr.scope = ass.scope
-        ass.value_expr <- compile_node(ass.value_expr, ctx.with_expected(ass.pattern.typ))
+        ass.value_expr = compile_node(ass.value_expr, ctx.with_expected(ass.pattern.typ))
         handle_poison(ass, ass.value_expr)
 
         // check types
@@ -685,7 +687,7 @@ impl CompileNode {
 
         for(by_ref=true) val in &arr.values {
             val.scope = arr.scope
-            *val = ^compile_node(&**val, ctx.with_expected(expected))
+            *val = ^*compile_node(&**val, ctx.with_expected(expected))
             
             if val.value == .Poison {
                 poison(arr)
@@ -728,7 +730,7 @@ impl CompileNode {
             None
         } else {
             arr.count.scope = arr.scope
-            arr.count = ^evaluate_node(&*arr.count, ctx.with_expected(@type_info(int)))
+            arr.count = ^*evaluate_node(&*arr.count, ctx.with_expected(@type_info(int)))
 
             handle_poison(arr, arr.count)
 
@@ -745,7 +747,7 @@ impl CompileNode {
         }
 
         arr.target.scope = arr.scope
-        arr.target <- evaluate_node(arr.target, ctx.with_expected(@type_info(type)))
+        arr.target = evaluate_node(arr.target, ctx.with_expected(@type_info(type)))
         if arr.target.value == .Poison or arr.target.typ != @type_info(type) {
             poison(arr)
             return arr
@@ -796,7 +798,7 @@ impl CompileNode {
 
     compile_unary_neg :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
         un.sub.scope = un.scope
-        un.sub <- compile_node(un.sub, ctx)
+        un.sub = compile_node(un.sub, ctx)
 
         // check types
         if un.sub.typ == null { return un }
@@ -829,7 +831,7 @@ impl CompileNode {
 
     compile_unary_not :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
         un.sub.scope = un.scope
-        un.sub <- compile_node(un.sub, ctx.with_expected(@type_info(bool)))
+        un.sub = compile_node(un.sub, ctx.with_expected(@type_info(bool)))
 
         // check types
         if un.sub.typ == null { return un }
@@ -861,7 +863,7 @@ impl CompileNode {
         }
 
         un.sub.scope = un.scope
-        un.sub <- compile_node(un.sub, ctx)
+        un.sub = compile_node(un.sub, ctx)
         handle_poison(un, un.sub)
 
         if un.sub.typ == @type_info(type) {
@@ -930,7 +932,7 @@ impl CompileNode {
 
     compile_unary_deref :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
         un.sub.scope = un.scope
-        un.sub <- compile_node(un.sub, ctx)
+        un.sub = compile_node(un.sub, ctx)
         handle_poison(un, un.sub)
 
         if !un.sub.has_flags(.LValue) {
@@ -963,8 +965,8 @@ impl CompileNode {
         bin.left.scope = bin.scope
         bin.right.scope = bin.scope
 
-        bin.left <- compile_node(bin.left, ctx)
-        bin.right <- compile_node(bin.right, ctx)
+        bin.left = compile_node(bin.left, ctx)
+        bin.right = compile_node(bin.right, ctx)
 
         handle_poison(bin, bin.left)
         handle_poison(bin, bin.right)
@@ -1106,7 +1108,7 @@ impl CompileNode {
 
     compile_index :: (&Self, node: &AstIndex, ctx: CNContext) -> &AstNode {
         node.sub.scope = node.scope
-        node.sub <- compile_node(node.sub, ctx)
+        node.sub = compile_node(node.sub, ctx)
         handle_poison(node, node.sub)
 
         match node.sub.value {
@@ -1117,7 +1119,7 @@ impl CompileNode {
                     return node
                 } else {
                     for arg in &node.arguments {
-                        param := &poly.params[it_index]
+                        param := poly.params[it_index]
 
                         arg.scope = node.scope
                         evaluate_node(&**arg, ctx.with_expected(param.var_type))
@@ -1136,7 +1138,7 @@ impl CompileNode {
                 }
 
                 cloner := AstCloner(compiler.next_ast_id, compiler.ast_allocator)
-                clone := cloner.clone(^poly.value_expr)
+                clone := cloner.clone(^*poly.value_expr)
                 if clone == null {
                     poison(node)
                     return node
@@ -1145,14 +1147,17 @@ impl CompileNode {
                 scope := compiler.new_scope(poly.scope)
 
                 for arg in &node.arguments {
-                    param := &poly.params[it_index]
+                    param := poly.params[it_index]
 
                     g_logger.log("{}: {}, {}", [param.name, arg.typ, arg.value])
                     scope.define_value(param.name, arg.typ, arg.value)
                 }
 
                 clone.scope = scope
-                return evaluate_node(&*clone, ctx)
+                result := evaluate_node(&*clone, ctx)
+                node.typ = result.typ
+                node.value = result.value
+                return node
             }
         }
 
@@ -1275,7 +1280,7 @@ impl CompileNode {
         // @todo: create a job for each child, so children can depend on other children
         for child in &str.children {
             child.scope = str.sub_scope
-            job := compiler.create_job(CompileStructMemberJob.new(^str, *child))
+            job := compiler.create_job(CompileStructMemberJob.new(^*str, *child))
             jobs.add(cast job)
             compiler.add_job(job)
 
@@ -1314,7 +1319,7 @@ impl CompileNode {
             name        = str.name
             members     = member_type_infos
         ))
-        compiler.register_struct(cast str.struct_type, ^str)
+        compiler.register_struct(cast str.struct_type, ^*str)
 
         // calculate size and alignment
         {
@@ -1341,6 +1346,7 @@ impl CompileNode {
             str.struct_type.size = size
             str.struct_type.alignment = alignment
         }
+        g_logger.log("compile struct '{}': 5", [str.name])
 
         str.value = .Type(str.struct_type)
         return str
@@ -1390,7 +1396,7 @@ impl CompileNode {
         }
 
         poly.typ = @type_info(void)
-        poly.value = .Poly(^poly)
+        poly.value = .Poly(^*poly)
         return poly
     }
 
@@ -1448,7 +1454,7 @@ impl CompileNode {
 
     compile_argument :: (&Self, arg: &AstArgument, ctx: CNContext) -> &AstNode {
         arg.value_expr.scope = arg.scope
-        arg.value_expr <- compile_node(arg.value_expr, ctx)
+        arg.value_expr = compile_node(arg.value_expr, ctx)
         arg.typ = arg.value_expr.typ
         arg.value = arg.value_expr.value
         return arg
@@ -1461,7 +1467,7 @@ impl CompileNode {
             return cst
         }
         cst.type_expr.scope = cst.scope
-        cst.type_expr = ^evaluate_node(&*cst.type_expr, ctx.with_expected(@type_info(type)))
+        cst.type_expr = ^*evaluate_node(&*cst.type_expr, ctx.with_expected(@type_info(type)))
 
         if cst.type_expr.value == .Poison {
             poison(cst)
@@ -1478,7 +1484,7 @@ impl CompileNode {
         cst.typ = cst.type_expr.value.Type
 
         cst.value_expr.scope = cst.scope
-        cst.value_expr <- compile_node(cst.value_expr, ctx.with_expected(cst.typ))
+        cst.value_expr = compile_node(cst.value_expr, ctx.with_expected(cst.typ))
 
         if cst.value_expr.value == .Poison {
             poison(cst)
@@ -1498,7 +1504,7 @@ impl CompileNode {
 
     compile_call :: (&Self, call: &AstCall, ctx: CNContext) -> &AstNode {
         call.function.scope = call.scope
-        call.function <- compile_node(call.function, ctx.with_expected(null))
+        call.function = compile_node(call.function, ctx.with_expected(null))
 
         if call.function.value == .Poison {
             poison(call)
@@ -1537,7 +1543,7 @@ impl CompileNode {
                     id          = -1
                     location    = call.location
                     scope       = call.scope
-                    type_expr   = ^call.function
+                    type_expr   = ^*call.function
                     value_expr  = &**call.arguments[0]
                 ))
 
@@ -1553,10 +1559,10 @@ impl CompileNode {
                     compiler.error_handler.report_error_at(call.location, "Wrong number of arguments in function call")
                 } else {
                     for arg in &call.arguments {
-                        param := &func.params[it_index]
+                        param := func.params[it_index]
 
                         arg.scope = call.scope
-                        *arg = cast ^compile_node(&**arg, ctx.with_expected(param.var_type))
+                        *arg = cast ^*compile_node(&**arg, ctx.with_expected(param.var_type))
 
                         if arg.value == .Poison {
                             poison(call)
@@ -1588,7 +1594,7 @@ impl CompileNode {
                     for arg in &call.arguments {
                         param_type := *func_type.param_types[it_index]
                         arg.scope = call.scope
-                        *arg = cast ^compile_node(&**arg, ctx.with_expected(param_type))
+                        *arg = cast ^*compile_node(&**arg, ctx.with_expected(param_type))
 
                         if arg.value == .Poison {
                             poison(call)
@@ -1618,7 +1624,7 @@ impl CompileNode {
                     for arg in &call.arguments {
                         param_type := *func_type.param_types[it_index]
                         arg.scope = call.scope
-                        *arg = cast ^compile_node(&**arg, ctx.with_expected(param_type))
+                        *arg = cast ^*compile_node(&**arg, ctx.with_expected(param_type))
 
                         if arg.value == .Poison {
                             poison(call)
@@ -1651,7 +1657,7 @@ impl CompileNode {
             child.scope = block.sub_scope
 
             expected : ^TypeInfo = if it_index == block.children.count() - 1 then ctx.expected else null
-            *child = ^compile_node(&**child, ctx.with_expected(expected))
+            *child = ^*compile_node(&**child, ctx.with_expected(expected))
 
             if child.value == .Poison {
                 poison(block)
@@ -1674,13 +1680,13 @@ impl CompileNode {
         // @todo: polymorphic functions
 
         _prev_func := self.function
-        self.function = ^func
+        self.function = ^*func
         defer self.function = _prev_func
 
         debug_log("compile_function '{}': Begin", [func.name])
         func.param_scope = compiler.new_scope(func.scope)
         func.body.scope = func.param_scope
-        func.value = Value.Function(^func)
+        func.value = Value.Function(^*func)
 
         // infer types of parameters
         param_types := mem.alloc_n(^TypeInfo, cast func.params.count(), compiler.type_allocator)
@@ -1700,7 +1706,7 @@ impl CompileNode {
             // compile type expression
             if param.type_expr != null {
                 param.type_expr.scope = param.scope
-                param.type_expr = ^compile_node(&*param.type_expr, ctx.with_expected(@type_info(type)))
+                param.type_expr = ^*compile_node(&*param.type_expr, ctx.with_expected(@type_info(type)))
                 
                 if param.type_expr.typ != @type_info(type) {
                     compiler.error_handler.report_error_at(param.type_expr.location, "Expected type, got {}", [param.type_expr.typ])
@@ -1713,7 +1719,7 @@ impl CompileNode {
 
             // default value
             if param.value_expr != null {
-                param.value_expr = ^compile_node(&*param.value_expr, ctx.with_expected(param.var_type))
+                param.value_expr = ^*compile_node(&*param.value_expr, ctx.with_expected(param.var_type))
                 if param.value_expr.typ == null { return func }
                 param.value = param.value_expr.value
 
@@ -1731,14 +1737,14 @@ impl CompileNode {
                 }
             }
 
-            param_types[it_index] = param.var_type
+            *param_types[it_index] = param.var_type
         }
 
         // handle return type
         func.return_type = @type_info(void)
         if func.return_type_expr != null {
             func.return_type_expr.scope = func.param_scope
-            func.return_type_expr = ^compile_node(&*func.return_type_expr, ctx.with_expected(@type_info(type)))
+            func.return_type_expr = ^*compile_node(&*func.return_type_expr, ctx.with_expected(@type_info(type)))
 
             if func.return_type_expr.value == .Poison {
                 poison(func)
@@ -1765,7 +1771,7 @@ impl CompileNode {
 
         // compile body
         debug_log("compile_function '{}': Compile Body", [func.name])
-        func.body = ^compile_node(&*func.body, ctx.with_expected(null)) // @todo: use return type as expected?
+        func.body = ^*compile_node(&*func.body, ctx.with_expected(null)) // @todo: use return type as expected?
         if func.body.value == .Poison {
             poison(func)
             return func
@@ -1774,7 +1780,7 @@ impl CompileNode {
         // generate byte code
         debug_log("compile_function '{}': Generate Bytecode", [func.name])
         code_gen := ByteCodeGenerator.new(&compiler.string_database, &*compiler.error_handler, compiler.bc_allocator)
-        code_gen.get().generate_code_for_function(^func)
+        code_gen.get().generate_code_for_function(^*func)
 
         debug_log("compile_function '{}': End", [func.name])
         return func
@@ -1803,7 +1809,7 @@ impl CompileNode {
         // compile type expression
         if decl.type_expr != null {
             decl.type_expr.scope = decl.scope
-            decl.type_expr = ^compile_node(&*decl.type_expr, ctx.with_expected(@type_info(type)))
+            decl.type_expr = ^*compile_node(&*decl.type_expr, ctx.with_expected(@type_info(type)))
             
             // error handling
             if decl.type_expr.value == .Poison {
@@ -1824,7 +1830,7 @@ impl CompileNode {
         // compile value if present
         if decl.value_expr != null {
             decl.value_expr.scope = decl.scope
-            decl.value_expr = ^compile_node(&*decl.value_expr, ctx.with_expected(decl.var_type))
+            decl.value_expr = ^*compile_node(&*decl.value_expr, ctx.with_expected(decl.var_type))
             if decl.value_expr.typ == null { return decl }
             decl.value = decl.value_expr.value
 
@@ -1911,7 +1917,7 @@ impl CompileNode {
         // compile type expression
         if decl.type_expr != null {
             decl.type_expr.scope = decl.scope
-            decl.type_expr = ^compile_node(&*decl.type_expr, ctx.with_expected(@type_info(type)))
+            decl.type_expr = ^*compile_node(&*decl.type_expr, ctx.with_expected(@type_info(type)))
             
             if decl.type_expr.typ != @type_info(type) {
                 compiler.error_handler.report_error_at(decl.type_expr.location, "Expected type, got {}", [decl.type_expr.typ])
@@ -1922,7 +1928,7 @@ impl CompileNode {
         }
 
 
-        decl.value_expr <- evaluate_node(decl.value_expr, ctx.with_expected(decl.var_type))
+        decl.value_expr = evaluate_node(decl.value_expr, ctx.with_expected(decl.var_type))
         decl.value = decl.value_expr.value
 
         if decl.value == .Poison {

@@ -191,7 +191,7 @@ impl Game for MyGame {
         variables["mxw"] = Complex(mouse_pos_w.x)
         variables["myw"] = Complex(mouse_pos_w.y)
 
-        variables["t"] = *^variables["t"] + Complex(dt)
+        variables["t"] = *variables["t"] + Complex(dt)
 
         draw_current_function()
 

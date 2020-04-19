@@ -291,7 +291,7 @@ impl Compiler {
             scope_allocator = scope_allocator
             type_allocator  = type_allocator
         ))
-        comp.get().error_handler.text_provider = ^comp.get()
+        comp.get().error_handler.text_provider = ^*comp.get()
         comp.get().global_scope = comp.get().new_scope()
         comp.get().define_builtin_types(&*comp.get().global_scope)
 
@@ -365,7 +365,7 @@ impl Compiler {
         self.lock()
         defer self.release()
 
-        string_sources := ^sources[string_sources_file.slice()]
+        string_sources := ^*sources[string_sources_file.slice()]
         string_sources.append_string(content)
         fs.append_file(string_sources_file.slice(), content)
 
@@ -416,7 +416,7 @@ impl Compiler {
 
         ptr := mem.alloc(T, job_allocator)
         *ptr = job
-        ptr.compiler = ^self
+        ptr.compiler = ^*self
         return ptr
     }
 
@@ -594,7 +594,7 @@ impl Compiler {
         *data = Data(
             thread      = t
             callback    = callback
-            compiler    = ^self
+            compiler    = ^*self
         )
         data.thread.start()
     }
@@ -716,7 +716,7 @@ impl Compiler {
         // cancel all fibers
         self.lock()
         defer self.release()
-        for fib in &waiting_fibers {
+        for(by_ref=false) fib in &waiting_fibers {
             if fib.job != null {
                 fib.job.cancelled = true
                 fib.fiber.resume()

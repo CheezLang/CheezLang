@@ -48,19 +48,19 @@ Main :: () {
     C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
     C.printf("`n")
 
-    s += "Hello "
+    &s += "Hello "
     C.printf("capaci: %lld`n", s.get_capacity())
     C.printf("length: %lld`n", s.length)
     C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
     C.printf("`n")
 
-    s += "World"c
+    &s += "World"c
     C.printf("capaci: %lld`n", s.get_capacity())
     C.printf("length: %lld`n", s.length)
     C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
     C.printf("`n")
 
-    s += '!'
+    &s += '!'
     C.printf("capaci: %lld`n", s.get_capacity())
     C.printf("length: %lld`n", s.length)
     C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
@@ -68,7 +68,7 @@ Main :: () {
 
     {
         str := String.from_string(" This is another string =)")
-        s += str
+        &s += &str
     }
     C.printf("capaci: %lld`n", s.get_capacity())
     C.printf("length: %lld`n", s.length)

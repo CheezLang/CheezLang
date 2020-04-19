@@ -73,7 +73,7 @@ impl ErrorHandler for ConsoleErrorHandler {
             bytes := text.bytes
             start := byte_index
             byte_index -= 1
-            while byte_index >= 0 and bytes[byte_index] != u8('`n') {
+            while byte_index >= 0 and *bytes[byte_index] != u8('`n') {
                 start = byte_index
                 byte_index -= 1
             }
@@ -83,7 +83,7 @@ impl ErrorHandler for ConsoleErrorHandler {
         // returns index of \n at the end of the same line
         find_end_of_line :: (text: string, byte_index: int) -> int {
             bytes := text.bytes
-            while byte_index < text.bytes.length and bytes[byte_index] != u8('`n') {
+            while byte_index < text.bytes.length and *bytes[byte_index] != u8('`n') {
                 byte_index += 1
             }
             return byte_index
@@ -96,7 +96,7 @@ impl ErrorHandler for ConsoleErrorHandler {
             end      := byte_index + byte_length
 
             while byte_index < end, byte_index += 1 {
-                if bytes[byte_index] == u8('`n') {
+                if *bytes[byte_index] == u8('`n') {
                     end_line += 1
                 }
             }

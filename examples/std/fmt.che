@@ -264,7 +264,7 @@ format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format:
             if tstruct.members.data != null {
                 comma := false
                 for i in 0..tstruct.members.length {
-                    member_info := ^tstruct.members[i]
+                    member_info := tstruct.members[i]
                     if member_info.has_attribute("fmt_ignore") then continue
 
                     if comma {

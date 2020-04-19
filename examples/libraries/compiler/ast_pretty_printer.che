@@ -346,11 +346,11 @@ pretty_print_ast_helper :: (result: &String, node: &AstNode) {
                 pretty_print_ast_helper(&r, case.pattern)
 
                 if case.condition != null {
-                    r += " if"
+                    &r += " if"
                     pretty_print_ast_helper(&r, &*case.condition)
                 }
 
-                r += " -> "
+                &r += " -> "
                 pretty_print_ast_helper(&r, case.body)
                 append_indented(result, &r, 4)
             }
@@ -683,11 +683,11 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
                 pretty_print_typed_ast_helper(&r, case.pattern)
 
                 if case.condition != null {
-                    r += " if"
+                    &r += " if"
                     pretty_print_typed_ast_helper(&r, &*case.condition)
                 }
 
-                r += " -> "
+                &r += " -> "
                 pretty_print_typed_ast_helper(&r, case.body)
                 append_indented(result, &r, 4)
             }

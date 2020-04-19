@@ -189,7 +189,7 @@ impl PathTracer {
                 result := Vec3()
 
                 // emission
-                result += hit.material.emission
+                &result += hit.material.emission
 
                 // diffuse
                 if hit.material.diffuse.max_component() > 0 {
@@ -205,7 +205,7 @@ impl PathTracer {
                     newDir := u * float(cos(r1)) * r2s + v * float(sin(r1)) * r2s + w * sqrtf(1 - r2)
                     newRay := Ray(hit.pos, newDir)
 
-                    result += hit.material.diffuse * calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
+                    &result += hit.material.diffuse * calc_color(newRay, prng, contribution * hit.material.diffuse.max_component(), depth + 1)
                 }
 
                 // reflection
@@ -213,7 +213,7 @@ impl PathTracer {
                     newDir := ray.dir.reflect(hit.normal)
                     newRay := Ray(hit.pos, newDir)
                     nextContribution := contribution * hit.material.reflection.max_component()
-                    result += hit.material.reflection * calc_color(newRay, prng, nextContribution, depth + 1)
+                    &result += hit.material.reflection * calc_color(newRay, prng, nextContribution, depth + 1)
                 }
 
                 // refraction
@@ -251,7 +251,7 @@ impl PathTracer {
                     }
 
                     color := color_reflected * kr + color_refracted * (1 - kr)
-                    result += hit.material.refraction * color
+                    &result += hit.material.refraction * color
                 }
 
                 result
@@ -383,14 +383,14 @@ impl Game for PathTracer {
             for x in 0..block_count_x {
                 context := alloc(RenderContext)
                 *context = RenderContext(
-                    pt      = ^self
+                    pt      = self
                     min     = Vector2[int](x * block_size, y * block_size)
                     max     = Vector2[int](min((x + 1) * block_size, width), min((y + 1) * block_size, height))
                     random  = MTwister.create(cast C.rand()) // crashes with seed not 0, wtf?
                     active  = false
                 )
 
-                thread_datas[x + y * block_count_x] = context
+                *thread_datas[x + y * block_count_x] = context
             }
         }
 
@@ -454,7 +454,7 @@ impl Game for PathTracer {
                         // calculate color of pixel by taking the average of the color
                         // in the buffer
                         pixel := {
-                            bufferColor := buffer[index] / float(sample)
+                            bufferColor := *buffer[index] / float(sample)
                             // println(bufferColor)
                             bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0f
                             c := Vec3.change_type(bufferColor, u8)
@@ -519,7 +519,7 @@ impl Game for PathTracer {
                 if sample > 0 {
                     // calculate color of pixel by taking the average of the color
                     // in the buffer
-                    bufferColor := buffer[index] / float(sample)
+                    bufferColor := *buffer[index] / float(sample)
                     bufferColor = bufferColor.clamped(0.0, 1.0)
                     data[index * 3 + 0] = bufferColor.x
                     data[index * 3 + 1] = bufferColor.y

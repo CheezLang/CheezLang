@@ -49,13 +49,13 @@ impl Entity {
     }
 
     add_component :: (&Self, component: Rc[Component]) {
-        component.get().base().entity = ^self
+        component.get().base().entity = self
         components.add(component)
     }
 
     get_component :: (&Self, $T: type) -> Option[Rc[T]] {
         for &components {
-            match &it.get() {
+            match it.get() {
                 T($comp) -> {
                     return Some(it.clone().change_type(T))
                 }

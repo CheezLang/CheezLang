@@ -86,7 +86,7 @@ impl JsonValue {
 impl Printable for JsonValue {
     print :: (&Self, str: &String, format: string) {
         s := fmt.format_any(self)
-        str += s
+        str += &s
     }
 }
 
@@ -552,7 +552,7 @@ next_json_token_number :: (json: string) -> (string, JsonTokenType) {
 
     buff := @alloca(char8, str.bytes.length + 1)
     C.memcpy(buff.data, str.bytes.data, cast str.bytes.length)
-    buff[str.bytes.length] = char8(0)
+    *buff[str.bytes.length] = char8(0)
 
     val := C.strtod(buff.data, null)
 

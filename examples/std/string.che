@@ -92,7 +92,7 @@ impl String {
     }
 
     set_char_at :: (&Self, i: int, c: u8) #operator("set[]") {
-        data[i] = c
+        *data[i] = c
     }
 
     reserve_more :: (&Self, amount: int) {
@@ -157,18 +157,18 @@ impl String {
         bytes, count := Utf8.encode(ch)
         newLength := length + int(count)
         self.reserve(newLength)
-        C.memcpy(^data[length], ^bytes[0], cast count)
+        C.memcpy(^*data[length], ^*bytes[0], cast count)
         length = newLength
         return self
     }
 
     sliceFT :: (&Self, from: int, to: int) -> string {
-        slice := string(^data[from], to - from)
+        slice := string(^*data[from], to - from)
         return slice
     }
 
     sliceFL :: (&Self, from: int, len: int) -> string {
-        slice := string(^data[from], len)
+        slice := string(^*data[from], len)
         return slice
     }
 
@@ -186,7 +186,7 @@ impl String {
 
     index_of :: (&Self, ch: char) -> int {
         for i in 0..length {
-            if data[i] == u8(ch) {
+            if *data[i] == u8(ch) {
                 return i
             }
         }
@@ -196,7 +196,7 @@ impl String {
 
     as_cstring :: (&Self) -> c_string {
         reserve(length + 1)
-        data[length] = 0u8
+        *data[length] = 0u8
         return cast data.data
     }
 }
@@ -250,7 +250,11 @@ impl String {
             } else {
                 args : [T.length]^Printable = default
                 @for_tuple_values(arguments, (v, i) => {
-                    args[i] = ^v
+                    if const @types_match(@typeof(v), &$_) {
+                        *args[i] = ^*v
+                    } else {
+                        *args[i] = ^v
+                    }
                 })
             }
         } else {
@@ -317,7 +321,7 @@ impl String {
                     formatSpecifier.length = 0
 
                 } else {
-                    formatSpecifier += c
+                    &formatSpecifier += c
                 }
             }
         }
@@ -334,7 +338,7 @@ impl String {
 
         start := 0
         for i in 0..length {
-            if data[i] == u8(c) {
+            if *data[i] == u8(c) {
                 sub := self.sliceFT(start, i)
                 if sub.bytes.length > 0 or !remove_empty {
                     result.add(sub)
@@ -510,7 +514,7 @@ impl string {
         }
 
         for i in 0 .. pref_bytes.length {
-            if self_bytes[i] != pref_bytes[i] {
+            if *self_bytes[i] != *pref_bytes[i] {
                 return false
             }
         }
@@ -528,7 +532,7 @@ impl string {
         offset := self_bytes.length - post_bytes.length
 
         for i in 0 .. post_bytes.length {
-            if self_bytes[offset + i] != post_bytes[i] {
+            if *self_bytes[offset + i] != *post_bytes[i] {
                 return false
             }
         }
@@ -602,7 +606,7 @@ impl string {
     index_of :: (Self, ch: char) -> int {
         bytes := self.bytes
         for i in 0..bytes.length {
-            if bytes[i] == u8(ch) {
+            if *bytes[i] == u8(ch) {
                 return i
             }
         }
@@ -618,7 +622,7 @@ impl string {
         bytes := self.bytes
         for i in 0..self.bytes.length #label outer {
             for k in 0..str.bytes.length {
-                if self[i + k] != str[k] then continue outer
+                if *self[i + k] != *str[k] then continue outer
             }
 
             return i

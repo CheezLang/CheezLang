@@ -40,11 +40,11 @@ Main :: () {
             pdr := 1
             pdl := 1
             for i in 0..length {
-                phr *= grid[y + 0][x + i]
-                phl *= grid[y + 0][x - i]
-                pv  *= grid[y + i][x + 0]
-                pdr *= grid[y + i][x + i]
-                pdl *= grid[y + i][x - i]
+                phr *= *grid[y + 0][x + i]
+                phl *= *grid[y + 0][x - i]
+                pv  *= *grid[y + i][x + 0]
+                pdr *= *grid[y + i][x + i]
+                pdl *= *grid[y + i][x - i]
             }
             largest = max(largest, phr)
             largest = max(largest, phl)

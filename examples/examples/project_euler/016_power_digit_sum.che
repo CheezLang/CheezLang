@@ -6,7 +6,7 @@ io :: import std.io
 
 Main :: () {
     digits := @dup(0, 1000)
-    digits[0] = 1
+    *digits[0] = 1
     leftmost_digit := 0
 
     // calculate 2^1000
@@ -15,12 +15,12 @@ Main :: () {
         for i in 0 ..= leftmost_digit {
             d := *digits[i]
             d = d * 2 + carry
-            digits[i] = d % 10
+            *digits[i] = d % 10
             carry = d / 10
         }
         if carry != 0 {
             leftmost_digit += 1
-            digits[leftmost_digit] = 1
+            *digits[leftmost_digit] = 1
         }
     }
 

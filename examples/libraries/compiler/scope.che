@@ -68,7 +68,7 @@ impl Scope {
             return Err()
         }
 
-        symbols[name] = Symbol.Func(^func)
+        symbols[name] = Symbol.Func(^*func)
 
         return Ok()
     }
@@ -81,7 +81,7 @@ impl Scope {
             return Err()
         }
 
-        symbols[name] = Symbol.Decl(^decl)
+        symbols[name] = Symbol.Decl(^*decl)
 
         return Ok()
     }
@@ -94,7 +94,7 @@ impl Scope {
             return Err()
         }
 
-        symbols[name] = Symbol.ConstDecl(^decl)
+        symbols[name] = Symbol.ConstDecl(^*decl)
 
         return Ok()
     }

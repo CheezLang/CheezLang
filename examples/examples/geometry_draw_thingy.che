@@ -1,12 +1,15 @@
-use import olc_pge.pixel_game_engine
-use import olc_pge.pixel
-use import olc_pge.key
-
-use import std.array
 use import std.alloca
+use import std.array
 use import std.math
 use import std.mem.allocator
+
 io :: import std.io
+
+use import logging.logger
+
+use import olc_pge.key
+use import olc_pge.pixel
+use import olc_pge.pixel_game_engine
 
 float2 :: Vector2[float]
 
@@ -40,8 +43,8 @@ impl BaseShape {
             color = Pixel.rgba(255, 255, 255)
             return null
         }
-        nodes.add(Node(^self, p))
-        return ^nodes[nodes.get_length() - 1]
+        nodes.add(Node(^*self, p))
+        return nodes[nodes.get_length() - 1]
     }
 
     draw_nodes :: (&Self, g: &MyGame) {
@@ -54,7 +57,7 @@ impl BaseShape {
     hit_node :: (&Self, p: float2) -> ^Node {
         for i in 0..nodes.get_length() {
             if (p - nodes[i].pos).magsq() < 0.01f {
-                return ^nodes[i]
+                return nodes[i]
             }
         }
 

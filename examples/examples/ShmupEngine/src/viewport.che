@@ -179,7 +179,7 @@ impl GameView for GameWindow {
                         EntityLayer($el) -> {
                             for entity in &el.entities {
                                 for component in &entity.get().components {
-                                    match &component.get() {
+                                    match component.get() {
                                         Camera($cam) -> {
                                             io.formatln("Found on entity ({}) {}", [entity.get().id, entity.get().name.slice()])
                                             return Some(component.borrow().change_type(Camera))

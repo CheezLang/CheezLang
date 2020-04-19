@@ -126,8 +126,8 @@ impl Renderer {
             indices := mem.alloc_n(u32, line_cache_size * 2)
             defer mem.free_n(indices)
             for i in 0..line_cache_size {
-                indices[i * 2 + 0] = u32(i * 2 + 0)
-                indices[i * 2 + 1] = u32(i * 2 + 1)
+                *indices[i * 2 + 0] = u32(i * 2 + 0)
+                *indices[i * 2 + 1] = u32(i * 2 + 1)
             }
 
             index_buffer := IndexBuffer.create(indices)
@@ -152,12 +152,12 @@ impl Renderer {
             indices := mem.alloc_n(u32, quad_cache_size * 6)
             defer mem.free_n(indices)
             for i in 0..quad_cache_size {
-                indices[i * 6 + 0] = u32(i * 4 + 0)
-                indices[i * 6 + 1] = u32(i * 4 + 1)
-                indices[i * 6 + 2] = u32(i * 4 + 2)
-                indices[i * 6 + 3] = u32(i * 4 + 2)
-                indices[i * 6 + 4] = u32(i * 4 + 3)
-                indices[i * 6 + 5] = u32(i * 4 + 0)
+                *indices[i * 6 + 0] = u32(i * 4 + 0)
+                *indices[i * 6 + 1] = u32(i * 4 + 1)
+                *indices[i * 6 + 2] = u32(i * 4 + 2)
+                *indices[i * 6 + 3] = u32(i * 4 + 2)
+                *indices[i * 6 + 4] = u32(i * 4 + 3)
+                *indices[i * 6 + 5] = u32(i * 4 + 0)
             }
 
             index_buffer := IndexBuffer.create(indices)
@@ -205,12 +205,12 @@ impl Renderer {
             indices := mem.alloc_n(u32, point_light_cache_size * 6)
             defer mem.free_n(indices)
             for i in 0..point_light_cache_size {
-                indices[i * 6 + 0] = u32(i * 4 + 0)
-                indices[i * 6 + 1] = u32(i * 4 + 1)
-                indices[i * 6 + 2] = u32(i * 4 + 2)
-                indices[i * 6 + 3] = u32(i * 4 + 2)
-                indices[i * 6 + 4] = u32(i * 4 + 3)
-                indices[i * 6 + 5] = u32(i * 4 + 0)
+                *indices[i * 6 + 0] = u32(i * 4 + 0)
+                *indices[i * 6 + 1] = u32(i * 4 + 1)
+                *indices[i * 6 + 2] = u32(i * 4 + 2)
+                *indices[i * 6 + 3] = u32(i * 4 + 2)
+                *indices[i * 6 + 4] = u32(i * 4 + 3)
+                *indices[i * 6 + 5] = u32(i * 4 + 0)
             }
 
             index_buffer := IndexBuffer.create(indices)
@@ -235,12 +235,12 @@ impl Renderer {
             indices := mem.alloc_n(u32, area_light_cache_size * 6)
             defer mem.free_n(indices)
             for i in 0..area_light_cache_size {
-                indices[i * 6 + 0] = u32(i * 4 + 0)
-                indices[i * 6 + 1] = u32(i * 4 + 1)
-                indices[i * 6 + 2] = u32(i * 4 + 2)
-                indices[i * 6 + 3] = u32(i * 4 + 2)
-                indices[i * 6 + 4] = u32(i * 4 + 3)
-                indices[i * 6 + 5] = u32(i * 4 + 0)
+                *indices[i * 6 + 0] = u32(i * 4 + 0)
+                *indices[i * 6 + 1] = u32(i * 4 + 1)
+                *indices[i * 6 + 2] = u32(i * 4 + 2)
+                *indices[i * 6 + 3] = u32(i * 4 + 2)
+                *indices[i * 6 + 4] = u32(i * 4 + 3)
+                *indices[i * 6 + 5] = u32(i * 4 + 0)
             }
 
             index_buffer := IndexBuffer.create(indices)
@@ -278,7 +278,7 @@ impl Renderer {
         color_shader.bind()
         uTextures : [16]i32 = default
         for i in 0..16 {
-            uTextures[i] = i32(i)
+            *uTextures[i] = i32(i)
         }
         color_shader.set_uniform_ints("uTextures", uTextures)
         color_shader.unbind()
@@ -345,7 +345,7 @@ impl Renderer {
 
     begin_scene :: (&Self, projection_matrix: &mat4, viewport_size: vec2) {
         // @todo: *& is a hack
-        self.projection_matrix = *^projection_matrix
+        self.projection_matrix = *projection_matrix
         self.projection_matrix_stack.clear()
 
         set_projection_matrix(projection_matrix)
@@ -575,14 +575,14 @@ impl Renderer {
 
         // calculate texture index
         tex_index : i32 = match texture {
-            Some($tex) -> match texture_map.get(int(^tex.get())) {
+            Some($tex) -> match texture_map.get(int(^*tex.get())) {
                 Some($idx) -> *idx
                 None -> {
                     if used_textures.get_length() >= max_texture_slots {
                         flush_quads()
                     }
                     idx := i32(used_textures.get_length())
-                    texture_map[int(^tex.get())] = idx
+                    texture_map[int(^*tex.get())] = idx
                     used_textures.add(tex.clone())
                     idx
                 }
@@ -721,7 +721,7 @@ impl Renderer {
         used_textures.clear()
 
         // set white tex as texture 0
-        texture_map[int(^white_tex.get())] = 0i32
+        texture_map[int(^*white_tex.get())] = 0i32
         used_textures.add(white_tex.clone())
 
         quad_cache.clear()

@@ -819,7 +819,7 @@ impl ImGuiStyle {
         return result
     }
     ScaleAllSizes :: (&Self, _scale_factor: f32) {
-        __c__ImGuiStyle_ScaleAllSizes_36(^self, _scale_factor)
+        __c__ImGuiStyle_ScaleAllSizes_36(^*self, _scale_factor)
     }
 }
 ImGuiIO :: struct #copy {
@@ -910,13 +910,13 @@ ImGuiIO :: struct #copy {
 }
 impl ImGuiIO {
     AddInputCharacter :: (&Self, _c: u32) {
-        __c__ImGuiIO_AddInputCharacter_53(^self, _c)
+        __c__ImGuiIO_AddInputCharacter_53(^*self, _c)
     }
     AddInputCharactersUTF8 :: (&Self, _str: ^char8) {
-        __c__ImGuiIO_AddInputCharactersUTF8_54(^self, _str)
+        __c__ImGuiIO_AddInputCharactersUTF8_54(^*self, _str)
     }
     ClearInputCharacters :: (&Self) {
-        __c__ImGuiIO_ClearInputCharacters_55(^self)
+        __c__ImGuiIO_ClearInputCharacters_55(^*self)
     }
     new :: () -> ImGuiIO {
         result : ImGuiIO = default
@@ -945,14 +945,14 @@ impl ImGuiInputTextCallbackData {
         return result
     }
     DeleteChars :: (&Self, _pos: i32, _bytes_count: i32) {
-        __c__ImGuiInputTextCallbackData_DeleteChars_13(^self, _pos, _bytes_count)
+        __c__ImGuiInputTextCallbackData_DeleteChars_13(^*self, _pos, _bytes_count)
     }
     InsertChars :: (&Self, _pos: i32, _text: ^char8, _text_end: ^char8 = null) {
-        __c__ImGuiInputTextCallbackData_InsertChars_14(^self, _pos, _text, _text_end)
+        __c__ImGuiInputTextCallbackData_InsertChars_14(^*self, _pos, _text, _text_end)
     }
     HasSelection :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiInputTextCallbackData_HasSelection_15(^self, ^result)
+        __c__ImGuiInputTextCallbackData_HasSelection_15(^*self, ^result)
         return result
     }
 }
@@ -994,21 +994,21 @@ impl ImGuiPayload {
         return result
     }
     Clear :: (&Self) {
-        __c__ImGuiPayload_Clear_9(^self)
+        __c__ImGuiPayload_Clear_9(^*self)
     }
     IsDataType :: (&Self, _type: ^char8) -> bool {
         result : bool = default
-        __c__ImGuiPayload_IsDataType_10(^self, ^result, _type)
+        __c__ImGuiPayload_IsDataType_10(^*self, ^result, _type)
         return result
     }
     IsPreview :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiPayload_IsPreview_11(^self, ^result)
+        __c__ImGuiPayload_IsPreview_11(^*self, ^result)
         return result
     }
     IsDelivery :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiPayload_IsDelivery_12(^self, ^result)
+        __c__ImGuiPayload_IsDelivery_12(^*self, ^result)
         return result
     }
 }
@@ -1035,23 +1035,23 @@ impl ImGuiTextFilter {
     }
     Draw :: (&Self, _label: ^char8 = "Filter (inc,-exc)", _width: f32 = 0.0f) -> bool {
         result : bool = default
-        __c__ImGuiTextFilter_Draw_1(^self, ^result, _label, _width)
+        __c__ImGuiTextFilter_Draw_1(^*self, ^result, _label, _width)
         return result
     }
     PassFilter :: (&Self, _text: ^char8, _text_end: ^char8 = null) -> bool {
         result : bool = default
-        __c__ImGuiTextFilter_PassFilter_2(^self, ^result, _text, _text_end)
+        __c__ImGuiTextFilter_PassFilter_2(^*self, ^result, _text, _text_end)
         return result
     }
     Build :: (&Self) {
-        __c__ImGuiTextFilter_Build_3(^self)
+        __c__ImGuiTextFilter_Build_3(^*self)
     }
     Clear :: (&Self) {
-        __c__ImGuiTextFilter_Clear_4(^self)
+        __c__ImGuiTextFilter_Clear_4(^*self)
     }
     IsActive :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiTextFilter_IsActive_5(^self, ^result)
+        __c__ImGuiTextFilter_IsActive_5(^*self, ^result)
         return result
     }
 }
@@ -1072,11 +1072,11 @@ impl ImGuiTextRange {
     }
     empty :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiTextRange_empty_4(^self, ^result)
+        __c__ImGuiTextRange_empty_4(^*self, ^result)
         return result
     }
     split :: (&Self, _separator: char8, _out: ^__UNKNOWN_16) {
-        __c__ImGuiTextRange_split_5(^self, _separator, _out)
+        __c__ImGuiTextRange_split_5(^*self, _separator, _out)
     }
 }
 ImGuiTextBuffer :: struct #copy {
@@ -1090,43 +1090,43 @@ impl ImGuiTextBuffer {
     }
     begin :: (&Self) -> ^char8 {
         result : ^char8 = default
-        __c__ImGuiTextBuffer_begin_4(^self, ^result)
+        __c__ImGuiTextBuffer_begin_4(^*self, ^result)
         return result
     }
     end :: (&Self) -> ^char8 {
         result : ^char8 = default
-        __c__ImGuiTextBuffer_end_5(^self, ^result)
+        __c__ImGuiTextBuffer_end_5(^*self, ^result)
         return result
     }
     size :: (&Self) -> i32 {
         result : i32 = default
-        __c__ImGuiTextBuffer_size_6(^self, ^result)
+        __c__ImGuiTextBuffer_size_6(^*self, ^result)
         return result
     }
     empty :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiTextBuffer_empty_7(^self, ^result)
+        __c__ImGuiTextBuffer_empty_7(^*self, ^result)
         return result
     }
     clear :: (&Self) {
-        __c__ImGuiTextBuffer_clear_8(^self)
+        __c__ImGuiTextBuffer_clear_8(^*self)
     }
     reserve :: (&Self, _capacity: i32) {
-        __c__ImGuiTextBuffer_reserve_9(^self, _capacity)
+        __c__ImGuiTextBuffer_reserve_9(^*self, _capacity)
     }
     c_str :: (&Self) -> ^char8 {
         result : ^char8 = default
-        __c__ImGuiTextBuffer_c_str_10(^self, ^result)
+        __c__ImGuiTextBuffer_c_str_10(^*self, ^result)
         return result
     }
     append :: (&Self, _str: ^char8, _str_end: ^char8 = null) {
-        __c__ImGuiTextBuffer_append_11(^self, _str, _str_end)
+        __c__ImGuiTextBuffer_append_11(^*self, _str, _str_end)
     }
     appendf :: (&Self, _fmt: ^char8) {
-        __c__ImGuiTextBuffer_appendf_12(^self, _fmt)
+        __c__ImGuiTextBuffer_appendf_12(^*self, _fmt)
     }
     appendfv :: (&Self, _fmt: ^char8, _args: va_list) {
-        __c__ImGuiTextBuffer_appendfv_13(^self, _fmt, _args)
+        __c__ImGuiTextBuffer_appendfv_13(^*self, _fmt, _args)
     }
 }
 ImGuiStorage :: struct #copy {
@@ -1134,65 +1134,65 @@ ImGuiStorage :: struct #copy {
 }
 impl ImGuiStorage {
     Clear :: (&Self) {
-        __c__ImGuiStorage_Clear_2(^self)
+        __c__ImGuiStorage_Clear_2(^*self)
     }
     GetInt :: (&Self, _key: ImGuiID, _default_val: i32 = 0) -> i32 {
         result : i32 = default
-        __c__ImGuiStorage_GetInt_3(^self, ^result, _key, _default_val)
+        __c__ImGuiStorage_GetInt_3(^*self, ^result, _key, _default_val)
         return result
     }
     SetInt :: (&Self, _key: ImGuiID, _val: i32) {
-        __c__ImGuiStorage_SetInt_4(^self, _key, _val)
+        __c__ImGuiStorage_SetInt_4(^*self, _key, _val)
     }
     GetBool :: (&Self, _key: ImGuiID, _default_val: bool = false) -> bool {
         result : bool = default
-        __c__ImGuiStorage_GetBool_5(^self, ^result, _key, _default_val)
+        __c__ImGuiStorage_GetBool_5(^*self, ^result, _key, _default_val)
         return result
     }
     SetBool :: (&Self, _key: ImGuiID, _val: bool) {
-        __c__ImGuiStorage_SetBool_6(^self, _key, _val)
+        __c__ImGuiStorage_SetBool_6(^*self, _key, _val)
     }
     GetFloat :: (&Self, _key: ImGuiID, _default_val: f32 = 0.0f) -> f32 {
         result : f32 = default
-        __c__ImGuiStorage_GetFloat_7(^self, ^result, _key, _default_val)
+        __c__ImGuiStorage_GetFloat_7(^*self, ^result, _key, _default_val)
         return result
     }
     SetFloat :: (&Self, _key: ImGuiID, _val: f32) {
-        __c__ImGuiStorage_SetFloat_8(^self, _key, _val)
+        __c__ImGuiStorage_SetFloat_8(^*self, _key, _val)
     }
     GetVoidPtr :: (&Self, _key: ImGuiID) -> ^void {
         result : ^void = default
-        __c__ImGuiStorage_GetVoidPtr_9(^self, ^result, _key)
+        __c__ImGuiStorage_GetVoidPtr_9(^*self, ^result, _key)
         return result
     }
     SetVoidPtr :: (&Self, _key: ImGuiID, _val: ^void) {
-        __c__ImGuiStorage_SetVoidPtr_10(^self, _key, _val)
+        __c__ImGuiStorage_SetVoidPtr_10(^*self, _key, _val)
     }
     GetIntRef :: (&Self, _key: ImGuiID, _default_val: i32 = 0) -> ^i32 {
         result : ^i32 = default
-        __c__ImGuiStorage_GetIntRef_11(^self, ^result, _key, _default_val)
+        __c__ImGuiStorage_GetIntRef_11(^*self, ^result, _key, _default_val)
         return result
     }
     GetBoolRef :: (&Self, _key: ImGuiID, _default_val: bool = false) -> ^bool {
         result : ^bool = default
-        __c__ImGuiStorage_GetBoolRef_12(^self, ^result, _key, _default_val)
+        __c__ImGuiStorage_GetBoolRef_12(^*self, ^result, _key, _default_val)
         return result
     }
     GetFloatRef :: (&Self, _key: ImGuiID, _default_val: f32 = 0.0f) -> ^f32 {
         result : ^f32 = default
-        __c__ImGuiStorage_GetFloatRef_13(^self, ^result, _key, _default_val)
+        __c__ImGuiStorage_GetFloatRef_13(^*self, ^result, _key, _default_val)
         return result
     }
     GetVoidPtrRef :: (&Self, _key: ImGuiID, _default_val: ^void = null) -> ^^void {
         result : ^^void = default
-        __c__ImGuiStorage_GetVoidPtrRef_14(^self, ^result, _key, _default_val)
+        __c__ImGuiStorage_GetVoidPtrRef_14(^*self, ^result, _key, _default_val)
         return result
     }
     SetAllInt :: (&Self, _val: i32) {
-        __c__ImGuiStorage_SetAllInt_15(^self, _val)
+        __c__ImGuiStorage_SetAllInt_15(^*self, _val)
     }
     BuildSortByKey :: (&Self) {
-        __c__ImGuiStorage_BuildSortByKey_16(^self)
+        __c__ImGuiStorage_BuildSortByKey_16(^*self)
     }
 }
 ImGuiStoragePair :: struct #copy {
@@ -1231,19 +1231,19 @@ impl ImGuiListClipper {
     }
     Step :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiListClipper_Step_8(^self, ^result)
+        __c__ImGuiListClipper_Step_8(^*self, ^result)
         return result
     }
     Begin :: (&Self, _items_count: i32, _items_height: f32 = -1.0f) {
-        __c__ImGuiListClipper_Begin_9(^self, _items_count, _items_height)
+        __c__ImGuiListClipper_Begin_9(^*self, _items_count, _items_height)
     }
     End :: (&Self) {
-        __c__ImGuiListClipper_End_10(^self)
+        __c__ImGuiListClipper_End_10(^*self)
     }
 }
 impl Drop for ImGuiListClipper {
     drop :: (&Self) {
-        __c__ImGuiListClipper_dtor(^self)
+        __c__ImGuiListClipper_dtor(^*self)
     }
 }
 ImColor :: struct #copy {
@@ -1272,15 +1272,15 @@ impl ImColor {
     }
     new :: (_col: &ImVec4) -> ImColor {
         result : ImColor = default
-        __c__ImColor_new_5(^result, ^_col)
+        __c__ImColor_new_5(^result, ^*_col)
         return result
     }
     SetHSV :: (&Self, _h: f32, _s: f32, _v: f32, _a: f32 = 1.0f) {
-        __c__ImColor_SetHSV_8(^self, _h, _s, _v, _a)
+        __c__ImColor_SetHSV_8(^*self, _h, _s, _v, _a)
     }
     HSV :: (&Self, _h: f32, _s: f32, _v: f32, _a: f32 = 1.0f) -> ImColor {
         result : ImColor = default
-        __c__ImColor_HSV_9(^self, ^result, _h, _s, _v, _a)
+        __c__ImColor_HSV_9(^*self, ^result, _h, _s, _v, _a)
         return result
     }
 }
@@ -1321,24 +1321,24 @@ impl ImDrawListSplitter {
         return result
     }
     Clear :: (&Self) {
-        __c__ImDrawListSplitter_Clear_5(^self)
+        __c__ImDrawListSplitter_Clear_5(^*self)
     }
     ClearFreeMemory :: (&Self) {
-        __c__ImDrawListSplitter_ClearFreeMemory_6(^self)
+        __c__ImDrawListSplitter_ClearFreeMemory_6(^*self)
     }
     Split :: (&Self, _draw_list: ^ImDrawList, _count: i32) {
-        __c__ImDrawListSplitter_Split_7(^self, _draw_list, _count)
+        __c__ImDrawListSplitter_Split_7(^*self, _draw_list, _count)
     }
     Merge :: (&Self, _draw_list: ^ImDrawList) {
-        __c__ImDrawListSplitter_Merge_8(^self, _draw_list)
+        __c__ImDrawListSplitter_Merge_8(^*self, _draw_list)
     }
     SetCurrentChannel :: (&Self, _draw_list: ^ImDrawList, _channel_idx: i32) {
-        __c__ImDrawListSplitter_SetCurrentChannel_9(^self, _draw_list, _channel_idx)
+        __c__ImDrawListSplitter_SetCurrentChannel_9(^*self, _draw_list, _channel_idx)
     }
 }
 impl Drop for ImDrawListSplitter {
     drop :: (&Self) {
-        __c__ImDrawListSplitter_dtor(^self)
+        __c__ImDrawListSplitter_dtor(^*self)
     }
 }
 ImDrawList :: struct #copy {
@@ -1364,177 +1364,177 @@ impl ImDrawList {
         return result
     }
     PushClipRect :: (&Self, _clip_rect_min: ImVec2, _clip_rect_max: ImVec2, _intersect_with_current_clip_rect: bool = false) {
-        __c__ImDrawList_PushClipRect_16(^self, ^_clip_rect_min, ^_clip_rect_max, _intersect_with_current_clip_rect)
+        __c__ImDrawList_PushClipRect_16(^*self, ^_clip_rect_min, ^_clip_rect_max, _intersect_with_current_clip_rect)
     }
     PushClipRectFullScreen :: (&Self) {
-        __c__ImDrawList_PushClipRectFullScreen_17(^self)
+        __c__ImDrawList_PushClipRectFullScreen_17(^*self)
     }
     PopClipRect :: (&Self) {
-        __c__ImDrawList_PopClipRect_18(^self)
+        __c__ImDrawList_PopClipRect_18(^*self)
     }
     PushTextureID :: (&Self, _texture_id: ImTextureID) {
-        __c__ImDrawList_PushTextureID_19(^self, _texture_id)
+        __c__ImDrawList_PushTextureID_19(^*self, _texture_id)
     }
     PopTextureID :: (&Self) {
-        __c__ImDrawList_PopTextureID_20(^self)
+        __c__ImDrawList_PopTextureID_20(^*self)
     }
     GetClipRectMin :: (&Self) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImDrawList_GetClipRectMin_21(^self, ^result)
+        __c__ImDrawList_GetClipRectMin_21(^*self, ^result)
         return result
     }
     GetClipRectMax :: (&Self) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImDrawList_GetClipRectMax_22(^self, ^result)
+        __c__ImDrawList_GetClipRectMax_22(^*self, ^result)
         return result
     }
     AddLine :: (&Self, _p1: &ImVec2, _p2: &ImVec2, _col: ImU32, _thickness: f32 = 1.0f) {
-        __c__ImDrawList_AddLine_23(^self, ^_p1, ^_p2, _col, _thickness)
+        __c__ImDrawList_AddLine_23(^*self, ^*_p1, ^*_p2, _col, _thickness)
     }
     AddRect :: (&Self, _p_min: &ImVec2, _p_max: &ImVec2, _col: ImU32, _rounding: f32 = 0.0f, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_.All, _thickness: f32 = 1.0f) {
-        __c__ImDrawList_AddRect_24(^self, ^_p_min, ^_p_max, _col, _rounding, _rounding_corners, _thickness)
+        __c__ImDrawList_AddRect_24(^*self, ^*_p_min, ^*_p_max, _col, _rounding, _rounding_corners, _thickness)
     }
     AddRectFilled :: (&Self, _p_min: &ImVec2, _p_max: &ImVec2, _col: ImU32, _rounding: f32 = 0.0f, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_.All) {
-        __c__ImDrawList_AddRectFilled_25(^self, ^_p_min, ^_p_max, _col, _rounding, _rounding_corners)
+        __c__ImDrawList_AddRectFilled_25(^*self, ^*_p_min, ^*_p_max, _col, _rounding, _rounding_corners)
     }
     AddRectFilledMultiColor :: (&Self, _p_min: &ImVec2, _p_max: &ImVec2, _col_upr_left: ImU32, _col_upr_right: ImU32, _col_bot_right: ImU32, _col_bot_left: ImU32) {
-        __c__ImDrawList_AddRectFilledMultiColor_26(^self, ^_p_min, ^_p_max, _col_upr_left, _col_upr_right, _col_bot_right, _col_bot_left)
+        __c__ImDrawList_AddRectFilledMultiColor_26(^*self, ^*_p_min, ^*_p_max, _col_upr_left, _col_upr_right, _col_bot_right, _col_bot_left)
     }
     AddQuad :: (&Self, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32, _thickness: f32 = 1.0f) {
-        __c__ImDrawList_AddQuad_27(^self, ^_p1, ^_p2, ^_p3, ^_p4, _col, _thickness)
+        __c__ImDrawList_AddQuad_27(^*self, ^*_p1, ^*_p2, ^*_p3, ^*_p4, _col, _thickness)
     }
     AddQuadFilled :: (&Self, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32) {
-        __c__ImDrawList_AddQuadFilled_28(^self, ^_p1, ^_p2, ^_p3, ^_p4, _col)
+        __c__ImDrawList_AddQuadFilled_28(^*self, ^*_p1, ^*_p2, ^*_p3, ^*_p4, _col)
     }
     AddTriangle :: (&Self, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _col: ImU32, _thickness: f32 = 1.0f) {
-        __c__ImDrawList_AddTriangle_29(^self, ^_p1, ^_p2, ^_p3, _col, _thickness)
+        __c__ImDrawList_AddTriangle_29(^*self, ^*_p1, ^*_p2, ^*_p3, _col, _thickness)
     }
     AddTriangleFilled :: (&Self, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _col: ImU32) {
-        __c__ImDrawList_AddTriangleFilled_30(^self, ^_p1, ^_p2, ^_p3, _col)
+        __c__ImDrawList_AddTriangleFilled_30(^*self, ^*_p1, ^*_p2, ^*_p3, _col)
     }
     AddCircle :: (&Self, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32 = 12, _thickness: f32 = 1.0f) {
-        __c__ImDrawList_AddCircle_31(^self, ^_center, _radius, _col, _num_segments, _thickness)
+        __c__ImDrawList_AddCircle_31(^*self, ^*_center, _radius, _col, _num_segments, _thickness)
     }
     AddCircleFilled :: (&Self, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32 = 12) {
-        __c__ImDrawList_AddCircleFilled_32(^self, ^_center, _radius, _col, _num_segments)
+        __c__ImDrawList_AddCircleFilled_32(^*self, ^*_center, _radius, _col, _num_segments)
     }
     AddNgon :: (&Self, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32, _thickness: f32 = 1.0f) {
-        __c__ImDrawList_AddNgon_33(^self, ^_center, _radius, _col, _num_segments, _thickness)
+        __c__ImDrawList_AddNgon_33(^*self, ^*_center, _radius, _col, _num_segments, _thickness)
     }
     AddNgonFilled :: (&Self, _center: &ImVec2, _radius: f32, _col: ImU32, _num_segments: i32) {
-        __c__ImDrawList_AddNgonFilled_34(^self, ^_center, _radius, _col, _num_segments)
+        __c__ImDrawList_AddNgonFilled_34(^*self, ^*_center, _radius, _col, _num_segments)
     }
     AddText :: (&Self, _pos: &ImVec2, _col: ImU32, _text: string) {
-        __c__ImDrawList_AddText_35(^self, ^_pos, _col, cast _text.bytes.data, cast(^char8) int(_text.bytes.data) + _text.bytes.length)
+        __c__ImDrawList_AddText_35(^*self, ^*_pos, _col, cast _text.bytes.data, cast(^char8) int(_text.bytes.data) + _text.bytes.length)
     }
     AddText_2 :: (&Self, _font: ^ImFont, _font_size: f32, _pos: &ImVec2, _col: ImU32, _text: string, _wrap_width: f32 = 0.0f, _cpu_fine_clip_rect: ^ImVec4 = null) {
-        __c__ImDrawList_AddText_36(^self, _font, _font_size, ^_pos, _col, cast _text.bytes.data, cast(^char8) int(_text.bytes.data) + _text.bytes.length, _wrap_width, _cpu_fine_clip_rect)
+        __c__ImDrawList_AddText_36(^*self, _font, _font_size, ^*_pos, _col, cast _text.bytes.data, cast(^char8) int(_text.bytes.data) + _text.bytes.length, _wrap_width, _cpu_fine_clip_rect)
     }
     AddPolyline :: (&Self, _points: ^ImVec2, _num_points: i32, _col: ImU32, _closed: bool, _thickness: f32) {
-        __c__ImDrawList_AddPolyline_37(^self, _points, _num_points, _col, _closed, _thickness)
+        __c__ImDrawList_AddPolyline_37(^*self, _points, _num_points, _col, _closed, _thickness)
     }
     AddConvexPolyFilled :: (&Self, _points: ^ImVec2, _num_points: i32, _col: ImU32) {
-        __c__ImDrawList_AddConvexPolyFilled_38(^self, _points, _num_points, _col)
+        __c__ImDrawList_AddConvexPolyFilled_38(^*self, _points, _num_points, _col)
     }
     AddBezierCurve :: (&Self, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _col: ImU32, _thickness: f32, _num_segments: i32 = 0) {
-        __c__ImDrawList_AddBezierCurve_39(^self, ^_p1, ^_p2, ^_p3, ^_p4, _col, _thickness, _num_segments)
+        __c__ImDrawList_AddBezierCurve_39(^*self, ^*_p1, ^*_p2, ^*_p3, ^*_p4, _col, _thickness, _num_segments)
     }
     AddImage :: (&Self, _user_texture_id: ImTextureID, _p_min: &ImVec2, _p_max: &ImVec2, _uv_min: &ImVec2, _uv_max: &ImVec2, _col: ImU32) {
-        __c__ImDrawList_AddImage_40(^self, _user_texture_id, ^_p_min, ^_p_max, ^_uv_min, ^_uv_max, _col)
+        __c__ImDrawList_AddImage_40(^*self, _user_texture_id, ^*_p_min, ^*_p_max, ^*_uv_min, ^*_uv_max, _col)
     }
     AddImageQuad :: (&Self, _user_texture_id: ImTextureID, _p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _uv1: &ImVec2, _uv2: &ImVec2, _uv3: &ImVec2, _uv4: &ImVec2, _col: ImU32) {
-        __c__ImDrawList_AddImageQuad_41(^self, _user_texture_id, ^_p1, ^_p2, ^_p3, ^_p4, ^_uv1, ^_uv2, ^_uv3, ^_uv4, _col)
+        __c__ImDrawList_AddImageQuad_41(^*self, _user_texture_id, ^*_p1, ^*_p2, ^*_p3, ^*_p4, ^*_uv1, ^*_uv2, ^*_uv3, ^*_uv4, _col)
     }
     AddImageRounded :: (&Self, _user_texture_id: ImTextureID, _p_min: &ImVec2, _p_max: &ImVec2, _uv_min: &ImVec2, _uv_max: &ImVec2, _col: ImU32, _rounding: f32, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_.All) {
-        __c__ImDrawList_AddImageRounded_42(^self, _user_texture_id, ^_p_min, ^_p_max, ^_uv_min, ^_uv_max, _col, _rounding, _rounding_corners)
+        __c__ImDrawList_AddImageRounded_42(^*self, _user_texture_id, ^*_p_min, ^*_p_max, ^*_uv_min, ^*_uv_max, _col, _rounding, _rounding_corners)
     }
     PathClear :: (&Self) {
-        __c__ImDrawList_PathClear_43(^self)
+        __c__ImDrawList_PathClear_43(^*self)
     }
     PathLineTo :: (&Self, _pos: &ImVec2) {
-        __c__ImDrawList_PathLineTo_44(^self, ^_pos)
+        __c__ImDrawList_PathLineTo_44(^*self, ^*_pos)
     }
     PathLineToMergeDuplicate :: (&Self, _pos: &ImVec2) {
-        __c__ImDrawList_PathLineToMergeDuplicate_45(^self, ^_pos)
+        __c__ImDrawList_PathLineToMergeDuplicate_45(^*self, ^*_pos)
     }
     PathFillConvex :: (&Self, _col: ImU32) {
-        __c__ImDrawList_PathFillConvex_46(^self, _col)
+        __c__ImDrawList_PathFillConvex_46(^*self, _col)
     }
     PathStroke :: (&Self, _col: ImU32, _closed: bool, _thickness: f32 = 1.0f) {
-        __c__ImDrawList_PathStroke_47(^self, _col, _closed, _thickness)
+        __c__ImDrawList_PathStroke_47(^*self, _col, _closed, _thickness)
     }
     PathArcTo :: (&Self, _center: &ImVec2, _radius: f32, _a_min: f32, _a_max: f32, _num_segments: i32 = 10) {
-        __c__ImDrawList_PathArcTo_48(^self, ^_center, _radius, _a_min, _a_max, _num_segments)
+        __c__ImDrawList_PathArcTo_48(^*self, ^*_center, _radius, _a_min, _a_max, _num_segments)
     }
     PathArcToFast :: (&Self, _center: &ImVec2, _radius: f32, _a_min_of_12: i32, _a_max_of_12: i32) {
-        __c__ImDrawList_PathArcToFast_49(^self, ^_center, _radius, _a_min_of_12, _a_max_of_12)
+        __c__ImDrawList_PathArcToFast_49(^*self, ^*_center, _radius, _a_min_of_12, _a_max_of_12)
     }
     PathBezierCurveTo :: (&Self, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _num_segments: i32 = 0) {
-        __c__ImDrawList_PathBezierCurveTo_50(^self, ^_p2, ^_p3, ^_p4, _num_segments)
+        __c__ImDrawList_PathBezierCurveTo_50(^*self, ^*_p2, ^*_p3, ^*_p4, _num_segments)
     }
     PathRect :: (&Self, _rect_min: &ImVec2, _rect_max: &ImVec2, _rounding: f32 = 0.0f, _rounding_corners: ImDrawCornerFlags = ImDrawCornerFlags_.All) {
-        __c__ImDrawList_PathRect_51(^self, ^_rect_min, ^_rect_max, _rounding, _rounding_corners)
+        __c__ImDrawList_PathRect_51(^*self, ^*_rect_min, ^*_rect_max, _rounding, _rounding_corners)
     }
     AddCallback :: (&Self, _callback: ImDrawCallback, _callback_data: ^void) {
-        __c__ImDrawList_AddCallback_52(^self, _callback, _callback_data)
+        __c__ImDrawList_AddCallback_52(^*self, _callback, _callback_data)
     }
     AddDrawCmd :: (&Self) {
-        __c__ImDrawList_AddDrawCmd_53(^self)
+        __c__ImDrawList_AddDrawCmd_53(^*self)
     }
     CloneOutput :: (&Self) -> ^ImDrawList {
         result : ^ImDrawList = default
-        __c__ImDrawList_CloneOutput_54(^self, ^result)
+        __c__ImDrawList_CloneOutput_54(^*self, ^result)
         return result
     }
     ChannelsSplit :: (&Self, _count: i32) {
-        __c__ImDrawList_ChannelsSplit_55(^self, _count)
+        __c__ImDrawList_ChannelsSplit_55(^*self, _count)
     }
     ChannelsMerge :: (&Self) {
-        __c__ImDrawList_ChannelsMerge_56(^self)
+        __c__ImDrawList_ChannelsMerge_56(^*self)
     }
     ChannelsSetCurrent :: (&Self, _n: i32) {
-        __c__ImDrawList_ChannelsSetCurrent_57(^self, _n)
+        __c__ImDrawList_ChannelsSetCurrent_57(^*self, _n)
     }
     Clear :: (&Self) {
-        __c__ImDrawList_Clear_58(^self)
+        __c__ImDrawList_Clear_58(^*self)
     }
     ClearFreeMemory :: (&Self) {
-        __c__ImDrawList_ClearFreeMemory_59(^self)
+        __c__ImDrawList_ClearFreeMemory_59(^*self)
     }
     PrimReserve :: (&Self, _idx_count: i32, _vtx_count: i32) {
-        __c__ImDrawList_PrimReserve_60(^self, _idx_count, _vtx_count)
+        __c__ImDrawList_PrimReserve_60(^*self, _idx_count, _vtx_count)
     }
     PrimUnreserve :: (&Self, _idx_count: i32, _vtx_count: i32) {
-        __c__ImDrawList_PrimUnreserve_61(^self, _idx_count, _vtx_count)
+        __c__ImDrawList_PrimUnreserve_61(^*self, _idx_count, _vtx_count)
     }
     PrimRect :: (&Self, _a: &ImVec2, _b: &ImVec2, _col: ImU32) {
-        __c__ImDrawList_PrimRect_62(^self, ^_a, ^_b, _col)
+        __c__ImDrawList_PrimRect_62(^*self, ^*_a, ^*_b, _col)
     }
     PrimRectUV :: (&Self, _a: &ImVec2, _b: &ImVec2, _uv_a: &ImVec2, _uv_b: &ImVec2, _col: ImU32) {
-        __c__ImDrawList_PrimRectUV_63(^self, ^_a, ^_b, ^_uv_a, ^_uv_b, _col)
+        __c__ImDrawList_PrimRectUV_63(^*self, ^*_a, ^*_b, ^*_uv_a, ^*_uv_b, _col)
     }
     PrimQuadUV :: (&Self, _a: &ImVec2, _b: &ImVec2, _c: &ImVec2, _d: &ImVec2, _uv_a: &ImVec2, _uv_b: &ImVec2, _uv_c: &ImVec2, _uv_d: &ImVec2, _col: ImU32) {
-        __c__ImDrawList_PrimQuadUV_64(^self, ^_a, ^_b, ^_c, ^_d, ^_uv_a, ^_uv_b, ^_uv_c, ^_uv_d, _col)
+        __c__ImDrawList_PrimQuadUV_64(^*self, ^*_a, ^*_b, ^*_c, ^*_d, ^*_uv_a, ^*_uv_b, ^*_uv_c, ^*_uv_d, _col)
     }
     PrimWriteVtx :: (&Self, _pos: &ImVec2, _uv: &ImVec2, _col: ImU32) {
-        __c__ImDrawList_PrimWriteVtx_65(^self, ^_pos, ^_uv, _col)
+        __c__ImDrawList_PrimWriteVtx_65(^*self, ^*_pos, ^*_uv, _col)
     }
     PrimWriteIdx :: (&Self, _idx: ImDrawIdx) {
-        __c__ImDrawList_PrimWriteIdx_66(^self, _idx)
+        __c__ImDrawList_PrimWriteIdx_66(^*self, _idx)
     }
     PrimVtx :: (&Self, _pos: &ImVec2, _uv: &ImVec2, _col: ImU32) {
-        __c__ImDrawList_PrimVtx_67(^self, ^_pos, ^_uv, _col)
+        __c__ImDrawList_PrimVtx_67(^*self, ^*_pos, ^*_uv, _col)
     }
     UpdateClipRect :: (&Self) {
-        __c__ImDrawList_UpdateClipRect_68(^self)
+        __c__ImDrawList_UpdateClipRect_68(^*self)
     }
     UpdateTextureID :: (&Self) {
-        __c__ImDrawList_UpdateTextureID_69(^self)
+        __c__ImDrawList_UpdateTextureID_69(^*self)
     }
 }
 impl Drop for ImDrawList {
     drop :: (&Self) {
-        __c__ImDrawList_dtor(^self)
+        __c__ImDrawList_dtor(^*self)
     }
 }
 ImDrawData :: struct #copy {
@@ -1555,18 +1555,18 @@ impl ImDrawData {
         return result
     }
     Clear :: (&Self) {
-        __c__ImDrawData_Clear_11(^self)
+        __c__ImDrawData_Clear_11(^*self)
     }
     DeIndexAllBuffers :: (&Self) {
-        __c__ImDrawData_DeIndexAllBuffers_12(^self)
+        __c__ImDrawData_DeIndexAllBuffers_12(^*self)
     }
     ScaleClipRects :: (&Self, _fb_scale: &ImVec2) {
-        __c__ImDrawData_ScaleClipRects_13(^self, ^_fb_scale)
+        __c__ImDrawData_ScaleClipRects_13(^*self, ^*_fb_scale)
     }
 }
 impl Drop for ImDrawData {
     drop :: (&Self) {
-        __c__ImDrawData_dtor(^self)
+        __c__ImDrawData_dtor(^*self)
     }
 }
 ImFontConfig :: struct #copy {
@@ -1619,27 +1619,27 @@ impl ImFontGlyphRangesBuilder {
         return result
     }
     Clear :: (&Self) {
-        __c__ImFontGlyphRangesBuilder_Clear_2(^self)
+        __c__ImFontGlyphRangesBuilder_Clear_2(^*self)
     }
     GetBit :: (&Self, _n: i32) -> bool {
         result : bool = default
-        __c__ImFontGlyphRangesBuilder_GetBit_3(^self, ^result, _n)
+        __c__ImFontGlyphRangesBuilder_GetBit_3(^*self, ^result, _n)
         return result
     }
     SetBit :: (&Self, _n: i32) {
-        __c__ImFontGlyphRangesBuilder_SetBit_4(^self, _n)
+        __c__ImFontGlyphRangesBuilder_SetBit_4(^*self, _n)
     }
     AddChar :: (&Self, _c: ImWchar) {
-        __c__ImFontGlyphRangesBuilder_AddChar_5(^self, _c)
+        __c__ImFontGlyphRangesBuilder_AddChar_5(^*self, _c)
     }
     AddText :: (&Self, _text: ^char8, _text_end: ^char8 = null) {
-        __c__ImFontGlyphRangesBuilder_AddText_6(^self, _text, _text_end)
+        __c__ImFontGlyphRangesBuilder_AddText_6(^*self, _text, _text_end)
     }
     AddRanges :: (&Self, _ranges: ^ImWchar) {
-        __c__ImFontGlyphRangesBuilder_AddRanges_7(^self, _ranges)
+        __c__ImFontGlyphRangesBuilder_AddRanges_7(^*self, _ranges)
     }
     BuildRanges :: (&Self, _out_ranges: ^__UNKNOWN_16) {
-        __c__ImFontGlyphRangesBuilder_BuildRanges_8(^self, _out_ranges)
+        __c__ImFontGlyphRangesBuilder_BuildRanges_8(^*self, _out_ranges)
     }
 }
 ImFontAtlasCustomRect :: struct #copy {
@@ -1660,7 +1660,7 @@ impl ImFontAtlasCustomRect {
     }
     IsPacked :: (&Self) -> bool {
         result : bool = default
-        __c__ImFontAtlasCustomRect_IsPacked_9(^self, ^result)
+        __c__ImFontAtlasCustomRect_IsPacked_9(^*self, ^result)
         return result
     }
 }
@@ -1689,132 +1689,132 @@ impl ImFontAtlas {
     }
     AddFont :: (&Self, _font_cfg: ^ImFontConfig) -> ^ImFont {
         result : ^ImFont = default
-        __c__ImFontAtlas_AddFont_2(^self, ^result, _font_cfg)
+        __c__ImFontAtlas_AddFont_2(^*self, ^result, _font_cfg)
         return result
     }
     AddFontDefault :: (&Self, _font_cfg: ^ImFontConfig = null) -> ^ImFont {
         result : ^ImFont = default
-        __c__ImFontAtlas_AddFontDefault_3(^self, ^result, _font_cfg)
+        __c__ImFontAtlas_AddFontDefault_3(^*self, ^result, _font_cfg)
         return result
     }
     AddFontFromFileTTF :: (&Self, _filename: ^char8, _size_pixels: f32, _font_cfg: ^ImFontConfig = null, _glyph_ranges: ^ImWchar = null) -> ^ImFont {
         result : ^ImFont = default
-        __c__ImFontAtlas_AddFontFromFileTTF_4(^self, ^result, _filename, _size_pixels, _font_cfg, _glyph_ranges)
+        __c__ImFontAtlas_AddFontFromFileTTF_4(^*self, ^result, _filename, _size_pixels, _font_cfg, _glyph_ranges)
         return result
     }
     AddFontFromMemoryTTF :: (&Self, _font_data: ^void, _font_size: i32, _size_pixels: f32, _font_cfg: ^ImFontConfig = null, _glyph_ranges: ^ImWchar = null) -> ^ImFont {
         result : ^ImFont = default
-        __c__ImFontAtlas_AddFontFromMemoryTTF_5(^self, ^result, _font_data, _font_size, _size_pixels, _font_cfg, _glyph_ranges)
+        __c__ImFontAtlas_AddFontFromMemoryTTF_5(^*self, ^result, _font_data, _font_size, _size_pixels, _font_cfg, _glyph_ranges)
         return result
     }
     AddFontFromMemoryCompressedTTF :: (&Self, _compressed_font_data: ^void, _compressed_font_size: i32, _size_pixels: f32, _font_cfg: ^ImFontConfig = null, _glyph_ranges: ^ImWchar = null) -> ^ImFont {
         result : ^ImFont = default
-        __c__ImFontAtlas_AddFontFromMemoryCompressedTTF_6(^self, ^result, _compressed_font_data, _compressed_font_size, _size_pixels, _font_cfg, _glyph_ranges)
+        __c__ImFontAtlas_AddFontFromMemoryCompressedTTF_6(^*self, ^result, _compressed_font_data, _compressed_font_size, _size_pixels, _font_cfg, _glyph_ranges)
         return result
     }
     AddFontFromMemoryCompressedBase85TTF :: (&Self, _compressed_font_data_base85: ^char8, _size_pixels: f32, _font_cfg: ^ImFontConfig = null, _glyph_ranges: ^ImWchar = null) -> ^ImFont {
         result : ^ImFont = default
-        __c__ImFontAtlas_AddFontFromMemoryCompressedBase85TTF_7(^self, ^result, _compressed_font_data_base85, _size_pixels, _font_cfg, _glyph_ranges)
+        __c__ImFontAtlas_AddFontFromMemoryCompressedBase85TTF_7(^*self, ^result, _compressed_font_data_base85, _size_pixels, _font_cfg, _glyph_ranges)
         return result
     }
     ClearInputData :: (&Self) {
-        __c__ImFontAtlas_ClearInputData_8(^self)
+        __c__ImFontAtlas_ClearInputData_8(^*self)
     }
     ClearTexData :: (&Self) {
-        __c__ImFontAtlas_ClearTexData_9(^self)
+        __c__ImFontAtlas_ClearTexData_9(^*self)
     }
     ClearFonts :: (&Self) {
-        __c__ImFontAtlas_ClearFonts_10(^self)
+        __c__ImFontAtlas_ClearFonts_10(^*self)
     }
     Clear :: (&Self) {
-        __c__ImFontAtlas_Clear_11(^self)
+        __c__ImFontAtlas_Clear_11(^*self)
     }
     Build :: (&Self) -> bool {
         result : bool = default
-        __c__ImFontAtlas_Build_12(^self, ^result)
+        __c__ImFontAtlas_Build_12(^*self, ^result)
         return result
     }
     GetTexDataAsAlpha8 :: (&Self, _out_pixels: ^^u8, _out_width: ^i32, _out_height: ^i32, _out_bytes_per_pixel: ^i32 = null) {
-        __c__ImFontAtlas_GetTexDataAsAlpha8_13(^self, _out_pixels, _out_width, _out_height, _out_bytes_per_pixel)
+        __c__ImFontAtlas_GetTexDataAsAlpha8_13(^*self, _out_pixels, _out_width, _out_height, _out_bytes_per_pixel)
     }
     GetTexDataAsRGBA32 :: (&Self, _out_pixels: ^^u8, _out_width: ^i32, _out_height: ^i32, _out_bytes_per_pixel: ^i32 = null) {
-        __c__ImFontAtlas_GetTexDataAsRGBA32_14(^self, _out_pixels, _out_width, _out_height, _out_bytes_per_pixel)
+        __c__ImFontAtlas_GetTexDataAsRGBA32_14(^*self, _out_pixels, _out_width, _out_height, _out_bytes_per_pixel)
     }
     IsBuilt :: (&Self) -> bool {
         result : bool = default
-        __c__ImFontAtlas_IsBuilt_15(^self, ^result)
+        __c__ImFontAtlas_IsBuilt_15(^*self, ^result)
         return result
     }
     SetTexID :: (&Self, _id: ImTextureID) {
-        __c__ImFontAtlas_SetTexID_16(^self, _id)
+        __c__ImFontAtlas_SetTexID_16(^*self, _id)
     }
     GetGlyphRangesDefault :: (&Self) -> ^ImWchar {
         result : ^ImWchar = default
-        __c__ImFontAtlas_GetGlyphRangesDefault_17(^self, ^result)
+        __c__ImFontAtlas_GetGlyphRangesDefault_17(^*self, ^result)
         return result
     }
     GetGlyphRangesKorean :: (&Self) -> ^ImWchar {
         result : ^ImWchar = default
-        __c__ImFontAtlas_GetGlyphRangesKorean_18(^self, ^result)
+        __c__ImFontAtlas_GetGlyphRangesKorean_18(^*self, ^result)
         return result
     }
     GetGlyphRangesJapanese :: (&Self) -> ^ImWchar {
         result : ^ImWchar = default
-        __c__ImFontAtlas_GetGlyphRangesJapanese_19(^self, ^result)
+        __c__ImFontAtlas_GetGlyphRangesJapanese_19(^*self, ^result)
         return result
     }
     GetGlyphRangesChineseFull :: (&Self) -> ^ImWchar {
         result : ^ImWchar = default
-        __c__ImFontAtlas_GetGlyphRangesChineseFull_20(^self, ^result)
+        __c__ImFontAtlas_GetGlyphRangesChineseFull_20(^*self, ^result)
         return result
     }
     GetGlyphRangesChineseSimplifiedCommon :: (&Self) -> ^ImWchar {
         result : ^ImWchar = default
-        __c__ImFontAtlas_GetGlyphRangesChineseSimplifiedCommon_21(^self, ^result)
+        __c__ImFontAtlas_GetGlyphRangesChineseSimplifiedCommon_21(^*self, ^result)
         return result
     }
     GetGlyphRangesCyrillic :: (&Self) -> ^ImWchar {
         result : ^ImWchar = default
-        __c__ImFontAtlas_GetGlyphRangesCyrillic_22(^self, ^result)
+        __c__ImFontAtlas_GetGlyphRangesCyrillic_22(^*self, ^result)
         return result
     }
     GetGlyphRangesThai :: (&Self) -> ^ImWchar {
         result : ^ImWchar = default
-        __c__ImFontAtlas_GetGlyphRangesThai_23(^self, ^result)
+        __c__ImFontAtlas_GetGlyphRangesThai_23(^*self, ^result)
         return result
     }
     GetGlyphRangesVietnamese :: (&Self) -> ^ImWchar {
         result : ^ImWchar = default
-        __c__ImFontAtlas_GetGlyphRangesVietnamese_24(^self, ^result)
+        __c__ImFontAtlas_GetGlyphRangesVietnamese_24(^*self, ^result)
         return result
     }
     AddCustomRectRegular :: (&Self, _id: u32, _width: i32, _height: i32) -> i32 {
         result : i32 = default
-        __c__ImFontAtlas_AddCustomRectRegular_25(^self, ^result, _id, _width, _height)
+        __c__ImFontAtlas_AddCustomRectRegular_25(^*self, ^result, _id, _width, _height)
         return result
     }
     AddCustomRectFontGlyph :: (&Self, _font: ^ImFont, _id: ImWchar, _width: i32, _height: i32, _advance_x: f32, _offset: &ImVec2) -> i32 {
         result : i32 = default
-        __c__ImFontAtlas_AddCustomRectFontGlyph_26(^self, ^result, _font, _id, _width, _height, _advance_x, ^_offset)
+        __c__ImFontAtlas_AddCustomRectFontGlyph_26(^*self, ^result, _font, _id, _width, _height, _advance_x, ^*_offset)
         return result
     }
     GetCustomRectByIndex :: (&Self, _index: i32) -> ^ImFontAtlasCustomRect {
         result : ^ImFontAtlasCustomRect = default
-        __c__ImFontAtlas_GetCustomRectByIndex_27(^self, ^result, _index)
+        __c__ImFontAtlas_GetCustomRectByIndex_27(^*self, ^result, _index)
         return result
     }
     CalcCustomRectUV :: (&Self, _rect: ^ImFontAtlasCustomRect, _out_uv_min: ^ImVec2, _out_uv_max: ^ImVec2) {
-        __c__ImFontAtlas_CalcCustomRectUV_28(^self, _rect, _out_uv_min, _out_uv_max)
+        __c__ImFontAtlas_CalcCustomRectUV_28(^*self, _rect, _out_uv_min, _out_uv_max)
     }
     GetMouseCursorTexData :: (&Self, _cursor: ImGuiMouseCursor, _out_offset: ^ImVec2, _out_size: ^ImVec2, _out_uv_border: ^ImVec2, _out_uv_fill: ^ImVec2) -> bool {
         result : bool = default
-        __c__ImFontAtlas_GetMouseCursorTexData_29(^self, ^result, _cursor, _out_offset, _out_size, _out_uv_border, _out_uv_fill)
+        __c__ImFontAtlas_GetMouseCursorTexData_29(^*self, ^result, _cursor, _out_offset, _out_size, _out_uv_border, _out_uv_fill)
         return result
     }
 }
 impl Drop for ImFontAtlas {
     drop :: (&Self) {
-        __c__ImFontAtlas_dtor(^self)
+        __c__ImFontAtlas_dtor(^*self)
     }
 }
 ImFont :: struct #copy {
@@ -1844,67 +1844,67 @@ impl ImFont {
     }
     FindGlyph :: (&Self, _c: ImWchar) -> ^ImFontGlyph {
         result : ^ImFontGlyph = default
-        __c__ImFont_FindGlyph_19(^self, ^result, _c)
+        __c__ImFont_FindGlyph_19(^*self, ^result, _c)
         return result
     }
     FindGlyphNoFallback :: (&Self, _c: ImWchar) -> ^ImFontGlyph {
         result : ^ImFontGlyph = default
-        __c__ImFont_FindGlyphNoFallback_20(^self, ^result, _c)
+        __c__ImFont_FindGlyphNoFallback_20(^*self, ^result, _c)
         return result
     }
     GetCharAdvance :: (&Self, _c: ImWchar) -> f32 {
         result : f32 = default
-        __c__ImFont_GetCharAdvance_21(^self, ^result, _c)
+        __c__ImFont_GetCharAdvance_21(^*self, ^result, _c)
         return result
     }
     IsLoaded :: (&Self) -> bool {
         result : bool = default
-        __c__ImFont_IsLoaded_22(^self, ^result)
+        __c__ImFont_IsLoaded_22(^*self, ^result)
         return result
     }
     GetDebugName :: (&Self) -> ^char8 {
         result : ^char8 = default
-        __c__ImFont_GetDebugName_23(^self, ^result)
+        __c__ImFont_GetDebugName_23(^*self, ^result)
         return result
     }
     CalcTextSizeA :: (&Self, _size: f32, _max_width: f32, _wrap_width: f32, _text_begin: ^char8, _text_end: ^char8 = null, _remaining: ^^char8 = null) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImFont_CalcTextSizeA_24(^self, ^result, _size, _max_width, _wrap_width, _text_begin, _text_end, _remaining)
+        __c__ImFont_CalcTextSizeA_24(^*self, ^result, _size, _max_width, _wrap_width, _text_begin, _text_end, _remaining)
         return result
     }
     CalcWordWrapPositionA :: (&Self, _scale: f32, _text: ^char8, _text_end: ^char8, _wrap_width: f32) -> ^char8 {
         result : ^char8 = default
-        __c__ImFont_CalcWordWrapPositionA_25(^self, ^result, _scale, _text, _text_end, _wrap_width)
+        __c__ImFont_CalcWordWrapPositionA_25(^*self, ^result, _scale, _text, _text_end, _wrap_width)
         return result
     }
     RenderChar :: (&Self, _draw_list: ^ImDrawList, _size: f32, _pos: ImVec2, _col: ImU32, _c: ImWchar) {
-        __c__ImFont_RenderChar_26(^self, _draw_list, _size, ^_pos, _col, _c)
+        __c__ImFont_RenderChar_26(^*self, _draw_list, _size, ^_pos, _col, _c)
     }
     RenderText :: (&Self, _draw_list: ^ImDrawList, _size: f32, _pos: ImVec2, _col: ImU32, _clip_rect: &ImVec4, _text_begin: ^char8, _text_end: ^char8, _wrap_width: f32 = 0.0f, _cpu_fine_clip: bool = false) {
-        __c__ImFont_RenderText_27(^self, _draw_list, _size, ^_pos, _col, ^_clip_rect, _text_begin, _text_end, _wrap_width, _cpu_fine_clip)
+        __c__ImFont_RenderText_27(^*self, _draw_list, _size, ^_pos, _col, ^*_clip_rect, _text_begin, _text_end, _wrap_width, _cpu_fine_clip)
     }
     BuildLookupTable :: (&Self) {
-        __c__ImFont_BuildLookupTable_28(^self)
+        __c__ImFont_BuildLookupTable_28(^*self)
     }
     ClearOutputData :: (&Self) {
-        __c__ImFont_ClearOutputData_29(^self)
+        __c__ImFont_ClearOutputData_29(^*self)
     }
     GrowIndex :: (&Self, _new_size: i32) {
-        __c__ImFont_GrowIndex_30(^self, _new_size)
+        __c__ImFont_GrowIndex_30(^*self, _new_size)
     }
     AddGlyph :: (&Self, _c: ImWchar, _x0: f32, _y0: f32, _x1: f32, _y1: f32, _u0: f32, _v0: f32, _u1: f32, _v1: f32, _advance_x: f32) {
-        __c__ImFont_AddGlyph_31(^self, _c, _x0, _y0, _x1, _y1, _u0, _v0, _u1, _v1, _advance_x)
+        __c__ImFont_AddGlyph_31(^*self, _c, _x0, _y0, _x1, _y1, _u0, _v0, _u1, _v1, _advance_x)
     }
     AddRemapChar :: (&Self, _dst: ImWchar, _src: ImWchar, _overwrite_dst: bool = true) {
-        __c__ImFont_AddRemapChar_32(^self, _dst, _src, _overwrite_dst)
+        __c__ImFont_AddRemapChar_32(^*self, _dst, _src, _overwrite_dst)
     }
     SetFallbackChar :: (&Self, _c: ImWchar) {
-        __c__ImFont_SetFallbackChar_33(^self, _c)
+        __c__ImFont_SetFallbackChar_33(^*self, _c)
     }
 }
 impl Drop for ImFont {
     drop :: (&Self) {
-        __c__ImFont_dtor(^self)
+        __c__ImFont_dtor(^*self)
     }
 }
 ImGuiPlatformMonitor :: struct #copy {
@@ -1982,7 +1982,7 @@ impl ImGuiViewport {
 }
 impl Drop for ImGuiViewport {
     drop :: (&Self) {
-        __c__ImGuiViewport_dtor(^self)
+        __c__ImGuiViewport_dtor(^*self)
     }
 }
 ImBoolVector :: struct #copy {
@@ -1995,18 +1995,18 @@ impl ImBoolVector {
         return result
     }
     Resize :: (&Self, _sz: i32) {
-        __c__ImBoolVector_Resize_2(^self, _sz)
+        __c__ImBoolVector_Resize_2(^*self, _sz)
     }
     Clear :: (&Self) {
-        __c__ImBoolVector_Clear_3(^self)
+        __c__ImBoolVector_Clear_3(^*self)
     }
     GetBit :: (&Self, _n: i32) -> bool {
         result : bool = default
-        __c__ImBoolVector_GetBit_4(^self, ^result, _n)
+        __c__ImBoolVector_GetBit_4(^*self, ^result, _n)
         return result
     }
     SetBit :: (&Self, _n: i32, _v: bool) {
-        __c__ImBoolVector_SetBit_5(^self, _n, _v)
+        __c__ImBoolVector_SetBit_5(^*self, _n, _v)
     }
 }
 ImVec1 :: struct #copy {
@@ -2041,7 +2041,7 @@ impl ImVec2ih {
     }
     new :: (_rhs: &ImVec2) -> ImVec2ih {
         result : ImVec2ih = default
-        __c__ImVec2ih_new_4(^result, ^_rhs)
+        __c__ImVec2ih_new_4(^result, ^*_rhs)
         return result
     }
 }
@@ -2057,12 +2057,12 @@ impl ImRect {
     }
     new :: (_min: &ImVec2, _max: &ImVec2) -> ImRect {
         result : ImRect = default
-        __c__ImRect_new_3(^result, ^_min, ^_max)
+        __c__ImRect_new_3(^result, ^*_min, ^*_max)
         return result
     }
     new :: (_v: &ImVec4) -> ImRect {
         result : ImRect = default
-        __c__ImRect_new_4(^result, ^_v)
+        __c__ImRect_new_4(^result, ^*_v)
         return result
     }
     new :: (_x1: f32, _y1: f32, _x2: f32, _y2: f32) -> ImRect {
@@ -2072,92 +2072,92 @@ impl ImRect {
     }
     GetCenter :: (&Self) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImRect_GetCenter_6(^self, ^result)
+        __c__ImRect_GetCenter_6(^*self, ^result)
         return result
     }
     GetSize :: (&Self) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImRect_GetSize_7(^self, ^result)
+        __c__ImRect_GetSize_7(^*self, ^result)
         return result
     }
     GetWidth :: (&Self) -> f32 {
         result : f32 = default
-        __c__ImRect_GetWidth_8(^self, ^result)
+        __c__ImRect_GetWidth_8(^*self, ^result)
         return result
     }
     GetHeight :: (&Self) -> f32 {
         result : f32 = default
-        __c__ImRect_GetHeight_9(^self, ^result)
+        __c__ImRect_GetHeight_9(^*self, ^result)
         return result
     }
     GetTL :: (&Self) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImRect_GetTL_10(^self, ^result)
+        __c__ImRect_GetTL_10(^*self, ^result)
         return result
     }
     GetTR :: (&Self) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImRect_GetTR_11(^self, ^result)
+        __c__ImRect_GetTR_11(^*self, ^result)
         return result
     }
     GetBL :: (&Self) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImRect_GetBL_12(^self, ^result)
+        __c__ImRect_GetBL_12(^*self, ^result)
         return result
     }
     GetBR :: (&Self) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImRect_GetBR_13(^self, ^result)
+        __c__ImRect_GetBR_13(^*self, ^result)
         return result
     }
     Contains :: (&Self, _p: &ImVec2) -> bool {
         result : bool = default
-        __c__ImRect_Contains_14(^self, ^result, ^_p)
+        __c__ImRect_Contains_14(^*self, ^result, ^*_p)
         return result
     }
     Contains :: (&Self, _r: &ImRect) -> bool {
         result : bool = default
-        __c__ImRect_Contains_15(^self, ^result, ^_r)
+        __c__ImRect_Contains_15(^*self, ^result, ^*_r)
         return result
     }
     Overlaps :: (&Self, _r: &ImRect) -> bool {
         result : bool = default
-        __c__ImRect_Overlaps_16(^self, ^result, ^_r)
+        __c__ImRect_Overlaps_16(^*self, ^result, ^*_r)
         return result
     }
     Add :: (&Self, _p: &ImVec2) {
-        __c__ImRect_Add_17(^self, ^_p)
+        __c__ImRect_Add_17(^*self, ^*_p)
     }
     Add :: (&Self, _r: &ImRect) {
-        __c__ImRect_Add_18(^self, ^_r)
+        __c__ImRect_Add_18(^*self, ^*_r)
     }
     Expand :: (&Self, _amount: f32) {
-        __c__ImRect_Expand_19(^self, _amount)
+        __c__ImRect_Expand_19(^*self, _amount)
     }
     Expand :: (&Self, _amount: &ImVec2) {
-        __c__ImRect_Expand_20(^self, ^_amount)
+        __c__ImRect_Expand_20(^*self, ^*_amount)
     }
     Translate :: (&Self, _d: &ImVec2) {
-        __c__ImRect_Translate_21(^self, ^_d)
+        __c__ImRect_Translate_21(^*self, ^*_d)
     }
     TranslateX :: (&Self, _dx: f32) {
-        __c__ImRect_TranslateX_22(^self, _dx)
+        __c__ImRect_TranslateX_22(^*self, _dx)
     }
     TranslateY :: (&Self, _dy: f32) {
-        __c__ImRect_TranslateY_23(^self, _dy)
+        __c__ImRect_TranslateY_23(^*self, _dy)
     }
     ClipWith :: (&Self, _r: &ImRect) {
-        __c__ImRect_ClipWith_24(^self, ^_r)
+        __c__ImRect_ClipWith_24(^*self, ^*_r)
     }
     ClipWithFull :: (&Self, _r: &ImRect) {
-        __c__ImRect_ClipWithFull_25(^self, ^_r)
+        __c__ImRect_ClipWithFull_25(^*self, ^*_r)
     }
     Floor :: (&Self) {
-        __c__ImRect_Floor_26(^self)
+        __c__ImRect_Floor_26(^*self)
     }
     IsInverted :: (&Self) -> bool {
         result : bool = default
-        __c__ImRect_IsInverted_27(^self, ^result)
+        __c__ImRect_IsInverted_27(^*self, ^result)
         return result
     }
 }
@@ -2215,16 +2215,16 @@ impl ImGuiMenuColumns {
         return result
     }
     Update :: (&Self, _count: i32, _spacing: f32, _clear: bool) {
-        __c__ImGuiMenuColumns_Update_6(^self, _count, _spacing, _clear)
+        __c__ImGuiMenuColumns_Update_6(^*self, _count, _spacing, _clear)
     }
     DeclColumns :: (&Self, _w0: f32, _w1: f32, _w2: f32) -> f32 {
         result : f32 = default
-        __c__ImGuiMenuColumns_DeclColumns_7(^self, ^result, _w0, _w1, _w2)
+        __c__ImGuiMenuColumns_DeclColumns_7(^*self, ^result, _w0, _w1, _w2)
         return result
     }
     CalcExtraSpace :: (&Self, _avail_w: f32) -> f32 {
         result : f32 = default
-        __c__ImGuiMenuColumns_CalcExtraSpace_8(^self, ^result, _avail_w)
+        __c__ImGuiMenuColumns_CalcExtraSpace_8(^*self, ^result, _avail_w)
         return result
     }
 }
@@ -2253,40 +2253,40 @@ impl ImGuiInputTextState {
         return result
     }
     ClearText :: (&Self) {
-        __c__ImGuiInputTextState_ClearText_17(^self)
+        __c__ImGuiInputTextState_ClearText_17(^*self)
     }
     ClearFreeMemory :: (&Self) {
-        __c__ImGuiInputTextState_ClearFreeMemory_18(^self)
+        __c__ImGuiInputTextState_ClearFreeMemory_18(^*self)
     }
     GetUndoAvailCount :: (&Self) -> i32 {
         result : i32 = default
-        __c__ImGuiInputTextState_GetUndoAvailCount_19(^self, ^result)
+        __c__ImGuiInputTextState_GetUndoAvailCount_19(^*self, ^result)
         return result
     }
     GetRedoAvailCount :: (&Self) -> i32 {
         result : i32 = default
-        __c__ImGuiInputTextState_GetRedoAvailCount_20(^self, ^result)
+        __c__ImGuiInputTextState_GetRedoAvailCount_20(^*self, ^result)
         return result
     }
     OnKeyPressed :: (&Self, _key: i32) {
-        __c__ImGuiInputTextState_OnKeyPressed_21(^self, _key)
+        __c__ImGuiInputTextState_OnKeyPressed_21(^*self, _key)
     }
     CursorAnimReset :: (&Self) {
-        __c__ImGuiInputTextState_CursorAnimReset_22(^self)
+        __c__ImGuiInputTextState_CursorAnimReset_22(^*self)
     }
     CursorClamp :: (&Self) {
-        __c__ImGuiInputTextState_CursorClamp_23(^self)
+        __c__ImGuiInputTextState_CursorClamp_23(^*self)
     }
     HasSelection :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiInputTextState_HasSelection_24(^self, ^result)
+        __c__ImGuiInputTextState_HasSelection_24(^*self, ^result)
         return result
     }
     ClearSelection :: (&Self) {
-        __c__ImGuiInputTextState_ClearSelection_25(^self)
+        __c__ImGuiInputTextState_ClearSelection_25(^*self)
     }
     SelectAll :: (&Self) {
-        __c__ImGuiInputTextState_SelectAll_26(^self)
+        __c__ImGuiInputTextState_SelectAll_26(^*self)
     }
 }
 ImGuiWindowSettings :: struct #copy {
@@ -2308,7 +2308,7 @@ impl ImGuiWindowSettings {
     }
     GetName :: (&Self) -> ^char8 {
         result : ^char8 = default
-        __c__ImGuiWindowSettings_GetName_10(^self, ^result)
+        __c__ImGuiWindowSettings_GetName_10(^*self, ^result)
         return result
     }
 }
@@ -2380,7 +2380,7 @@ impl ImGuiColumns {
         return result
     }
     Clear :: (&Self) {
-        __c__ImGuiColumns_Clear_16(^self)
+        __c__ImGuiColumns_Clear_16(^*self)
     }
 }
 ImDrawListSharedData :: struct #copy {
@@ -2404,13 +2404,13 @@ ImDrawDataBuilder :: struct #copy {
 }
 impl ImDrawDataBuilder {
     Clear :: (&Self) {
-        __c__ImDrawDataBuilder_Clear_1(^self)
+        __c__ImDrawDataBuilder_Clear_1(^*self)
     }
     ClearFreeMemory :: (&Self) {
-        __c__ImDrawDataBuilder_ClearFreeMemory_2(^self)
+        __c__ImDrawDataBuilder_ClearFreeMemory_2(^*self)
     }
     FlattenIntoSingleLayer :: (&Self) {
-        __c__ImDrawDataBuilder_FlattenIntoSingleLayer_3(^self)
+        __c__ImDrawDataBuilder_FlattenIntoSingleLayer_3(^*self)
     }
 }
 ImGuiViewportP :: struct #copy {
@@ -2440,21 +2440,21 @@ impl ImGuiViewportP {
     }
     GetRect :: (&Self) -> ImRect {
         result : ImRect = default
-        __c__ImGuiViewportP_GetRect_20(^self, ^result)
+        __c__ImGuiViewportP_GetRect_20(^*self, ^result)
         return result
     }
     GetCenter :: (&Self) -> ImVec2 {
         result : ImVec2 = default
-        __c__ImGuiViewportP_GetCenter_21(^self, ^result)
+        __c__ImGuiViewportP_GetCenter_21(^*self, ^result)
         return result
     }
     ClearRequestFlags :: (&Self) {
-        __c__ImGuiViewportP_ClearRequestFlags_22(^self)
+        __c__ImGuiViewportP_ClearRequestFlags_22(^*self)
     }
 }
 impl Drop for ImGuiViewportP {
     drop :: (&Self) {
-        __c__ImGuiViewportP_dtor(^self)
+        __c__ImGuiViewportP_dtor(^*self)
     }
 }
 ImGuiNavMoveResult :: struct #copy {
@@ -2473,7 +2473,7 @@ impl ImGuiNavMoveResult {
         return result
     }
     Clear :: (&Self) {
-        __c__ImGuiNavMoveResult_Clear_8(^self)
+        __c__ImGuiNavMoveResult_Clear_8(^*self)
     }
 }
 ImGuiNextWindowData :: struct #copy {
@@ -2504,7 +2504,7 @@ impl ImGuiNextWindowData {
         return result
     }
     ClearFlags :: (&Self) {
-        __c__ImGuiNextWindowData_ClearFlags_20(^self)
+        __c__ImGuiNextWindowData_ClearFlags_20(^*self)
     }
 }
 ImGuiNextItemData :: struct #copy {
@@ -2520,7 +2520,7 @@ impl ImGuiNextItemData {
         return result
     }
     ClearFlags :: (&Self) {
-        __c__ImGuiNextItemData_ClearFlags_5(^self)
+        __c__ImGuiNextItemData_ClearFlags_5(^*self)
     }
 }
 ImGuiShrinkWidthItem :: struct #copy {
@@ -2590,63 +2590,63 @@ impl ImGuiDockNode {
     }
     IsRootNode :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiDockNode_IsRootNode_39(^self, ^result)
+        __c__ImGuiDockNode_IsRootNode_39(^*self, ^result)
         return result
     }
     IsDockSpace :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiDockNode_IsDockSpace_40(^self, ^result)
+        __c__ImGuiDockNode_IsDockSpace_40(^*self, ^result)
         return result
     }
     IsFloatingNode :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiDockNode_IsFloatingNode_41(^self, ^result)
+        __c__ImGuiDockNode_IsFloatingNode_41(^*self, ^result)
         return result
     }
     IsCentralNode :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiDockNode_IsCentralNode_42(^self, ^result)
+        __c__ImGuiDockNode_IsCentralNode_42(^*self, ^result)
         return result
     }
     IsHiddenTabBar :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiDockNode_IsHiddenTabBar_43(^self, ^result)
+        __c__ImGuiDockNode_IsHiddenTabBar_43(^*self, ^result)
         return result
     }
     IsNoTabBar :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiDockNode_IsNoTabBar_44(^self, ^result)
+        __c__ImGuiDockNode_IsNoTabBar_44(^*self, ^result)
         return result
     }
     IsSplitNode :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiDockNode_IsSplitNode_45(^self, ^result)
+        __c__ImGuiDockNode_IsSplitNode_45(^*self, ^result)
         return result
     }
     IsLeafNode :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiDockNode_IsLeafNode_46(^self, ^result)
+        __c__ImGuiDockNode_IsLeafNode_46(^*self, ^result)
         return result
     }
     IsEmpty :: (&Self) -> bool {
         result : bool = default
-        __c__ImGuiDockNode_IsEmpty_47(^self, ^result)
+        __c__ImGuiDockNode_IsEmpty_47(^*self, ^result)
         return result
     }
     GetMergedFlags :: (&Self) -> ImGuiDockNodeFlags {
         result : ImGuiDockNodeFlags = default
-        __c__ImGuiDockNode_GetMergedFlags_48(^self, ^result)
+        __c__ImGuiDockNode_GetMergedFlags_48(^*self, ^result)
         return result
     }
     Rect :: (&Self) -> ImRect {
         result : ImRect = default
-        __c__ImGuiDockNode_Rect_49(^self, ^result)
+        __c__ImGuiDockNode_Rect_49(^*self, ^result)
         return result
     }
 }
 impl Drop for ImGuiDockNode {
     drop :: (&Self) {
-        __c__ImGuiDockNode_dtor(^self)
+        __c__ImGuiDockNode_dtor(^*self)
     }
 }
 ImGuiContext :: struct #copy {
@@ -2997,73 +2997,73 @@ impl ImGuiWindow {
     }
     GetID :: (&Self, _str: ^char8, _str_end: ^char8 = null) -> ImGuiID {
         result : ImGuiID = default
-        __c__ImGuiWindow_GetID_101(^self, ^result, _str, _str_end)
+        __c__ImGuiWindow_GetID_101(^*self, ^result, _str, _str_end)
         return result
     }
     GetID :: (&Self, _ptr: ^void) -> ImGuiID {
         result : ImGuiID = default
-        __c__ImGuiWindow_GetID_102(^self, ^result, _ptr)
+        __c__ImGuiWindow_GetID_102(^*self, ^result, _ptr)
         return result
     }
     GetID :: (&Self, _n: i32) -> ImGuiID {
         result : ImGuiID = default
-        __c__ImGuiWindow_GetID_103(^self, ^result, _n)
+        __c__ImGuiWindow_GetID_103(^*self, ^result, _n)
         return result
     }
     GetIDNoKeepAlive :: (&Self, _str: ^char8, _str_end: ^char8 = null) -> ImGuiID {
         result : ImGuiID = default
-        __c__ImGuiWindow_GetIDNoKeepAlive_104(^self, ^result, _str, _str_end)
+        __c__ImGuiWindow_GetIDNoKeepAlive_104(^*self, ^result, _str, _str_end)
         return result
     }
     GetIDNoKeepAlive :: (&Self, _ptr: ^void) -> ImGuiID {
         result : ImGuiID = default
-        __c__ImGuiWindow_GetIDNoKeepAlive_105(^self, ^result, _ptr)
+        __c__ImGuiWindow_GetIDNoKeepAlive_105(^*self, ^result, _ptr)
         return result
     }
     GetIDNoKeepAlive :: (&Self, _n: i32) -> ImGuiID {
         result : ImGuiID = default
-        __c__ImGuiWindow_GetIDNoKeepAlive_106(^self, ^result, _n)
+        __c__ImGuiWindow_GetIDNoKeepAlive_106(^*self, ^result, _n)
         return result
     }
     GetIDFromRectangle :: (&Self, _r_abs: &ImRect) -> ImGuiID {
         result : ImGuiID = default
-        __c__ImGuiWindow_GetIDFromRectangle_107(^self, ^result, ^_r_abs)
+        __c__ImGuiWindow_GetIDFromRectangle_107(^*self, ^result, ^*_r_abs)
         return result
     }
     Rect :: (&Self) -> ImRect {
         result : ImRect = default
-        __c__ImGuiWindow_Rect_108(^self, ^result)
+        __c__ImGuiWindow_Rect_108(^*self, ^result)
         return result
     }
     CalcFontSize :: (&Self) -> f32 {
         result : f32 = default
-        __c__ImGuiWindow_CalcFontSize_109(^self, ^result)
+        __c__ImGuiWindow_CalcFontSize_109(^*self, ^result)
         return result
     }
     TitleBarHeight :: (&Self) -> f32 {
         result : f32 = default
-        __c__ImGuiWindow_TitleBarHeight_110(^self, ^result)
+        __c__ImGuiWindow_TitleBarHeight_110(^*self, ^result)
         return result
     }
     TitleBarRect :: (&Self) -> ImRect {
         result : ImRect = default
-        __c__ImGuiWindow_TitleBarRect_111(^self, ^result)
+        __c__ImGuiWindow_TitleBarRect_111(^*self, ^result)
         return result
     }
     MenuBarHeight :: (&Self) -> f32 {
         result : f32 = default
-        __c__ImGuiWindow_MenuBarHeight_112(^self, ^result)
+        __c__ImGuiWindow_MenuBarHeight_112(^*self, ^result)
         return result
     }
     MenuBarRect :: (&Self) -> ImRect {
         result : ImRect = default
-        __c__ImGuiWindow_MenuBarRect_113(^self, ^result)
+        __c__ImGuiWindow_MenuBarRect_113(^*self, ^result)
         return result
     }
 }
 impl Drop for ImGuiWindow {
     drop :: (&Self) {
-        __c__ImGuiWindow_dtor(^self)
+        __c__ImGuiWindow_dtor(^*self)
     }
 }
 ImGuiItemHoveredDataBackup :: struct #copy {
@@ -3079,10 +3079,10 @@ impl ImGuiItemHoveredDataBackup {
         return result
     }
     Backup :: (&Self) {
-        __c__ImGuiItemHoveredDataBackup_Backup_5(^self)
+        __c__ImGuiItemHoveredDataBackup_Backup_5(^*self)
     }
     Restore :: (&Self) {
-        __c__ImGuiItemHoveredDataBackup_Restore_6(^self)
+        __c__ImGuiItemHoveredDataBackup_Restore_6(^*self)
     }
 }
 ImGuiTabItem :: struct #copy {
@@ -3137,12 +3137,12 @@ impl ImGuiTabBar {
     }
     GetTabOrder :: (&Self, _tab: ^ImGuiTabItem) -> i32 {
         result : i32 = default
-        __c__ImGuiTabBar_GetTabOrder_25(^self, ^result, _tab)
+        __c__ImGuiTabBar_GetTabOrder_25(^*self, ^result, _tab)
         return result
     }
     GetTabName :: (&Self, _tab: ^ImGuiTabItem) -> ^char8 {
         result : ^char8 = default
-        __c__ImGuiTabBar_GetTabName_26(^self, ^result, _tab)
+        __c__ImGuiTabBar_GetTabName_26(^*self, ^result, _tab)
         return result
     }
 }
@@ -3238,12 +3238,12 @@ End :: () {
 }
 BeginChildStr :: (_str_id: ^char8, _size: &ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
-    __c__BeginChild(^result, _str_id, ^_size, _border, _flags)
+    __c__BeginChild(^result, _str_id, ^*_size, _border, _flags)
     return result
 }
 BeginChildInt :: (_id: ImGuiID, _size: &ImVec2, _border: bool = false, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
-    __c__BeginChild_2(^result, _id, ^_size, _border, _flags)
+    __c__BeginChild_2(^result, _id, ^*_size, _border, _flags)
     return result
 }
 EndChild :: () {
@@ -3305,16 +3305,16 @@ GetWindowHeight :: () -> f32 {
     return result
 }
 SetNextWindowPos :: (_pos: &ImVec2, _cond: ImGuiCond = 0, _pivot: &ImVec2) {
-    __c__SetNextWindowPos(^_pos, _cond, ^_pivot)
+    __c__SetNextWindowPos(^*_pos, _cond, ^*_pivot)
 }
 SetNextWindowSize :: (_size: &ImVec2, _cond: ImGuiCond = 0) {
-    __c__SetNextWindowSize(^_size, _cond)
+    __c__SetNextWindowSize(^*_size, _cond)
 }
 SetNextWindowSizeConstraints :: (_size_min: &ImVec2, _size_max: &ImVec2, _custom_callback: ImGuiSizeCallback = null, _custom_callback_data: ^void = null) {
-    __c__SetNextWindowSizeConstraints(^_size_min, ^_size_max, _custom_callback, _custom_callback_data)
+    __c__SetNextWindowSizeConstraints(^*_size_min, ^*_size_max, _custom_callback, _custom_callback_data)
 }
 SetNextWindowContentSize :: (_size: &ImVec2) {
-    __c__SetNextWindowContentSize(^_size)
+    __c__SetNextWindowContentSize(^*_size)
 }
 SetNextWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond = 0) {
     __c__SetNextWindowCollapsed(_collapsed, _cond)
@@ -3329,10 +3329,10 @@ SetNextWindowViewport :: (_viewport_id: ImGuiID) {
     __c__SetNextWindowViewport(_viewport_id)
 }
 SetWindowPos :: (_pos: &ImVec2, _cond: ImGuiCond = 0) {
-    __c__SetWindowPos(^_pos, _cond)
+    __c__SetWindowPos(^*_pos, _cond)
 }
 SetWindowSize :: (_size: &ImVec2, _cond: ImGuiCond = 0) {
-    __c__SetWindowSize(^_size, _cond)
+    __c__SetWindowSize(^*_size, _cond)
 }
 SetWindowCollapsed :: (_collapsed: bool, _cond: ImGuiCond = 0) {
     __c__SetWindowCollapsed(_collapsed, _cond)
@@ -3344,10 +3344,10 @@ SetWindowFontScale :: (_scale: f32) {
     __c__SetWindowFontScale(_scale)
 }
 SetWindowPos_2 :: (_name: ^char8, _pos: &ImVec2, _cond: ImGuiCond = 0) {
-    __c__SetWindowPos_2(_name, ^_pos, _cond)
+    __c__SetWindowPos_2(_name, ^*_pos, _cond)
 }
 SetWindowSize_2 :: (_name: ^char8, _size: &ImVec2, _cond: ImGuiCond = 0) {
-    __c__SetWindowSize_2(_name, ^_size, _cond)
+    __c__SetWindowSize_2(_name, ^*_size, _cond)
 }
 SetWindowCollapsed_2 :: (_name: ^char8, _collapsed: bool, _cond: ImGuiCond = 0) {
     __c__SetWindowCollapsed_2(_name, _collapsed, _cond)
@@ -3428,7 +3428,7 @@ PushStyleColorInt :: (_idx: ImGuiCol, _col: ImU32) {
     __c__PushStyleColor(_idx, _col)
 }
 PushStyleColorVec :: (_idx: ImGuiCol, _col: &ImVec4) {
-    __c__PushStyleColor_2(_idx, ^_col)
+    __c__PushStyleColor_2(_idx, ^*_col)
 }
 PopStyleColor :: (_count: i32 = 1) {
     __c__PopStyleColor(_count)
@@ -3437,7 +3437,7 @@ PushStyleVar :: (_idx: ImGuiStyleVar, _val: f32) {
     __c__PushStyleVar(_idx, _val)
 }
 PushStyleVarVec :: (_idx: ImGuiStyleVar, _val: &ImVec2) {
-    __c__PushStyleVar_2(_idx, ^_val)
+    __c__PushStyleVar_2(_idx, ^*_val)
 }
 PopStyleVar :: (_count: i32 = 1) {
     __c__PopStyleVar(_count)
@@ -3469,7 +3469,7 @@ GetColorU32 :: (_idx: ImGuiCol, _alpha_mul: f32 = 1.0f) -> ImU32 {
 }
 GetColorU32_2 :: (_col: &ImVec4) -> ImU32 {
     result : ImU32 = default
-    __c__GetColorU32_2(^result, ^_col)
+    __c__GetColorU32_2(^result, ^*_col)
     return result
 }
 GetColorU32_3 :: (_col: ImU32) -> ImU32 {
@@ -3522,7 +3522,7 @@ Spacing :: () {
     __c__Spacing()
 }
 Dummy :: (_size: &ImVec2) {
-    __c__Dummy(^_size)
+    __c__Dummy(^*_size)
 }
 Indent :: (_indent_w: f32 = 0.0f) {
     __c__Indent(_indent_w)
@@ -3552,7 +3552,7 @@ GetCursorPosY :: () -> f32 {
     return result
 }
 SetCursorPos :: (_local_pos: &ImVec2) {
-    __c__SetCursorPos(^_local_pos)
+    __c__SetCursorPos(^*_local_pos)
 }
 SetCursorPosX :: (_local_x: f32) {
     __c__SetCursorPosX(_local_x)
@@ -3571,7 +3571,7 @@ GetCursorScreenPos :: () -> ImVec2 {
     return result
 }
 SetCursorScreenPos :: (_pos: &ImVec2) {
-    __c__SetCursorScreenPos(^_pos)
+    __c__SetCursorScreenPos(^*_pos)
 }
 AlignTextToFramePadding :: () {
     __c__AlignTextToFramePadding()
@@ -3636,10 +3636,10 @@ TextV :: (_fmt: ^char8, _args: va_list) {
     __c__TextV(_fmt, _args)
 }
 TextColored :: (_col: &ImVec4, _fmt: ^char8) {
-    __c__TextColored(^_col, _fmt)
+    __c__TextColored(^*_col, _fmt)
 }
 TextColoredV :: (_col: &ImVec4, _fmt: ^char8, _args: va_list) {
-    __c__TextColoredV(^_col, _fmt, _args)
+    __c__TextColoredV(^*_col, _fmt, _args)
 }
 TextDisabled :: (_fmt: ^char8) {
     __c__TextDisabled(_fmt)
@@ -3667,7 +3667,7 @@ BulletTextV :: (_fmt: ^char8, _args: va_list) {
 }
 Button :: (_label: ^char8, _size: &ImVec2) -> bool {
     result : bool = default
-    __c__Button(^result, _label, ^_size)
+    __c__Button(^result, _label, ^*_size)
     return result
 }
 SmallButton :: (_label: ^char8) -> bool {
@@ -3677,7 +3677,7 @@ SmallButton :: (_label: ^char8) -> bool {
 }
 InvisibleButton :: (_str_id: ^char8, _size: &ImVec2) -> bool {
     result : bool = default
-    __c__InvisibleButton(^result, _str_id, ^_size)
+    __c__InvisibleButton(^result, _str_id, ^*_size)
     return result
 }
 ArrowButton :: (_str_id: ^char8, _dir: ImGuiDir) -> bool {
@@ -3686,11 +3686,11 @@ ArrowButton :: (_str_id: ^char8, _dir: ImGuiDir) -> bool {
     return result
 }
 Image :: (_user_texture_id: ImTextureID, _size: &ImVec2, _uv0: &ImVec2, _uv1: &ImVec2, _tint_col: &ImVec4, _border_col: &ImVec4) {
-    __c__Image(_user_texture_id, ^_size, ^_uv0, ^_uv1, ^_tint_col, ^_border_col)
+    __c__Image(_user_texture_id, ^*_size, ^*_uv0, ^*_uv1, ^*_tint_col, ^*_border_col)
 }
 ImageButton :: (_user_texture_id: ImTextureID, _size: &ImVec2, _uv0: &ImVec2, _uv1: &ImVec2, _frame_padding: i32 = -1, _bg_col: &ImVec4, _tint_col: &ImVec4) -> bool {
     result : bool = default
-    __c__ImageButton(^result, _user_texture_id, ^_size, ^_uv0, ^_uv1, _frame_padding, ^_bg_col, ^_tint_col)
+    __c__ImageButton(^result, _user_texture_id, ^*_size, ^*_uv0, ^*_uv1, _frame_padding, ^*_bg_col, ^*_tint_col)
     return result
 }
 Checkbox :: (_label: ^char8, _v: ^bool) -> bool {
@@ -3714,7 +3714,7 @@ RadioButton_2 :: (_label: ^char8, _v: ^i32, _v_button: i32) -> bool {
     return result
 }
 ProgressBar :: (_fraction: f32, _size_arg: &ImVec2, _overlay: ^char8 = null) {
-    __c__ProgressBar(_fraction, ^_size_arg, _overlay)
+    __c__ProgressBar(_fraction, ^*_size_arg, _overlay)
 }
 Bullet :: () {
     __c__Bullet()
@@ -3859,17 +3859,17 @@ SliderScalarN :: (_label: ^char8, _data_type: ImGuiDataType, _p_data: ^void, _co
 }
 VSliderFloat :: (_label: ^char8, _size: &ImVec2, _v: ^f32, _v_min: f32, _v_max: f32, _format: ^char8 = "%.3f", _power: f32 = 1.0f) -> bool {
     result : bool = default
-    __c__VSliderFloat(^result, _label, ^_size, _v, _v_min, _v_max, _format, _power)
+    __c__VSliderFloat(^result, _label, ^*_size, _v, _v_min, _v_max, _format, _power)
     return result
 }
 VSliderInt :: (_label: ^char8, _size: &ImVec2, _v: ^i32, _v_min: i32, _v_max: i32, _format: ^char8 = "%d") -> bool {
     result : bool = default
-    __c__VSliderInt(^result, _label, ^_size, _v, _v_min, _v_max, _format)
+    __c__VSliderInt(^result, _label, ^*_size, _v, _v_min, _v_max, _format)
     return result
 }
 VSliderScalar :: (_label: ^char8, _size: &ImVec2, _data_type: ImGuiDataType, _p_data: ^void, _p_min: ^void, _p_max: ^void, _format: ^char8 = null, _power: f32 = 1.0f) -> bool {
     result : bool = default
-    __c__VSliderScalar(^result, _label, ^_size, _data_type, _p_data, _p_min, _p_max, _format, _power)
+    __c__VSliderScalar(^result, _label, ^*_size, _data_type, _p_data, _p_min, _p_max, _format, _power)
     return result
 }
 InputText :: (_label: ^char8, _buf: ^char8, _buf_size: size_t, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: ^void = null) -> bool {
@@ -3879,7 +3879,7 @@ InputText :: (_label: ^char8, _buf: ^char8, _buf_size: size_t, _flags: ImGuiInpu
 }
 InputTextMultiline :: (_label: ^char8, _buf: ^char8, _buf_size: size_t, _size: &ImVec2, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: ^void = null) -> bool {
     result : bool = default
-    __c__InputTextMultiline(^result, _label, _buf, _buf_size, ^_size, _flags, _callback, _user_data)
+    __c__InputTextMultiline(^result, _label, _buf, _buf_size, ^*_size, _flags, _callback, _user_data)
     return result
 }
 InputTextWithHint :: (_label: ^char8, _hint: ^char8, _buf: ^char8, _buf_size: size_t, _flags: ImGuiInputTextFlags = 0, _callback: ImGuiInputTextCallback = null, _user_data: ^void = null) -> bool {
@@ -3964,7 +3964,7 @@ ColorPicker4 :: (_label: ^char8, _col: ^f32, _flags: ImGuiColorEditFlags = 0, _r
 }
 ColorButton :: (_desc_id: ^char8, _col: &ImVec4, _flags: ImGuiColorEditFlags = 0, _size: ImVec2) -> bool {
     result : bool = default
-    __c__ColorButton(^result, _desc_id, ^_col, _flags, ^_size)
+    __c__ColorButton(^result, _desc_id, ^*_col, _flags, ^_size)
     return result
 }
 SetColorEditOptions :: (_flags: ImGuiColorEditFlags) {
@@ -4049,12 +4049,12 @@ SetNextItemOpen :: (_is_open: bool, _cond: ImGuiCond = 0) {
 }
 Selectable :: (_label: ^char8, _selected: bool = false, _flags: ImGuiSelectableFlags = 0, _size: &ImVec2) -> bool {
     result : bool = default
-    __c__Selectable(^result, _label, _selected, _flags, ^_size)
+    __c__Selectable(^result, _label, _selected, _flags, ^*_size)
     return result
 }
 Selectable_2 :: (_label: ^char8, _p_selected: ^bool, _flags: ImGuiSelectableFlags = 0, _size: &ImVec2) -> bool {
     result : bool = default
-    __c__Selectable_2(^result, _label, _p_selected, _flags, ^_size)
+    __c__Selectable_2(^result, _label, _p_selected, _flags, ^*_size)
     return result
 }
 ListBox :: (_label: ^char8, _current_item: ^i32, _items: ^^char8, _items_count: i32, _height_in_items: i32 = -1) -> bool {
@@ -4069,7 +4069,7 @@ ListBoxFnPtr :: (_label: ^char8, _current_item: ^i32, _items_getter: fn(^void, i
 }
 ListBoxHeader :: (_label: ^char8, _size: &ImVec2) -> bool {
     result : bool = default
-    __c__ListBoxHeader(^result, _label, ^_size)
+    __c__ListBoxHeader(^result, _label, ^*_size)
     return result
 }
 ListBoxHeader_2 :: (_label: ^char8, _items_count: i32, _height_in_items: i32 = -1) -> bool {
@@ -4246,7 +4246,7 @@ SetTabItemClosed :: (_tab_or_docked_window_label: ^char8) {
     __c__SetTabItemClosed(_tab_or_docked_window_label)
 }
 DockSpace :: (_id: ImGuiID, _size: &ImVec2, _flags: ImGuiDockNodeFlags = 0, _window_class: ^ImGuiWindowClass = null) {
-    __c__DockSpace(_id, ^_size, _flags, _window_class)
+    __c__DockSpace(_id, ^*_size, _flags, _window_class)
 }
 DockSpaceOverViewport :: (_viewport: ^ImGuiViewport = null, _flags: ImGuiDockNodeFlags = 0, _window_class: ^ImGuiWindowClass = null) -> ImGuiID {
     result : ImGuiID = default
@@ -4319,7 +4319,7 @@ GetDragDropPayload :: () -> ^ImGuiPayload {
     return result
 }
 PushClipRect :: (_clip_rect_min: &ImVec2, _clip_rect_max: &ImVec2, _intersect_with_current_clip_rect: bool) {
-    __c__PushClipRect(^_clip_rect_min, ^_clip_rect_max, _intersect_with_current_clip_rect)
+    __c__PushClipRect(^*_clip_rect_min, ^*_clip_rect_max, _intersect_with_current_clip_rect)
 }
 PopClipRect :: () {
     __c__PopClipRect()
@@ -4415,12 +4415,12 @@ SetItemAllowOverlap :: () {
 }
 IsRectVisible :: (_size: &ImVec2) -> bool {
     result : bool = default
-    __c__IsRectVisible(^result, ^_size)
+    __c__IsRectVisible(^result, ^*_size)
     return result
 }
 IsRectVisible_2 :: (_rect_min: &ImVec2, _rect_max: &ImVec2) -> bool {
     result : bool = default
-    __c__IsRectVisible_2(^result, ^_rect_min, ^_rect_max)
+    __c__IsRectVisible_2(^result, ^*_rect_min, ^*_rect_max)
     return result
 }
 GetTime :: () -> f64 {
@@ -4481,7 +4481,7 @@ CalcListClipping :: (_items_count: i32, _items_height: f32, _out_items_display_s
 }
 BeginChildFrame :: (_id: ImGuiID, _size: &ImVec2, _flags: ImGuiWindowFlags = 0) -> bool {
     result : bool = default
-    __c__BeginChildFrame(^result, _id, ^_size, _flags)
+    __c__BeginChildFrame(^result, _id, ^*_size, _flags)
     return result
 }
 EndChildFrame :: () {
@@ -4494,14 +4494,14 @@ ColorConvertU32ToFloat4 :: (_in: ImU32) -> ImVec4 {
 }
 ColorConvertFloat4ToU32 :: (_in: &ImVec4) -> ImU32 {
     result : ImU32 = default
-    __c__ColorConvertFloat4ToU32(^result, ^_in)
+    __c__ColorConvertFloat4ToU32(^result, ^*_in)
     return result
 }
 ColorConvertRGBtoHSV :: (_r: f32, _g: f32, _b: f32, _out_h: &f32, _out_s: &f32, _out_v: &f32) {
-    __c__ColorConvertRGBtoHSV(_r, _g, _b, ^_out_h, ^_out_s, ^_out_v)
+    __c__ColorConvertRGBtoHSV(_r, _g, _b, ^*_out_h, ^*_out_s, ^*_out_v)
 }
 ColorConvertHSVtoRGB :: (_h: f32, _s: f32, _v: f32, _out_r: &f32, _out_g: &f32, _out_b: &f32) {
-    __c__ColorConvertHSVtoRGB(_h, _s, _v, ^_out_r, ^_out_g, ^_out_b)
+    __c__ColorConvertHSVtoRGB(_h, _s, _v, ^*_out_r, ^*_out_g, ^*_out_b)
 }
 GetKeyIndex :: (_imgui_key: ImGuiKey) -> i32 {
     result : i32 = default
@@ -4553,7 +4553,7 @@ IsMouseDoubleClicked :: (_button: ImGuiMouseButton) -> bool {
 }
 IsMouseHoveringRect :: (_r_min: &ImVec2, _r_max: &ImVec2, _clip: bool = true) -> bool {
     result : bool = default
-    __c__IsMouseHoveringRect(^result, ^_r_min, ^_r_max, _clip)
+    __c__IsMouseHoveringRect(^result, ^*_r_min, ^*_r_max, _clip)
     return result
 }
 IsMousePosValid :: (_mouse_pos: ^ImVec2 = null) -> bool {
@@ -4840,36 +4840,36 @@ ImFileLoadToMemory :: (_filename: ^char8, _mode: ^char8, _out_file_size: ^size_t
 }
 ImBezierCalc :: (_p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _t: f32) -> ImVec2 {
     result : ImVec2 = default
-    __c__ImBezierCalc(^result, ^_p1, ^_p2, ^_p3, ^_p4, _t)
+    __c__ImBezierCalc(^result, ^*_p1, ^*_p2, ^*_p3, ^*_p4, _t)
     return result
 }
 ImBezierClosestPoint :: (_p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _p: &ImVec2, _num_segments: i32) -> ImVec2 {
     result : ImVec2 = default
-    __c__ImBezierClosestPoint(^result, ^_p1, ^_p2, ^_p3, ^_p4, ^_p, _num_segments)
+    __c__ImBezierClosestPoint(^result, ^*_p1, ^*_p2, ^*_p3, ^*_p4, ^*_p, _num_segments)
     return result
 }
 ImBezierClosestPointCasteljau :: (_p1: &ImVec2, _p2: &ImVec2, _p3: &ImVec2, _p4: &ImVec2, _p: &ImVec2, _tess_tol: f32) -> ImVec2 {
     result : ImVec2 = default
-    __c__ImBezierClosestPointCasteljau(^result, ^_p1, ^_p2, ^_p3, ^_p4, ^_p, _tess_tol)
+    __c__ImBezierClosestPointCasteljau(^result, ^*_p1, ^*_p2, ^*_p3, ^*_p4, ^*_p, _tess_tol)
     return result
 }
 ImLineClosestPoint :: (_a: &ImVec2, _b: &ImVec2, _p: &ImVec2) -> ImVec2 {
     result : ImVec2 = default
-    __c__ImLineClosestPoint(^result, ^_a, ^_b, ^_p)
+    __c__ImLineClosestPoint(^result, ^*_a, ^*_b, ^*_p)
     return result
 }
 ImTriangleContainsPoint :: (_a: &ImVec2, _b: &ImVec2, _c: &ImVec2, _p: &ImVec2) -> bool {
     result : bool = default
-    __c__ImTriangleContainsPoint(^result, ^_a, ^_b, ^_c, ^_p)
+    __c__ImTriangleContainsPoint(^result, ^*_a, ^*_b, ^*_c, ^*_p)
     return result
 }
 ImTriangleClosestPoint :: (_a: &ImVec2, _b: &ImVec2, _c: &ImVec2, _p: &ImVec2) -> ImVec2 {
     result : ImVec2 = default
-    __c__ImTriangleClosestPoint(^result, ^_a, ^_b, ^_c, ^_p)
+    __c__ImTriangleClosestPoint(^result, ^*_a, ^*_b, ^*_c, ^*_p)
     return result
 }
 ImTriangleBarycentricCoords :: (_a: &ImVec2, _b: &ImVec2, _c: &ImVec2, _p: &ImVec2, _out_u: &f32, _out_v: &f32, _out_w: &f32) {
-    __c__ImTriangleBarycentricCoords(^_a, ^_b, ^_c, ^_p, ^_out_u, ^_out_v, ^_out_w)
+    __c__ImTriangleBarycentricCoords(^*_a, ^*_b, ^*_c, ^*_p, ^*_out_u, ^*_out_v, ^*_out_w)
 }
 ImGetDirQuadrantFromDelta :: (_dx: f32, _dy: f32) -> ImGuiDir {
     result : ImGuiDir = default
@@ -4925,10 +4925,10 @@ GetWindowAllowedExtentRect :: (_window: ^ImGuiWindow) -> ImRect {
     return result
 }
 SetWindowPos_3 :: (_window: ^ImGuiWindow, _pos: &ImVec2, _cond: ImGuiCond = 0) {
-    __c__SetWindowPos_3(_window, ^_pos, _cond)
+    __c__SetWindowPos_3(_window, ^*_pos, _cond)
 }
 SetWindowSize_3 :: (_window: ^ImGuiWindow, _size: &ImVec2, _cond: ImGuiCond = 0) {
-    __c__SetWindowSize_3(_window, ^_size, _cond)
+    __c__SetWindowSize_3(_window, ^*_size, _cond)
 }
 SetWindowCollapsed_3 :: (_window: ^ImGuiWindow, _collapsed: bool, _cond: ImGuiCond = 0) {
     __c__SetWindowCollapsed_3(_window, _collapsed, _cond)
@@ -4964,7 +4964,7 @@ UpdateMouseMovingWindowEndFrame :: () {
     __c__UpdateMouseMovingWindowEndFrame()
 }
 TranslateWindowsInViewport :: (_viewport: ^ImGuiViewportP, _old_pos: &ImVec2, _new_pos: &ImVec2) {
-    __c__TranslateWindowsInViewport(_viewport, ^_old_pos, ^_new_pos)
+    __c__TranslateWindowsInViewport(_viewport, ^*_old_pos, ^*_new_pos)
 }
 ScaleWindowsInViewport :: (_viewport: ^ImGuiViewportP, _scale: f32) {
     __c__ScaleWindowsInViewport(_viewport, _scale)
@@ -5015,7 +5015,7 @@ SetScrollFromPosY_2 :: (_window: ^ImGuiWindow, _local_y: f32, _center_y_ratio: f
 }
 ScrollToBringRectIntoView :: (_window: ^ImGuiWindow, _item_rect: &ImRect) -> ImVec2 {
     result : ImVec2 = default
-    __c__ScrollToBringRectIntoView(^result, _window, ^_item_rect)
+    __c__ScrollToBringRectIntoView(^result, _window, ^*_item_rect)
     return result
 }
 SetActiveID :: (_id: ImGuiID, _window: ^ImGuiWindow) {
@@ -5045,24 +5045,24 @@ PushOverrideID :: (_id: ImGuiID) {
     __c__PushOverrideID(_id)
 }
 ItemSize :: (_size: &ImVec2, _text_baseline_y: f32 = -1.0f) {
-    __c__ItemSize(^_size, _text_baseline_y)
+    __c__ItemSize(^*_size, _text_baseline_y)
 }
 ItemSize_2 :: (_bb: &ImRect, _text_baseline_y: f32 = -1.0f) {
-    __c__ItemSize_2(^_bb, _text_baseline_y)
+    __c__ItemSize_2(^*_bb, _text_baseline_y)
 }
 ItemAdd :: (_bb: &ImRect, _id: ImGuiID, _nav_bb: ^ImRect = null) -> bool {
     result : bool = default
-    __c__ItemAdd(^result, ^_bb, _id, _nav_bb)
+    __c__ItemAdd(^result, ^*_bb, _id, _nav_bb)
     return result
 }
 ItemHoverable :: (_bb: &ImRect, _id: ImGuiID) -> bool {
     result : bool = default
-    __c__ItemHoverable(^result, ^_bb, _id)
+    __c__ItemHoverable(^result, ^*_bb, _id)
     return result
 }
 IsClippedEx :: (_bb: &ImRect, _id: ImGuiID, _clip_even_when_logged: bool) -> bool {
     result : bool = default
-    __c__IsClippedEx(^result, ^_bb, _id, _clip_even_when_logged)
+    __c__IsClippedEx(^result, ^*_bb, _id, _clip_even_when_logged)
     return result
 }
 FocusableItemRegister :: (_window: ^ImGuiWindow, _id: ImGuiID) -> bool {
@@ -5080,7 +5080,7 @@ CalcItemSize :: (_size: ImVec2, _default_w: f32, _default_h: f32) -> ImVec2 {
 }
 CalcWrapWidthForPos :: (_pos: &ImVec2, _wrap_pos_x: f32) -> f32 {
     result : f32 = default
-    __c__CalcWrapWidthForPos(^result, ^_pos, _wrap_pos_x)
+    __c__CalcWrapWidthForPos(^result, ^*_pos, _wrap_pos_x)
     return result
 }
 PushMultiItemsWidths :: (_components: i32, _width_full: f32) {
@@ -5145,7 +5145,7 @@ FindBestWindowPosForPopup :: (_window: ^ImGuiWindow) -> ImVec2 {
 }
 FindBestWindowPosForPopupEx :: (_ref_pos: &ImVec2, _size: &ImVec2, _last_dir: ^ImGuiDir, _r_outer: &ImRect, _r_avoid: &ImRect, _policy: ImGuiPopupPositionPolicy = ImGuiPopupPositionPolicy.Default) -> ImVec2 {
     result : ImVec2 = default
-    __c__FindBestWindowPosForPopupEx(^result, ^_ref_pos, ^_size, _last_dir, ^_r_outer, ^_r_avoid, _policy)
+    __c__FindBestWindowPosForPopupEx(^result, ^*_ref_pos, ^*_size, _last_dir, ^*_r_outer, ^*_r_avoid, _policy)
     return result
 }
 NavInitWindow :: (_window: ^ImGuiWindow, _force_reinit: bool) {
@@ -5160,7 +5160,7 @@ NavMoveRequestCancel :: () {
     __c__NavMoveRequestCancel()
 }
 NavMoveRequestForward :: (_move_dir: ImGuiDir, _clip_dir: ImGuiDir, _bb_rel: &ImRect, _move_flags: ImGuiNavMoveFlags) {
-    __c__NavMoveRequestForward(_move_dir, _clip_dir, ^_bb_rel, _move_flags)
+    __c__NavMoveRequestForward(_move_dir, _clip_dir, ^*_bb_rel, _move_flags)
 }
 NavMoveRequestTryWrapping :: (_window: ^ImGuiWindow, _move_flags: ImGuiNavMoveFlags) {
     __c__NavMoveRequestTryWrapping(_window, _move_flags)
@@ -5187,7 +5187,7 @@ SetNavID :: (_id: ImGuiID, _nav_layer: i32) {
     __c__SetNavID(_id, _nav_layer)
 }
 SetNavIDWithRectRel :: (_id: ImGuiID, _nav_layer: i32, _rect_rel: &ImRect) {
-    __c__SetNavIDWithRectRel(_id, _nav_layer, ^_rect_rel)
+    __c__SetNavIDWithRectRel(_id, _nav_layer, ^*_rect_rel)
 }
 IsMouseDragPastThreshold :: (_button: ImGuiMouseButton, _lock_threshold: f32 = -1.0f) -> bool {
     result : bool = default
@@ -5295,7 +5295,7 @@ DockBuilderFinish :: (_node_id: ImGuiID) {
 }
 BeginDragDropTargetCustom :: (_bb: &ImRect, _id: ImGuiID) -> bool {
     result : bool = default
-    __c__BeginDragDropTargetCustom(^result, ^_bb, _id)
+    __c__BeginDragDropTargetCustom(^result, ^*_bb, _id)
     return result
 }
 ClearDragDrop :: () {
@@ -5343,7 +5343,7 @@ GetColumnNormFromOffset :: (_columns: ^ImGuiColumns, _offset: f32) -> f32 {
 }
 BeginTabBarEx :: (_tab_bar: ^ImGuiTabBar, _bb: &ImRect, _flags: ImGuiTabBarFlags, _dock_node: ^ImGuiDockNode) -> bool {
     result : bool = default
-    __c__BeginTabBarEx(^result, _tab_bar, ^_bb, _flags, _dock_node)
+    __c__BeginTabBarEx(^result, _tab_bar, ^*_bb, _flags, _dock_node)
     return result
 }
 TabBarFindTabByID :: (_tab_bar: ^ImGuiTabBar, _tab_id: ImGuiID) -> ^ImGuiTabItem {
@@ -5379,11 +5379,11 @@ TabItemCalcSize :: (_label: ^char8, _has_close_button: bool) -> ImVec2 {
     return result
 }
 TabItemBackground :: (_draw_list: ^ImDrawList, _bb: &ImRect, _flags: ImGuiTabItemFlags, _col: ImU32) {
-    __c__TabItemBackground(_draw_list, ^_bb, _flags, _col)
+    __c__TabItemBackground(_draw_list, ^*_bb, _flags, _col)
 }
 TabItemLabelAndCloseButton :: (_draw_list: ^ImDrawList, _bb: &ImRect, _flags: ImGuiTabItemFlags, _frame_padding: ImVec2, _label: ^char8, _tab_id: ImGuiID, _close_button_id: ImGuiID) -> bool {
     result : bool = default
-    __c__TabItemLabelAndCloseButton(^result, _draw_list, ^_bb, _flags, ^_frame_padding, _label, _tab_id, _close_button_id)
+    __c__TabItemLabelAndCloseButton(^result, _draw_list, ^*_bb, _flags, ^_frame_padding, _label, _tab_id, _close_button_id)
     return result
 }
 RenderText :: (_pos: ImVec2, _text: ^char8, _text_end: ^char8 = null, _hide_text_after_hash: bool = true) {
@@ -5393,13 +5393,13 @@ RenderTextWrapped :: (_pos: ImVec2, _text: ^char8, _text_end: ^char8, _wrap_widt
     __c__RenderTextWrapped(^_pos, _text, _text_end, _wrap_width)
 }
 RenderTextClipped :: (_pos_min: &ImVec2, _pos_max: &ImVec2, _text: ^char8, _text_end: ^char8, _text_size_if_known: ^ImVec2, _align: &ImVec2, _clip_rect: ^ImRect = null) {
-    __c__RenderTextClipped(^_pos_min, ^_pos_max, _text, _text_end, _text_size_if_known, ^_align, _clip_rect)
+    __c__RenderTextClipped(^*_pos_min, ^*_pos_max, _text, _text_end, _text_size_if_known, ^*_align, _clip_rect)
 }
 RenderTextClippedEx :: (_draw_list: ^ImDrawList, _pos_min: &ImVec2, _pos_max: &ImVec2, _text: ^char8, _text_end: ^char8, _text_size_if_known: ^ImVec2, _align: &ImVec2, _clip_rect: ^ImRect = null) {
-    __c__RenderTextClippedEx(_draw_list, ^_pos_min, ^_pos_max, _text, _text_end, _text_size_if_known, ^_align, _clip_rect)
+    __c__RenderTextClippedEx(_draw_list, ^*_pos_min, ^*_pos_max, _text, _text_end, _text_size_if_known, ^*_align, _clip_rect)
 }
 RenderTextEllipsis :: (_draw_list: ^ImDrawList, _pos_min: &ImVec2, _pos_max: &ImVec2, _clip_max_x: f32, _ellipsis_max_x: f32, _text: ^char8, _text_end: ^char8, _text_size_if_known: ^ImVec2) {
-    __c__RenderTextEllipsis(_draw_list, ^_pos_min, ^_pos_max, _clip_max_x, _ellipsis_max_x, _text, _text_end, _text_size_if_known)
+    __c__RenderTextEllipsis(_draw_list, ^*_pos_min, ^*_pos_max, _clip_max_x, _ellipsis_max_x, _text, _text_end, _text_size_if_known)
 }
 RenderFrame :: (_p_min: ImVec2, _p_max: ImVec2, _fill_col: ImU32, _border: bool = true, _rounding: f32 = 0.0f) {
     __c__RenderFrame(^_p_min, ^_p_max, _fill_col, _border, _rounding)
@@ -5414,7 +5414,7 @@ RenderCheckMark :: (_pos: ImVec2, _col: ImU32, _sz: f32) {
     __c__RenderCheckMark(^_pos, _col, _sz)
 }
 RenderNavHighlight :: (_bb: &ImRect, _id: ImGuiID, _flags: ImGuiNavHighlightFlags = ImGuiNavHighlightFlags_.TypeDefault) {
-    __c__RenderNavHighlight(^_bb, _id, _flags)
+    __c__RenderNavHighlight(^*_bb, _id, _flags)
 }
 RenderMouseCursor :: (_pos: ImVec2, _scale: f32, _mouse_cursor: ImGuiMouseCursor = ImGuiMouseCursor_.Arrow) {
     __c__RenderMouseCursor(^_pos, _scale, _mouse_cursor)
@@ -5443,7 +5443,7 @@ RenderArrowDockMenu :: (_draw_list: ^ImDrawList, _p_min: ImVec2, _sz: f32, _col:
     __c__RenderArrowDockMenu(_draw_list, ^_p_min, _sz, _col)
 }
 RenderRectFilledRangeH :: (_draw_list: ^ImDrawList, _rect: &ImRect, _col: ImU32, _x_start_norm: f32, _x_end_norm: f32, _rounding: f32) {
-    __c__RenderRectFilledRangeH(_draw_list, ^_rect, _col, _x_start_norm, _x_end_norm, _rounding)
+    __c__RenderRectFilledRangeH(_draw_list, ^*_rect, _col, _x_start_norm, _x_end_norm, _rounding)
 }
 RenderRectFilledWithHole :: (_draw_list: ^ImDrawList, _outer: ImRect, _inner: ImRect, _col: ImU32, _rounding: f32) {
     __c__RenderRectFilledWithHole(_draw_list, ^_outer, ^_inner, _col, _rounding)
@@ -5453,17 +5453,17 @@ TextEx :: (_text: ^char8, _text_end: ^char8 = null, _flags: ImGuiTextFlags = 0) 
 }
 ButtonEx :: (_label: ^char8, _size_arg: &ImVec2, _flags: ImGuiButtonFlags = 0) -> bool {
     result : bool = default
-    __c__ButtonEx(^result, _label, ^_size_arg, _flags)
+    __c__ButtonEx(^result, _label, ^*_size_arg, _flags)
     return result
 }
 CloseButton :: (_id: ImGuiID, _pos: &ImVec2) -> bool {
     result : bool = default
-    __c__CloseButton(^result, _id, ^_pos)
+    __c__CloseButton(^result, _id, ^*_pos)
     return result
 }
 CollapseButton :: (_id: ImGuiID, _pos: &ImVec2, _dock_node: ^ImGuiDockNode) -> bool {
     result : bool = default
-    __c__CollapseButton(^result, _id, ^_pos, _dock_node)
+    __c__CollapseButton(^result, _id, ^*_pos, _dock_node)
     return result
 }
 ArrowButtonEx :: (_str_id: ^char8, _dir: ImGuiDir, _size_arg: ImVec2, _flags: ImGuiButtonFlags) -> bool {
@@ -5476,7 +5476,7 @@ Scrollbar :: (_axis: ImGuiAxis) {
 }
 ScrollbarEx :: (_bb: &ImRect, _id: ImGuiID, _axis: ImGuiAxis, _p_scroll_v: ^f32, _avail_v: f32, _contents_v: f32, _rounding_corners: ImDrawCornerFlags) -> bool {
     result : bool = default
-    __c__ScrollbarEx(^result, ^_bb, _id, _axis, _p_scroll_v, _avail_v, _contents_v, _rounding_corners)
+    __c__ScrollbarEx(^result, ^*_bb, _id, _axis, _p_scroll_v, _avail_v, _contents_v, _rounding_corners)
     return result
 }
 GetWindowScrollbarID :: (_window: ^ImGuiWindow, _axis: ImGuiAxis) -> ImGuiID {
@@ -5494,7 +5494,7 @@ SeparatorEx :: (_flags: ImGuiSeparatorFlags) {
 }
 ButtonBehavior :: (_bb: &ImRect, _id: ImGuiID, _out_hovered: ^bool, _out_held: ^bool, _flags: ImGuiButtonFlags = 0) -> bool {
     result : bool = default
-    __c__ButtonBehavior(^result, ^_bb, _id, _out_hovered, _out_held, _flags)
+    __c__ButtonBehavior(^result, ^*_bb, _id, _out_hovered, _out_held, _flags)
     return result
 }
 DragBehavior :: (_id: ImGuiID, _data_type: ImGuiDataType, _p_v: ^void, _v_speed: f32, _p_min: ^void, _p_max: ^void, _format: ^char8, _power: f32, _flags: ImGuiDragFlags) -> bool {
@@ -5504,12 +5504,12 @@ DragBehavior :: (_id: ImGuiID, _data_type: ImGuiDataType, _p_v: ^void, _v_speed:
 }
 SliderBehavior :: (_bb: &ImRect, _id: ImGuiID, _data_type: ImGuiDataType, _p_v: ^void, _p_min: ^void, _p_max: ^void, _format: ^char8, _power: f32, _flags: ImGuiSliderFlags, _out_grab_bb: ^ImRect) -> bool {
     result : bool = default
-    __c__SliderBehavior(^result, ^_bb, _id, _data_type, _p_v, _p_min, _p_max, _format, _power, _flags, _out_grab_bb)
+    __c__SliderBehavior(^result, ^*_bb, _id, _data_type, _p_v, _p_min, _p_max, _format, _power, _flags, _out_grab_bb)
     return result
 }
 SplitterBehavior :: (_bb: &ImRect, _id: ImGuiID, _axis: ImGuiAxis, _size1: ^f32, _size2: ^f32, _min_size1: f32, _min_size2: f32, _hover_extend: f32 = 0.0f, _hover_visibility_delay: f32 = 0.0f) -> bool {
     result : bool = default
-    __c__SplitterBehavior(^result, ^_bb, _id, _axis, _size1, _size2, _min_size1, _min_size2, _hover_extend, _hover_visibility_delay)
+    __c__SplitterBehavior(^result, ^*_bb, _id, _axis, _size1, _size2, _min_size1, _min_size2, _hover_extend, _hover_visibility_delay)
     return result
 }
 TreeNodeBehavior :: (_id: ImGuiID, _flags: ImGuiTreeNodeFlags, _label: ^char8, _label_end: ^char8 = null) -> bool {
@@ -5545,12 +5545,12 @@ DataTypeApplyOpFromText :: (_buf: ^char8, _initial_value_buf: ^char8, _data_type
 }
 InputTextEx :: (_label: ^char8, _hint: ^char8, _buf: ^char8, _buf_size: i32, _size_arg: &ImVec2, _flags: ImGuiInputTextFlags, _callback: ImGuiInputTextCallback = null, _user_data: ^void = null) -> bool {
     result : bool = default
-    __c__InputTextEx(^result, _label, _hint, _buf, _buf_size, ^_size_arg, _flags, _callback, _user_data)
+    __c__InputTextEx(^result, _label, _hint, _buf, _buf_size, ^*_size_arg, _flags, _callback, _user_data)
     return result
 }
 TempInputTextScalar :: (_bb: &ImRect, _id: ImGuiID, _label: ^char8, _data_type: ImGuiDataType, _p_data: ^void, _format: ^char8) -> bool {
     result : bool = default
-    __c__TempInputTextScalar(^result, ^_bb, _id, _label, _data_type, _p_data, _format)
+    __c__TempInputTextScalar(^result, ^*_bb, _id, _label, _data_type, _p_data, _format)
     return result
 }
 ColorTooltip :: (_text: ^char8, _col: ^f32, _flags: ImGuiColorEditFlags) {
@@ -5569,7 +5569,7 @@ ShadeVertsLinearColorGradientKeepAlpha :: (_draw_list: ^ImDrawList, _vert_start_
     __c__ShadeVertsLinearColorGradientKeepAlpha(_draw_list, _vert_start_idx, _vert_end_idx, ^_gradient_p0, ^_gradient_p1, _col0, _col1)
 }
 ShadeVertsLinearUV :: (_draw_list: ^ImDrawList, _vert_start_idx: i32, _vert_end_idx: i32, _a: &ImVec2, _b: &ImVec2, _uv_a: &ImVec2, _uv_b: &ImVec2, _clamp: bool) {
-    __c__ShadeVertsLinearUV(_draw_list, _vert_start_idx, _vert_end_idx, ^_a, ^_b, ^_uv_a, ^_uv_b, _clamp)
+    __c__ShadeVertsLinearUV(_draw_list, _vert_start_idx, _vert_end_idx, ^*_a, ^*_b, ^*_uv_a, ^*_uv_b, _clamp)
 }
 ImFontAtlasBuildWithStbTruetype :: (_atlas: ^ImFontAtlas) -> bool {
     result : bool = default

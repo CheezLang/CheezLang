@@ -221,7 +221,7 @@ Main :: () {
             
             for component in &clear_color {
                 ImGui.PushIDInt(i32(it_index))
-                ImGui.InputFloat("##", ^component)
+                ImGui.InputFloat("##", ^*component)
                 ImGui.PopID()
             }
 
@@ -229,7 +229,7 @@ Main :: () {
             ImGui.InputText("String to add", buff.data, cast buff.length)
             if ImGui.SmallButton("Add String") {
                 strings.add(String.from_cstring(buff.data))
-                buff[0] = char8(0)
+                *buff[0] = char8(0)
             }
             ImGui.Separator()
 
@@ -296,7 +296,7 @@ create_dock_space :: () {
     if opt_fullscreen then ImGui.PopStyleVar(2)
 
     // DockSpace
-    io := &ImGui.GetIO()
+    io := ImGui.GetIO()
     if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.DockingEnable)) != 0 {
         dockspace_id := ImGui.GetID("MyDockSpace")
         size := ImGui.ImVec2(0.0f, 0.0f)
@@ -438,7 +438,7 @@ init_imgui :: (window: ^GLFWwindow) -> bool {
         return false
     }
 
-    imgui_io := &ImGui.GetIO()
+    imgui_io := ImGui.GetIO()
     imgui_io.ConfigFlags = @bin_or(
         imgui_io.ConfigFlags,
         i32(ImGui.ImGuiConfigFlags_.DockingEnable),
@@ -447,7 +447,7 @@ init_imgui :: (window: ^GLFWwindow) -> bool {
     ImGui.StyleColorsDark(null)
 
     // change corners so they are right angles instead of rounded
-    style := &ImGui.GetStyle()	
+    style := ImGui.GetStyle()	
     style.WindowRounding = 0.0	
 
     //

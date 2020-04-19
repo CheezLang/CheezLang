@@ -39,7 +39,7 @@ get_ref :: (a: &Option[int]) -> &Option[int] {
 inc1 :: (a: &Option[int]) {
     match get_ref(a) {
         Some($v) -> {
-            v += 1
+            *v += 1
         }
     }
 
@@ -47,7 +47,7 @@ inc1 :: (a: &Option[int]) {
 
 inc2 :: (a: &Option[int]) {
     a_ref := get_ref(a)
-    match *^a_ref {
+    match *a_ref {
         Some($v) -> {
             v += 2
         }
@@ -57,7 +57,7 @@ inc2 :: (a: &Option[int]) {
 inc3 :: (a: Option[int]) {
     match &a {
         Some($v) -> {
-            v += 4
+            *v += 4
         }
     }
 }
@@ -66,14 +66,6 @@ inc4 :: (a: Option[int]) {
     match Option[int].Some(1) {
         Some($v) -> {
             v += 8
-        }
-    }
-}
-
-inc5 :: (a: Option[int]) {
-    match Option[int].Some(1) {
-        Some($v) -> {
-            v += 16
         }
     }
 }

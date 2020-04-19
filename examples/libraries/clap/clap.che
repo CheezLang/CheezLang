@@ -54,7 +54,7 @@ impl Clap {
             match state, c {
                 (Escaped, $c) -> {
                     state = Quoted
-                    current += c
+                    &current += c
                 }
 
                 (Unquoted, $c) if char.is_whitespace(c) -> {
@@ -63,7 +63,7 @@ impl Clap {
                     state = Whitespace
                 }
                 (Unquoted, $c) -> {
-                    current += c
+                    &current += c
                 }
 
                 (Whitespace, '"') -> {
@@ -73,7 +73,7 @@ impl Clap {
                     loc.end = loc.start
                 }
                 (Whitespace, $c) if !char.is_whitespace(c) -> {
-                    current += c
+                    &current += c
                     state = Unquoted
 
                     loc.start = it_index
@@ -92,7 +92,7 @@ impl Clap {
                 }
 
                 (Quoted, $c) -> {
-                    current += c
+                    &current += c
                 }
             }
 
@@ -193,7 +193,7 @@ get_cmd_args :: () -> Array[String] {
 
 get_help_message :: (type_info: ^TypeInfo) -> String {
     result := String.empty()
-    result += "Usage:`n"
+    &result += "Usage:`n"
 
     get_help_message_helper(type_info, &result, indent_size)
 
@@ -237,8 +237,8 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
             true
         }
 
-        TypeInfoEnum($info)   -> parse_arguments_enum(^info, args, result)
-        TypeInfoStruct($info) -> parse_arguments_struct(^info, args, result)
+        TypeInfoEnum($info)   -> parse_arguments_enum(^*info, args, result)
+        TypeInfoStruct($info) -> parse_arguments_struct(^*info, args, result)
         TypeInfoInt(_)    -> {
             if !require_arg(*args) { return false }
             *cast(^int) result = fmt.parse_int(args[0].slice())
@@ -267,7 +267,7 @@ parse_arguments_string_array :: (args: &[]String, result: ^void) -> bool {
     *array = Array[String].create()
 
     while args.length > 0 {
-        arg := &args[0]
+        arg := args[0]
         @assert(arg.length > 0)
 
         if arg[0] == '-' {
@@ -295,7 +295,7 @@ parse_arguments_enum :: (type_info: ^TypeInfoEnum, args: &[]String, result: ^voi
         return false
     }
 
-    command := &args[0]
+    command := args[0]
     *args = args[1..]
 
     for(by_ref=true) mem in type_info.members {
@@ -341,13 +341,13 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
             continue
         }
 
-        members.add((mem_name, ^m, false))
+        members.add((mem_name, ^*m, false))
     }
 
     get_member :: (arr: &@typeof(members), name: string) -> ^MemberInfo {
-        for(by_ref=true) arr.slice() {
+        for arr {
             if streq(it.name, name) {
-                return ^it
+                return ^*it
             }
         }
         return null
@@ -355,7 +355,7 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
 
     // parse arguments
     while args.length > 0 {
-        arg := &args[0]
+        arg := args[0]
         @assert(arg.length > 0)
 
         *args = args[1..]
@@ -413,8 +413,8 @@ get_help_message_helper :: (type_info: ^TypeInfo, result: &String, indent: int) 
             result += "Array[String]"
         }
 
-        TypeInfoStruct($ti) -> get_help_message_struct(^ti, result, indent)
-        TypeInfoEnum($ti) -> get_help_message_enum(^ti, result, indent)
+        TypeInfoStruct($ti) -> get_help_message_struct(^*ti, result, indent)
+        TypeInfoEnum($ti) -> get_help_message_enum(^*ti, result, indent)
     }
 }
 
@@ -455,7 +455,7 @@ get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent:
                     result += "`n"
                     indent_string(result, description_indent + indent)
                 }
-                result += line
+                result += *line
             }
         }
 
@@ -510,7 +510,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
                     result += "`n"
                     indent_string(result, description_indent + indent)
                 }
-                result += line
+                result += *line
             }
         }
 
@@ -590,7 +590,7 @@ to_ascii_strings :: (argv: ^^u16, argc: int) -> Array[String] {
     for i in 0..argc {
         str := String.empty()
         while k := 0, argv[i][k] != 0, k += 1 {
-            str += char(argv[i][k])
+            &str += char(argv[i][k])
         }
 
         array.add(str)

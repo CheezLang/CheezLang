@@ -237,7 +237,7 @@ impl ShmupEngine {
         renderer     = Renderer.create(viewport_size_max)
 
         // setup editors
-        hierarchy.engine = ^self
+        hierarchy.engine = self
         console = Rc[Console].new(Console.new(cast self.on_command))
         
         {
@@ -250,9 +250,9 @@ impl ShmupEngine {
     }
 
     initialize_viewport :: (&Self) -> bool {
-        editor_windows.add(WindowBase.new(EditorWindow, ^self))
-        editor_windows.add(WindowBase.new(GameWindow, ^self))
-        editor_windows.add(WindowBase.new(GameAndEditorWindow, ^self))
+        editor_windows.add(WindowBase.new(EditorWindow, self))
+        editor_windows.add(WindowBase.new(GameWindow, self))
+        editor_windows.add(WindowBase.new(GameAndEditorWindow, self))
         editor_windows[2].get().base().enabled = false
         active_editor_window = editor_windows[0].clone()
 
@@ -757,7 +757,7 @@ impl ShmupEngine {
     }
 
     set_editor_background_color :: (&Self, col: vec3) {
-        ImGui.GetStyle().Colors[int(ImGui.ImGuiCol_.WindowBg)] = ImGui.ImVec4(col.x, col.y, col.z, 1)
+        *ImGui.GetStyle().Colors[int(ImGui.ImGuiCol_.WindowBg)] = ImGui.ImVec4(col.x, col.y, col.z, 1)
     }
 
     current_mode_data :: (&Self) -> ^EngineModeData {
@@ -806,7 +806,7 @@ init_imgui :: (window: ^GLFWwindow) -> bool {
         return false
     }
 
-    imgui_io := &ImGui.GetIO()
+    imgui_io := ImGui.GetIO()
     imgui_io.ConfigWindowsMoveFromTitleBarOnly = true
     imgui_io.ConfigFlags = @bin_or(
         imgui_io.ConfigFlags,
@@ -816,7 +816,7 @@ init_imgui :: (window: ^GLFWwindow) -> bool {
     ImGui.StyleColorsDark(null)
 
     // change corners so they are right angles instead of rounded
-    style := &ImGui.GetStyle()
+    style := ImGui.GetStyle()
     style.WindowRounding = 0.0
 
     //
@@ -886,7 +886,7 @@ create_dock_space :: () {
     if opt_fullscreen then ImGui.PopStyleVar(2)
 
     // DockSpace
-    io := &ImGui.GetIO()
+    io := ImGui.GetIO()
     if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.DockingEnable)) != 0 {
         dockspace_id := ImGui.GetID("MyDockSpace")
         size := ImGui.ImVec2(0.0f, 0.0f)

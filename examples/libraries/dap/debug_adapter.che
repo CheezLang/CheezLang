@@ -177,7 +177,7 @@ impl DebugAdapter {
             events              = RingQueue[DAEvent].new()
         ))
 
-        adapter.get().command_handler.get().adapter = ^adapter.get()
+        adapter.get().command_handler.get().adapter = ^*adapter.get()
         return adapter
     }
 
@@ -373,7 +373,7 @@ DapReqLaunch :: struct {
 
 impl Into[DapReqLaunch] for JsonValue {
     into :: (json: &Self) -> DapReqLaunch {
-        map := &json.as_map()
+        map := json.as_map()
         return DapReqLaunch(
             program = match map.get("program") {
                 Some($prog) -> prog.to_string()
@@ -416,7 +416,7 @@ impl Into[JsonValue] for DapSource {
 
 impl Into[DapSource] for JsonValue {
     into :: (&Self) -> DapSource {
-        map := &self.as_map()
+        map := self.as_map()
         name := map.at("name").to_string()
         path := map.at("path").to_string()
         return DapSource(name, path)
@@ -430,7 +430,7 @@ DapSetBreakpoints :: struct {
 
 impl Into[DapSetBreakpoints] for JsonValue {
     into :: (&Self) -> DapSetBreakpoints {
-        map := &self.as_map()
+        map := self.as_map()
         breakpoints : Array[DapBreakpoint] = match map.get("breakpoints") {
             Some($arr) -> arr.as_array().into()
             None -> Array[DapBreakpoint].create()
@@ -474,7 +474,7 @@ DapReqVariables :: struct {
 
 impl Into[DapReqVariables] for JsonValue {
     into :: (&Self) -> DapReqVariables {
-        map := &self.as_map()
+        map := self.as_map()
         variablesReference := map.at("variablesReference").to_number()
         start := map.get("start").map_ref((v: &JsonValue) => int(v.to_number()))
         count := map.get("count").map_ref((v: &JsonValue) => int(v.to_number()))
@@ -492,7 +492,7 @@ DapReqScopes :: struct {
 
 impl Into[DapReqScopes] for JsonValue {
     into :: (&Self) -> DapReqScopes {
-        map := &self.as_map()
+        map := self.as_map()
         frameId := map.at("frameId").to_number()
         return DapReqScopes(cast(int) frameId)
     }

@@ -364,7 +364,7 @@ impl Hittable for FlipNormals {
     hit :: (&Self, r: &Ray, t_min: real, t_max: real, random: &Random) -> Option[HitRecord] {
         return match obj.hit(r, t_min, t_max, random) {
             Some($hit) -> {
-                hit.n *= real(-1.0)
+                &hit.n *= real(-1.0)
                 Some(hit)
             }
 

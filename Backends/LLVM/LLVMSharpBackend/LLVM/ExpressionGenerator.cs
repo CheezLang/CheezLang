@@ -1045,6 +1045,36 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         result = builder.CreateInsertValue(result, typeInfo, 1, "");
                         return result;
                     }
+
+                case (PointerType t, ReferenceType f)
+                    when CheezType.TypesMatch(t.TargetType, f.TargetType):
+                    if (t.TargetType == CheezType.Any)
+                    {
+                        var anyPtr = GenerateExpression(cast.SubExpression, true);
+                        var valuePtr = GetAnyPtr(anyPtr);
+                        var typeInfoPtr = GetAnyTypeInfo(anyPtr);
+
+                        var result = LLVM.GetUndef(toLLVM);
+                        result = builder.CreateInsertValue(result, valuePtr, 0, "");
+                        result = builder.CreateInsertValue(result, typeInfoPtr, 1, "");
+                        return result;
+                    }
+                    else if (t.TargetType is TraitType)
+                    {
+                        var traitPtr = GenerateExpression(cast.SubExpression, true);
+                        var valuePtr = GetTraitPtr(traitPtr);
+                        var vtablePtr = GetTraitVtable(traitPtr);
+
+                        var result = LLVM.GetUndef(toLLVM);
+                        result = builder.CreateInsertValue(result, valuePtr, 0, "");
+                        result = builder.CreateInsertValue(result, vtablePtr, 1, "");
+                        return result;
+                    }
+                    else
+                    {
+                        var ptr = GenerateExpression(cast.SubExpression, true);
+                        return ptr;
+                    }
             }
 
             if (to is TraitType trait2)

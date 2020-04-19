@@ -29,8 +29,8 @@ create_directory :: (path: string) -> Result[(), FsError] {
 
     // prepend \\?\ to path to remove path length limit
     path_long := String.empty()
-    path_long += "\\?\"
-    path_long += full_path
+    &path_long += "\\?\"
+    &path_long += &full_path
 
     // convert to utf16
     full_path_utf16 := try_with(path_long.slice().to_utf16(), {return Err(FsError.Unknown)})

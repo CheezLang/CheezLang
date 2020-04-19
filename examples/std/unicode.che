@@ -21,25 +21,25 @@ Utf8 :: struct{}
 impl Utf8 {
     encode :: (ch: char) -> [4]u8, i32 {
         rune := u32(ch)
-        ext := &utf8_formats[0]
+        ext := utf8_formats[0]
 
-        if format := &utf8_formats[1], rune <= format.end {
+        if format := utf8_formats[1], rune <= format.end {
             return [u8(rune), 0, 0, 0], 1
-        } else if format := &utf8_formats[2], rune <= format.end {
+        } else if format := utf8_formats[2], rune <= format.end {
             return [
                 rune | @bin_lsr(_, 6)  | u8() | @bin_and(format.mask) | @bin_or(format.lead)
                 rune | @bin_lsr(_, 0)  | u8() | @bin_and(ext.mask)    | @bin_or(ext.lead)
                 0
                 0
             ], 2
-        } else if format := &utf8_formats[3], rune <= format.end {
+        } else if format := utf8_formats[3], rune <= format.end {
             return [
                 rune | @bin_lsr(_, 12) | u8() | @bin_and(format.mask) | @bin_or(format.lead)
                 rune | @bin_lsr(_, 6)  | u8() | @bin_and(ext.mask)    | @bin_or(ext.lead)
                 rune | @bin_lsr(_, 0)  | u8() | @bin_and(ext.mask)    | @bin_or(ext.lead)
                 0
             ], 3
-        } else if format := &utf8_formats[4], rune <= format.end {
+        } else if format := utf8_formats[4], rune <= format.end {
             return [
                 rune | @bin_lsr(_, 18) | u8() | @bin_and(format.mask) | @bin_or(format.lead)
                 rune | @bin_lsr(_, 12) | u8() | @bin_and(ext.mask)    | @bin_or(ext.lead)
@@ -51,7 +51,7 @@ impl Utf8 {
     }
 
     decode :: (bytes: []u8) -> char, i32 {
-        ext := &utf8_formats[0]
+        ext := utf8_formats[0]
 
         mask :: (format: &Utf8Format, b: u8) -> u32 {
             return b | @bin_and(format.mask) | u32()
@@ -65,18 +65,18 @@ impl Utf8 {
             code_point = cast b0
             byte_count = 1
         } else if @bin_lsr(b0, 5) == 0b110 {
-            format := &utf8_formats[2]
+            format := utf8_formats[2]
             code_point = *bytes[0] | mask(format) |
                         @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[1]))
             byte_count = 2
         } else if @bin_lsr(b0, 4) == 0b1110 {
-            format := &utf8_formats[3]
+            format := utf8_formats[3]
             code_point = *bytes[0] | mask(format) |
                         @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[1])) |
                         @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[2]))
             byte_count = 3
         } else if @bin_lsr(b0, 3) == 0b11110 {
-            format := &utf8_formats[4]
+            format := utf8_formats[4]
             code_point = *bytes[0] | @bin_and(format.mask) | u32() |
                         @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[1])) |
                         @bin_lsl(_, 6) | @bin_or(mask(ext, *bytes[2])) |

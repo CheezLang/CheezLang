@@ -75,11 +75,11 @@ impl Hierarchy {
 
             for v in layer.uiae {
                 str := fmt.format("u{}", [it_index])
-                ImGui.DragFloat(str.as_cstring(), ^layer.uiae[it_index], 0.01f)
+                ImGui.DragFloat(str.as_cstring(), layer.uiae[it_index], 0.01f)
             }
 
             for l in &data.layer_stack {
-                if l == ^layer then break
+                if *l == ^*layer then break
                 ImGui.PushIDPtr(*l)
                 defer ImGui.PopID()
 

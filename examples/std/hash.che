@@ -33,6 +33,6 @@ impl Hashable for string {
 
 impl Hashable for int {
     hash :: (&Self) -> uint {
-        return cast(uint) (self * 123)
+        return cast(uint) (*self * 123)
     }
 }

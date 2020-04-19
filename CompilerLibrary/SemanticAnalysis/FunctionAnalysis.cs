@@ -526,6 +526,16 @@ namespace Cheez
                 var ops = ass.Scope.GetNaryOperators("set[]", arr.SubExpression.Type, arr.Arguments[0].Type, value.Type);
                 if (ops.Count == 0)
                 {
+                    var type = arr.SubExpression.Type;
+                    if (type is ReferenceType r)
+                        type = r.TargetType;
+                    else
+                        type = ReferenceType.GetRefType(type);
+                    ops = ass.Scope.GetNaryOperators("set[]", type, arr.Arguments[0].Type, value.Type);
+                }
+
+                if (ops.Count == 0)
+                {
                     if (!pattern.TypeInferred)
                     {
                         pattern.SetFlag(ExprFlags.AssignmentTarget, false);
@@ -563,9 +573,20 @@ namespace Cheez
                 GetImplsForType(valType);
 
                 var ops = ass.Scope.GetBinaryOperators(assOp, pattern.Type, valType);
+                if (ops.Count == 0)
+                {
+                    var type = pattern.Type;
+                    if (type is ReferenceType r)
+                        type = r.TargetType;
+                    else
+                        type = ReferenceType.GetRefType(type);
+                    ops = ass.Scope.GetBinaryOperators(assOp, type, valType);
+                }
+
                 if (ops.Count == 1)
                 {
                     ass.OnlyGenerateValue = true;
+                    pattern = HandleReference(pattern, ops[0].LhsType, null);
                     var opCall = new AstBinaryExpr(assOp, pattern, value, value.Location);
                     opCall.Replace(value);
                     return InferType(opCall, null);

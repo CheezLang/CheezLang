@@ -214,14 +214,14 @@ parse_args_enum :: (ti: ^TypeInfoEnum, args: []ClapToken, loc: Location) -> Opti
     result := mem.alloc(EnumExpr)
     *result = EnumExpr(ti, loc)
 
-    current := &args[0]
+    current := args[0]
     result.loc = current.loc
     args = args[1..args.length]
 
     for(by_ref=true) mem in ti.members {
         display_name := get_display_name_for_member(&*mem)
         if streq(display_name, current.raw.slice()) {
-            result.mem = Some(^mem)
+            result.mem = Some(mem)
             if mem.typ != null {
                 result.sub, args = parse_args_help(mem.typ, args, Location(current.loc.end, current.loc.end))
                 //result.loc = Location(result.loc.start, result.sub.loc.end)
@@ -245,7 +245,7 @@ parse_args_struct :: (ti: ^TypeInfoStruct, args: []ClapToken, loc: Location) -> 
     *result = StructExpr(ti, loc)
 
     while args.length > 0 {
-        current := &args[0]
+        current := args[0]
         result.loc.start = if result.loc.start >= 0 then result.loc.start else current.loc.start
         args = args[1..args.length]
 
@@ -261,7 +261,7 @@ parse_args_struct :: (ti: ^TypeInfoStruct, args: []ClapToken, loc: Location) -> 
             for(by_ref=true) mem in ti.members {
                 display_name := get_display_name_for_member(mem)
                 if streq(display_name, current_raw) {
-                    mem_info = ^mem
+                    mem_info = mem
                     sub, args = parse_args_help(mem.typ, args, Location(current.loc.end, current.loc.end))
                     // match &sub {
                     //     Some($sub) -> {
@@ -288,7 +288,7 @@ parse_args_struct :: (ti: ^TypeInfoStruct, args: []ClapToken, loc: Location) -> 
 
 parse_args_help :: (ti: ^TypeInfo, args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken {
     return match &*ti {
-        TypeInfoEnum($info)    -> parse_args_enum(^info, args, loc)
+        TypeInfoEnum($info)    -> parse_args_enum(info, args, loc)
         TypeInfoStruct($info)  -> {
             custom_parser := TypeInfo.get_trait_impl(info, CustomParser)
             if custom_parser != null {
@@ -296,7 +296,7 @@ parse_args_help :: (ti: ^TypeInfo, args: []ClapToken, loc: Location) -> Option[B
                 @assert(func != null)
                 return func(args, loc)
             } else {
-                parse_args_struct(^info, args, loc)
+                parse_args_struct(info, args, loc)
             }
         }
         _ -> if args.length == 0 {
@@ -384,13 +384,13 @@ get_value_help :: (result: ^void, expr: &Expr) {
                     Some($sub)  -> get_value_help(util.pointer_add(result, offset), sub.get())
                     None        -> @assert(false)
                 }
-                members_set[mem.mem.index] = true
+                *members_set[mem.mem.index] = true
             }
 
             for set in members_set {
                 if set then continue
                 type_info := cast(^TypeInfoStruct) v.typ
-                mem := &type_info.members[it_index]
+                mem := type_info.members[it_index]
                 @assert(mem.initializer != null)
                 member_ptr := util.pointer_add(result, mem.offset)
                 mem.initializer(member_ptr)
@@ -441,7 +441,7 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
 
                 None -> {
                     match &v.sub {
-                        Some($sub) -> match &sub.get() {
+                        Some($sub) -> match sub.get() {
                             ValueExpr($raw) -> Err(ClapError(raw.loc, fmt.format("Unknown argument {}", [raw.raw.slice()])))
                             _               -> @assert(false)
                         }
@@ -484,14 +484,14 @@ validate :: (expr: &Expr) -> Result[(), ClapError] {
                 if members_set[mem.mem.index] {
                     return Err(ClapError(mem.loc, fmt.format("Duplicate argument '{}'", [get_display_name_for_member(&*mem.mem)])))
                 }
-                members_set[mem.mem.index] = true
+                *members_set[mem.mem.index] = true
             }
 
             for set in members_set {
                 if set then continue
 
                 type_info := cast(^TypeInfoStruct) v.typ
-                mem := &type_info.members[it_index]
+                mem := type_info.members[it_index]
                 if mem.initializer != null then continue
 
                 return Err(ClapError(v.loc, fmt.format("Missing argument '{}'", [get_display_name_for_member(mem)])))
@@ -585,7 +585,7 @@ get_auto_completions_at_struct :: (result: &Array[String], expr: &StructExpr, po
                 match &sub.sub {
                     Some($sub) -> {
                         // sub must be a ValueExpr since mem is null
-                        match &sub.get() {
+                        match sub.get() {
                             ValueExpr($val) -> {
                                 // member name is not fully specified, so if its at the end
                                 // of the name, complete it, otherwise don't
@@ -638,7 +638,7 @@ get_auto_completions_at_enum :: (result: &Array[String], expr: &EnumExpr, pos: i
             None -> {
                 // partial command
                 @assert(expr.sub == Option[Box[Expr]].Some)
-                match &expr.sub.Some.get() {
+                match expr.sub.Some.get() {
                     ValueExpr($val) -> {
                         offset := pos - val.loc.start
                         raw := val.raw.slice()
@@ -702,7 +702,7 @@ autocomplete_type_members :: (ti: ^TypeInfo, prefix: string, result: &Array[Stri
                 for(by_ref=true) mem in info.members {
                     result.add(fmt.format("-{}", [mem.name]))
                 }
-            } else if prefix[0] == u8('-') {
+            } else if *prefix[0] == u8('-') {
                 prefix := prefix.sub_string(1)
                 for(by_ref=true) mem in info.members {
                     is_prefix := mem.name.starts_with(prefix)

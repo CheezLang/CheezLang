@@ -160,7 +160,7 @@ Equatable :: trait(T: type) {
 
 impl Equatable[int] for int {
     equal :: (&Self, other: &int) -> bool {
-        return self == other
+        return *self == *other
     }
 }
 
@@ -611,7 +611,7 @@ impl TypeInfo {
         ti := @type_info(T)
         for(by_ref=true) self.traits {
             if it.trait_type == ti {
-                return ^it
+                return ^*it
             }
         }
         return null
@@ -645,7 +645,7 @@ impl TypeInfoStruct {
     get_member :: (&Self, name: string) -> ^TypeInfoStructMember {
         for(by_ref=true) members {
             if strings_equal(name, it.name) {
-                return ^it
+                return ^*it
             }
         }
         return null
@@ -677,7 +677,7 @@ impl TypeInfoStructMember {
     get_attribute :: (&Self, name: string) -> ^TypeInfoAttribute {
         for(by_ref=true) att in attributes {
             if strings_equal(att.name, name) {
-                return ^att
+                return ^*att
             }
         }
 
@@ -699,7 +699,7 @@ impl TypeInfoEnumMember {
     get_attribute :: (&Self, name: string) -> ^TypeInfoAttribute {
         for(by_ref=true) att in attributes {
             if strings_equal(att.name, name) {
-                return ^att
+                return ^*att
             }
         }
 
@@ -721,7 +721,7 @@ impl TypeInfoTrait {
     get_function :: (&Self, name: string) -> ^TypeInfoTraitFunction {
         for(by_ref=true) functions {
             if strings_equal(name, it.name) {
-                return ^it
+                return ^*it
             }
         }
         return null
@@ -740,7 +740,7 @@ strings_equal :: (a: string, b: string) -> bool #operator("==") {
     }
 
     for 0..a_bytes.length {
-        if a_bytes[it] != b_bytes[it] {
+        if *a_bytes[it] != *b_bytes[it] {
             return false
         }
     }
