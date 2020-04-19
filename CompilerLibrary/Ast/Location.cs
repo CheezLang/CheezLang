@@ -72,5 +72,10 @@ namespace Cheez.Ast
         {
             return new Location(expressions.First().Beginning, expressions.Last().End);
         }
+
+        public override string ToString()
+        {
+            return Beginning.ToString();
+        }
     }
 }

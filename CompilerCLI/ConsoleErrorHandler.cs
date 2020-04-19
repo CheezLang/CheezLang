@@ -123,6 +123,7 @@ namespace CheezCLI
             int lineStart = GetLineStartIndex(text, index);
             int lineEnd = GetLineEndIndex(text, end.end);
             int linesSpread = CountLines(text, index, end.end);
+            linesSpread = Math.Min(linesSpread, 2);
 
             var errorLineBackgroundColor = ConsoleColor.Black;
             int lineNumberWidth = (end.line + linesAfter).ToString(CultureInfo.InvariantCulture).Length;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -816,7 +816,7 @@ namespace Cheez
                 if (ret.ReturnValue.Type.IsErrorType)
                     return ret;
 
-                ret.ReturnValue = CheckType(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value ({ret.ReturnValue.Type}) does not match the return type of the function ({currentFunction.FunctionType.ReturnType})");
+                ret.ReturnValue = CheckType(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value '{ret.ReturnValue.Type}' does not match the return type of the function '{currentFunction.FunctionType.ReturnType}'");
             }
             return ret;
         }
