@@ -838,6 +838,10 @@ namespace Cheez
                     return ret;
 
                 ret.ReturnValue = CheckType(ret.ReturnValue, currentFunction.FunctionType.ReturnType, $"The type of the return value '{ret.ReturnValue.Type}' does not match the return type of the function '{currentFunction.FunctionType.ReturnType}'");
+
+                if (ret.ReturnValue.Type is VoidType) {
+                    ReportError(ret, $"Can't return void");
+                }
             }
             return ret;
         }
