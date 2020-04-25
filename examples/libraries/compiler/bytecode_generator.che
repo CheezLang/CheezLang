@@ -86,7 +86,7 @@ impl CodeGenerator for ByteCodeGenerator {
         cbc_func.parameter_slots = -slot_index
 
         generate_expression(&*func.body)
-        builder.set_location(func.body.location)
+        builder.set_location(func.body.location.end())
         builder.build_return_void()
 
         builder.end_function()
@@ -517,6 +517,9 @@ impl CodeGenerator for ByteCodeGenerator {
                 builder.build_pop(slots_for_size(child.typ.size))
             }
         }
+
+        builder.set_location(block.location.end())
+        builder.build_noop()
     }
 
     generate_cast :: (&Self, cst: &AstCast) {
@@ -807,7 +810,7 @@ impl InstructionBuilder {
     build_const_int :: (&Self, value: int) {
         add_debug_info_line()
         function.instructions.add(cast Instruction.ConstInt)
-        function.instructions.add(*cast(^u64)^value)
+        function.instructions.add(cast value)
     }
 
     build_const_float :: (&Self, value: f64) {

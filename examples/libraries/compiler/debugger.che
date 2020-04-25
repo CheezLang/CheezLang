@@ -184,7 +184,7 @@ impl Debugger {
 
 impl CodeRunner for Debugger {
     run :: (&Self, interp: &Interpreter) -> InterpStepResult {
-        self.current_interp = ^*interp
+        self.current_interp = interp
 
         self.store_old_state()
 
@@ -278,6 +278,38 @@ impl CodeRunner for Debugger {
     }
 }
 
+g_debug_adapter : ^CheezDebugAdapter = null
+
+print_string :: (interp: ^Interpreter) {
+    frame := interp.top_frame()
+    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, string)]), "console")
+}
+
+print_int :: (interp: ^Interpreter) {
+    frame := interp.top_frame()
+    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, int)]), "console")
+}
+
+print_float :: (interp: ^Interpreter) {
+    frame := interp.top_frame()
+    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, f64)]), "console")
+}
+
+print_bool :: (interp: ^Interpreter) {
+    frame := interp.top_frame()
+    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, bool)]), "console")
+}
+
+print_String :: (interp: ^Interpreter) {
+    frame := interp.top_frame()
+    str := frame.get_arg(0, ^String)
+    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [str.slice()]), "console")
+}
+
+debug_break :: (interp: ^Interpreter) {
+    g_debug_adapter.debugger.get().pause()
+}
+
 CheezDebugAdapter :: struct CommandHandler {
     debugger        : Rc[Debugger]
     variable_refs   : Array[Rc[VariableRef]]
@@ -297,12 +329,12 @@ impl CheezDebugAdapter {
             debugger = Debugger.new()
             variable_refs   = Array[Rc[VariableRef]].create()
         )
+        g_debug_adapter = command_handler
 
         return Rc[CommandHandler].from_pointer(command_handler, owned = true)
     }
 
     clear_variable_refs :: (&Self) {
-        g_logger.log("clear_variable_refs")
         variable_refs.clear()
     }
 
@@ -331,36 +363,6 @@ impl CheezDebugAdapter {
         return result
     }
 
-    print_string :: (&Self, interp: ^Interpreter) {
-        frame := interp.top_frame()
-        self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, string)]), "console")
-    }
-
-    print_int :: (&Self, interp: ^Interpreter) {
-        frame := interp.top_frame()
-        self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, int)]), "console")
-    }
-
-    print_float :: (&Self, interp: ^Interpreter) {
-        frame := interp.top_frame()
-        self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, f64)]), "console")
-    }
-
-    print_bool :: (&Self, interp: ^Interpreter) {
-        frame := interp.top_frame()
-        self.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, bool)]), "console")
-    }
-
-    print_String :: (&Self, interp: ^Interpreter) {
-        frame := interp.top_frame()
-        str := frame.get_arg(0, ^String)
-        self.adapter.emit_output_event(fmt.format("{}", [str.slice()]), "console")
-    }
-
-    debug_break :: (&Self, interp: ^Interpreter) {
-        debugger.get().pause()
-    }
-
     on_done :: (&Self) {
         self.adapter.emit_terminated_event()
     }
@@ -371,22 +373,22 @@ impl CheezDebugAdapter {
         // register native functions
         compiler.get().global_scope.define_native_function(
             "print_string",
-            NativeFunctionWrapper.new(cast(NativeFunction) self.print_string, fn(string)))
+            NativeFunctionWrapper.new(cast(NativeFunction) print_string, fn(string)))
         compiler.get().global_scope.define_native_function(
             "print",
-            NativeFunctionWrapper.new(cast(NativeFunction) self.print_String, fn(^String)))
+            NativeFunctionWrapper.new(cast(NativeFunction) print_String, fn(^String)))
         compiler.get().global_scope.define_native_function(
             "print_int",
-            NativeFunctionWrapper.new(cast(NativeFunction) self.print_int, fn(int)))
+            NativeFunctionWrapper.new(cast(NativeFunction) print_int, fn(int)))
         compiler.get().global_scope.define_native_function(
             "print_float",
-            NativeFunctionWrapper.new(cast(NativeFunction) self.print_float, fn(f64)))
+            NativeFunctionWrapper.new(cast(NativeFunction) print_float, fn(f64)))
         compiler.get().global_scope.define_native_function(
             "print_bool",
-            NativeFunctionWrapper.new(cast(NativeFunction) self.print_bool, fn(bool)))
+            NativeFunctionWrapper.new(cast(NativeFunction) print_bool, fn(bool)))
         compiler.get().global_scope.define_native_function(
             "debugbreak",
-            NativeFunctionWrapper.new(cast(NativeFunction) self.debug_break, fn()))
+            NativeFunctionWrapper.new(cast(NativeFunction) debug_break, fn()))
         //
 
         // strings
@@ -572,7 +574,7 @@ impl CommandHandler for CheezDebugAdapter {
 
         variables := Array[DapVariable].create()
 
-        if index < 0 or index > variable_refs.count() {
+        if index <= 0 or index > variable_refs.count() {
             return Err(fmt.format("Failed to get variables, variableReferences out of bounds: {}", [variable_refs.count()]))
         }
 
@@ -732,6 +734,7 @@ impl Variable {
                     fmt.format("{}", [any_value])
                 }
             }
+
             _ -> fmt.format("{:?}", [any_value])
         }
 

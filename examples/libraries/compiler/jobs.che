@@ -445,7 +445,7 @@ impl CompileNode {
 
         original_sub := dot.sub
         dot.sub.scope = dot.scope
-        dot.sub = ^*compile_node(&*dot.sub, ctx)
+        dot.sub = compile_node(&*dot.sub, ctx)
         handle_poison(dot, *dot.sub)
 
         match dot.sub.typ {
@@ -457,11 +457,10 @@ impl CompileNode {
                     sub         = &*dot.sub
                     operator    = .Deref
                 ))
-                dot.sub = ^*compile_node(&*deref, ctx.with_expected(ti.target))
+                dot.sub = compile_node(&*deref, ctx.with_expected(ti.target))
                 handle_poison(dot, *dot.sub)
             }
         }
-        g_logger.log("{}", [dot.sub.typ])
         name := dot.name.name
         match dot.sub.typ {
             TypeInfoArray($ti) -> {
@@ -495,9 +494,9 @@ impl CompileNode {
 
                 // check if member with this name exists
                 member : ^TypeInfoStructMember = null
-                for mem in ti.members {
+                for(by_ref=true) mem in ti.members {
                     if mem.name == name {
-                        member = ^mem
+                        member = mem
                         break
                     }
                 }
@@ -509,7 +508,6 @@ impl CompileNode {
                     return dot
                 }
 
-                g_logger.log("impl_funcs: {}", [ti.impl_funcs.length])
                 func : ^TypeInfoImplFunction = null
                 for(by_ref=true) ti.impl_funcs {
                     if it.name == name {
@@ -519,7 +517,6 @@ impl CompileNode {
                 }
 
                 if func != null {
-                    g_logger.log("native function '{}': {}", [func.typ, *cast(^^int)^func.pointer])
                     match compiler.get_native_function_wrapper(cast func.typ) {
                         Some($wrapper) -> {
                             return compile_node(&*compiler.new_ast(AstUfc(
@@ -1149,7 +1146,6 @@ impl CompileNode {
                 for arg in &node.arguments {
                     param := poly.params[it_index]
 
-                    g_logger.log("{}: {}, {}", [param.name, arg.typ, arg.value])
                     scope.define_value(param.name, arg.typ, arg.value)
                 }
 
@@ -1346,7 +1342,6 @@ impl CompileNode {
             str.struct_type.size = size
             str.struct_type.alignment = alignment
         }
-        g_logger.log("compile struct '{}': 5", [str.name])
 
         str.value = .Type(str.struct_type)
         return str
@@ -1527,8 +1522,10 @@ impl CompileNode {
             }
         }
 
-        dump := pretty_print_typed_ast(call)
-        g_logger.log("dump: {}", [dump])
+        {
+            // dump := pretty_print_typed_ast(call)
+            // g_logger.log("dump: {}", [dump])
+        }
 
         match call.function.value {
             .Type($typ) -> {

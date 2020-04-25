@@ -210,10 +210,10 @@ impl Lexer {
 
     read_token :: (&Self) -> Token {
         token := Token(
-            typ = TokenType.EOF
-            data = TokenData.None
+            typ      = TokenType.EOF
+            data     = TokenData.None
             location = location
-            suffix = None
+            suffix   = None
         )
 
         token.location.byte_length = 0
@@ -317,7 +317,8 @@ impl Lexer {
         }
 
         token.location.byte_length = location.byte_index - token.location.byte_index
-        token.location.end_line = location.line
+        token.location.end_column  = location.column
+        token.location.end_line    = location.line
 
         return token
     }
@@ -761,6 +762,7 @@ Location :: struct #copy {
     byte_length : int    = default
     line        : int    = default
     column      : int    = default
+    end_column  : int    = default
     end_line    : int    = default
 }
 
@@ -772,7 +774,20 @@ impl Location {
             byte_length = end.byte_index + end.byte_length - byte_index
             line        = line
             column      = column
+            end_column  = end.end_column
             end_line    = end.end_line
+        )
+    }
+
+    end :: (Self) -> Location {
+        return Location(
+            file        = file
+            byte_index  = byte_index + byte_length
+            byte_length = 0
+            line        = end_line
+            column      = end_column
+            end_column  = end_column
+            end_line    = end_line
         )
     }
 }

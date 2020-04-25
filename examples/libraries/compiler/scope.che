@@ -145,13 +145,13 @@ impl Scope {
 Symbol :: enum #copy {
     NotFound
     Poison
-    Decl        : ^AstDecl
-    ConstDecl   : ^AstConstDecl
-    Val         : (typ: ^TypeInfo, value: Value)
-    Func        : ^AstFunction
-    NativeFunc  : ^NativeFunctionWrapper
-    NativeFunc2 : NativeFunctionWrapper2
-    StructMember: ^TypeInfoStructMember
+    Decl            : ^AstDecl
+    ConstDecl       : ^AstConstDecl
+    Val             : (typ: ^TypeInfo, value: Value)
+    Func            : ^AstFunction
+    NativeFunc      : ^NativeFunctionWrapper
+    NativeFunc2     : NativeFunctionWrapper2
+    StructMember    : ^TypeInfoStructMember
 }
 
 #file_scope

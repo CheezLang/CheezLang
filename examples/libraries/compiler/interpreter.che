@@ -797,7 +797,7 @@ impl Interpreter {
                         fmt.align(35), frame.dump_stack()
                     ], "stdout")
                 }}
-                wrapper(func, ^*self)
+                wrapper(func, self)
                 if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
                     frame := top_frame()
                     g_logger.log("ret_slots: {}{}{}{}{}{}{}{}{}", [
@@ -834,7 +834,7 @@ impl Interpreter {
                         fmt.align(35), frame.dump_stack()
                     ], "stdout")
                 }}
-                wrapper.function(^*self)
+                wrapper.function(self)
                 if const DEBUG_ENABLED { if DEBUG_INTERPRETER {
                     frame := top_frame()
                     g_logger.log("ret_slots: {}{}{}{}{}{}{}{}{}", [
