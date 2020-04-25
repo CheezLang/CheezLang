@@ -70,6 +70,7 @@ namespace Cheez
             expr.Type = CheezType.Type;
             expr.Value = new TraitType(expr);
             AddTrait(expr);
+            // mTypesRequiredAtRuntimeQueue.Enqueue(expr.TraitType);
             return expr;
         }
 

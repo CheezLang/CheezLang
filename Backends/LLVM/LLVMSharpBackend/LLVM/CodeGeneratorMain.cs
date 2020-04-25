@@ -90,6 +90,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private CheezType sTypeInfoTraitFunction;
         private CheezType sTypeInfoTraitImpl;
         private CheezType sTypeInfoType;
+        private CheezType sTypeInfoCode;
 
         private LLVMTypeRef rttiTypeInfoAttribute;
         private LLVMTypeRef rttiTypeInfoPtr;
@@ -118,7 +119,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMTypeRef rttiTypeInfoTraitFunction;
         private LLVMTypeRef rttiTypeInfoTraitImpl;
         private LLVMTypeRef rttiTypeInfoType;
-
+        private LLVMTypeRef rttiTypeInfoCode;
 
         // context
         private AstFuncExpr currentFunction;

@@ -332,12 +332,6 @@ namespace Cheez
                 expr.Source = InferTypeHelper(expr.Source, r.TargetType, context);
                 expr.Source = CheckType(expr.Source, expr.Target.Type);
 
-                if (!expr.Source.Type.IsErrorType && !expr.Source.GetFlag(ExprFlags.IsLValue))
-                {
-                    ReportError(expr.Source, $"Source reference reassignment must be an lvalue");
-                    return expr;
-                }
-
                 expr.Type = CheezType.Void;
                 return expr;
             }
@@ -2270,7 +2264,15 @@ namespace Cheez
 
                 changes = true;
 
-                mTypesRequiredAtRuntime.Add(type);
+                switch (type) {
+                    case PolyType _:
+                    case AbstractType _:
+                        break;
+
+                    default:
+                        mTypesRequiredAtRuntime.Add(type);
+                        break;
+                }
 
                 var impls = GetImplsForType(type);
                 foreach (var impl in impls)
@@ -2354,7 +2356,11 @@ namespace Cheez
                     case AnyType _:
                     case VoidType _:
                     case CheezTypeType _:
+                    case CodeType _:
                         break;
+                    
+                    case PolyType _:
+                    case AbstractType _:
 
 
                     case ErrorType _:

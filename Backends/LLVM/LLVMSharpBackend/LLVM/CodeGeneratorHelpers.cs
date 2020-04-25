@@ -999,6 +999,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             sTypeInfoTraitFunction      = workspace.GlobalScope.GetStruct("TypeInfoTraitFunction").StructType;
             sTypeInfoTraitImpl          = workspace.GlobalScope.GetStruct("TypeInfoTraitImpl").StructType;
             sTypeInfoType               = workspace.GlobalScope.GetStruct("TypeInfoType").StructType;
+            sTypeInfoCode               = workspace.GlobalScope.GetStruct("TypeInfoCode").StructType;
 
             rttiTypeInfoPtr             = CheezTypeToLLVMType(PointerType.GetPointerType(sTypeInfo));
             rttiTypeInfoRef             = CheezTypeToLLVMType(ReferenceType.GetRefType(sTypeInfo));
@@ -1026,6 +1027,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             rttiTypeInfoTraitImpl       = CheezTypeToLLVMType(sTypeInfoTraitImpl);
             rttiTypeInfoAttribute       = CheezTypeToLLVMType(sTypeInfoAttribute);
             rttiTypeInfoType            = CheezTypeToLLVMType(sTypeInfoType);
+            rttiTypeInfoCode            = CheezTypeToLLVMType(sTypeInfoCode);
 
             rttiTypeInfoStructMemberInitializer = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[] { voidPointerType }, false);
         }
@@ -1102,7 +1104,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     FunctionType t  => (sTypeInfoFunction,  rttiTypeInfoFunction),
                     AnyType t       => (sTypeInfoAny,       rttiTypeInfoAny),
                     CheezTypeType t => (sTypeInfoType,      rttiTypeInfoType),
-                    _ => throw new NotImplementedException(),
+                    CodeType t      => (sTypeInfoCode,      rttiTypeInfoCode),
+                    _ => throw new NotImplementedException(type.ToString()),
                 };
                 var global = module.AddGlobal(rttiType, $"ti.{type}");
                 global.SetInitializer(GetZeroInitializer(rttiType));
@@ -1175,6 +1178,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     case CharType _:
                     case AnyType _:
                     case CheezTypeType _:
+                    case CodeType _:
                         break;
                     
                     // @todo
