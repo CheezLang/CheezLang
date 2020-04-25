@@ -69,6 +69,20 @@ impl RunCodeJob {
     }
 }
 
+RunFunctionJob :: struct CompilationJob {
+    name            : String
+    function_name   : String
+}
+
+impl RunFunctionJob {
+    new :: (function_name: String) -> RunFunctionJob {
+        return RunFunctionJob(
+            name            = fmt.format("RunFunctionJob '{}'", [function_name])
+            function_name   = function_name
+        )
+    }
+}
+
 CompileGlobalNodeJob :: struct CompilationJob {
     name        : String
     node        : ^AstNode
@@ -250,6 +264,76 @@ impl CompilationJob for RunCodeJob {
                 workspace.error_handler.report_error_at(location, "{}", [msg])
             }
         }
+        debug_log("Done")
+    }
+}
+
+impl CompilationJob for RunFunctionJob {
+    get_name :: (&Self) -> string {
+        return name.slice()
+    }
+
+    debug_log :: (&Self, msg: string, args: []^any = []) {
+        if const DEBUG_ENABLED { if DEBUG_JOBS {
+            str := fmt.format(msg, args)
+            g_logger.log("[Workspace {}] [{}] {}", [workspace.id, name.slice(), str])
+        }}
+    }
+
+    execute :: (&Self) {
+        if workspace.error_handler.has_errors() {
+            return
+        }
+        debug_log("Begin execution")
+
+        function := workspace.global_scope.get_symbol(function_name.slice())
+        match function {
+            .Func($function) -> {
+                context := Fiber.user_data(FiberContext)
+                context.interp.comp_call(&*function)
+                match compiler.code_runner.get().run(&*context.interp) {
+                    .Error($msg) -> {
+                        frame := context.interp.top_frame()
+                        location := frame.func.debug_info.get_location_for_ip(frame.ip)
+                        workspace.error_handler.report_error_at(location, "{}", [msg])
+                    }
+                }
+            }
+
+            .ConstDecl($decl) -> {
+                match decl.value {
+                    .Function($function) -> {
+                        context := Fiber.user_data(FiberContext)
+                        context.interp.comp_call(&*function)
+                        match compiler.code_runner.get().run(&*context.interp) {
+                            .Error($msg) -> {
+                                frame := context.interp.top_frame()
+                                location := frame.func.debug_info.get_location_for_ip(frame.ip)
+                                workspace.error_handler.report_error_at(location, "{}", [msg])
+                            }
+                        }
+                    }
+
+                    _ -> {
+                        g_logger.log("failed to run function '{}'", [function_name.slice()])
+                    }
+                }
+                // context := Fiber.user_data(FiberContext)
+                // context.interp.comp_call(&*function)
+                // match compiler.code_runner.get().run(&*context.interp) {
+                //     .Error($msg) -> {
+                //         frame := context.interp.top_frame()
+                //         location := frame.func.debug_info.get_location_for_ip(frame.ip)
+                //         workspace.error_handler.report_error_at(location, "{}", [msg])
+                //     }
+                // }
+            }
+
+            _ -> {
+                g_logger.log("failed to run function '{}'", [function_name.slice()])
+            }
+        }
+
         debug_log("Done")
     }
 }

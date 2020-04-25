@@ -1,7 +1,4 @@
 _ :: Main()
 Main :: () {
-    a := 5
-    comp := get_compiler()
-    ws := comp.create_workspace()
-    ws.add_load_file_job("..\data\basic_cheez2.che")
+    print_string("hi")
 }

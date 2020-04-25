@@ -126,4 +126,10 @@ get_full_path :: (path: string) -> Result[String, ()] {
     return String.from_utf16(buffer[..int(len)])
 }
 
+get_working_directory :: () -> Result[String, ()] {
+    buff : [512]u16 = default
+    length := GetCurrentDirectoryW(cast buff.length, buff.data)
+    return String.from_utf16(buff[..int(length)])
+}
+
 #file_scope
