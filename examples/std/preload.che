@@ -407,11 +407,13 @@ for_extension_array :: (arr: [$Size]$T, code: Code, reverse: bool = false, by_re
         }
     }
 }
-
 // trait stuff
+__VTable :: struct {
+    type_info : ^TypeInfo
+}
 __Trait :: struct {
     value  : ^void
-    vtable : ^void
+    vtable : ^__VTable
 }
 
 Traits :: struct {
@@ -484,6 +486,8 @@ TypeInfoVoid :: struct TypeInfo {}
 __ti_TypeInfoVoid := @type_info(TypeInfoVoid)
 TypeInfoType :: struct TypeInfo {}
 __ti_TypeInfoType := @type_info(TypeInfoType)
+TypeInfoCode :: struct TypeInfo {}
+__ti_TypeInfoCode := @type_info(TypeInfoCode)
 TypeInfoFloat :: struct TypeInfo {}
 __ti_TypeInfoFloat := @type_info(TypeInfoFloat)
 TypeInfoBool :: struct TypeInfo {}
@@ -649,6 +653,32 @@ impl TypeInfoStruct {
             }
         }
         return null
+    }
+}
+
+impl TypeInfoEnum {
+    get_enum_member :: (&Self, tag: int) -> ^TypeInfoEnumMember {
+        for(by_ref=true) mem in members {
+            if mem.tag == tag {
+                return ^*mem
+            }
+        }
+
+        return null
+    }
+
+    get_tag :: (&Self, value: ^void) -> int {
+        return match self.tag_type {
+            $ti if ti == @type_info(u8)  -> int(*cast(^u8)value)
+            $ti if ti == @type_info(u16) -> int(*cast(^u16)value)
+            $ti if ti == @type_info(u32) -> int(*cast(^u32)value)
+            $ti if ti == @type_info(u64) -> int(*cast(^u64)value)
+            $ti if ti == @type_info(i8)  -> int(*cast(^i8)value)
+            $ti if ti == @type_info(i16) -> int(*cast(^i16)value)
+            $ti if ti == @type_info(i32) -> int(*cast(^i32)value)
+            $ti if ti == @type_info(i64) -> int(*cast(^i64)value)
+            _ -> -1
+        }
     }
 }
 

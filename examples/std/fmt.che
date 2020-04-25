@@ -236,6 +236,11 @@ format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format:
                     result += ", "
                 }
 
+                if i >= 100 {
+                    result += "..."
+                    break
+                }
+
                 elem := pointer_add(ptr.data, i * ti.target.size)
                 format_any_into_string(result, elem, ti.target, format, recursive)
             }
@@ -248,6 +253,11 @@ format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format:
             for i in 0..ti.count {
                 if i > 0 {
                     result += ", "
+                }
+
+                if i >= 100 {
+                    result += "..."
+                    break
                 }
 
                 elem := pointer_add(ptr, i * ti.target.size)
@@ -312,8 +322,30 @@ format_any_into_string :: (result: &String, data: ^void, typ: ^TypeInfo, format:
             }
         }
 
+        TypeInfoTuple($ti) -> {
+            ptr := cast(^void) data
+
+            result += "("
+            if ti.members.data != null {
+                for(by_ref=true) member_info in ti.members {
+                    if it_index > 0 {
+                        result += ", "
+                    }
+
+                    member_ptr  := pointer_add(ptr, member_info.offset)
+                    format_any_into_string(result, member_ptr, member_info.typ, format, recursive)
+                }
+            }
+            result += ")"
+        }
+
+        TypeInfoFunction($ti) -> {
+            ptr := cast(^^void) data
+            result.appendf("fn 0x{:x}", int(*ptr))
+        }
+
         $_ -> {
-            result += "<unknown>"
+            format_into(result, "<unknown {}>", [typ])
         }
     }
 }

@@ -78,6 +78,11 @@ compile_files :: (files: []String, thread_count: int) {
     compiler := Compiler.new(thread_count, ^console_error_handler)
     main_workspace := compiler.get().get_main_workspace()
 
+    main_workspace.get().global_scope.define_native_function("get_compiler", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+        frame := interp.top_frame()
+        frame.set_return(g_compiler)
+    }, fn() -> ^Compiler))
+
     main_workspace.get().global_scope.define_native_function("print_string", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
         frame := interp.top_frame()
         io.set_console_color(.Green, .Black)
@@ -293,6 +298,11 @@ impl Workspace {
         return &*cast(^Compiler)_compiler
     }
 
+    add_load_file_job :: (&Self, filename: string) -> ^CompilationJob {
+        _ := add_load_file_job
+        return create_and_add_job(LoadFileJob.new(filename.to_owned()))
+    }
+
     define_builtin_types :: (&Self, scope: &Scope) {
         // ints
         scope.define_value("u8",  @type_info(type), .Type(@type_info(u8)))
@@ -330,6 +340,8 @@ impl Workspace {
         // temp
         register_native_function_type(fn(^String))
         register_native_function_type(fn(^String, string) -> ^String)
+        register_native_function_type(fn(^Compiler) -> ^Workspace)
+        register_native_function_type(fn(^Workspace, string) -> ^CompilationJob)
     }
 
     lock :: (&Self, mutex: &Mutex) {
@@ -541,6 +553,7 @@ impl Workspace {
     }
 }
 
+g_compiler : ^Compiler = null
 Compiler :: struct {
     // there is a weird bug where the pointer to the  debug adapter at some point changes to point to the compiler
     // and thus overrides variables of the compiler
@@ -598,6 +611,7 @@ impl Compiler {
 
             code_runner     = Rc[CodeRunner].new(DefaultCodeRunner())
         ))
+        g_compiler = ^*comp.get()
         comp.get().global_error_handler.text_provider = ^*comp.get()
 
 
@@ -650,9 +664,19 @@ impl Compiler {
         return sources[path].slice()
     }
 
-    // create_workspace :: (&Self) -> Rc[Workspace] {
+    create_workspace :: (&Self) -> ^Workspace {
+        _ := create_workspace
+        workspaces.add(Workspace.new(workspaces.count(), self, global_error_handler, threads.count() > 0))
+        
 
-    // }
+        workspaces.peek_last().get().global_scope.define_native_function("print_string", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+            frame := interp.top_frame()
+            io.set_console_color(.Green, .Black)
+            io.formatln("{}", [frame.get_arg(0, string)])
+            io.set_console_color(.White, .Black)
+        }, fn(string)))
+        return ^*workspaces.peek_last().get()
+    }
 }
 
 impl Compiler {
@@ -771,6 +795,7 @@ impl Compiler {
                 // no ready fibers
                 if self.ready_fibers.count() == 0 {
                     has_jobs := false
+                    g_logger.log("{} workspaces", [self.workspaces.count()])
                     for workspace in &self.workspaces {
                         if workspace.get().jobs.count() > 0 {
                             job := workspace.get().jobs.pop()

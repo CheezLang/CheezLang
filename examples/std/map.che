@@ -234,7 +234,7 @@ impl(K: type, V: type) Clone for Map[K, V] if K : Clone, V : Clone {
     }
 }
 
-for_extension_table :: (r: &Map[$K, $V], code: Code) #for {
+for_extension_map :: (r: &Map[$K, $V], code: Code) #for {
     it_index := 0
     for(by_ref=true) e, _ in r.get_entries() {
         if !e.filled then continue

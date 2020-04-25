@@ -128,16 +128,16 @@ for_extension_ring_queue_T :: (que: &RingQueue[$T], code: Code, reverse: bool = 
         if const reverse {
             it_index_rev := que.count() - it_index - 1
             if const by_ref {
-                it := &que[it_index_rev]
-            } else {
                 it := que[it_index_rev]
+            } else {
+                it := *que[it_index_rev]
             }
             @insert(code, link=[it_index_rev], _break=break, _continue=continue)
         } else {
             if const by_ref {
-                it := &que[it_index]
-            } else {
                 it := que[it_index]
+            } else {
+                it := *que[it_index]
             }
             @insert(code, _break=break, _continue=continue)
         }

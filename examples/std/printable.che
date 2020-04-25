@@ -162,7 +162,7 @@ impl(K: type, V: type) Printable for Table[K, V] if K: Printable, V: Printable {
 
 impl(T: type) Printable for Box[T] {
     print :: (&Self, str: &String, format: string) {
-        msg := fmt.format("Box({})", [_value])
+        msg := fmt.format("Box({})", [value])
         str.append(&msg)
     }
 }
@@ -299,7 +299,16 @@ impl Printable for TypeInfoArray {
 }
 impl Printable for TypeInfoTrait {
     print :: (&Self, str: &String, format: string) {
-        str += "TODO: printable for TypeInfoTrait"
+        if format == "?" {
+            fmt.format_into(str, "trait {} ``{`n", [self.name])
+            // @todo
+            // for mem in self.members {
+            //     fmt.format_into(str, "    {} : {}`n", [mem.name, mem.typ])
+            // }
+            str += "}"
+        } else {
+            str += self.name
+        }
     }
 }
 impl Printable for TypeInfoStruct {
@@ -317,7 +326,16 @@ impl Printable for TypeInfoStruct {
 }
 impl Printable for TypeInfoEnum {
     print :: (&Self, str: &String, format: string) {
-        str += "TODO: printable for TypeInfoEnum"
+        if format == "?" {
+            fmt.format_into(str, "enum {} ``{`n", [self.name])
+            // @todo
+            // for mem in self.members {
+            //     fmt.format_into(str, "    {} : {}`n", [mem.name, mem.typ])
+            // }
+            str += "}"
+        } else {
+            str += self.name
+        }
     }
 }
 

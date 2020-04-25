@@ -3,7 +3,7 @@ use import std.mem.allocator
 #export_scope
 
 Box :: struct(T: type) {
-    _value: ^T
+    value: ^T
 }
 
 impl(T: type) Box[T] {
@@ -27,20 +27,15 @@ impl(T: type) Box[T] {
         return Box[T](ptr)
     }
 
-    value :: (&Self) -> &T {
-        @assert(_value != null)
-        return &*_value
-    }
-
     get :: (&Self) -> &T {
-        @assert(_value != null)
-        return &*_value
+        @assert(value != null)
+        return &*value
     }
 }
 
 impl(T: type) Drop for Box[T] {
     drop :: (&Self) {
-        free(_value)
-        _value = null
+        free(value)
+        value = null
     }
 }

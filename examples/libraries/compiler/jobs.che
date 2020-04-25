@@ -108,7 +108,7 @@ impl CompilationJob for CompileStructMemberJob {
     debug_log :: (&Self, msg: string, args: []^any = []) {
         if const DEBUG_ENABLED { if DEBUG_JOBS {
             str := fmt.format(msg, args)
-            g_logger.log("[CompileStructMemberJob #{}] {}", [node.id, str])
+            g_logger.log("[Workspace {}] [CompileStructMemberJob #{}] {}", [workspace.id, node.id, str])
         }}
     }
 
@@ -185,7 +185,7 @@ impl CompilationJob for CompileGlobalNodeJob {
     debug_log :: (&Self, msg: string, args: []^any = []) {
         if const DEBUG_ENABLED { if DEBUG_JOBS {
             str := fmt.format(msg, args)
-            g_logger.log("[CompileGlobalNodeJob #{}] {}", [node.id, str])
+            g_logger.log("[Workspace {}] [CompileGlobalNodeJob #{}] {}", [workspace.id, node.id, str])
         }}
     }
 
@@ -232,7 +232,7 @@ impl CompilationJob for RunCodeJob {
     debug_log :: (&Self, msg: string, args: []^any = []) {
         if const DEBUG_ENABLED { if DEBUG_JOBS {
             str := fmt.format(msg, args)
-            g_logger.log("[RunCodeJob '{}'] {}", [function.name, str])
+            g_logger.log("[Workspace {}] [RunCodeJob '{}'] {}", [workspace.id, function.name, str])
         }}
     }
 
@@ -262,7 +262,7 @@ impl CompilationJob for LoadFileJob {
     debug_log :: (&Self, msg: string, args: []^any = []) {
         if const DEBUG_ENABLED { if DEBUG_JOBS {
             str := fmt.format(msg, args)
-            g_logger.log("[LoadFileJob '{}'] {}", [path, str])
+            g_logger.log("[Workspace {}] [LoadFileJob '{}'] {}", [workspace.id, path, str])
         }}
     }
 
@@ -330,7 +330,7 @@ impl CompileNode {
     debug_log :: (&Self, msg: string, args: []^any = []) {
         if const DEBUG_ENABLED { if DEBUG_JOBS {
             str := fmt.format(msg, args)
-            g_logger.log("[{}] {}", [job.get_name(), str])
+            g_logger.log("[Workspace {}] [{}] {}", [workspace.id, job.get_name(), str])
         }}
     }
 
@@ -343,7 +343,7 @@ impl CompileNode {
             return node
         }
         node.scope = workspace.new_scope(node.scope, constant = true)
-        node = compile_node(node, ctx)
+        node <- compile_node(node, ctx)
 
         if node.value == .None {
             code_gen := ByteCodeGenerator.new(&workspace.string_database, &*workspace.error_handler, workspace.bc_allocator)
@@ -441,7 +441,7 @@ impl CompileNode {
 
         original_sub := dot.sub
         dot.sub.scope = dot.scope
-        dot.sub = compile_node(&*dot.sub, ctx)
+        dot.sub <- compile_node(&*dot.sub, ctx)
         handle_poison(dot, *dot.sub)
 
         match dot.sub.typ {
@@ -453,7 +453,7 @@ impl CompileNode {
                     sub         = &*dot.sub
                     operator    = .Deref
                 ))
-                dot.sub = compile_node(&*deref, ctx.with_expected(ti.target))
+                dot.sub <- compile_node(&*deref, ctx.with_expected(ti.target))
                 handle_poison(dot, *dot.sub)
             }
         }
@@ -560,13 +560,13 @@ impl CompileNode {
         // in that case turn it into @typeof(<expr>)."[]set"(<expr>, <index>, <value>)
 
         ass.pattern.scope = ass.scope
-        ass.pattern = compile_node(ass.pattern, ctx)
+        ass.pattern <- compile_node(ass.pattern, ctx)
         handle_poison(ass, ass.pattern)
 
         // @todo: check if pattern is lvalue
 
         ass.value_expr.scope = ass.scope
-        ass.value_expr = compile_node(ass.value_expr, ctx.with_expected(ass.pattern.typ))
+        ass.value_expr <- compile_node(ass.value_expr, ctx.with_expected(ass.pattern.typ))
         handle_poison(ass, ass.value_expr)
 
         // check types
@@ -791,7 +791,7 @@ impl CompileNode {
 
     compile_unary_neg :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
         un.sub.scope = un.scope
-        un.sub = compile_node(un.sub, ctx)
+        un.sub <- compile_node(un.sub, ctx)
 
         // check types
         if un.sub.typ == null { return un }
@@ -824,7 +824,7 @@ impl CompileNode {
 
     compile_unary_not :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
         un.sub.scope = un.scope
-        un.sub = compile_node(un.sub, ctx.with_expected(@type_info(bool)))
+        un.sub <- compile_node(un.sub, ctx.with_expected(@type_info(bool)))
 
         // check types
         if un.sub.typ == null { return un }
@@ -856,7 +856,7 @@ impl CompileNode {
         }
 
         un.sub.scope = un.scope
-        un.sub = compile_node(un.sub, ctx)
+        un.sub <- compile_node(un.sub, ctx)
         handle_poison(un, un.sub)
 
         if un.sub.typ == @type_info(type) {
@@ -925,7 +925,7 @@ impl CompileNode {
 
     compile_unary_deref :: (&Self, un: &AstUnary, ctx: CNContext) -> &AstNode {
         un.sub.scope = un.scope
-        un.sub = compile_node(un.sub, ctx)
+        un.sub <- compile_node(un.sub, ctx)
         handle_poison(un, un.sub)
 
         if !un.sub.has_flags(.LValue) {
@@ -958,8 +958,8 @@ impl CompileNode {
         bin.left.scope = bin.scope
         bin.right.scope = bin.scope
 
-        bin.left = compile_node(bin.left, ctx)
-        bin.right = compile_node(bin.right, ctx)
+        bin.left <- compile_node(bin.left, ctx)
+        bin.right <- compile_node(bin.right, ctx)
 
         handle_poison(bin, bin.left)
         handle_poison(bin, bin.right)
@@ -1101,7 +1101,7 @@ impl CompileNode {
 
     compile_index :: (&Self, node: &AstIndex, ctx: CNContext) -> &AstNode {
         node.sub.scope = node.scope
-        node.sub = compile_node(node.sub, ctx)
+        node.sub <- compile_node(node.sub, ctx)
         handle_poison(node, node.sub)
 
         match node.sub.value {
@@ -1445,7 +1445,7 @@ impl CompileNode {
 
     compile_argument :: (&Self, arg: &AstArgument, ctx: CNContext) -> &AstNode {
         arg.value_expr.scope = arg.scope
-        arg.value_expr = compile_node(arg.value_expr, ctx)
+        arg.value_expr <- compile_node(arg.value_expr, ctx)
         arg.typ = arg.value_expr.typ
         arg.value = arg.value_expr.value
         return arg
@@ -1475,7 +1475,7 @@ impl CompileNode {
         cst.typ = cst.type_expr.value.Type
 
         cst.value_expr.scope = cst.scope
-        cst.value_expr = compile_node(cst.value_expr, ctx.with_expected(cst.typ))
+        cst.value_expr <- compile_node(cst.value_expr, ctx.with_expected(cst.typ))
 
         if cst.value_expr.value == .Poison {
             poison(cst)
@@ -1495,7 +1495,7 @@ impl CompileNode {
 
     compile_call :: (&Self, call: &AstCall, ctx: CNContext) -> &AstNode {
         call.function.scope = call.scope
-        call.function = compile_node(call.function, ctx.with_expected(null))
+        call.function <- compile_node(call.function, ctx.with_expected(null))
 
         if call.function.value == .Poison {
             poison(call)
@@ -1634,7 +1634,7 @@ impl CompileNode {
             }
 
             $val -> {
-                workspace.error_handler.report_error_at(call.location, "[compile_call] not implemented: {}", [val])
+                workspace.error_handler.report_error_at(call.function.location, "[compile_call] not implemented: {}", [val])
                 poison(call)
                 return call
             }

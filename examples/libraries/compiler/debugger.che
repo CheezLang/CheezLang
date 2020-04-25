@@ -7,6 +7,7 @@ use import std.mem.std_heap_allocator
 use import std.os.windows
 use import std.os.windows_functions
 use import std.rc
+use import std.ring_queue
 use import std.string
 use import std.thread
 
@@ -360,6 +361,9 @@ impl CheezDebugAdapter {
         args := ArgumentsScope.new(debugger.get().current_interp, frame)
         result.add(args.clone().change_type(VariableRef))
 
+        debugger := Variable.new(debugger.get().current_interp, frame, "Debugger".to_owned(), @type_info(CheezDebugAdapter), ^*self)
+        result.add(debugger.change_type(VariableRef))
+
         return result
     }
 
@@ -372,6 +376,11 @@ impl CheezDebugAdapter {
         main_workspace := compiler.get().get_main_workspace()
 
         // register native functions
+        
+        main_workspace.get().global_scope.define_native_function("get_compiler", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+            frame := interp.top_frame()
+            frame.set_return(g_compiler)
+        }, fn() -> ^Compiler))
         main_workspace.get().global_scope.define_native_function(
             "print_string",
             NativeFunctionWrapper.new(cast(NativeFunction) print_string, fn(string)))
@@ -644,6 +653,10 @@ Breakpoint :: struct #copy {
     line : int
 }
 
+VariableProvider :: trait {
+    get_variables :: (&Self, interp: ^Interpreter, frame: int, start: int, count: int) -> Array[Rc[VariableRef]];
+}
+
 VariableRef :: trait {
     interp  : ^Interpreter
     frame   : int
@@ -714,8 +727,16 @@ impl Variable {
         any_value := Any.from_pointers(pointer, type_info)
 
         named_variables, indexed_variables := match type_info {
+            TypeInfoTuple($ti)      -> ti.members.length, 0
             TypeInfoStruct($ti)     -> ti.members.length, 0
+            TypeInfoEnum($ti)       -> (if {
+                mem := ti.get_enum_member(ti.get_tag(pointer))
+                mem != null and mem.typ != null
+            } then 1 else 0), 0
             TypeInfoArray($ti)      -> 0, ti.count
+            TypeInfoSlice($ti)      -> 0, *cast(^int)pointer
+            TypeInfoPointer($ti) if ti.target == @type_info(void)
+                                    -> 0, 0
             TypeInfoPointer($ti)    -> (if (*cast(^int)pointer) == 0 then 0 else 1, 0)
             _ -> 0, 0
         }
@@ -728,13 +749,46 @@ impl Variable {
 
             TypeInfoString(_) -> fmt.format("`"{}`"", [any_value])
 
+            $ti if ti == @type_info(^void) -> {
+                if (*cast(^int)pointer) == 0 {
+                    "null".to_owned()
+                } else {
+                    fmt.format("0x{:x}", [int(pointer)])
+                }
+            }
+
             TypeInfoPointer($ti) -> {
                 if (*cast(^int)pointer) == 0 {
                     "null".to_owned()
                 } else {
-                    fmt.format("{}", [any_value])
+                    match ti.target {
+                        TypeInfoTrait($ti_trait) -> {
+                            trait_ptr := cast(^__Trait)pointer
+                            ti := trait_ptr.vtable.type_info
+                            if ti != null {
+                                type_info = ti
+                                pointer = trait_ptr.value
+                                named_variables, indexed_variables = match type_info {
+                                    TypeInfoStruct($ti)     -> ti.members.length, 0
+                                    TypeInfoArray($ti)      -> 0, ti.count
+                                    TypeInfoPointer($ti)    -> (if (*cast(^int)pointer) == 0 then 0 else 1, 0)
+                                    _ -> 0, 0
+                                }
+                                fmt.format("[{}] {}", [ti, any_value])
+                            } else {
+                                fmt.format("{}", [any_value])
+                            }
+                        }
+
+                        _ -> {
+                            fmt.format("{}", [any_value])
+                        }
+                    }
                 }
             }
+
+            TypeInfoStruct($ti) -> ti.name.to_owned()
+            TypeInfoTrait($ti) -> ti.name.to_owned()
 
             _ -> fmt.format("{:?}", [any_value])
         }
@@ -758,7 +812,27 @@ impl VariableRef for Variable {
     get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]] {
         result := Array[Rc[VariableRef]].create()
 
+        trait_func := self.type_info.get_trait_function(VariableProvider, "get_variables", fn(^void, ^Interpreter, int, int, int) -> Array[Rc[VariableRef]])
+
+        if trait_func != null {
+            return trait_func(self.pointer, self.interp, self.frame, start, count)
+        }
+
         match self.type_info {
+            TypeInfoTuple($ti) -> {
+                for 0 .. min(ti.members.length, count) {
+                    index := start + it
+                    if index < 0 or index >= ti.members.length then break
+                    member := ti.members[index]
+
+                    name := fmt.format("{}", [it])
+
+                    var := Variable.new(
+                        interp, frame, name, member.typ, util.pointer_add(self.pointer, member.offset))
+                    result.add(var.clone().change_type(VariableRef))
+                }
+            }
+
             TypeInfoStruct($ti) -> {
                 for 0 .. min(ti.members.length, count) {
                     index := start + it
@@ -770,12 +844,40 @@ impl VariableRef for Variable {
                 }
             }
 
+            TypeInfoEnum($ti) -> {
+                mem := ti.get_enum_member(ti.get_tag(pointer))
+                if mem != null and mem.typ != null {
+                    var := Variable.new(
+                        interp,
+                        frame,
+                        "*".to_owned(),
+                        mem.typ,
+                        util.pointer_add(self.pointer, ti.tag_type.size)
+                    )
+                    result.add(var.clone().change_type(VariableRef))
+                }
+            }
+
             TypeInfoArray($ti) -> {
                 for 0 .. min(ti.count, count) {
                     index := start + it
                     if index < 0 or index >= ti.count then break
                     var := Variable.new(
                         interp, frame, fmt.format("[{}]", [index]), ti.target, util.pointer_add(self.pointer, index * ti.target.size))
+                    result.add(var.clone().change_type(VariableRef))
+                }
+            }
+
+            TypeInfoSlice($ti) -> {
+                slice := *cast(^[]int)self.pointer
+
+                g_logger.log("slice_length: {}", [slice.length])
+
+                for 0 .. min(slice.length, count) {
+                    index := start + it
+                    if index < 0 or index >= slice.length then break
+                    var := Variable.new(
+                        interp, frame, fmt.format("[{}]", [index]), ti.target, util.pointer_add(slice.data, index * ti.target.size))
                     result.add(var.clone().change_type(VariableRef))
                 }
             }
@@ -791,7 +893,80 @@ impl VariableRef for Variable {
                 )
                 result.add(var.clone().change_type(VariableRef))
             }
+
+            TypeInfoReference($ti) -> {
+                ptr := *cast(^^void)pointer
+                var := Variable.new(
+                    interp,
+                    frame,
+                    "*".to_owned(),
+                    ti.target,
+                    ptr
+                )
+                result.add(var.clone().change_type(VariableRef))
+            }
         }
+
+        return result
+    }
+}
+
+impl(T: type) VariableProvider for Array[T] {
+    get_variables :: (&Self, interp: ^Interpreter, frame: int, start: int, count: int) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+
+        for self {
+            var := Variable.new(interp, frame, fmt.format("[{}]", [it_index]), @type_info(T), ^*it)
+            result.add(var.change_type(VariableRef))
+        }
+
+        return result
+    }
+}
+
+impl(T: type) VariableProvider for RingQueue[T] {
+    get_variables :: (&Self, interp: ^Interpreter, frame: int, start: int, count: int) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+
+        for self {
+            var := Variable.new(interp, frame, fmt.format("[{}]", [it_index]), @type_info(T), ^*it)
+            result.add(var.change_type(VariableRef))
+        }
+
+        return result
+    }
+}
+
+impl(K: type, V: type) VariableProvider for Map[K, V] {
+    get_variables :: (&Self, interp: ^Interpreter, frame: int, start: int, count: int) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+
+        for self {
+            var := Variable.new(interp, frame, fmt.format("{}", [*it.name]), @type_info(V), ^*it.value)
+            result.add(var.change_type(VariableRef))
+        }
+
+        return result
+    }
+}
+
+impl(T: type) VariableProvider for Rc[T] {
+    get_variables :: (&Self, interp: ^Interpreter, frame: int, start: int, count: int) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+
+        var := Variable.new(interp, frame, "*".to_owned(), @type_info(T), self.value)
+        result.add(var.change_type(VariableRef))
+
+        return result
+    }
+}
+
+impl(T: type) VariableProvider for Box[T] {
+    get_variables :: (&Self, interp: ^Interpreter, frame: int, start: int, count: int) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+
+        var := Variable.new(interp, frame, "*".to_owned(), @type_info(T), self.value)
+        result.add(var.change_type(VariableRef))
 
         return result
     }
