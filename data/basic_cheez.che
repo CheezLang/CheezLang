@@ -4,7 +4,9 @@ Main :: () {
     baz : Baz
 
     baz.a = 5
+    print_int(baz.a)
     baz.b = "hi"
+    print_string(baz.b)
 }
 
 sub :: (a: int, b: int) -> int {
@@ -22,5 +24,7 @@ Foo :: (Body: string) struct {
     Body
 }
 
-Baz :: Foo["a: int
-b: string"]
+Baz :: Foo["
+    a: int
+    b: string
+"]

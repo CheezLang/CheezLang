@@ -4,6 +4,7 @@ use import std.thread
 
 fmt :: import std.fmt
 io  :: import std.io
+mem :: import std.mem.allocator
 
 use import lexer
 
@@ -12,12 +13,50 @@ use import lexer
 ErrorHandler :: trait {
     text_provider : ^TextProvider
     has_errors :: (&Self) -> bool;
-    report_error_at :: (&Self, location: Location, message: string, args: []^any = []);
-    report_error :: (&Self, message: string, args: []^any = []);
+    report_error_at :: (&Self, location: Location, message: string, args: []^any = [], prefix: string = "");
+    report_error :: (&Self, message: string, args: []^any = [], prefix: string = "");
 }
 
 TextProvider :: trait {
     get_text :: (&Self, filename: string) -> string;
+}
+
+PrefixErrorHandler :: struct ErrorHandler {
+    base    : &ErrorHandler
+    prefix  : String
+}
+
+impl PrefixErrorHandler {
+    new :: (base: &ErrorHandler, prefix: String) -> ^PrefixErrorHandler {
+        eh := mem.alloc(PrefixErrorHandler)
+        *eh = PrefixErrorHandler(base.text_provider, base, prefix)
+        return eh
+    }
+}
+
+impl ErrorHandler for PrefixErrorHandler {
+
+    has_errors :: (&Self) -> bool {
+        return base.has_errors()
+    }
+
+    report_error_at :: (&Self, location: Location, message: string, args: []^any = [], prefix: string = "") {
+        pre := if prefix != "" {
+            fmt.format("{}][{}", [self.prefix, prefix])
+        } else {
+            self.prefix.clone()
+        }
+        base.report_error_at(location, message, args, pre.slice())
+    }
+
+    report_error :: (&Self, message: string, args: []^any = [], prefix: string = "") {
+        pre := if prefix != "" {
+            fmt.format("{}][{}", [self.prefix, prefix])
+        } else {
+            self.prefix.clone()
+        }
+        base.report_error(message, args, pre.slice())
+    }
 }
 
 ConsoleErrorHandler :: struct ErrorHandler {
@@ -39,24 +78,31 @@ impl ErrorHandler for ConsoleErrorHandler {
         return error_count > 0
     }
 
-    report_error :: (&Self, message: string, args: []^any = []) {
+    report_error :: (&Self, message: string, args: []^any = [], prefix: string = "") {
         mutex.lock()
         defer mutex.release()
 
         error_count += 1
 
+        if prefix != "" {
+            io.set_console_color(@bin_or(io.ConsoleColor.White, io.ConsoleColor.Bright), io.ConsoleColor.Black)
+            io.format("[{}] ", [prefix])
+        }
         io.set_console_color(@bin_or(io.ConsoleColor.Red, io.ConsoleColor.Bright), io.ConsoleColor.Black)
         io.formatln(message, args)
         io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
     }
 
-    report_error_at :: (&Self, location: Location, message: string, args: []^any = []) {
+    report_error_at :: (&Self, location: Location, message: string, args: []^any = [], prefix: string = "") {
         mutex.lock()
         defer mutex.release()
 
         error_count += 1
 
         io.set_console_color(@bin_or(io.ConsoleColor.White, io.ConsoleColor.Bright), io.ConsoleColor.Black)
+        if prefix != "" {
+            io.format("[{}] ", [prefix])
+        }
         io.format("{}:{}:{}: ", [location.file, location.line, location.column])
         io.set_console_color(@bin_or(io.ConsoleColor.Red, io.ConsoleColor.Bright), io.ConsoleColor.Black)
         io.formatln(message, args)

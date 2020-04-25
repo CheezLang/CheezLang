@@ -369,30 +369,31 @@ impl CheezDebugAdapter {
 
     compile_cheez_program :: (&Self, path: string) {
         compiler = Compiler.new(1, ^*self)
+        main_workspace := compiler.get().get_main_workspace()
 
         // register native functions
-        compiler.get().global_scope.define_native_function(
+        main_workspace.get().global_scope.define_native_function(
             "print_string",
             NativeFunctionWrapper.new(cast(NativeFunction) print_string, fn(string)))
-        compiler.get().global_scope.define_native_function(
+        main_workspace.get().global_scope.define_native_function(
             "print",
             NativeFunctionWrapper.new(cast(NativeFunction) print_String, fn(^String)))
-        compiler.get().global_scope.define_native_function(
+        main_workspace.get().global_scope.define_native_function(
             "print_int",
             NativeFunctionWrapper.new(cast(NativeFunction) print_int, fn(int)))
-        compiler.get().global_scope.define_native_function(
+        main_workspace.get().global_scope.define_native_function(
             "print_float",
             NativeFunctionWrapper.new(cast(NativeFunction) print_float, fn(f64)))
-        compiler.get().global_scope.define_native_function(
+        main_workspace.get().global_scope.define_native_function(
             "print_bool",
             NativeFunctionWrapper.new(cast(NativeFunction) print_bool, fn(bool)))
-        compiler.get().global_scope.define_native_function(
+        main_workspace.get().global_scope.define_native_function(
             "debugbreak",
             NativeFunctionWrapper.new(cast(NativeFunction) debug_break, fn()))
         //
 
         // strings
-        compiler.get().global_scope.define_native_function("new_string", NativeFunctionWrapper.new(
+        main_workspace.get().global_scope.define_native_function("new_string", NativeFunctionWrapper.new(
             cast(NativeFunction) (interp) => {
                 frame := interp.top_frame()
                 str := mem.alloc(String)
@@ -401,7 +402,7 @@ impl CheezDebugAdapter {
             },
             fn() -> ^String)
         )
-        compiler.get().global_scope.define_native_function("append_string", NativeFunctionWrapper.new(
+        main_workspace.get().global_scope.define_native_function("append_string", NativeFunctionWrapper.new(
             cast(NativeFunction) (interp) => {
                 frame := interp.top_frame()
                 str := frame.get_arg(0, ^String)
@@ -410,7 +411,7 @@ impl CheezDebugAdapter {
             },
             fn(^String, string))
         )
-        compiler.get().global_scope.define_native_function("slice", NativeFunctionWrapper.new(
+        main_workspace.get().global_scope.define_native_function("slice", NativeFunctionWrapper.new(
             cast(NativeFunction) (interp) => {
                 frame := interp.top_frame()
                 str := frame.get_arg(0, ^String)
@@ -421,7 +422,7 @@ impl CheezDebugAdapter {
 
         //
         compiler.get().code_runner = debugger.clone().change_type(CodeRunner)
-        compiler.get().add_job(compiler.get().create_job(LoadFileJob.new(path.to_owned())))
+        main_workspace.get().create_and_add_job(LoadFileJob.new(path.to_owned()))
         compiler.get().start_compilation()
 
         compiler.get().on_done(cast self.on_done)
@@ -433,12 +434,12 @@ impl ErrorHandler for CheezDebugAdapter {
         return false
     }
 
-    report_error_at :: (&Self, location: Location, message: string, args: []^any) {
+    report_error_at :: (&Self, location: Location, message: string, args: []^any, prefix: string = "") {
         msg := fmt.format(message, args)
         g_logger.log("[Code Gen] {}: {}", [location, msg])
     }
 
-    report_error :: (&Self, message: string, args: []^any) {
+    report_error :: (&Self, message: string, args: []^any, prefix: string = "") {
         msg := fmt.format(message, args)
         g_logger.log("[Code Gen] {}", [msg])
     }
