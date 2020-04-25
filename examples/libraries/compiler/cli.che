@@ -16,9 +16,11 @@ use import logging.logger
 use import compiler
 use import config
 use import error_handler
+use import jobs
 use import lexer
 use import parser
 use import string_database
+use import value
 
 LOG_PATH :: "../data/logs/compiler_log.txt"
 
@@ -37,6 +39,7 @@ Main :: () {
     io.println(fmt.format_any(*compiler_args))
 
     match *compiler_args {
+        MainCommand.Build($options) -> command_build(^options)
         MainCommand.Compile($options) -> command_compile(^options)
 
         MainCommand.Project($poptions) -> match poptions {
@@ -95,7 +98,15 @@ e.g. ... compile foo bar")
 }
 
 CommandBuild :: struct {
-    
+    thread_count := 1
+
+    debug_interpreter := false
+    debug_jobs        := false
+    debug_parser      := false
+    debug_wait        := false
+    dump_ast          := false
+    print_ast         := false
+    print_typed_ast   := false
 }
 
 CommandProject :: enum {
@@ -270,4 +281,130 @@ command_compile :: (options: ^CommandCompile) {
     PRINT_AST         = options.print_ast
     PRINT_TYPED_AST   = options.print_typed_ast
     compile_files(options.files.slice(), options.thread_count)
+}
+
+command_build :: (options: ^CommandBuild) {
+    DEBUG_INTERPRETER = options.debug_interpreter
+    DEBUG_JOBS        = options.debug_jobs
+    DEBUG_PARSER      = options.debug_parser
+    DEBUG_WAIT        = options.debug_wait
+    DUMP_AST          = options.dump_ast
+    PRINT_AST         = options.print_ast
+    PRINT_TYPED_AST   = options.print_typed_ast
+    
+    
+    console_error_handler := ConsoleErrorHandler.new(null)
+
+    if options.thread_count < 1 or options.thread_count > 32 {
+        console_error_handler.report_error("Invalid thread_count: {}", [options.thread_count])
+        return
+    }
+
+    compiler := Compiler.new(options.thread_count, ^console_error_handler)
+    main_workspace := compiler.get().get_main_workspace()
+
+    main_workspace.get().global_scope.define_value("Compiler", @type_info(type), .Type(@type_info(Compiler)))
+
+    main_workspace.get().global_scope.define_native_function("get_compiler", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+        frame := interp.top_frame()
+        frame.set_return(g_compiler)
+    }, fn() -> ^Compiler))
+
+    main_workspace.get().global_scope.define_native_function("print_string", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+        frame := interp.top_frame()
+        io.set_console_color(.Green, .Black)
+        io.formatln("{}", [frame.get_arg(0, string)])
+        io.set_console_color(.White, .Black)
+    }, fn(string)))
+    // main_workspace.get().global_scope.define_native_function("print_int", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+    //     frame := interp.top_frame()
+    //     io.set_console_color(.Green, .Black)
+    //     io.formatln("{}", [frame.get_arg(0, int)])
+    //     io.set_console_color(.White, .Black)
+    // }, fn(int)))
+    // main_workspace.get().global_scope.define_native_function("print_float", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+    //     frame := interp.top_frame()
+    //     io.set_console_color(.Green, .Black)
+    //     io.formatln("{}", [frame.get_arg(0, f64)])
+    //     io.set_console_color(.White, .Black)
+    // }, fn(f64)))
+    // main_workspace.get().global_scope.define_native_function("print_bool", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+    //     frame := interp.top_frame()
+    //     io.set_console_color(.Green, .Black)
+    //     io.formatln("{}", [frame.get_arg(0, bool)])
+    //     io.set_console_color(.White, .Black)
+    // }, fn(bool)))
+    // main_workspace.get().global_scope.define_native_function("print_array", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+    //     frame := interp.top_frame()
+    //     io.set_console_color(.Green, .Black)
+    //     io.formatln("{}", [frame.get_arg(0, [3]int)])
+    //     io.set_console_color(.White, .Black)
+    // }, fn([3]int)))
+    // main_workspace.get().global_scope.define_native_function("print", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+    //     frame := interp.top_frame()
+    //     io.set_console_color(.Green, .Black)
+    //     io.formatln("{}", [frame.get_arg(0, ^any)])
+    //     io.set_console_color(.White, .Black)
+    // }, fn(^any)))
+
+    // main_workspace.get().global_scope.define_native_function("debugbreak", NativeFunctionWrapper.new(
+    //     cast(NativeFunction) (interp) => {},
+    //     fn())
+    // )
+
+    // strings
+    // main_workspace.get().global_scope.define_native_function("new_string", NativeFunctionWrapper.new(
+    //     cast(NativeFunction) (interp) => {
+    //         frame := interp.top_frame()
+    //         str := mem.alloc(String)
+    //         *str = String.empty()
+    //         frame.set_return(str)
+    //     },
+    //     fn() -> ^String)
+    // )
+    // main_workspace.get().global_scope.define_native_function("append_string", NativeFunctionWrapper.new(
+    //     cast(NativeFunction) (interp) => {
+    //         frame := interp.top_frame()
+    //         str := frame.get_arg(0, ^String)
+    //         value := frame.get_arg(1, string)
+    //         str.append_string(value)
+    //     },
+    //     fn(^String, string))
+    // )
+    // main_workspace.get().global_scope.define_native_function("print", NativeFunctionWrapper.new(
+    //     cast(NativeFunction) (interp) => {
+    //         frame := interp.top_frame()
+    //         str := frame.get_arg(0, ^String)
+    //         io.set_console_color(.Green, .Black)
+    //         io.formatln("{}", [str.slice()])
+    //         io.set_console_color(.White, .Black)
+    //     },
+    //     fn(^String))
+    // )
+    // main_workspace.get().global_scope.define_native_function("slice", NativeFunctionWrapper.new(
+    //     cast(NativeFunction) (interp) => {
+    //         frame := interp.top_frame()
+    //         str := frame.get_arg(0, ^String)
+    //         frame.set_return(str.slice())
+    //     },
+    //     fn(^String) -> string)
+    // )
+    
+    wd := match fs.get_working_directory() {
+        Ok($wd) -> wd
+        Err(_) -> {
+            io.println("[FATAL] Failed to get working directory")
+            return
+        }
+    }
+    build_file := fmt.format("{}/build.che", [wd.slice()])
+    main_workspace.get().create_and_add_job(LoadFileJob.new(build_file))
+    // main_workspace.get().create_and_add_job(RunFunctionJob.new("build".to_owned()))
+
+    start := get_time_milliseconds()
+    compiler.get().start_compilation()
+    compiler.get().wait_until_done()
+    end := get_time_milliseconds()
+    dur := end - start
+    g_logger.log("[Compiler] Compilation took {} ms", [dur])
 }

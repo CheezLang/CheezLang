@@ -44,6 +44,11 @@ enable_profiler :: false
 
 wait_until :: (cond: Code, on_error: Code, on_yield: Code = {}, on_resume: Code = {}) #macro {
     fiber_context := Fiber.user_data(FiberContext)
+    if fiber_context.job.cancelled {
+        @insert(on_error)
+        loop Fiber.yield()
+    }
+
     fiber_context.job.progressed = true
 
     loop {
@@ -217,8 +222,6 @@ Workspace :: struct {
     global_scope    : ^Scope = null
     all_nodes       := Array[^AstNode].create()
 
-    code_runner     : Rc[CodeRunner]
-
     structs         := Map[int, ^AstStruct].new()
     structs_mutex   := Mutex.new()
 
@@ -263,8 +266,6 @@ impl Workspace {
 
             string_database = StringDatabase.new()
             error_handler   = PrefixErrorHandler.new(&*error_handler, fmt.format("Workspace #{}", [id]))
-
-            code_runner     = Rc[CodeRunner].new(DefaultCodeRunner())
 
             ast_allocator   = create_allocator(0x1000) // 4 Kb
             bc_allocator    = create_allocator(0x1000) // 4 Kb
@@ -667,8 +668,11 @@ impl Compiler {
     create_workspace :: (&Self) -> ^Workspace {
         _ := create_workspace
         workspaces.add(Workspace.new(workspaces.count(), self, global_error_handler, threads.count() > 0))
-        
 
+        workspaces.peek_last().get().global_scope.define_native_function("get_compiler", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
+            frame := interp.top_frame()
+            frame.set_return(g_compiler)
+        }, fn() -> ^Compiler))
         workspaces.peek_last().get().global_scope.define_native_function("print_string", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
             frame := interp.top_frame()
             io.set_console_color(.Green, .Black)
@@ -795,7 +799,6 @@ impl Compiler {
                 // no ready fibers
                 if self.ready_fibers.count() == 0 {
                     has_jobs := false
-                    g_logger.log("{} workspaces", [self.workspaces.count()])
                     for workspace in &self.workspaces {
                         if workspace.get().jobs.count() > 0 {
                             job := workspace.get().jobs.pop()

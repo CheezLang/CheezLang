@@ -179,4 +179,4 @@ _InterlockedExchange64                  :: (dest: ^LONG64, value: LONG64) -> LON
 
 
 // somehow not linking
-// GetCurrentDirectory :: (nBufferLength: DWORD, lpBuffer: c_string) -> DWORD #stdcall;
+GetCurrentDirectoryW :: (nBufferLength: DWORD, lpBuffer: ^u16) -> DWORD #stdcall;

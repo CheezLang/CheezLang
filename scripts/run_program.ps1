@@ -17,7 +17,9 @@ Push-Location gen
 # &"./$file$executable_file_extension" project new -name hello_world3 -type program
 # &"./$file$executable_file_extension" "../data/json_test.json"
 # &"./$file$executable_file_extension" help
-&"./$file$executable_file_extension" compile -thread_count 1 -debug_jobs -files "../data/basic_cheez.che"
+&"./$file$executable_file_extension" build -thread_count 1 -debug_jobs
+# &"./$file$executable_file_extension" build -thread_count 2
+# &"./$file$executable_file_extension" compile -thread_count 1 -debug_jobs -files "../data/basic_cheez.che"
 # &"./$file$executable_file_extension" compile -thread_count 1 -files "../data/basic_cheez.che"
 Pop-Location
 
