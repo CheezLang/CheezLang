@@ -501,14 +501,16 @@ impl Into[DapReqScopes] for JsonValue {
 DapScope :: struct {
     variables_reference : int
     name                : String
-    presentation_hint   : String
+    presentation_hint   : Option[String]
 }
 
 impl Into[JsonValue] for DapScope {
     into :: (&Self) -> JsonValue {
         json := Table[string, JsonValue].create(strings_equal)
         json["name"] = JsonValue.JsonString(self.name.clone())
-        json["presentationHint"] = JsonValue.JsonString(self.presentation_hint.clone())
+        if self.presentation_hint == .Some {
+            json["presentationHint"] = JsonValue.JsonString(self.presentation_hint.Some.clone())
+        }
         json["variablesReference"] = JsonValue.JsonNumber(cast(double) self.variables_reference)
         return JsonValue.JsonObject(json)
     }

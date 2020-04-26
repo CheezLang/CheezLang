@@ -30,6 +30,7 @@ use import interpreter
 use import jobs
 use import lexer
 use import parser
+use import scope
 use import string_database
 use import value
 
@@ -286,27 +287,6 @@ print_string :: (interp: ^Interpreter) {
     g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, string)]), "console")
 }
 
-print_int :: (interp: ^Interpreter) {
-    frame := interp.top_frame()
-    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, int)]), "console")
-}
-
-print_float :: (interp: ^Interpreter) {
-    frame := interp.top_frame()
-    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, f64)]), "console")
-}
-
-print_bool :: (interp: ^Interpreter) {
-    frame := interp.top_frame()
-    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, bool)]), "console")
-}
-
-print_String :: (interp: ^Interpreter) {
-    frame := interp.top_frame()
-    str := frame.get_arg(0, ^String)
-    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [str.slice()]), "console")
-}
-
 debug_break :: (interp: ^Interpreter) {
     g_debug_adapter.debugger.get().pause()
 }
@@ -361,8 +341,8 @@ impl CheezDebugAdapter {
         args := ArgumentsScope.new(debugger.get().current_interp, frame)
         result.add(args.clone().change_type(VariableRef))
 
-        debugger := Variable.new(debugger.get().current_interp, frame, "Debugger".to_owned(), @type_info(CheezDebugAdapter), ^*self)
-        result.add(debugger.change_type(VariableRef))
+        debugger := DebuggerScope.new(debugger.get().current_interp, frame, ^*self)
+        result.add(debugger.clone().change_type(VariableRef))
 
         return result
     }
@@ -376,58 +356,27 @@ impl CheezDebugAdapter {
         main_workspace := compiler.get().get_main_workspace()
 
         // register native functions
-        
-        main_workspace.get().global_scope.define_native_function("get_compiler", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-            frame := interp.top_frame()
-            frame.set_return(g_compiler)
-        }, fn() -> ^Compiler))
-        main_workspace.get().global_scope.define_native_function(
-            "print_string",
-            NativeFunctionWrapper.new(cast(NativeFunction) print_string, fn(string)))
-        main_workspace.get().global_scope.define_native_function(
-            "print",
-            NativeFunctionWrapper.new(cast(NativeFunction) print_String, fn(^String)))
-        main_workspace.get().global_scope.define_native_function(
-            "print_int",
-            NativeFunctionWrapper.new(cast(NativeFunction) print_int, fn(int)))
-        main_workspace.get().global_scope.define_native_function(
-            "print_float",
-            NativeFunctionWrapper.new(cast(NativeFunction) print_float, fn(f64)))
-        main_workspace.get().global_scope.define_native_function(
-            "print_bool",
-            NativeFunctionWrapper.new(cast(NativeFunction) print_bool, fn(bool)))
-        main_workspace.get().global_scope.define_native_function(
-            "debugbreak",
-            NativeFunctionWrapper.new(cast(NativeFunction) debug_break, fn()))
-        //
+        compiler.get().user_defined_builtins.add((
+            "_get_compiler",
+            Symbol.NativeFunc(NativeFunctionWrapper.new(
+                cast(NativeFunction) (interp) => {
+                    frame := interp.top_frame()
+                    frame.set_return(g_compiler)
+                },
+                fn() -> ^Compiler
+            ))
+        ))
 
-        // strings
-        main_workspace.get().global_scope.define_native_function("new_string", NativeFunctionWrapper.new(
-            cast(NativeFunction) (interp) => {
-                frame := interp.top_frame()
-                str := mem.alloc(String)
-                *str = String.empty()
-                frame.set_return(str)
-            },
-            fn() -> ^String)
-        )
-        main_workspace.get().global_scope.define_native_function("append_string", NativeFunctionWrapper.new(
-            cast(NativeFunction) (interp) => {
-                frame := interp.top_frame()
-                str := frame.get_arg(0, ^String)
-                value := frame.get_arg(1, string)
-                str.append_string(value)
-            },
-            fn(^String, string))
-        )
-        main_workspace.get().global_scope.define_native_function("slice", NativeFunctionWrapper.new(
-            cast(NativeFunction) (interp) => {
-                frame := interp.top_frame()
-                str := frame.get_arg(0, ^String)
-                frame.set_return(str.slice())
-            },
-            fn(^String) -> string)
-        )
+        compiler.get().user_defined_builtins.add((
+            "_print_string",
+            Symbol.NativeFunc(NativeFunctionWrapper.new(cast(NativeFunction) print_string, fn(string)))
+        ))
+
+        compiler.get().user_defined_builtins.add((
+            "_debugbreak",
+            Symbol.NativeFunc(NativeFunctionWrapper.new(cast(NativeFunction) debug_break, fn()))
+        ))
+        //
 
         //
         compiler.get().code_runner = debugger.clone().change_type(CodeRunner)
@@ -661,19 +610,71 @@ VariableRef :: trait {
     interp  : ^Interpreter
     frame   : int
     name    : String
-    hint    : String
+    hint    : Option[String]
     index   : int
 
     get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]];
 }
 
-ArgumentsScope :: struct VariableRef {
-
+DebuggerScope :: struct VariableRef {
+    debug_adapter : ^CheezDebugAdapter
+    debugger      : ^Debugger
+    compiler      : ^Compiler
 }
+
+impl DebuggerScope {
+    new :: (interp: ^Interpreter, frame: int, debug_adapter: ^CheezDebugAdapter) -> Rc[DebuggerScope] {
+        return Rc[DebuggerScope].new(DebuggerScope(
+            interp          = interp
+            frame           = frame
+            name            = "Debugger".to_string()
+            hint            = None
+            index           = -1
+            debug_adapter   = debug_adapter
+            debugger        = ^*debug_adapter.debugger.get()
+            compiler        = ^*debug_adapter.compiler.get()
+        ))
+    }
+}
+
+impl VariableRef for DebuggerScope {
+    get_variables :: (&Self, start: int, count: int) -> Array[Rc[VariableRef]] {
+        result := Array[Rc[VariableRef]].create()
+
+        result.add(
+            Variable.new(
+                debug_adapter.debugger.get().current_interp, frame, "DebugAdapter".to_owned(), @type_info(CheezDebugAdapter), debug_adapter
+            ).change_type(VariableRef))
+
+        result.add(
+            Variable.new(
+                debug_adapter.debugger.get().current_interp, frame, "Debugger".to_owned(), @type_info(Debugger), debugger
+            ).change_type(VariableRef))
+
+        result.add(
+            Variable.new(
+                debug_adapter.debugger.get().current_interp, frame, "Compiler".to_owned(), @type_info(Compiler), compiler
+            ).change_type(VariableRef))
+
+        result.add(
+            Variable.new(
+                debug_adapter.debugger.get().current_interp, frame, "Interpreter".to_owned(), @type_info(Interpreter), debug_adapter.debugger.get().current_interp
+            ).change_type(VariableRef))
+
+        result.add(
+            Variable.new(
+                debug_adapter.debugger.get().current_interp, frame, "Current Function".to_owned(), @type_info(CBCFunction), debug_adapter.debugger.get().current_interp.top_frame().func
+            ).change_type(VariableRef))
+
+        return result
+    }
+}
+
+ArgumentsScope :: struct VariableRef {}
 
 impl ArgumentsScope {
     new :: (interp: ^Interpreter, frame: int) -> Rc[ArgumentsScope] {
-        return Rc[ArgumentsScope].new(ArgumentsScope(interp, frame, "Arguments".to_string(), "arguments".to_string(), -1))
+        return Rc[ArgumentsScope].new(ArgumentsScope(interp, frame, "Arguments".to_string(), Some("arguments".to_string()), -1))
     }
 }
 
@@ -690,13 +691,11 @@ impl VariableRef for ArgumentsScope {
     }
 }
 
-LocalsScope :: struct VariableRef {
-
-}
+LocalsScope :: struct VariableRef {}
 
 impl LocalsScope {
     new :: (interp: ^Interpreter, frame: int) -> Rc[LocalsScope] {
-        return Rc[LocalsScope].new(LocalsScope(interp, frame, "Locals".to_string(), "locals".to_string(), -1))
+        return Rc[LocalsScope].new(LocalsScope(interp, frame, "Locals".to_string(), Some("locals".to_string()), -1))
     }
 }
 
@@ -787,6 +786,41 @@ impl Variable {
                 }
             }
 
+            TypeInfoReference($ti) -> {
+                match ti.target {
+                    TypeInfoTrait($ti_trait) -> {
+                        trait_ptr := cast(^__Trait)pointer
+                        ti_concrete := trait_ptr.vtable.type_info
+                        if ti_concrete != null {
+                            type_info = ti_concrete
+                            pointer = trait_ptr.value
+                            any_value = Any.from_pointers(pointer, type_info)
+                            named_variables, indexed_variables = match type_info {
+                                TypeInfoStruct($ti)     -> ti.members.length, 0
+                                TypeInfoArray($ti)      -> 0, ti.count
+                                TypeInfoPointer($ti)    -> (if (*cast(^int)pointer) == 0 then 0 else 1, 0)
+                                _ -> 0, 0
+                            }
+                            fmt.format("[{}] &{}", [ti_concrete, any_value])
+                        } else {
+                            type_info = ti.target
+                            pointer = *cast(^^void)pointer
+
+                            any_value = Any.from_pointers(pointer, type_info)
+                            fmt.format("&{}", [any_value])
+                        }
+                    }
+
+                    _ -> {
+                        type_info = ti.target
+                        pointer = *cast(^^void)pointer
+
+                        any_value = Any.from_pointers(pointer, type_info)
+                        fmt.format("&{}", [any_value])
+                    }
+                }
+            }
+
             TypeInfoStruct($ti) -> ti.name.to_owned()
             TypeInfoTrait($ti) -> ti.name.to_owned()
 
@@ -797,7 +831,7 @@ impl Variable {
             interp              = interp
             frame               = frame
             name                = name
-            hint                = String.empty()
+            hint                = None
             index               = -1
             value               = value
             named_variables     = named_variables
@@ -969,5 +1003,14 @@ impl(T: type) VariableProvider for Box[T] {
         result.add(var.change_type(VariableRef))
 
         return result
+    }
+}
+
+impl(T: type) Clone for Option[T] if T : Clone {
+    clone :: (&Self) -> Option[T] {
+        return match self {
+            Some($value) -> Some(value.clone())
+            None -> None
+        }
     }
 }

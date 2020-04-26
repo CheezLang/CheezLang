@@ -15,10 +15,12 @@ use import compiler
 
 Scope :: struct {
     parent      : ^Scope
-    constant    := false
     symbols     := Map[string, Symbol].new()
-
     mutex       := Option[Mutex].None
+
+    // if true, this scope is for code executed at compile time
+    // and thus can only access constant values from parent scopes
+    constant    := false
 }
 
 impl Scope {
@@ -112,6 +114,19 @@ impl Scope {
         return Ok()
     }
 
+    define_symbol :: (&Self, name: string, symbol: Symbol) -> Result[(), ()] {
+        self.lock()
+        defer self.release()
+
+        if symbols.contains(name) {
+            return Err()
+        }
+
+        symbols[name] = symbol
+
+        return Ok()
+    }
+
     get_symbol :: (&Self, name: string) -> Symbol {
         if parent == null {
             self.lock()
@@ -129,6 +144,9 @@ impl Scope {
             Some($sym)  -> *sym
             None        -> {
                 sym := parent.get_symbol(name)
+
+                // if its a constant scope, you can't access variables from outside
+                // @todo: actually you should be able to still access global variables
                 if constant {
                     match &sym {
                         .Decl(_) -> {
@@ -136,6 +154,7 @@ impl Scope {
                         }
                     }
                 }
+
                 return sym
             }
         }

@@ -69,20 +69,6 @@ impl RunCodeJob {
     }
 }
 
-RunFunctionJob :: struct CompilationJob {
-    name            : String
-    function_name   : String
-}
-
-impl RunFunctionJob {
-    new :: (function_name: String) -> RunFunctionJob {
-        return RunFunctionJob(
-            name            = fmt.format("RunFunctionJob '{}'", [function_name])
-            function_name   = function_name
-        )
-    }
-}
-
 CompileGlobalNodeJob :: struct CompilationJob {
     name        : String
     node        : ^AstNode
@@ -268,76 +254,6 @@ impl CompilationJob for RunCodeJob {
     }
 }
 
-impl CompilationJob for RunFunctionJob {
-    get_name :: (&Self) -> string {
-        return name.slice()
-    }
-
-    debug_log :: (&Self, msg: string, args: []^any = []) {
-        if const DEBUG_ENABLED { if DEBUG_JOBS {
-            str := fmt.format(msg, args)
-            g_logger.log("[Workspace {}] [{}] {}", [workspace.id, name.slice(), str])
-        }}
-    }
-
-    execute :: (&Self) {
-        if workspace.error_handler.has_errors() {
-            return
-        }
-        debug_log("Begin execution")
-
-        function := workspace.global_scope.get_symbol(function_name.slice())
-        match function {
-            .Func($function) -> {
-                context := Fiber.user_data(FiberContext)
-                context.interp.comp_call(&*function)
-                match compiler.code_runner.get().run(&*context.interp) {
-                    .Error($msg) -> {
-                        frame := context.interp.top_frame()
-                        location := frame.func.debug_info.get_location_for_ip(frame.ip)
-                        workspace.error_handler.report_error_at(location, "{}", [msg])
-                    }
-                }
-            }
-
-            .ConstDecl($decl) -> {
-                match decl.value {
-                    .Function($function) -> {
-                        context := Fiber.user_data(FiberContext)
-                        context.interp.comp_call(&*function)
-                        match compiler.code_runner.get().run(&*context.interp) {
-                            .Error($msg) -> {
-                                frame := context.interp.top_frame()
-                                location := frame.func.debug_info.get_location_for_ip(frame.ip)
-                                workspace.error_handler.report_error_at(location, "{}", [msg])
-                            }
-                        }
-                    }
-
-                    _ -> {
-                        g_logger.log("failed to run function '{}'", [function_name.slice()])
-                    }
-                }
-                // context := Fiber.user_data(FiberContext)
-                // context.interp.comp_call(&*function)
-                // match compiler.code_runner.get().run(&*context.interp) {
-                //     .Error($msg) -> {
-                //         frame := context.interp.top_frame()
-                //         location := frame.func.debug_info.get_location_for_ip(frame.ip)
-                //         workspace.error_handler.report_error_at(location, "{}", [msg])
-                //     }
-                // }
-            }
-
-            _ -> {
-                g_logger.log("failed to run function '{}'", [function_name.slice()])
-            }
-        }
-
-        debug_log("Done")
-    }
-}
-
 impl CompilationJob for LoadFileJob {
     get_name :: (&Self) -> string {
         return name.slice()
@@ -358,35 +274,33 @@ impl CompilationJob for LoadFileJob {
             Err(_) -> workspace.string_database.intern(path.slice())
         }
 
-        // @todo: thread sync needed because we are accessing compiler.sources
-        if !workspace.sources.contains(full_path) {
-            content := compiler.get_source(full_path)
-            workspace.sources.set(full_path, true)
+        match workspace.load_file(full_path) {
+            Some($file) -> {
+                // todo: workspace.string_database must be protected in multi threading
+                lexer := Lexer.from_string(file.content, &workspace.string_database)
+                lexer.get().location.file = full_path
+                parser := Parser.new(lexer.get(), workspace.error_handler, workspace.ast_allocator, workspace.next_ast_id)
+                workspace.next_ast_id += 0xFFFFFFFF // ?
 
-            // @todo: thread sync needed because we are accessing compiler.sources
-            lexer := Lexer.from_string(content, &workspace.string_database)
-            lexer.get().location.file = full_path
-            parser := Parser.new(lexer.get(), workspace.error_handler, workspace.ast_allocator, workspace.next_ast_id)
-            workspace.next_ast_id += 0xFFFFFFFF // ?
+                loop {
+                    node := parser.parse_node()
+                    if node == null then break
 
-            loop {
-                node := parser.parse_node()
-                if node == null then break
-
-                if const DEBUG_ENABLED { if DUMP_AST {
-                    dump := dump_ast(&*node)
-                    g_logger.log("[{}] {}", [self.name, dump])
-                }}
-                if const DEBUG_ENABLED { if PRINT_AST {
-                    dump := pretty_print_ast(&*node)
+                    if const DEBUG_ENABLED { if DUMP_AST {
+                        dump := dump_ast(&*node)
                         g_logger.log("[{}] {}", [self.name, dump])
-                }}
+                    }}
+                    if const DEBUG_ENABLED { if PRINT_AST {
+                        dump := pretty_print_ast(&*node)
+                            g_logger.log("[{}] {}", [self.name, dump])
+                    }}
 
-                node.scope = workspace.global_scope
-                workspace.add_job(workspace.create_job(CompileGlobalNodeJob.new(node)))
+                    node.scope = file.global_scope
+                    workspace.add_job(workspace.create_job(CompileGlobalNodeJob.new(node)))
+                }
             }
         }
-        
+
         debug_log("Done")
     }
 }

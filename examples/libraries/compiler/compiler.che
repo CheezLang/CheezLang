@@ -83,94 +83,41 @@ compile_files :: (files: []String, thread_count: int) {
     compiler := Compiler.new(thread_count, ^console_error_handler)
     main_workspace := compiler.get().get_main_workspace()
 
-    main_workspace.get().global_scope.define_native_function("get_compiler", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-        frame := interp.top_frame()
-        frame.set_return(g_compiler)
-    }, fn() -> ^Compiler))
-
-    main_workspace.get().global_scope.define_native_function("print_string", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-        frame := interp.top_frame()
-        io.set_console_color(.Green, .Black)
-        io.formatln("{}", [frame.get_arg(0, string)])
-        io.set_console_color(.White, .Black)
-    }, fn(string)))
-    main_workspace.get().global_scope.define_native_function("print_int", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-        frame := interp.top_frame()
-        io.set_console_color(.Green, .Black)
-        io.formatln("{}", [frame.get_arg(0, int)])
-        io.set_console_color(.White, .Black)
-    }, fn(int)))
-    main_workspace.get().global_scope.define_native_function("print_float", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-        frame := interp.top_frame()
-        io.set_console_color(.Green, .Black)
-        io.formatln("{}", [frame.get_arg(0, f64)])
-        io.set_console_color(.White, .Black)
-    }, fn(f64)))
-    main_workspace.get().global_scope.define_native_function("print_bool", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-        frame := interp.top_frame()
-        io.set_console_color(.Green, .Black)
-        io.formatln("{}", [frame.get_arg(0, bool)])
-        io.set_console_color(.White, .Black)
-    }, fn(bool)))
-    main_workspace.get().global_scope.define_native_function("print_array", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-        frame := interp.top_frame()
-        io.set_console_color(.Green, .Black)
-        io.formatln("{}", [frame.get_arg(0, [3]int)])
-        io.set_console_color(.White, .Black)
-    }, fn([3]int)))
-    // main_workspace.get().global_scope.define_native_function("print", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-    //     frame := interp.top_frame()
-    //     io.set_console_color(.Green, .Black)
-    //     io.formatln("{}", [frame.get_arg(0, ^any)])
-    //     io.set_console_color(.White, .Black)
-    // }, fn(^any)))
-
-    main_workspace.get().global_scope.define_native_function("debugbreak", NativeFunctionWrapper.new(
-        cast(NativeFunction) (interp) => {},
-        fn())
-    )
-
-    // strings
-    main_workspace.get().global_scope.define_native_function("new_string", NativeFunctionWrapper.new(
-        cast(NativeFunction) (interp) => {
-            frame := interp.top_frame()
-            str := mem.alloc(String)
-            *str = String.empty()
-            frame.set_return(str)
-        },
-        fn() -> ^String)
-    )
-    main_workspace.get().global_scope.define_native_function("append_string", NativeFunctionWrapper.new(
-        cast(NativeFunction) (interp) => {
-            frame := interp.top_frame()
-            str := frame.get_arg(0, ^String)
-            value := frame.get_arg(1, string)
-            str.append_string(value)
-        },
-        fn(^String, string))
-    )
-    main_workspace.get().global_scope.define_native_function("print", NativeFunctionWrapper.new(
-        cast(NativeFunction) (interp) => {
-            frame := interp.top_frame()
-            str := frame.get_arg(0, ^String)
-            io.set_console_color(.Green, .Black)
-            io.formatln("{}", [str.slice()])
-            io.set_console_color(.White, .Black)
-        },
-        fn(^String))
-    )
-    main_workspace.get().global_scope.define_native_function("slice", NativeFunctionWrapper.new(
-        cast(NativeFunction) (interp) => {
-            frame := interp.top_frame()
-            str := frame.get_arg(0, ^String)
-            frame.set_return(str.slice())
-        },
-        fn(^String) -> string)
-    )
-    
     for(by_ref=true) file in files {
         main_workspace.get().create_and_add_job(LoadFileJob.new(file.clone()))
     }
+
+    compiler.get().user_defined_builtins.add((
+        "_get_compiler",
+        Symbol.NativeFunc(NativeFunctionWrapper.new(
+            cast(NativeFunction) (interp) => {
+                frame := interp.top_frame()
+                frame.set_return(g_compiler)
+            },
+            fn() -> ^Compiler
+        ))
+    ))
+
+    compiler.get().user_defined_builtins.add((
+        "_print_string",
+        Symbol.NativeFunc(NativeFunctionWrapper.new(
+            cast(NativeFunction) (interp) => {
+                frame := interp.top_frame()
+                io.set_console_color(.Green, .Black)
+                io.formatln("{}", [frame.get_arg(0, string)])
+                io.set_console_color(.White, .Black)
+            },
+            fn(string)
+        ))
+    ))
+
+    compiler.get().user_defined_builtins.add((
+        "_debugbreak",
+        Symbol.NativeFunc(NativeFunctionWrapper.new(
+            cast(NativeFunction) (interp) => {},
+            fn()
+        ))
+    ))
 
     start := get_time_milliseconds()
     compiler.get().start_compilation()
@@ -204,6 +151,12 @@ impl Equatable[FunctionTypeWrapper] for FunctionTypeWrapper {
     }
 }
 
+SourceFile :: struct {
+    path            : string
+    content         : string
+    global_scope    : ^Scope
+}
+
 Workspace :: struct {
     id              : int
     _compiler       : ^void
@@ -219,7 +172,6 @@ Workspace :: struct {
     error_handler   : ^ErrorHandler
     string_database : StringDatabase
 
-    global_scope    : ^Scope = null
     all_nodes       := Array[^AstNode].create()
 
     structs         := Map[int, ^AstStruct].new()
@@ -230,7 +182,7 @@ Workspace :: struct {
 
     // filename -> filecontent
     // contains all source files loaded during compilation
-    sources         := Map[string, bool].new()
+    sources         := Map[string, SourceFile].new()
 
     native_function_wrappers := Map[FunctionTypeWrapper, NativeFunctionWrapper2].new()
 
@@ -245,7 +197,7 @@ Workspace :: struct {
 }
 
 impl Workspace {
-    new :: (id: int, compiler: &Compiler, error_handler: ^ErrorHandler, create_mutexes: bool) -> Rc[Workspace] {
+    new :: (id: int, compiler: &Compiler, error_handler: ^ErrorHandler) -> Rc[Workspace] {
         AllocatorType :: BumpAllocator
         create_allocator :: (size: uint) -> ^mem.Allocator {
             allocator := mem.alloc(AllocatorType)
@@ -274,10 +226,7 @@ impl Workspace {
             type_allocator  = create_allocator(0x1000) // 4 Kb
         ))
 
-        workspace.get().global_scope = workspace.get().new_scope()
-        workspace.get().define_builtin_types(&*workspace.get().global_scope)
-
-        // @todo: make these paths not absolute and include workspace id or name
+        // @todo: make these paths not absolute
         string_sources_file := fmt.format("d:\dev\CheezLang\gen\int\string_sources_{}.che", [id])
         workspace.get().string_sources_file = match fs.get_full_path(string_sources_file.slice()) {
             Ok($path) -> path
@@ -286,11 +235,6 @@ impl Workspace {
         compiler.sources.set(workspace.get().string_sources_file.slice(), "".to_owned())
         workspace.get().string_location.file = workspace.get().string_sources_file.slice()
         fs.write_file(workspace.get().string_sources_file.slice(), "")
-
-        // create mutex for global scope if thread_count > 1
-        if create_mutexes {
-            workspace.get().global_scope.mutex = Some(Mutex.new())
-        }
 
         return workspace
     }
@@ -343,6 +287,10 @@ impl Workspace {
         register_native_function_type(fn(^String, string) -> ^String)
         register_native_function_type(fn(^Compiler) -> ^Workspace)
         register_native_function_type(fn(^Workspace, string) -> ^CompilationJob)
+
+        for user_def_sym in &get_compiler().user_defined_builtins {
+            scope.define_symbol(user_def_sym.name, user_def_sym.symbol)
+        }
     }
 
     lock :: (&Self, mutex: &Mutex) {
@@ -351,6 +299,32 @@ impl Workspace {
 
     release :: (&Self, mutex: &Mutex) {
         mutex.release()
+    }
+
+    load_file :: (&Self, path: string) -> Option[^SourceFile] {
+        self.lock(&mutex)
+        defer self.release(&mutex)
+
+        return match sources.get(path) {
+            Some($source) -> None
+            None -> {
+                content := get_compiler().get_source(path)
+                sources.set(path, SourceFile(
+                    path            = path
+                    content         = content
+                    global_scope    = new_scope()
+                ))
+                result := ^*sources.at(path)
+
+                define_builtin_types(&*result.global_scope)
+                // create mutex if multithreding enabled
+                if get_compiler().threads.count() > 1 {
+                    result.global_scope.mutex = Some(Mutex.new())
+                }
+
+                Some(result)
+            }
+        }
     }
 
     add_string_source :: (&Self, content: string) -> Rc[Lexer] {
@@ -580,6 +554,9 @@ Compiler :: struct {
     // filename -> filecontent
     // contains all source files loaded during compilation
     sources         := Map[string, String].new()
+
+    // 
+    user_defined_builtins := Array[(name: string, symbol: Symbol)].create()
 }
 
 impl Drop for Compiler {
@@ -617,11 +594,12 @@ impl Compiler {
 
 
         // create main workspace
-        comp.get().workspaces.add(Workspace.new(0, comp.get(), error_handler, thread_count > 0))
+        comp.get().workspaces.add(Workspace.new(0, comp.get(), error_handler))
 
         for 0..thread_count {
             comp.get().threads.add(Thread.new(cast comp.get().thread_func))
         }
+
         return comp
     }
 
@@ -667,18 +645,7 @@ impl Compiler {
 
     create_workspace :: (&Self) -> ^Workspace {
         _ := create_workspace
-        workspaces.add(Workspace.new(workspaces.count(), self, global_error_handler, threads.count() > 0))
-
-        workspaces.peek_last().get().global_scope.define_native_function("get_compiler", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-            frame := interp.top_frame()
-            frame.set_return(g_compiler)
-        }, fn() -> ^Compiler))
-        workspaces.peek_last().get().global_scope.define_native_function("print_string", NativeFunctionWrapper.new(cast(NativeFunction) (interp) => {
-            frame := interp.top_frame()
-            io.set_console_color(.Green, .Black)
-            io.formatln("{}", [frame.get_arg(0, string)])
-            io.set_console_color(.White, .Black)
-        }, fn(string)))
+        workspaces.add(Workspace.new(workspaces.count(), self, global_error_handler))
         return ^*workspaces.peek_last().get()
     }
 }

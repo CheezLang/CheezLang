@@ -1,4 +1,25 @@
+
+
 _ :: Main()
 Main :: () {
-    print_string("hi")
+    a := 0
+    print_things(
+        get_a(),
+        get_b()
+    )
+}
+
+get_a :: () -> string {
+    _print_string("get_a")
+    return "hi"
+}
+
+get_b :: () -> string {
+    _print_string("get_b")
+    return "lol"
+}
+
+print_things :: (a: string, b: string) {
+    _print_string(a)
+    _print_string(b)
 }
