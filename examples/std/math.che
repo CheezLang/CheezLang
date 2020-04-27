@@ -7,11 +7,9 @@ abs   :: (i: $T) -> T { return if i < 0 {-i} else {i} }
 fabsf :: (f: float) -> float;
 fabs  :: (f: double) -> double;
 
-max   :: (a: $T, b: T) -> T { return if a >= b then a else b }
 fmaxf :: (f1: float, f2: float) -> float;
 fmax  :: (f1: double, f2: double) -> double;
 
-min   :: (a: $T, b: T) -> T { return if a <= b then a else b }
 fminf :: (f1: float, f2: float) -> float;
 fmin  :: (f1: double, f2: double) -> double;
 

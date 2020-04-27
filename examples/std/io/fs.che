@@ -8,12 +8,13 @@ if const @is_os("linux") {
     linux :: import std.os.linux
 }
 
-use import std.mem.allocator
 use import std.io.file
+use import std.mem.allocator
 use import std.string
 use import std.util
-io :: import std.io
+
 C  :: import std.c
+io :: import std.io
 
 #export_scope
 FsError :: enum {
@@ -130,6 +131,40 @@ get_working_directory :: () -> Result[String, ()] {
     buff : [512]u16 = default
     length := GetCurrentDirectoryW(cast buff.length, buff.data)
     return String.from_utf16(buff[..int(length)])
+}
+
+Path :: struct {}
+
+impl Path {
+    get_containing_directory :: (path: string) -> string {
+        index_slash     := path.last_index_of('/')
+        index_backslash := path.last_index_of('\')
+        index := max(index_slash, index_backslash)
+        if index < 0 {
+            return path
+        }
+        return path[.. index]
+    }
+
+    get_file_name :: (path: string) -> string {
+        index_slash     := path.last_index_of('/')
+        index_backslash := path.last_index_of('\')
+        index := max(index_slash, index_backslash)
+        if index < 0 {
+            return path
+        }
+        return path[index+1 ..]
+    }
+
+    concat :: (path1: string, path2: string) -> String {
+        result := String.with_capacity(path1.bytes.length + path2.bytes.length + 1)
+        result += path1
+        if !path1.ends_with("/") and !path1.ends_with("\") {
+            result += "/"
+        }
+        result += path2
+        return result
+    }
 }
 
 #file_scope

@@ -1,25 +1,20 @@
+// use import basic_cheez2
+// bc :: import basic_cheez2
+std :: import "std.che"
+uiae :: import "basic_cheez2.che"
 
-
-_ :: Main()
+// _ :: Main()
 Main :: () {
-    a := 0
-    print_things(
-        get_a(),
-        get_b()
-    )
+    std.print_string("Main")
+
+    std.print_string("uiae.test()")
+    uiae.test()
+    std.print_string("uiae.uiae.test()")
+    uiae.uiae.test()
+    std.print_string("uiae.uiae.uiae.test()")
+    uiae.uiae.uiae.test()
 }
 
-get_a :: () -> string {
-    _print_string("get_a")
-    return "hi"
-}
-
-get_b :: () -> string {
-    _print_string("get_b")
-    return "lol"
-}
-
-print_things :: (a: string, b: string) {
-    _print_string(a)
-    _print_string(b)
+test :: () {
+    std.print_string("basic_cheez")
 }

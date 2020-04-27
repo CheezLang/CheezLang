@@ -4,10 +4,28 @@ use import std.string
 #export_scope
 
 TypeInfoError :: struct TypeInfo {}
+__ti_type_info_error := @type_info(TypeInfoError)
+
 TypeInfoPoly :: struct TypeInfo {}
+__ti_type_info_poly := @type_info(TypeInfoPoly)
+
+TypeInfoModule :: struct TypeInfo {}
+__ti_type_info_module := @type_info(TypeInfoModule)
+
+impl Printable for TypeInfoError {
+    print :: (&Self, str: &String, format: string) {
+        str += "error"
+    }
+}
 
 impl Printable for TypeInfoPoly {
     print :: (&Self, str: &String, format: string) {
         str += "poly"
+    }
+}
+
+impl Printable for TypeInfoModule {
+    print :: (&Self, str: &String, format: string) {
+        str += "module"
     }
 }

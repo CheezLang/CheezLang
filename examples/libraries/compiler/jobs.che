@@ -292,16 +292,90 @@ impl CompilationJob for LoadFileJob {
                     }}
                     if const DEBUG_ENABLED { if PRINT_AST {
                         dump := pretty_print_ast(&*node)
-                            g_logger.log("[{}] {}", [self.name, dump])
+                        g_logger.log("[{}] {}", [self.name, dump])
                     }}
 
                     node.scope = file.global_scope
-                    workspace.add_job(workspace.create_job(CompileGlobalNodeJob.new(node)))
+                    file.nodes.add(node)
+
+                    match node {
+                        AstConstDecl($decl) -> {
+                            define_const_decl(&*decl)
+                            AstNode.set_flags(&*decl, .IsDefinedInScope)
+                        }
+                        AstDecl($decl) -> {
+                            define_decl(&*decl)
+                            AstNode.set_flags(&*decl, .IsDefinedInScope)
+                        }
+                    }
+                }
+
+                for node in &file.nodes {
+                    workspace.add_job(workspace.create_job(CompileGlobalNodeJob.new(*node)))
                 }
             }
         }
 
         debug_log("Done")
+    }
+
+    define_decl :: (&Self, decl: &AstDecl) {
+        decl.name = match &*decl.pattern {
+            AstIdentifier($id) -> id.name
+            _ -> {
+                workspace.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
+                return
+            }
+        }
+
+        // define symbol but only if not _
+        if decl.name != "_" {
+            match decl.scope.define_decl(decl.name, decl) {
+                Err() -> {
+                    workspace.error_handler.report_error_at(decl.pattern.location, "A symbol with this name already exists in this scope")
+                }
+            }
+        }
+    }
+
+    define_const_decl :: (&Self, decl: &AstConstDecl) {
+        decl.value_expr.scope = decl.scope
+
+        name := match decl.pattern {
+            AstIdentifier($id) -> id.name
+            _ -> {
+                workspace.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
+                return
+            }
+        }
+
+        // set name of value expr if its a function or struct/trait/enum
+        match decl.value_expr {
+            AstFunction($func) -> {
+                func.name = name
+            }
+            AstStruct($str) -> {
+                str.name = name
+            }
+            AstEnum($en) -> {
+                en.name = name
+            }
+            AstTrait($tr) -> {
+                tr.name = name
+            }
+            AstPoly($poly) -> {
+                poly.name = name
+            }
+        }
+
+        // define symbol but only if not _
+        if name != "_" {
+            match decl.scope.define_const_decl(name, decl) {
+                Err() -> {
+                    workspace.error_handler.report_error_at(decl.pattern.location, "A symbol with this name already exists in this scope")
+                }
+            }
+        }
     }
 }
 
@@ -342,6 +416,7 @@ impl CompileNode {
         }
         node.scope = workspace.new_scope(node.scope, constant = true)
         node <- compile_node(node, ctx)
+        handle_poison(node, node)
 
         if node.value == .None {
             code_gen := ByteCodeGenerator.new(&workspace.string_database, &*workspace.error_handler, workspace.bc_allocator)
@@ -405,6 +480,7 @@ impl CompileNode {
             AstFunction($func)      -> compile_function(func, ctx)
             AstIdentifier($id)      -> compile_identifier(id, ctx)
             AstIf($iff)             -> compile_if(iff, ctx)
+            AstImport($imp)         -> compile_import(imp, ctx)
             AstIndex($index)        -> compile_index(index, ctx)
             AstLoop($lop)           -> compile_loop(lop, ctx)
             AstNumberLiteral($num)  -> compile_number(num, ctx)
@@ -540,6 +616,16 @@ impl CompileNode {
                 workspace.error_handler.report_error_at(dot.name.location, "Struct '{}' has no member or function '{}'", [ti.name, name])
                 poison(dot)
                 return dot
+            }
+
+            TypeInfoModule(_) -> {
+                @assert(dot.sub.value == .Module)
+                file := dot.sub.value.Module
+
+                dot.name.scope = file.global_scope
+                compile_node(dot.name, ctx)
+                dot.typ = dot.name.typ
+                dot.value = dot.name.value
             }
 
             _ -> {
@@ -1095,6 +1181,60 @@ impl CompileNode {
         }
 
         return iff
+    }
+
+    compile_import :: (&Self, node: &AstImport, ctx: CNContext) -> &AstNode {
+        match node.path {
+            AstString($str) -> {
+                str.typ = @type_info(void)
+
+                current_file_path := node.location.file
+                // g_logger.log("current_file_path: '{}'", [current_file_path])
+                current_directory := fs.Path.get_containing_directory(current_file_path)
+                // g_logger.log("current_directory: '{}'", [current_directory])
+                import_path := fs.Path.concat(current_directory, str.string_value)
+                match fs.get_full_path(import_path.slice()) {
+                    Ok($path) -> {
+                        import_path = path
+                    }
+                }
+                // import_path := fs.Path.concat(current_directory, str.string_value)
+                // g_logger.log("import_path: '{}'", [import_path])
+
+                match workspace.get_file(import_path.slice()) {
+                    Some($file) -> {
+                        node.typ = workspace.new_module_type()
+                        node.value = .Module(file)
+                        return node
+                    }
+                }
+
+                job := cast(^LoadFileJob) workspace.create_and_add_job(LoadFileJob.new(import_path.clone()))
+                wait_until(job.done, {})
+
+                match workspace.get_file(import_path.slice()) {
+                    Some($file) -> {
+                        node.typ = workspace.new_module_type()
+                        node.value = .Module(file)
+                        return node
+                    }
+
+                    None -> {
+                        workspace.error_handler.report_error_at(node.path.location, "Can't find file '{}' (Searched for '{}')", [str.string_value, import_path])
+                        poison(node)
+                        return node
+                    }
+                }
+            }
+
+            _ -> {
+                workspace.error_handler.report_error_at(node.path.location, "Invalid import path")
+                poison(node)
+                return node
+            }
+        }
+
+        return node
     }
 
     compile_index :: (&Self, node: &AstIndex, ctx: CNContext) -> &AstNode {
@@ -1779,20 +1919,22 @@ impl CompileNode {
 
     compile_decl :: (&Self, decl: &AstDecl, ctx: CNContext) -> &AstNode {
         decl.typ = @type_info(void)
+        if !AstNode.has_flags(decl, .IsDefinedInScope) {
 
-        decl.name = match &*decl.pattern {
-            AstIdentifier($id) -> id.name
-            _ -> {
-                workspace.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
-                return decl
+            decl.name = match &*decl.pattern {
+                AstIdentifier($id) -> id.name
+                _ -> {
+                    workspace.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
+                    return decl
+                }
             }
-        }
 
-        // define symbol but only if not _
-        if decl.name != "_" {
-            match decl.scope.define_decl(decl.name, decl) {
-                Err() -> {
-                    workspace.error_handler.report_error_at(decl.pattern.location, "A symbol with this name already exists in this scope")
+            // define symbol but only if not _
+            if decl.name != "_" {
+                match decl.scope.define_decl(decl.name, decl) {
+                    Err() -> {
+                        workspace.error_handler.report_error_at(decl.pattern.location, "A symbol with this name already exists in this scope")
+                    }
                 }
             }
         }
@@ -1867,40 +2009,43 @@ impl CompileNode {
     compile_const_decl :: (&Self, decl: &AstConstDecl, ctx: CNContext) -> &AstNode {
         // debug_log("compile_const_decl")
         decl.typ = @type_info(void)
-        decl.value_expr.scope = decl.scope
 
-        name := match decl.pattern {
-            AstIdentifier($id) -> id.name
-            _ -> {
-                workspace.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
-                return decl
-            }
-        }
+        if !AstNode.has_flags(decl, .IsDefinedInScope) {
+            decl.value_expr.scope = decl.scope
 
-        // set name of value expr if its a function or struct/trait/enum
-        match decl.value_expr {
-            AstFunction($func) -> {
-                func.name = name
+            name := match decl.pattern {
+                AstIdentifier($id) -> id.name
+                _ -> {
+                    workspace.error_handler.report_error_at(decl.location, "Non-identifier patterns not implemented yet")
+                    return decl
+                }
             }
-            AstStruct($str) -> {
-                str.name = name
-            }
-            AstEnum($en) -> {
-                en.name = name
-            }
-            AstTrait($tr) -> {
-                tr.name = name
-            }
-            AstPoly($poly) -> {
-                poly.name = name
-            }
-        }
 
-        // define symbol but only if not _
-        if name != "_" {
-            match decl.scope.define_const_decl(name, decl) {
-                Err() -> {
-                    workspace.error_handler.report_error_at(decl.pattern.location, "A symbol with this name already exists in this scope")
+            // set name of value expr if its a function or struct/trait/enum
+            match decl.value_expr {
+                AstFunction($func) -> {
+                    func.name = name
+                }
+                AstStruct($str) -> {
+                    str.name = name
+                }
+                AstEnum($en) -> {
+                    en.name = name
+                }
+                AstTrait($tr) -> {
+                    tr.name = name
+                }
+                AstPoly($poly) -> {
+                    poly.name = name
+                }
+            }
+
+            // define symbol but only if not _
+            if name != "_" {
+                match decl.scope.define_const_decl(name, decl) {
+                    Err() -> {
+                        workspace.error_handler.report_error_at(decl.pattern.location, "A symbol with this name already exists in this scope")
+                    }
                 }
             }
         }

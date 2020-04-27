@@ -53,7 +53,6 @@ impl Instrumentor {
     init :: (thread_safe: bool) {
         @assert(global_instrumantor == null)
 
-
         m : ^Mutex = if thread_safe {
             m := alloc(Mutex)
             *m = Mutex.new()

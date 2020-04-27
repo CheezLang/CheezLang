@@ -604,11 +604,25 @@ impl string {
     }
 
     index_of :: (Self, ch: char) -> int {
+        // @todo: properly handle utf8
         bytes := self.bytes
         for i in 0..bytes.length {
             if *bytes[i] == u8(ch) {
                 return i
             }
+        }
+
+        return -1
+    }
+
+    last_index_of :: (Self, ch: char) -> int {
+        ch_bytes, ch_len := Utf8.encode(ch)
+
+        for i in self.bytes.length - int(ch_len) .. 0 #label outer {
+            for k in 0 .. int(ch_len) {
+                if *self.bytes[i + k] != *ch_bytes[k] then continue outer
+            }
+            return i
         }
 
         return -1

@@ -785,3 +785,6 @@ pointer_add_sized :: (ptr: ^$T, amount: int) -> ^T {
 pointer_add :: (ptr: ^$T, amount: int) -> ^T {
     return cast(^T)((cast(int) ptr) + amount)
 }
+
+max :: (a: $T, b: T) -> T { return if a >= b then a else b }
+min :: (a: $T, b: T) -> T { return if a <= b then a else b }

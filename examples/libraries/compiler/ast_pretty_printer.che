@@ -469,6 +469,7 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
         }
 
         AstConstDecl($decl) -> {
+            // g_logger.log("pretty_print_typed_ast_helper AstConstDecl")
             pretty_print_typed_ast_helper(result, decl.pattern)
 
             fmt.format_into(result, " : {} : ", [decl.var_type])
@@ -667,6 +668,7 @@ pretty_print_typed_ast_helper :: (result: &String, node: &AstNode) {
         }
 
         AstImport($imp) -> {
+            // g_logger.log("pretty_print_typed_ast_helper AstImport")
             result += "import "
             pretty_print_typed_ast_helper(result, imp.path)
         }

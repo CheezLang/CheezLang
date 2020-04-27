@@ -13,6 +13,7 @@ use import value
 AstNodeFlags :: enum #flags {
     None
     LValue
+    IsDefinedInScope
 }
 
 __uiaeuiaeuiae := @type_info(AstNodeFlags)

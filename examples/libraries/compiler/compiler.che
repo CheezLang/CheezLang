@@ -155,6 +155,7 @@ SourceFile :: struct {
     path            : string
     content         : string
     global_scope    : ^Scope
+    nodes           := Array[^AstNode].create()
 }
 
 Workspace :: struct {
@@ -301,6 +302,13 @@ impl Workspace {
         mutex.release()
     }
 
+    get_file :: (&Self, path: string) -> Option[^SourceFile] {
+        return match sources.get(path) {
+            Some($file) -> Some(file)
+            None -> None
+        }
+    }
+
     load_file :: (&Self, path: string) -> Option[^SourceFile] {
         self.lock(&mutex)
         defer self.release(&mutex)
@@ -408,6 +416,17 @@ impl Workspace {
         result := mem.alloc(T, type_allocator)
         *result = type_info
         return result
+    }
+
+    new_module_type :: (&Self) -> ^TypeInfo {
+        typ := self.new_type(TypeInfoModule(
+            size        = 0
+            alignment   = 1
+            impl_funcs  = []
+            traits      = []
+        ))
+
+        return typ
     }
 
     poly_type :: (&Self) -> ^TypeInfo {

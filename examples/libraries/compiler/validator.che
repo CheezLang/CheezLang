@@ -197,6 +197,13 @@ validate_node :: (node: &AstNode, error_handler: ^ErrorHandler) -> bool {
             }
         }
 
+        AstImport($node) -> {
+            assert("AstImport", node.typ != null)
+            // if !validate_node(node.path, error_handler) {
+            //     return false
+            // }
+        }
+
         AstIndex($node) -> {
             assert("AstIndex", node.typ != null)
             if !validate_node(node.sub, error_handler) {

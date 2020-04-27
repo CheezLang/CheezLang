@@ -31,20 +31,13 @@ import compiler.cli
 
 // use import std.string
 // io :: import std.io
-// C :: import std.c
-// mem :: import std.mem.allocator
-
-// get_ref :: (r: &int) -> &int {
-//     return r
-// }
 
 // Main :: () {
-//     a := 5
-//     b := 10
-//     r := get_ref(&a)
-//     io.println(*r)
-//     r = get_ref(&b)
-//     io.println(*r)
+//     path := "D:\dev\CheezLang\data\"
+//     last_index := path.last_index_of('\')
+//     io.println(last_index)
+//     io.formatln("'{}'", [path[..last_index]])
+//     io.formatln("'{}'", [path[last_index+1 ..]])
 // }
 
 // use import std.mem.allocator
