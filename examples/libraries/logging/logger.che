@@ -27,7 +27,11 @@ ConsoleLogger :: struct {}
 impl Logger for ConsoleLogger {
     log :: (&Self, format: string, args: []^any = [], prefix: string = "") {
         msg := fmt.format(format, args)
-        io.formatln("[{}] [{}] {}", [Thread.current().id, prefix, msg])
+        if prefix != "" {
+            io.formatln("[{}] [{}] {}", [Thread.current().id, prefix, msg])
+        } else {
+            io.formatln("[{}] {}", [Thread.current().id, msg])
+        }
     }
 }
 

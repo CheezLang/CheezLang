@@ -1178,7 +1178,7 @@ impl Parser {
                 }
             }
 
-            error_handler.report_error_at(tok.location, "Unexpeted token {}, expected {}", [tok, typ])
+            error_handler.report_error_at(tok.location, "Unexpected token {}, expected {}", [tok.typ, typ])
             lexer.skip_line()
             return *tok
         }

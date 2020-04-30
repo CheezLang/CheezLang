@@ -3,9 +3,9 @@
 std :: import "std.che"
 uiae :: import "basic_cheez2.che"
 
-// _ :: Main()
+_ :: Main()
 Main :: () {
-    std.print_string("Main")
+    std.print_string("Main()")
 
     std.print_string("uiae.test()")
     uiae.test()

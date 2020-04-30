@@ -275,7 +275,12 @@ impl CompilationJob for LoadFileJob {
         }
 
         match workspace.load_file(full_path) {
-            Some($file) -> {
+            Err(_) -> {
+                workspace.error_handler.report_error("Failed to load file '{}'", [full_path])
+                return
+            }
+
+            Ok($file) -> match file { Some($file) -> {
                 // todo: workspace.string_database must be protected in multi threading
                 lexer := Lexer.from_string(file.content, &workspace.string_database)
                 lexer.get().location.file = full_path
@@ -313,7 +318,7 @@ impl CompilationJob for LoadFileJob {
                 for node in &file.nodes {
                     workspace.add_job(workspace.create_job(CompileGlobalNodeJob.new(*node)))
                 }
-            }
+            }}
         }
 
         debug_log("Done")
@@ -450,6 +455,7 @@ impl CompileNode {
     }
 
     compile_node :: (&Self, node: &AstNode, ctx: CNContext) -> &AstNode {
+        // g_logger.log("compile_node"
         if node.typ != null {
             return node
         }
@@ -531,6 +537,7 @@ impl CompileNode {
                 handle_poison(dot, *dot.sub)
             }
         }
+
         name := dot.name.name
         match dot.sub.typ {
             TypeInfoArray($ti) -> {
@@ -1188,43 +1195,56 @@ impl CompileNode {
             AstString($str) -> {
                 str.typ = @type_info(void)
 
-                current_file_path := node.location.file
-                // g_logger.log("current_file_path: '{}'", [current_file_path])
-                current_directory := fs.Path.get_containing_directory(current_file_path)
-                // g_logger.log("current_directory: '{}'", [current_directory])
-                import_path := fs.Path.concat(current_directory, str.string_value)
-                match fs.get_full_path(import_path.slice()) {
-                    Ok($path) -> {
-                        import_path = path
+                // g_logger.log("current_file_path: '{}'", [node.location.file])
+                search_paths := Array[string].create()
+                search_paths.add(fs.Path.get_containing_directory(node.location.file))
+                search_paths.add(compiler.module_path)
+
+                for search_path in &search_paths {
+                    // g_logger.log("searching in '{}'", [*search_path])
+                    import_path := fs.Path.concat(*search_path, str.string_value)
+                    // g_logger.log("import path  : '{}'", [import_path])
+                    import_path_n := fs.Path.normalize(import_path.slice())
+                    // g_logger.log("import path n: '{}'", [import_path_n])
+                    // match fs.get_full_path(import_path.slice()) {
+                    //     Ok($path) -> {
+                    //         import_path = path
+                    //     }
+                    // }
+                    // import_path := fs.Path.concat(current_directory, str.string_value)
+                    // g_logger.log("import_path: '{}'", [import_path])
+
+                    match compiler.get_source(import_path_n.slice()) {
+                        Err(_) -> continue
+                    }
+                    match workspace.get_file(import_path_n.slice()) {
+                        Some($file) -> {
+                            node.typ = workspace.new_module_type()
+                            node.value = .Module(file)
+                            return node
+                        }
+                    }
+
+                    job := cast(^LoadFileJob) workspace.create_and_add_job(LoadFileJob.new(import_path_n.clone()))
+                    wait_until(job.done, {})
+
+                    match workspace.get_file(import_path_n.slice()) {
+                        Some($file) -> {
+                            node.typ = workspace.new_module_type()
+                            node.value = .Module(file)
+                            return node
+                        }
                     }
                 }
-                // import_path := fs.Path.concat(current_directory, str.string_value)
-                // g_logger.log("import_path: '{}'", [import_path])
 
-                match workspace.get_file(import_path.slice()) {
-                    Some($file) -> {
-                        node.typ = workspace.new_module_type()
-                        node.value = .Module(file)
-                        return node
-                    }
-                }
-
-                job := cast(^LoadFileJob) workspace.create_and_add_job(LoadFileJob.new(import_path.clone()))
-                wait_until(job.done, {})
-
-                match workspace.get_file(import_path.slice()) {
-                    Some($file) -> {
-                        node.typ = workspace.new_module_type()
-                        node.value = .Module(file)
-                        return node
-                    }
-
-                    None -> {
-                        workspace.error_handler.report_error_at(node.path.location, "Can't find file '{}' (Searched for '{}')", [str.string_value, import_path])
-                        poison(node)
-                        return node
-                    }
-                }
+                workspace.error_handler.report_error_at(
+                    node.path.location,
+                    "Can't find file '{}'",
+                    [str.string_value],
+                    details = [("Searched in '{}'", cast([]^any)[search_paths.slice()])]
+                )
+                poison(node)
+                return node
             }
 
             _ -> {
@@ -1785,6 +1805,8 @@ impl CompileNode {
         block.sub_scope = workspace.new_scope(block.scope)
 
         for child in &block.children {
+            // g_logger.log("compile_block {}", [it_index])
+
             child.scope = block.sub_scope
 
             expected : ^TypeInfo = if it_index == block.children.count() - 1 then ctx.expected else null
@@ -2007,7 +2029,7 @@ impl CompileNode {
     }
 
     compile_const_decl :: (&Self, decl: &AstConstDecl, ctx: CNContext) -> &AstNode {
-        // debug_log("compile_const_decl")
+        debug_log("compile_const_decl")
         decl.typ = @type_info(void)
 
         if !AstNode.has_flags(decl, .IsDefinedInScope) {
@@ -2020,6 +2042,7 @@ impl CompileNode {
                     return decl
                 }
             }
+
 
             // set name of value expr if its a function or struct/trait/enum
             match decl.value_expr {
@@ -2040,6 +2063,7 @@ impl CompileNode {
                 }
             }
 
+
             // define symbol but only if not _
             if name != "_" {
                 match decl.scope.define_const_decl(name, decl) {
@@ -2049,6 +2073,7 @@ impl CompileNode {
                 }
             }
         }
+
 
         // compile type expression
         if decl.type_expr != null {
@@ -2063,14 +2088,18 @@ impl CompileNode {
             }
         }
 
+        debug_log("compile_const_decl 1")
 
-        decl.value_expr = evaluate_node(decl.value_expr, ctx.with_expected(decl.var_type))
+        decl.value_expr <- evaluate_node(decl.value_expr, ctx.with_expected(decl.var_type))
+        debug_log("compile_const_decl 2")
         decl.value = decl.value_expr.value
 
         if decl.value == .Poison {
             poison(decl)
             return decl
         }
+
+        debug_log("compile_const_decl 3")
 
         if decl.value_expr.typ != @type_info(void) and decl.value == .None {
             workspace.error_handler.report_error_at(decl.value_expr.location, "Value is not constant")

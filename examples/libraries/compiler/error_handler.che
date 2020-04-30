@@ -13,8 +13,8 @@ use import lexer
 ErrorHandler :: trait {
     text_provider : ^TextProvider
     has_errors :: (&Self) -> bool;
-    report_error_at :: (&Self, location: Location, message: string, args: []^any = [], prefix: string = "");
-    report_error :: (&Self, message: string, args: []^any = [], prefix: string = "");
+    report_error :: (&Self, message: string, args: []^any = [], prefix: string = "", details: [](fmt: string, args: []^any) = []);
+    report_error_at :: (&Self, location: Location, message: string, args: []^any = [], prefix: string = "", details: [](fmt: string, args: []^any) = []);
 }
 
 TextProvider :: trait {
@@ -40,22 +40,22 @@ impl ErrorHandler for PrefixErrorHandler {
         return base.has_errors()
     }
 
-    report_error_at :: (&Self, location: Location, message: string, args: []^any = [], prefix: string = "") {
+    report_error :: (&Self, message: string, args: []^any = [], prefix: string = "", details: [](fmt: string, args: []^any) = []) {
         pre := if prefix != "" {
             fmt.format("{}][{}", [self.prefix, prefix])
         } else {
             self.prefix.clone()
         }
-        base.report_error_at(location, message, args, pre.slice())
+        base.report_error(message, args, pre.slice(), details)
     }
 
-    report_error :: (&Self, message: string, args: []^any = [], prefix: string = "") {
+    report_error_at :: (&Self, location: Location, message: string, args: []^any = [], prefix: string = "", details: [](fmt: string, args: []^any) = []) {
         pre := if prefix != "" {
             fmt.format("{}][{}", [self.prefix, prefix])
         } else {
             self.prefix.clone()
         }
-        base.report_error(message, args, pre.slice())
+        base.report_error_at(location, message, args, pre.slice(), details)
     }
 }
 
@@ -78,7 +78,7 @@ impl ErrorHandler for ConsoleErrorHandler {
         return error_count > 0
     }
 
-    report_error :: (&Self, message: string, args: []^any = [], prefix: string = "") {
+    report_error :: (&Self, message: string, args: []^any = [], prefix: string = "", details: [](fmt: string, args: []^any) = []) {
         mutex.lock()
         defer mutex.release()
 
@@ -93,7 +93,7 @@ impl ErrorHandler for ConsoleErrorHandler {
         io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
     }
 
-    report_error_at :: (&Self, location: Location, message: string, args: []^any = [], prefix: string = "") {
+    report_error_at :: (&Self, location: Location, message: string, args: []^any = [], prefix: string = "", details: [](fmt: string, args: []^any) = []) {
         mutex.lock()
         defer mutex.release()
 
@@ -109,6 +109,18 @@ impl ErrorHandler for ConsoleErrorHandler {
         io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
 
         if do_print_location then print_location(location)
+
+        if details.length > 0 {
+            print_details(details)
+        }
+    }
+
+    print_details :: (&Self, details: [](fmt: string, args: []^any)) {
+        io.set_console_color(@bin_or(io.ConsoleColor.Red, io.ConsoleColor.Green, io.ConsoleColor.Bright), io.ConsoleColor.Black)
+        for detail in details {
+            io.formatln(detail.fmt, detail.args)
+        }
+        io.set_console_color(io.ConsoleColor.White, io.ConsoleColor.Black)
     }
 
     print_location :: (&Self, location: Location) {

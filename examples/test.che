@@ -31,13 +31,19 @@ import compiler.cli
 
 // use import std.string
 // io :: import std.io
+// fs :: import std.io.fs
 
 // Main :: () {
-//     path := "D:\dev\CheezLang\data\"
-//     last_index := path.last_index_of('\')
-//     io.println(last_index)
-//     io.formatln("'{}'", [path[..last_index]])
-//     io.formatln("'{}'", [path[last_index+1 ..]])
+//     io.println(fs.Path.normalize("test.che"))
+//     io.println(fs.Path.normalize("foo/bar/test.che"))
+//     io.println(fs.Path.normalize("foo/./test.che"))
+//     io.println(fs.Path.normalize("foo/../test.che"))
+
+//     io.println(fs.Path.normalize("/test.che"))
+//     io.println(fs.Path.normalize("/foo/bar/test.che"))
+//     io.println(fs.Path.normalize("/foo/./test.che"))
+//     io.println(fs.Path.normalize("/foo/../bar/baz/../lol/../../uiae/../../test.che"))
+//     io.println(fs.Path.normalize("foo/../bar/baz/../lol/../../uiae/../../test.che"))
 // }
 
 // use import std.mem.allocator

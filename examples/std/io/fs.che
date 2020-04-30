@@ -8,6 +8,7 @@ if const @is_os("linux") {
     linux :: import std.os.linux
 }
 
+use import std.array
 use import std.io.file
 use import std.mem.allocator
 use import std.string
@@ -163,6 +164,59 @@ impl Path {
             result += "/"
         }
         result += path2
+        return result
+    }
+
+    normalize :: (path: string) -> String {
+        parts := Array[string].create()
+
+        starts_with_slash := false
+
+        start := 0
+        for i in 0 .. path.bytes.length {
+            c := char(*path.bytes[i])
+
+            if c == '/' and i == 0 {
+                starts_with_slash = true
+            }
+
+            if c == '/' or c == '\' {
+                sub := path[start..i]
+                if sub == "." {
+                    // do nothing
+                } else if sub == ".." and parts.count() > 0 {
+                    parts.pop()
+                } else if sub.bytes.length > 0 {
+                    parts.add(sub)
+                }
+
+                start = i + 1
+            }
+        }
+
+        if start < path.bytes.length {
+            sub := path[start..]
+            if sub == "." {
+                // do nothing
+            } else if sub == ".." and parts.count() > 0 {
+                parts.pop()
+            } else if sub.bytes.length > 0 {
+                parts.add(sub)
+            }
+        }
+
+        result := String.with_capacity(path.bytes.length)
+
+        if starts_with_slash {
+            result += "/"
+        }
+
+        for p in &parts {
+            if it_index > 0 {
+                result += "\"
+            }
+            result += *p
+        }
         return result
     }
 }
