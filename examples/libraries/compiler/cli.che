@@ -327,12 +327,24 @@ command_build :: (options: ^CommandBuild) {
     ))
 
     compiler.get().user_defined_builtins.add((
-        "_print_string",
+        "_println",
         Symbol.NativeFunc(NativeFunctionWrapper.new(
             cast(NativeFunction) (interp) => {
                 frame := interp.top_frame()
                 io.set_console_color(.Green, .Black)
                 io.formatln("{}", [frame.get_arg(0, string)])
+                io.set_console_color(.White, .Black)
+            },
+            fn(string)
+        ))
+    ))
+    compiler.get().user_defined_builtins.add((
+        "_print",
+        Symbol.NativeFunc(NativeFunctionWrapper.new(
+            cast(NativeFunction) (interp) => {
+                frame := interp.top_frame()
+                io.set_console_color(.Green, .Black)
+                io.format("{}", [frame.get_arg(0, string)])
                 io.set_console_color(.White, .Black)
             },
             fn(string)

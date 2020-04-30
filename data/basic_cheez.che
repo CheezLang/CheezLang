@@ -2,10 +2,14 @@
 // bc :: import basic_cheez2
 std :: import "std.che"
 uiae :: import "basic_cheez2.che"
+xvlc :: import "../data/basic_cheez2.che"
 
 _ :: Main()
 Main :: () {
     std.print_string("Main()")
+    std.print_int(0)
+    std.print_int(123)
+    std.print_int(-456)
 
     std.print_string("uiae.test()")
     uiae.test()
@@ -16,5 +20,6 @@ Main :: () {
 }
 
 test :: () {
-    std.print_string("basic_cheez")
+    std.print_bool(false)
+    // std.print_string("basic_cheez")
 }

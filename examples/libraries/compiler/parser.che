@@ -560,6 +560,7 @@ impl Parser {
 
         false_case : ^AstNode = if check_token(.KwElse) {
             lexer.next_token()
+            lexer.skip_whitespace()
             expr := parse_expression(allow_comma, false)
             location = location.to(expr.location)
             expr
@@ -986,7 +987,7 @@ impl Parser {
             .StringLiteral  -> cast(^AstNode) parse_string()
 
             _ -> {
-                error_handler.report_error_at(token.location, "Unexpected token {} in expression", [token])
+                error_handler.report_error_at(token.location, "Unexpected token {} in expression", [token.typ])
                 cast(^AstNode) null
             }
         }

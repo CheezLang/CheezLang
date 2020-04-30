@@ -281,10 +281,36 @@ impl CodeRunner for Debugger {
 }
 
 g_debug_adapter : ^CheezDebugAdapter = null
+g_print_buffer : ^String = null
+
+println_string :: (interp: ^Interpreter) {
+    if g_print_buffer == null {
+        g_print_buffer = mem.alloc(String)
+        *g_print_buffer = String.empty()
+    }
+
+    frame := interp.top_frame()
+    msg := fmt.format("{}", [frame.get_arg(0, string)])
+    *g_print_buffer += &msg
+
+    g_debug_adapter.adapter.emit_output_event(g_print_buffer.clone(), "console")
+    g_print_buffer.clear()
+}
 
 print_string :: (interp: ^Interpreter) {
+    if g_print_buffer == null {
+        g_print_buffer = mem.alloc(String)
+        *g_print_buffer = String.empty()
+    }
+
     frame := interp.top_frame()
-    g_debug_adapter.adapter.emit_output_event(fmt.format("{}", [frame.get_arg(0, string)]), "console")
+    msg := fmt.format("{}", [frame.get_arg(0, string)])
+    *g_print_buffer += &msg
+
+    if msg.slice().ends_with("`n") {
+        g_debug_adapter.adapter.emit_output_event(g_print_buffer.clone(), "console")
+        g_print_buffer.clear()
+    }
 }
 
 debug_break :: (interp: ^Interpreter) {
@@ -368,7 +394,11 @@ impl CheezDebugAdapter {
         ))
 
         compiler.get().user_defined_builtins.add((
-            "_print_string",
+            "_println",
+            Symbol.NativeFunc(NativeFunctionWrapper.new(cast(NativeFunction) println_string, fn(string)))
+        ))
+        compiler.get().user_defined_builtins.add((
+            "_print",
             Symbol.NativeFunc(NativeFunctionWrapper.new(cast(NativeFunction) print_string, fn(string)))
         ))
 
@@ -392,12 +422,12 @@ impl ErrorHandler for CheezDebugAdapter {
         return false
     }
 
-    report_error_at :: (&Self, location: Location, message: string, args: []^any, prefix: string = "") {
+    report_error_at :: (&Self, location: Location, message: string, args: []^any, prefix: string = "", details: [](fmt: string, args: []^any) = []) {
         msg := fmt.format(message, args)
         g_logger.log("[Code Gen] {}: {}", [location, msg])
     }
 
-    report_error :: (&Self, message: string, args: []^any, prefix: string = "") {
+    report_error :: (&Self, message: string, args: []^any, prefix: string = "", details: [](fmt: string, args: []^any) = []) {
         msg := fmt.format(message, args)
         g_logger.log("[Code Gen] {}", [msg])
     }

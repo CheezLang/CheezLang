@@ -1,3 +1,33 @@
 print_string :: (str: string) {
-    _print_string(str)
+    _println(str)
+}
+
+print_bool :: (b: bool) {
+    _println(if b then "true" else "false")
+}
+
+print_int :: (mut b: int) {
+    print_rec :: (i: int) {
+        if i >= 10 then print_rec(i / 10)
+        print_digit(i % 10)
+    }
+    if b < 0 {
+        _print("-")
+        b = -b
+    }
+    print_rec(b)
+    _println("")
+}
+
+print_digit :: (d: int) {
+    if d == 0 then _print("0") else
+    if d == 1 then _print("1") else
+    if d == 2 then _print("2") else
+    if d == 3 then _print("3") else
+    if d == 4 then _print("4") else
+    if d == 5 then _print("5") else
+    if d == 6 then _print("6") else
+    if d == 7 then _print("7") else
+    if d == 8 then _print("8") else
+    if d == 9 then _print("9")
 }
