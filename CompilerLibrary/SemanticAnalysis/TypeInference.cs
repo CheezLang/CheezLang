@@ -4664,6 +4664,10 @@ namespace Cheez
                 v = expr.Values[i] = InferTypeHelper(v, e, context);
                 ConvertLiteralTypeToDefaultType(v, e);
 
+                if (e != null) {
+                    v = expr.Values[i] = CheckType(v, e);
+                }
+
                 members[i].type = v.Type;
 
                 if (v.Type == CheezType.Type)
