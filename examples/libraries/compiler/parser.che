@@ -71,8 +71,16 @@ impl Parser {
     }
 
     parse_expression :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
-        if check_token(.KwMut) {
-            return parse_declaration(allow_comma, allow_function)
+        if check_token(.KwPub) {
+            lexer.next_token()
+            mutable := if check_token(.KwMut) {
+                lexer.next_token()
+                true
+            } else false
+            return parse_declaration(public=true, mutable=mutable, allow_comma=allow_comma, allow_function=allow_function)
+        } else if check_token(.KwMut) {
+            lexer.next_token()
+            return parse_declaration(public=false, mutable=true, allow_comma=allow_comma, allow_function=allow_function)
         }
 
         expr := parse_comma_expression(allow_comma, allow_function)
@@ -138,14 +146,8 @@ impl Parser {
         return expr
     }
 
-    parse_declaration :: (&Self, allow_comma: bool, allow_function: bool) -> ^AstNode {
-        mutable := false
-        if check_token(.KwMut) {
-            lexer.next_token()
-            mutable = true
-        }
-
-        pattern := parse_comma_expression(allow_comma, allow_function)
+    parse_declaration :: (&Self, public: bool, mutable: bool, allow_comma: bool, allow_function: bool) -> ^AstNode {
+        pattern := try(parse_comma_expression(allow_comma, allow_function))
 
         consume(.Colon)
         lexer.skip_whitespace()
@@ -153,13 +155,13 @@ impl Parser {
         type_expr : ^AstNode = if check_token(.Equal) or check_token(.Colon) {
             null
         } else {
-            parse_comma_expression(allow_comma, allow_function)
+            try(parse_comma_expression(allow_comma, allow_function))
         }
 
         if check_token(.Equal) {
             lexer.next_token()
             lexer.skip_whitespace()
-            value_expr := parse_comma_expression(allow_comma, allow_function)
+            value_expr := try(parse_comma_expression(allow_comma, allow_function))
 
             return allocate(AstDecl(
                 id          = next_id()
@@ -167,7 +169,25 @@ impl Parser {
                 pattern     = pattern
                 type_expr   = type_expr
                 value_expr  = value_expr
+                public      = public
                 mutable     = mutable
+            ))
+        } else if check_token(.Colon) {
+            lexer.next_token()
+            lexer.skip_whitespace()
+            value_expr := try(parse_comma_expression(allow_comma, allow_function))
+
+            if mutable {
+                error_handler.report_error_at(pattern.location, "Constant declaration can't be mutable")
+            }
+
+            return allocate(AstConstDecl(
+                id          = next_id()
+                location    = pattern.location.to(value_expr.location)
+                pattern     = &*pattern
+                type_expr   = type_expr
+                value_expr  = &*value_expr
+                public      = public
             ))
         } else {
             return allocate(AstDecl(
@@ -176,6 +196,7 @@ impl Parser {
                 pattern     = pattern
                 type_expr   = type_expr
                 value_expr  = null
+                public      = public
                 mutable     = mutable
             ))
         }

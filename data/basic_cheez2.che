@@ -1,7 +1,10 @@
 std :: import "std.che"
-uiae :: import "basic_cheez.che"
+pub basic1 :: import "basic_cheez.che"
 
-test :: () {
+pub test :: () {
     std.print_string("basic_cheez2")
-    uiae.test()
+    basic1.test()
+
+    foo : basic1.Foo
+    foo.a = 5
 }

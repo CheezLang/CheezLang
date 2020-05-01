@@ -127,7 +127,7 @@ impl Scope {
         return Ok()
     }
 
-    get_symbol :: (&Self, name: string) -> Symbol {
+    get_symbol :: (&Self, name: string, only_public: bool = false) -> Symbol {
         if parent == null {
             self.lock()
             defer self.release()
@@ -135,7 +135,20 @@ impl Scope {
             wait_until(symbols.contains(name), {
                 return Symbol.NotFound
             }, self.release(), self.lock())
-            return *symbols.at(name)
+            result := symbols.at(name)
+
+            if only_public {
+                match result {
+                    .Decl($decl) if !(*decl).public -> {
+                        return .Private(*decl)
+                    }
+                    .ConstDecl($decl) if !(*decl).public -> {
+                        return .Private(*decl)
+                    }
+                }
+            }
+
+            return *result
         }
 
         @assert(self.mutex == .None)
@@ -162,8 +175,9 @@ impl Scope {
 }
 
 Symbol :: enum #copy {
-    NotFound
     Poison
+    NotFound
+    Private         : ^AstNode
     Decl            : ^AstDecl
     ConstDecl       : ^AstConstDecl
     Val             : (typ: ^TypeInfo, value: Value)

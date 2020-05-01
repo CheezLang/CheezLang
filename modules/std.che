@@ -1,12 +1,12 @@
-print_string :: (str: string) {
+pub print_string :: (str: string) {
     _println(str)
 }
 
-print_bool :: (b: bool) {
+pub print_bool :: (b: bool) {
     _println(if b then "true" else "false")
 }
 
-print_int :: (mut b: int) {
+pub print_int :: (mut b: int) {
     print_rec :: (i: int) {
         if i >= 10 then print_rec(i / 10)
         print_digit(i % 10)

@@ -1,25 +1,29 @@
 // use import basic_cheez2
 // bc :: import basic_cheez2
 std :: import "std.che"
-uiae :: import "basic_cheez2.che"
-xvlc :: import "../data/basic_cheez2.che"
+pub basic2 :: import "basic_cheez2.che"
+
+pub Foo :: struct {
+    a : int
+}
 
 _ :: Main()
 Main :: () {
+    a := 6
     std.print_string("Main()")
     std.print_int(0)
     std.print_int(123)
     std.print_int(-456)
 
-    std.print_string("uiae.test()")
-    uiae.test()
-    std.print_string("uiae.uiae.test()")
-    uiae.uiae.test()
-    std.print_string("uiae.uiae.uiae.test()")
-    uiae.uiae.uiae.test()
+    std.print_string("basic2.test()")
+    basic2.test()
+    std.print_string("basic2.basic1.test()")
+    basic2.basic1.test()
+    std.print_string("basic2.basic1.basic2.test()")
+    basic2.basic1.basic2.test()
 }
 
-test :: () {
+pub test :: () {
     std.print_bool(false)
     // std.print_string("basic_cheez")
 }

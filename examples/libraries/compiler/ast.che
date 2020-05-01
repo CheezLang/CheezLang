@@ -14,6 +14,8 @@ AstNodeFlags :: enum #flags {
     None
     LValue
     IsDefinedInScope
+    AllowPubModifier
+    OnlyPubDeclarations
 }
 
 __uiaeuiaeuiae := @type_info(AstNodeFlags)
@@ -47,6 +49,8 @@ AstConstDecl :: struct AstNode {
     type_expr   : ^AstNode
     value_expr  : &AstNode
 
+    public      : bool = false
+
     var_type    : ^TypeInfo = null
 }
 impl AstNode for AstConstDecl {}
@@ -55,7 +59,9 @@ AstDecl :: struct AstNode {
     pattern     : ^AstNode
     type_expr   : ^AstNode
     value_expr  : ^AstNode
-    mutable     : bool
+
+    mutable     : bool = false
+    public      : bool = false
 
     name        : string = "_"
     var_type    : ^TypeInfo = null

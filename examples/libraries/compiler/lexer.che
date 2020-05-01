@@ -808,7 +808,7 @@ TokenData :: enum #copy {
 
 impl Printable for Location {
     print :: (&Self, str: &String, format: string) {
-        str.appendf("{}:{}:{}->{}", (file, line, column, end_line))
+        str.appendf("{}:{}:{}", (file, line, column, end_line))
     }
 }
 

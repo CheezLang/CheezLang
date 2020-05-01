@@ -200,6 +200,7 @@ impl CompilationJob for CompileGlobalNodeJob {
             function    = null
         )
 
+        node.set_flags(.AllowPubModifier)
         node = ^*compile_node.compile_node(&*node, CNContext())
 
         if node.value == .Poison {
@@ -630,6 +631,7 @@ impl CompileNode {
                 file := dot.sub.value.Module
 
                 dot.name.scope = file.global_scope
+                AstNode.set_flags(dot.name, .OnlyPubDeclarations)
                 compile_node(dot.name, ctx)
                 dot.typ = dot.name.typ
                 dot.value = dot.name.value
@@ -1195,24 +1197,13 @@ impl CompileNode {
             AstString($str) -> {
                 str.typ = @type_info(void)
 
-                // g_logger.log("current_file_path: '{}'", [node.location.file])
                 search_paths := Array[string].create()
                 search_paths.add(fs.Path.get_containing_directory(node.location.file))
                 search_paths.add(compiler.module_path)
 
                 for search_path in &search_paths {
-                    // g_logger.log("searching in '{}'", [*search_path])
                     import_path := fs.Path.concat(*search_path, str.string_value)
-                    // g_logger.log("import path  : '{}'", [import_path])
                     import_path_n := fs.Path.normalize(import_path.slice())
-                    // g_logger.log("import path n: '{}'", [import_path_n])
-                    // match fs.get_full_path(import_path.slice()) {
-                    //     Ok($path) -> {
-                    //         import_path = path
-                    //     }
-                    // }
-                    // import_path := fs.Path.concat(current_directory, str.string_value)
-                    // g_logger.log("import_path: '{}'", [import_path])
 
                     match compiler.get_source(import_path_n.slice()) {
                         Err(_) -> continue
@@ -1430,21 +1421,10 @@ impl CompileNode {
         // @todo: create a job for each child, so children can depend on other children
         for child in &str.children {
             child.scope = str.sub_scope
+            child.set_flags(.AllowPubModifier)
             job := workspace.create_job(CompileStructMemberJob.new(^*str, *child))
             jobs.add(cast job)
             workspace.add_job(job)
-
-            // child = ^compile_node(*child, ctx)
-
-            // match &*child {
-            //     AstDecl($decl) -> {
-            //         str.members.add(^decl)
-            //     }
-
-            //     AstConstDecl($decl) -> {
-            //         str.constants.add(^decl)
-            //     }
-            // }
         }
 
         for job in &jobs {
@@ -1550,7 +1530,7 @@ impl CompileNode {
     }
 
     compile_identifier :: (&Self, id: &AstIdentifier, ctx: CNContext) -> &AstNode {
-        id.symbol = id.scope.get_symbol(id.name)
+        id.symbol = id.scope.get_symbol(id.name, AstNode.has_flags(id, .OnlyPubDeclarations))
         match id.symbol {
             .Val($value) -> {
                 id.typ = value.typ
@@ -1582,6 +1562,13 @@ impl CompileNode {
                 workspace.error_handler.report_error_at(id.location, "Unknown symbol '{}'", [id.name])
                 poison(id)
                 loop Fiber.yield()
+                return id
+            }
+
+            .Private($node) -> {
+                workspace.error_handler.report_error_at(id.location, "Can't access '{}' from here because it's not public", [id.name],
+                    details = [("'{}' defined here: {}", [id.name, node.location])])
+                poison(id)
                 return id
             }
 
@@ -1961,6 +1948,10 @@ impl CompileNode {
             }
         }
 
+        if decl.public and !AstNode.has_flags(decl, .AllowPubModifier) {
+            workspace.error_handler.report_error_at(decl.pattern.location, "Modifier 'pub' is not allowed here")
+        }
+
         // compile type expression
         if decl.type_expr != null {
             decl.type_expr.scope = decl.scope
@@ -2074,6 +2065,9 @@ impl CompileNode {
             }
         }
 
+        if decl.public and !AstNode.has_flags(decl, .AllowPubModifier) {
+            workspace.error_handler.report_error_at(decl.pattern.location, "Modifier 'pub' is not allowed here")
+        }
 
         // compile type expression
         if decl.type_expr != null {
