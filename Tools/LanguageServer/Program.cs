@@ -11,11 +11,8 @@ namespace CheezLanguageServer
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
-#if DEBUG
-            RunLanguageServerOverTcp(5007);
-#else
+            //RunLanguageServerOverTcp(5007);
             RunLanguageServerOverStdInOut();
-#endif
         }
 
         private static void LaunchLanguageServer(Stream inStream, Stream outStream)
@@ -32,9 +29,16 @@ namespace CheezLanguageServer
             }
         }
 
+        private static void foo()
+        {
+
+        }
+
         private static void RunLanguageServerOverStdInOut()
         {
-            LaunchLanguageServer(Console.OpenStandardInput(), Console.OpenStandardOutput());
+            using var _in = Console.OpenStandardInput();
+            using var _out = Console.OpenStandardOutput();
+            LaunchLanguageServer(_in, _out);
         }
 
         private static void RunLanguageServerOverTcp(int port)

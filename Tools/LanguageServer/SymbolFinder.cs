@@ -14,7 +14,7 @@ namespace CheezLanguageServer
         public List<SymbolInformation> FindSymbols(Workspace w, PTFile file)
         {
             var list = new List<SymbolInformation>();
-            foreach (var s in w.Statements.Where(s => s.Location.Beginning.file == file.Name))
+            foreach (var s in file.Statements)
             {
                 s.Accept(this, list);
             }
@@ -36,26 +36,26 @@ namespace CheezLanguageServer
             };
         }
 
-        public override object VisitStructDecl(AstStructDecl type, List<SymbolInformation> list)
+        public override object VisitStructTypeExpr(AstStructTypeExpr type, List<SymbolInformation> list)
         {
             list.Add(new SymbolInformation
             {
                 containerName = type.Scope.Name,
                 kind = SymbolKind.Class,
-                location = CastLocation(type.Name.Location),
-                name = type.Name.Name
+                location = CastLocation(type.Location),
+                name = type.Name
             });
             return default;
         }
 
-        public override object VisitFunctionDecl(AstFunctionDecl function, List<SymbolInformation> list)
+        public override object VisitFuncExpr(AstFuncExpr function, List<SymbolInformation> list)
         {
             list.Add(new SymbolInformation
             {
                 containerName = function.Scope.Name,
                 kind = SymbolKind.Function,
-                location = CastLocation(function.Name.Location),
-                name = function.Name.Name
+                location = CastLocation(function.Location),
+                name = function.Name
             });
 
             function.Body?.Accept(this, list);

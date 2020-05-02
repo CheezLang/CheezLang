@@ -14,6 +14,8 @@ namespace Cheez.Ast
         public TokenLocation Beginning => this;
         public TokenLocation End => this;
 
+        public int Column => index - lineStartIndex + 1;
+
         public TokenLocation()
         {
         }
@@ -32,7 +34,7 @@ namespace Cheez.Ast
 
         public override string ToString()
         {
-            return $"{file}:{line}:{index - lineStartIndex + 1}";
+            return $"{file}:{line}:{Column}";
         }
     }
     public interface ILocation

@@ -7,9 +7,15 @@
 // import examples.snake.snake
 // import examples.pathtracer
 // import examples.pathtracer2.main
-import compiler.cli
+// import compiler.cli
 // import compiler.debugger
 // import examples.ShmupEngine.src.main // crashes sometimes
+
+Foo :: struct {}
+Bar :: trait {}
+Baz :: enum {}
+uiae :: () {}
+
 
 // examples which are not working currently
 // import examples.image_processing

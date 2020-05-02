@@ -46,8 +46,8 @@ namespace CheezLanguageServer
             foreach (var kv in scope.Symbols)
             {
                 var sym = kv.Value;
-                if (!symbols.ContainsKey(sym.Name.Name))
-                    symbols.Add(sym.Name.Name, sym);
+                if (!symbols.ContainsKey(sym.Name))
+                    symbols.Add(sym.Name, sym);
             }
 
             if (scope.Parent != null)
@@ -69,7 +69,7 @@ namespace CheezLanguageServer
         public override Dictionary<string, ISymbol> GetSymbols()
         {
             var syms = base.GetSymbols();
-            var funcType = Call.Function.Type as FunctionType;
+            var funcType = Call.FunctionExpr.Type as FunctionType;
             var pars = funcType?.Parameters;
             if (pars == null || ArgIndex >= pars.Length)
                 return syms;
@@ -93,9 +93,9 @@ namespace CheezLanguageServer
 
         public NodeFinderResult FindNode(Workspace w, PTFile file, int line, int character, bool exactMatch)
         {
-            int index = GetPosition(file, line, character);
+            int index = GetPosition(file.Text, line, character);
 
-            foreach (var s in w.Statements.Where(s => s.Location.Beginning.file == file.Name))
+            foreach (var s in file.Statements)
             {
                 var loc = GetRelativeLocation(s.Location, index);
                 if (loc == RelativeLocation.Same)
@@ -120,23 +120,23 @@ namespace CheezLanguageServer
             return RelativeLocation.After;
         }
 
-        private static int GetPosition(IText text, int line, int character)
+        private static int GetPosition(string text, int line, int character)
         {
             int pos = 0;
             for (; 0 < line; line--)
             {
-                var lf = text.Text.IndexOf('\n', pos);
+                var lf = text.IndexOf('\n', pos);
                 if (lf < 0)
                 {
-                    return text.Text.Length;
+                    return text.Length;
                 }
                 pos = lf + 1;
             }
-            var linefeed = text.Text.IndexOf('\n', pos);
+            var linefeed = text.IndexOf('\n', pos);
             var max = 0;
             if (linefeed < 0)
             {
-                max = text.Text.Length;
+                max = text.Length;
             }
             else
             {
@@ -150,12 +150,12 @@ namespace CheezLanguageServer
 
         #region Visitors
 
-        public override NodeFinderResult VisitFunctionDecl(AstFunctionDecl function, int index = 0)
+        public override NodeFinderResult VisitFuncExpr(AstFuncExpr function, int index = 0)
         {
             if (GetRelativeLocation(function.Body.Location, index) == RelativeLocation.Same)
                 return function.Body.Accept(this, index);
 
-            return new NodeFinderResult(function.Scope, stmt: function);
+            return new NodeFinderResult(function.Scope, expr: function);
         }
 
         public override NodeFinderResult VisitVariableDecl(AstVariableDecl variable, int index = 0)
@@ -242,9 +242,6 @@ namespace CheezLanguageServer
 
         public override NodeFinderResult VisitWhileStmt(AstWhileStmt ws, int i = 0)
         {
-            if (GetRelativeLocation(ws.Condition.Location, i) == RelativeLocation.Same)
-                return ws.Condition.Accept(this, i);
-
             if (GetRelativeLocation(ws.Body.Location, i) == RelativeLocation.Same)
                 return ws.Body.Accept(this, i);
 
@@ -258,8 +255,8 @@ namespace CheezLanguageServer
             if (GetRelativeLocation(arr.SubExpression.Location, index) == RelativeLocation.Same)
                 return arr.SubExpression.Accept(this, index);
 
-            if (GetRelativeLocation(arr.Indexer.Location, index) == RelativeLocation.Same)
-                return arr.Indexer.Accept(this, index);
+            if (GetRelativeLocation(arr.Arguments[0].Location, index) == RelativeLocation.Same)
+                return arr.Arguments[0].Accept(this, index);
 
             return new NodeFinderResult(arr.Scope, expr: arr);
         }
@@ -283,8 +280,8 @@ namespace CheezLanguageServer
                     return arg.Accept(this, i);
             }
 
-            if (GetRelativeLocation(call.Function.Location, i) == RelativeLocation.Same)
-                return call.Function.Accept(this, i);
+            if (GetRelativeLocation(call.FunctionExpr.Location, i) == RelativeLocation.Same)
+                return call.FunctionExpr.Accept(this, i);
 
             return new NodeFinderResultCallExpr(call, 0);
         }

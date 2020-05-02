@@ -1,5 +1,5 @@
 {
-  "name": "cheezlangls",
+  "name": "cheez",
   "description": "A language server for CheezLang",
   "author": "Nimaoth",
   "license": "MIT",
@@ -9,26 +9,19 @@
     "type": "git",
     "url": "https://github.com/Nimaoth/CheezLang"
   },
-  "engines": {
-    "vscode": "^1.29.0"
-  },
   "categories": [
     "Other"
   ],
   "activationEvents": [
-    "onLanguage:cheezls",
+    "onLanguage:cheez",
     "workspaceContains:**/*.che"
   ],
-  "main": "./out/src/extension",
+  "main": "./out/extension",
   "contributes": {
     "commands": [
       {
         "command": "reload_language_server",
         "title": "Reset Cheez Language Server"
-      },
-      {
-        "command": "cheez.test",
-        "title": "Cheez Test"
       }
     ],
     "languages": [
@@ -37,18 +30,7 @@
         "extensions": [
           ".che"
         ],
-        "aliases": [
-          "cheez",
-          "Cheez",
-          "CheezLang"
-        ],
         "configuration": "./language-configuration.json"
-      },
-      {
-        "id": "cheezbc",
-        "extensions": [
-          ".cbc"
-        ]
       }
     ],
     "grammars": [
@@ -60,21 +42,27 @@
     ],
     "configuration": {
       "type": "object",
-      "title": "CheezLang Language Server Configuration",
+      "title": "Cheez Configuration",
       "properties": {
-        "cheezls.maxNumberOfProblems": {
+        "cheez.languageServerPath": {
+          "scope": "resource",
+          "type": "string",
+          "default": null,
+          "description": "Path to cheez language server."
+        },
+        "cheez.languageServerPort": {
           "scope": "resource",
           "type": "number",
-          "default": 100,
-          "description": "Controls the maximum number of problems produced by the server."
+          "default": 5007,
+          "description": "Port of cheez language server."
         },
-        "cheezls.logFilePath": {
+        "cheez.logFilePath": {
           "scope": "resource",
           "type": "string",
           "default": null,
           "description": "Path to log file of cheez language server."
         },
-        "cheezls.trace.server": {
+        "cheez.trace.server": {
           "scope": "window",
           "type": "string",
           "enum": [
@@ -82,8 +70,14 @@
             "messages",
             "verbose"
           ],
-          "default": "off",
+          "default": "verbose",
           "description": "Traces the communication between VSCode and the language server."
+        },
+        "cheez.use_std_io": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Communicate with language server using standard in/out"
         }
       }
     },
@@ -93,7 +87,7 @@
         "label": "Cheez",
         "program": "D:/dev/CheezLang/gen/cheezdb.exe",
         "languages": [
-          "cheez"
+          "cheezlang"
         ],
         "initialConfigurations": [
           {
@@ -102,9 +96,6 @@
             "name": "TODO",
             "program": "${workspaceFolder}/TODO"
           }
-        ],
-        "args": [
-          "cheez"
         ]
       }
     ],
@@ -115,22 +106,22 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "tnpm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -w -p ./",
-    "postinstall": "node ./node_modules/vscode/bin/install",
-    "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    "compile": "tsc -p ./"
   },
   "dependencies": {
-    "diff": ">=3.5.0",
-    "find-process": "^1.4.2",
-    "tar": "^4.4.13",
-    "vscode": "^1.1.36",
-    "vscode-languageclient": "^5.2.1"
+    "vscode-languageclient": "^6.1.3"
+  },
+  "engines": {
+    "vscode": "^1.43.0"
   },
   "devDependencies": {
     "@types/mocha": "^5.2.7",
-    "@types/node": "^12.12.7",
-    "typescript": "^3.7.2"
+    "mocha": "^6.2.2",
+    "@types/node": "^12.12.0",
+    "eslint": "^6.4.0",
+    "@typescript-eslint/parser": "^2.3.0",
+    "typescript": "^3.8.3",
+    "@types/vscode": "1.43.0",
+    "vscode-test": "^1.3.0"
   }
 }
