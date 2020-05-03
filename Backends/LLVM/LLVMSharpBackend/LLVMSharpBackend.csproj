@@ -5,8 +5,13 @@
     <FileUpgradeFlags>40</FileUpgradeFlags>
     <UpgradeBackupLocation>D:\dev\CheezLang\Backup\Backends\LLVM\LLVMSharpBackend\</UpgradeBackupLocation>
     <OldToolsVersion>2.0</OldToolsVersion>
+    <Configurations>Debug;Release;DebugLanguageServer</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <NoWarn>1701;1702;NU1701</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugLanguageServer|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <NoWarn>1701;1702;NU1701</NoWarn>
   </PropertyGroup>

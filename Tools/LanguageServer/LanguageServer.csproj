@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>CheezLanguageServer</AssemblyName>
+    <Configurations>Debug;Release;DebugLanguageServer</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

@@ -14,7 +14,7 @@ export function activate(context: vscode.ExtensionContext) {
     const debugPort: number = vscode.workspace.getConfiguration().get('cheez.languageServerPort');
     const useStdio: boolean = vscode.workspace.getConfiguration().get('cheez.use_std_io');
 
-    vscode.window.showInformationMessage("Cheez extension: " + debugPort + ", " + useStdio);
+    // vscode.window.showInformationMessage("Cheez extension: " + debugPort + ", " + useStdio);
 
     let serverOptions: ServerOptions = null;
 
@@ -27,8 +27,8 @@ export function activate(context: vscode.ExtensionContext) {
         }
 
         serverOptions = {
-            run: { command: serverCommand },
-            debug: { command: serverCommand }
+            run: { command: serverCommand, args: ["--language-server-console", "dummy.che"] },
+            debug: { command: serverCommand, args: ["--language-server-console", "dummy.che"] }
         };
     }
     else

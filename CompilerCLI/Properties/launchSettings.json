@@ -4,6 +4,10 @@
       "commandName": "Project",
       "commandLineArgs": "examples/test.che --out gen  --stdlib examples --time --run  --print-ast-analysed ./gen/int/ast_analyzed.che --emit-llvm-ir --opt",
       "workingDirectory": ".."
+    },
+    "Debug Language Server": {
+      "commandName": "Project",
+      "commandLineArgs": "--language-server-tcp --port 5007 dummy.che"
     }
   }
 }

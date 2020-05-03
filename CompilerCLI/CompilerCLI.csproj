@@ -6,8 +6,14 @@
     <FileUpgradeFlags>40</FileUpgradeFlags>
     <UpgradeBackupLocation>D:\dev\CheezLang\Backup1\</UpgradeBackupLocation>
     <OldToolsVersion>Current</OldToolsVersion>
+    <Configurations>Debug;Release;DebugLanguageServer</Configurations>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <NoWarn>1701;1702;NU1701</NoWarn>
+    <OutputPath>../bin/Debug</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugLanguageServer|AnyCPU'">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <NoWarn>1701;1702;NU1701</NoWarn>
     <OutputPath>../bin/Debug</OutputPath>
@@ -31,5 +37,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Backends\LLVM\LLVMSharpBackend\LLVMSharpBackend.csproj" />
     <ProjectReference Include="..\CompilerLibrary\CompilerLibrary.csproj" />
+    <ProjectReference Include="..\Tools\LanguageServer\LanguageServer.csproj" />
   </ItemGroup>
 </Project>

@@ -88,6 +88,16 @@ namespace CheezCLI
 
         [Option("print-linker-args", Default = false, HelpText = "Print arguments passed to linker")]
         public bool PrintLinkerArguments { get; set; }
+
+
+        [Option("language-server-tcp", Default = false)]
+        public bool LaunchLanguageServerTcp { get; set; }
+
+        [Option("port", Default = 5007)]
+        public int Port { get; set; }
+
+        [Option("language-server-console", Default = false)]
+        public bool LaunchLanguageServerConsole { get; set; }
     }
 
     class Prog
@@ -113,7 +123,23 @@ namespace CheezCLI
             stopwatch.Start();
             var result = argsParser.ParseArguments<CompilerOptions>(args)
                 .MapResult(
-                    options => Run(SetDefaults(options)),
+                    options =>
+                    {
+                        if (options.LaunchLanguageServerTcp)
+                        {
+                            CheezLanguageServer.CheezLanguageServerLauncher.RunLanguageServerOverTcp(options.Port);
+                            return new CompilationResult { ExitCode = 0 };
+                        }
+                        else if (options.LaunchLanguageServerConsole)
+                        {
+                            CheezLanguageServer.CheezLanguageServerLauncher.RunLanguageServerOverStdInOut();
+                            return new CompilationResult { ExitCode = 0 };
+                        }
+                        else
+                        {
+                            return Run(SetDefaults(options));
+                        }
+                    },
                     _ => new CompilationResult { ExitCode = -1 });
 
 

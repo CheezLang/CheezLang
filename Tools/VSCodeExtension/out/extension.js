@@ -11,7 +11,7 @@ function activate(context) {
     const serverCommand = vscode.workspace.getConfiguration().get('cheez.languageServerPath');
     const debugPort = vscode.workspace.getConfiguration().get('cheez.languageServerPort');
     const useStdio = vscode.workspace.getConfiguration().get('cheez.use_std_io');
-    vscode.window.showInformationMessage("Cheez extension: " + debugPort + ", " + useStdio);
+    // vscode.window.showInformationMessage("Cheez extension: " + debugPort + ", " + useStdio);
     let serverOptions = null;
     if (useStdio) {
         // The server is implemented in C#
@@ -20,8 +20,8 @@ function activate(context) {
             return;
         }
         serverOptions = {
-            run: { command: serverCommand },
-            debug: { command: serverCommand }
+            run: { command: serverCommand, args: ["--language-server-console", "dummy.che"] },
+            debug: { command: serverCommand, args: ["--language-server-console", "dummy.che"] }
         };
     }
     else {

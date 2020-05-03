@@ -69,7 +69,7 @@ namespace CheezLanguageServer
                 capabilities = new ServerCapabilities
                 {
                     textDocumentSync = TextDocumentSyncKind.Full,
-                    //documentSymbolProvider = true,
+                    documentSymbolProvider = true,
                     workspaceSymbolProvider = true,
                     executeCommandProvider = new ExecuteCommandOptions
                     {
@@ -188,7 +188,7 @@ namespace CheezLanguageServer
             var path = uri.LocalPath;
             path = path.TrimStart('/');
             path = path.Substring(0, 1).ToUpperInvariant() + path.Substring(1);
-            return path;
+            return path.Replace("/", "\\"); ;
         }
 
         protected override Result<dynamic, ResponseError> ExecuteCommand(ExecuteCommandParams @params)
@@ -257,10 +257,8 @@ namespace CheezLanguageServer
                         break;
 
                     default:
-                        name = stmt.ToString();
-                        break;
+                        continue;
                 }
-
 
                 if (!name.Contains(query, StringComparison.InvariantCultureIgnoreCase))
                     continue;
@@ -300,6 +298,25 @@ namespace CheezLanguageServer
             }
 
             return Result<SymbolInformation[], ResponseError>.Success(result.ToArray());
+        }
+
+        protected override Result<DocumentSymbolResult, ResponseError> DocumentSymbols(DocumentSymbolParams @params)
+        {
+            string path = GetFilePath(@params.textDocument.uri);
+            if (files.TryGetValue(path, out var file))
+            {
+                var result = new List<SymbolInformation>();
+                GetSymbolsInScope(result, file.uri, file.statements, "", null);
+                return Result<DocumentSymbolResult, ResponseError>.Success(new DocumentSymbolResult(result.ToArray()));
+            }
+            else
+            {
+                return Result<DocumentSymbolResult, ResponseError>.Error(new ResponseError
+                {
+                    code = ErrorCodes.InvalidParams,
+                    message = $"File '{path}' not found"
+                });
+            }
         }
 
         protected override VoidResult<ResponseError> Shutdown()

@@ -6,42 +6,17 @@ using System.Text;
 
 namespace CheezLanguageServer
 {
-    class Program
+    public static class CheezLanguageServerLauncher
     {
-        static void Main(string[] args)
+        public static void RunLanguageServerOverStdInOut()
         {
             Console.OutputEncoding = Encoding.UTF8;
-            //RunLanguageServerOverTcp(5007);
-            RunLanguageServerOverStdInOut();
-        }
-
-        private static void LaunchLanguageServer(Stream inStream, Stream outStream)
-        {
-            try
-            {
-                var app = new CheezLanguageServer(inStream, outStream);
-                Logger.Instance.Attach(app);
-                app.Listen().Wait();
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine(ex);
-            }
-        }
-
-        private static void foo()
-        {
-
-        }
-
-        private static void RunLanguageServerOverStdInOut()
-        {
             using var _in = Console.OpenStandardInput();
             using var _out = Console.OpenStandardOutput();
             LaunchLanguageServer(_in, _out);
         }
 
-        private static void RunLanguageServerOverTcp(int port)
+        public static void RunLanguageServerOverTcp(int port)
         {
             Console.WriteLine("Running Language Server oper tcp");
             TcpListener server = null;
@@ -75,6 +50,19 @@ namespace CheezLanguageServer
             {
                 // Stop listening for new clients.
                 server.Stop();
+            }
+        }
+        private static void LaunchLanguageServer(Stream inStream, Stream outStream)
+        {
+            try
+            {
+                var app = new CheezLanguageServer(inStream, outStream);
+                Logger.Instance.Attach(app);
+                app.Listen().Wait();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(ex);
             }
         }
     }
