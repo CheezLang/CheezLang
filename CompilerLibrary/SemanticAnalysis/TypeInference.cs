@@ -421,23 +421,16 @@ namespace Cheez
                 return null;
             }
 
-            IEnumerable<string> ModulePaths(PTFile file, AstIdExpr[] path)
+            IEnumerable<string> GetImportPaths(PTFile file, AstIdExpr[] path)
             {
                 yield return Path.GetDirectoryName(file.Name);
-                if (path.Length > 1)
-                {
-                    var start = path[0].Name;
-                    if (mCompiler.ModulePaths.TryGetValue(start, out var p))
-                        yield return p;
-
-                    if (mCompiler.ModulePaths.TryGetValue("libs", out var p2))
-                        yield return p2;
-                }
+                foreach (var modulePath in mCompiler.ModulePaths)
+                    yield return modulePath;
             }
 
             string FindModule()
             {
-                foreach (var modPath in ModulePaths(file, i.Path))
+                foreach (var modPath in GetImportPaths(file, i.Path))
                 {
                     var p = SearchForModuleInPath(modPath, i.Path);
                     if (p != null)

@@ -43,7 +43,7 @@ namespace Cheez
         private Dictionary<string, Lexer> mLoadingFiles = new Dictionary<string, Lexer>();
         private Dictionary<string, Workspace> mWorkspaces = new Dictionary<string, Workspace>();
         public IErrorHandler ErrorHandler { get; }
-        public Dictionary<string, string> ModulePaths { get; } = new Dictionary<string, string>();
+        public List<string> ModulePaths { get; } = new List<string>();
 
         private Workspace mMainWorkspace;
         public Workspace DefaultWorkspace => mMainWorkspace;
@@ -66,30 +66,10 @@ namespace Cheez
 
             string exePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "libraries");
             if (stdlib != null) exePath = stdlib;
-            ModulePaths["std"]      = exePath;
-            ModulePaths["libs"]     = exePath;
-            ModulePaths["opencv"]   = exePath + "/libraries";
-            ModulePaths["glfw"]     = exePath + "/libraries";
-            ModulePaths["imgui"]    = exePath + "/libraries";
-            ModulePaths["opengl"]   = exePath + "/libraries";
-            ModulePaths["stb"]      = exePath + "/libraries";
-            ModulePaths["olc_pge"]  = exePath + "/libraries";
-            ModulePaths["bmp"]      = exePath + "/libraries";
-            ModulePaths["lua"]      = exePath + "/libraries";
-            ModulePaths["clap"]     = exePath + "/libraries";
-            ModulePaths["compiler"] = exePath + "/libraries";
-            ModulePaths["libclang"] = exePath + "/libraries";
-            ModulePaths["serpa"]    = exePath + "/libraries";
-            ModulePaths["json"]     = exePath + "/libraries";
-            ModulePaths["dap"]      = exePath + "/libraries";
-            ModulePaths["logging"]  = exePath + "/libraries";
 
             mGlobalConstIfScope = new Scope("global_const_if");
             mGlobalConstIfScope.DefineBuiltInTypes();
             mGlobalConstIfScope.DefineBuiltInOperators();
-
-            // add preload file
-            AddFile(Path.Combine(exePath, preload ?? "std/preload.che"), globalScope: true);
         }
 
         public PTFile AddFile(string fileNameT, string body = null, Workspace workspace = null, bool globalScope = false)

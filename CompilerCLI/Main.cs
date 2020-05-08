@@ -12,6 +12,7 @@ using Cheez.CodeGeneration.LLVMCodeGen;
 using Cheez;
 using Cheez.Ast.Expressions;
 using Cheez.Ast;
+using System.Reflection;
 
 namespace CheezCLI
 {
@@ -206,15 +207,20 @@ namespace CheezCLI
             stopwatch.Start();
             var compiler = new CheezCompiler(errorHandler, options.Stdlib, options.Preload);
             foreach (string mod in options.Modules)
-            {
-                var parts = mod.Split(':');
-                if (parts.Length != 2)
-                {
-                    errorHandler.ReportError($"Invalid module option: {mod}");
-                    continue;
-                }
+                compiler.ModulePaths.Add(mod);
 
-                compiler.ModulePaths[parts[0]] = parts[1];
+            // load additional module paths from modules.txt if existent
+            {
+                string exePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                string modulesFile = Path.Combine(exePath, "modules.txt");
+                if (File.Exists(modulesFile))
+                {
+                    foreach (var modulePath in File.ReadAllLines(modulesFile))
+                    {
+                        if (!string.IsNullOrWhiteSpace(modulePath))
+                            compiler.ModulePaths.Add(modulePath);
+                    }
+                }
             }
 
             foreach (var file in options.Files)

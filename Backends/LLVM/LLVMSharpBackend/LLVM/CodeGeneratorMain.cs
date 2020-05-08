@@ -282,6 +282,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             // run optimizations
             if (optimize) // TODO
             {
+                if (outputIntermediateFile)
+                    module.PrintToFile(Path.Combine(intDir, targetFile + ".debug.ll"));
+
                 Console.WriteLine("[LLVM] Running optimizations...");
                 var (modifiedFunctions, modifiedModule) = RunOptimizations(1);
 
@@ -327,8 +330,6 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private (int, bool) RunOptimizations(uint level)
         {
-            module.PrintToFile(Path.Combine(intDir, targetFile + ".debug.ll"));
-
             var pmBuilder = LLVM.PassManagerBuilderCreate();
             LLVM.PassManagerBuilderSetOptLevel(pmBuilder, level);
             LLVM.PassManagerBuilderUseInlinerWithThreshold(pmBuilder, 0);

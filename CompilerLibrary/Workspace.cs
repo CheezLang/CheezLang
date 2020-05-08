@@ -7,6 +7,7 @@ using Cheez.Util;
 using Cheez.Visitors;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Cheez
@@ -89,6 +90,17 @@ namespace Cheez
 
         public void CompileAll()
         {
+            // add preload file
+            foreach (var modulePath in mCompiler.ModulePaths)
+            {
+                var preloadPath = Path.Combine(modulePath, "std", "preload.che");
+                if (File.Exists(preloadPath))
+                {
+                    mCompiler.AddFile(preloadPath, workspace: this, globalScope: true);
+                    break;
+                }
+            }
+
             // new
             ResolveImports();
             ResolveDeclarations();
