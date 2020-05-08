@@ -1,2 +1,0 @@
-
-___chkstk_ms :: () #extern #linkname("___chkstk_ms") #nostacktrace #unused {}

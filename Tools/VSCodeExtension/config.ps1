@@ -1,1 +1,0 @@
-$extensionName = "cheez"
