@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 
 using Cheez.Ast;
 using Cheez.Ast.Expressions;

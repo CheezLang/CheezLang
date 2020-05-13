@@ -1,4 +1,4 @@
-﻿namespace Cheez.CodeGeneration.LLVMCodeGen
+namespace Cheez.CodeGeneration.LLVMCodeGen
 {
     public static class AttributeKindExt
     {

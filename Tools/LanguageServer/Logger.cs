@@ -1,4 +1,4 @@
-﻿using LanguageServer;
+using LanguageServer;
 using LanguageServer.Client;
 using LanguageServer.Parameters.Window;
 using System.IO;

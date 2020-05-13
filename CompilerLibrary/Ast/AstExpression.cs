@@ -1,4 +1,4 @@
-﻿using Cheez.Ast.Expressions.Types;
+using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
 using Cheez.Extras;
 using Cheez.Parsing;

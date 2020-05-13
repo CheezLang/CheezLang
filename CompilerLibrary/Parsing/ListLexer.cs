@@ -1,4 +1,4 @@
-﻿using Cheez.Ast;
+using Cheez.Ast;
 using System;
 using System.Collections.Generic;
 using System.Linq;

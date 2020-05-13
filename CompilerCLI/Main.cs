@@ -1,4 +1,4 @@
-﻿using Cheez.CodeGeneration;
+using Cheez.CodeGeneration;
 using System.Diagnostics;
 using System.IO;
 using System;

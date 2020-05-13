@@ -1,4 +1,4 @@
-﻿using LLVMSharp;
+using LLVMSharp;
 using System;
 using System.Runtime.InteropServices;
 

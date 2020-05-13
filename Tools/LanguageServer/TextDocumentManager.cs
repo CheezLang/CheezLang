@@ -1,4 +1,4 @@
-﻿using LanguageServer.Parameters;
+using LanguageServer.Parameters;
 using LanguageServer.Parameters.TextDocument;
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-﻿using Cheez.Types.Abstract;
+using Cheez.Types.Abstract;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
 using Cheez.Util;

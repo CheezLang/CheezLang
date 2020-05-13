@@ -1,4 +1,4 @@
-﻿using Cheez.Ast.Statements;
+using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Complex;
 using LLVMSharp;

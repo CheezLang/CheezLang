@@ -1,4 +1,4 @@
-﻿using Cheez.Ast.Expressions;
+using Cheez.Ast.Expressions;
 using System;
 
 namespace Cheez

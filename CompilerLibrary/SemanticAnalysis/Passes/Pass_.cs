@@ -1,4 +1,4 @@
-﻿namespace Cheez
+namespace Cheez
 {
     public partial class Workspace
     {

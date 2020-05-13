@@ -1,4 +1,4 @@
-﻿using Cheez.Util;
+using Cheez.Util;
 using Microsoft.Win32;
 using System;
 using System.IO;

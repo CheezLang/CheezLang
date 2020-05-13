@@ -1,4 +1,4 @@
-﻿using LanguageServer.Parameters.TextDocument;
+using LanguageServer.Parameters.TextDocument;
 using System;
 
 namespace CheezLanguageServer

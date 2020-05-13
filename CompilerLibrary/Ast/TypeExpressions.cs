@@ -1,4 +1,4 @@
-﻿using Cheez.Visitors;
+using Cheez.Visitors;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;

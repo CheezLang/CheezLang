@@ -1,4 +1,4 @@
-﻿#define PRINT_SRC_LOCATION
+#define PRINT_SRC_LOCATION
 
 using System;
 using System.Collections.Generic;

@@ -1,4 +1,4 @@
-﻿using Cheez.Extras;
+using Cheez.Extras;
 using Cheez.Types.Complex;
 using System;
 using System.Collections.Generic;
