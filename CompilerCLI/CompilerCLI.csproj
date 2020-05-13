@@ -29,6 +29,7 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <AssemblyName>cheezc</AssemblyName>
     <LangVersion>8.0</LangVersion>
+    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.6.0" />
@@ -40,6 +41,6 @@
     <ProjectReference Include="..\Tools\LanguageServer\LanguageServer.csproj" />
   </ItemGroup>
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy &quot;$(SolutionDir)modules.txt&quot; &quot;$(OutDir)&quot; /Y&#xD;&#xA;xcopy &quot;$(SolutionDir)lib&quot; &quot;$(OutDir)&quot; /Y" />
+    <Exec Command="pwsh &quot;$(SolutionDir)/scripts/copy_additional_build_files.ps1&quot; $(SolutionDir) $(ProjectDir) $(OutDir) &#xD;&#xA;&#xD;&#xA;" />
   </Target>
 </Project>
