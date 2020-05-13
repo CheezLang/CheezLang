@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Cheez.CodeGeneration.LLVMCodeGen
@@ -219,15 +220,18 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 sprintf = module.AddFunction("sprintf", ltype);
             }
 
-            exitThread = module.GetNamedFunction("ExitThread");
-            if (exitThread.Pointer.ToInt64() == 0)
-            {
-                var ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[]
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                exitThread = module.GetNamedFunction("ExitThread");
+                if (exitThread.Pointer.ToInt64() == 0)
                 {
-                    LLVM.Int32Type()
-                }, false);
-                exitThread = module.AddFunction("ExitThread", ltype);
-                exitThread.SetFunctionCallConv((uint)LLVMCallConv.LLVMX86StdcallCallConv);
+                    var ltype = LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[]
+                    {
+                        LLVM.Int32Type()
+                    }, false);
+                    exitThread = module.AddFunction("ExitThread", ltype);
+                    exitThread.SetFunctionCallConv((uint)LLVMCallConv.LLVMX86StdcallCallConv);
+                }
             }
         }
 
@@ -253,9 +257,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateFree(originalBuffer);
 
             // exit thread
-            builder.CreateCall(exitThread, new LLVMValueRef[] {
-                LLVM.ConstInt(LLVM.Int32Type(), (uint)exitCode, true)
-            }, "");
+            if (exitThread.Pointer.ToInt64() != 0) {
+                builder.CreateCall(exitThread, new LLVMValueRef[] {
+                    LLVM.ConstInt(LLVM.Int32Type(), (uint)exitCode, true)
+                }, "");
+            }
         }
 
         private LLVMValueRef GenerateIntrinsicDeclaration(string name, LLVMTypeRef retType, params LLVMTypeRef[] paramTypes)

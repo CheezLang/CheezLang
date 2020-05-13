@@ -6,8 +6,10 @@ use import std.rc
 use import std.thread
 use import std.ring_queue
 
-use import std.os.windows
-use import std.os.windows_functions
+if const @is_os("windows") {
+    use import std.os.windows
+    use import std.os.windows_functions
+}
 
 io  :: import std.io
 fmt :: import std.fmt
