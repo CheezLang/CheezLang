@@ -11,12 +11,23 @@
             "internalConsoleOptions": "openOnSessionStart"
         },
         {
-            "name": ".NET Core Launch (console)",
+            "name": ".NET Core Launch Compiler",
             "type": "coreclr",
             "request": "launch",
             // "preLaunchTask": "build",
             "program": "${workspaceFolder}/bin/Debug/cheezc.dll",
             "args": ["examples/test.che", "--out", "gen", "--stdlib", "examples", "--time", "--run"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": ".NET Core Launch Language Server",
+            "type": "coreclr",
+            "request": "launch",
+            // "preLaunchTask": "build",
+            "program": "${workspaceFolder}/bin/Debug/cheezc.dll",
+            "args": ["_.che", "--language-server-tcp"],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "internalConsole"

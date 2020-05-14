@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using Cheez;
 using Cheez.Ast;
 using Cheez.Ast.Expressions;
@@ -41,6 +43,7 @@ namespace CheezLanguageServer
         private TextDocumentManager _documents;
 
         private Dictionary<string, SourceFile> files;
+        private List<string> modulePaths = new List<string>();
 
         //private SilentErrorHandler _errorHandler;
         //private CheezCompiler _compiler;
@@ -61,8 +64,23 @@ namespace CheezLanguageServer
             //_compiler = new CheezCompiler(_errorHandler, null, null);
             return Result<dynamic, ResponseError>.Success(true);
         }
+
         protected override Result<InitializeResult, ResponseError<InitializeErrorData>> Initialize(InitializeParams @params)
         {
+            // load additional module paths from modules.txt if existent
+            {
+                string exePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                string modulesFile = Path.Combine(exePath, "modules.txt");
+                if (File.Exists(modulesFile))
+                {
+                    foreach (var modulePath in File.ReadAllLines(modulesFile))
+                    {
+                        if (!string.IsNullOrWhiteSpace(modulePath))
+                            modulePaths.Add(modulePath);
+                    }
+                }
+            }
+
             _workerSpaceRoot = @params.rootUri;
             var result = new InitializeResult
             {
@@ -89,7 +107,7 @@ namespace CheezLanguageServer
 
         private void LoadFile(Uri uri, string path, string text)
         {
-            path = path.Replace("/", "\\");
+            path = path.Replace('/', System.IO.Path.DirectorySeparatorChar);
             if (files.ContainsKey(path))
                 return;
 
@@ -129,8 +147,8 @@ namespace CheezLanguageServer
                 IEnumerable<string> ModulePaths(string baseFilePath, AstIdExpr[] path)
                 {
                     yield return Path.GetDirectoryName(baseFilePath);
-                    yield return @"D:\dev\CheezLang\examples";
-                    yield return @"D:\dev\CheezLang\examples\libraries";
+                    foreach (var modulePath in modulePaths)
+                        yield return modulePath;
                 }
 
                 string FindModule()
@@ -185,10 +203,17 @@ namespace CheezLanguageServer
 
         private static string GetFilePath(Uri uri)
         {
-            var path = uri.LocalPath;
-            path = path.TrimStart('/');
-            path = path.Substring(0, 1).ToUpperInvariant() + path.Substring(1);
-            return path.Replace("/", "\\"); ;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+                var path = uri.LocalPath;
+                path = path.TrimStart('/');
+                path = path.Substring(0, 1).ToUpperInvariant() + path.Substring(1);
+
+                return path.Replace("/", "\\"); ;
+            } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
+                return uri.LocalPath;
+            } else {
+                return uri.LocalPath;
+            }
         }
 
         protected override Result<dynamic, ResponseError> ExecuteCommand(ExecuteCommandParams @params)
