@@ -66,7 +66,8 @@ namespace CheezLanguageServer
             }
         }
 
-        private static int GetPosition(string text, int line, int character)
+        /// returns the offset of (line, character) in text
+        public static int GetPosition(string text, int line, int character)
         {
             var pos = 0;
             for (; 0 <= line; line--)

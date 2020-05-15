@@ -85,18 +85,25 @@ namespace Cheez.Visitors
 
         public override string VisitTraitTypeExpr(AstTraitTypeExpr trait, int data = 0)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine("trait {");
+            var head = $"trait";
+            if (trait.Parameters != null && trait.Parameters.Count > 0)
+            {
+                head += $"({string.Join(", ", trait.Parameters.Select(p => p.Accept(this)))})";
+            }
+            return head;
 
-            foreach (var f in trait.Members)
-                sb.AppendLine(f.Decl.Accept(this).Indent(4));
+            // var sb = new StringBuilder();
+            // sb.AppendLine("trait {");
 
-            foreach (var f in trait.Functions)
-                sb.AppendLine($"{f.Name} :: f.Accept(this)".Indent(4));
+            // foreach (var f in trait.Members)
+            //     sb.AppendLine(f.Decl.Accept(this).Indent(4));
 
-            sb.Append("}");
+            // foreach (var f in trait.Functions)
+            //     sb.AppendLine($"{f.Name} :: f.Accept(this)".Indent(4));
 
-            return sb.ToString().Indent(data);
+            // sb.Append("}");
+
+            // return sb.ToString().Indent(data);
         }
 
         private string VisitImplCondition(ImplCondition cond)
@@ -259,11 +266,12 @@ namespace Cheez.Visitors
         {
             var body = string.Join("\n", en.Declarations.Select(m => m.Accept(this)));
             var head = $"enum";
-            if (en.Parameters != null)
+            if (en.Parameters != null && en.Parameters.Count > 0)
             {
                 head += $"({string.Join(", ", en.Parameters.Select(p => p.Accept(this)))})";
             }
-            return $"{head} {{\n{body.Indent(4)}\n}}";
+            // return $"{head} {{\n{body.Indent(4)}\n}}";
+            return head;
         }
 
         public override string VisitBreakExpr(AstBreakExpr br, int data = 0)
@@ -547,6 +555,27 @@ namespace Cheez.Visitors
         public override string VisitSliceTypeExpr(AstSliceTypeExpr type, int data = 0)
         {
             return $"[]{type.Target.Accept(this)}";
+        }
+
+        public override string VisitStructTypeExpr(AstStructTypeExpr expr, int data = default(int)) {
+            var body = string.Join("\n", expr.Declarations.Select(m => m.Accept(this)));
+            var head = $"struct";
+            if (expr.Parameters != null && expr.Parameters.Count > 0)
+            {
+                head += $"({string.Join(", ", expr.Parameters.Select(p => p.Accept(this)))})";
+            }
+            // return $"{head} {{\n{body.Indent(4)}\n}}";
+            return head;
+        }
+
+        public override string VisitFuncExpr(AstFuncExpr expr, int data = default(int)) {
+            var pars = string.Join(", ", expr.Parameters.Select(p => p.Accept(this)));
+            var head = $"({pars})";
+
+            if (expr.ReturnTypeExpr != null)
+                head += $" -> {expr.ReturnTypeExpr.Accept(this)}";
+
+            return head;
         }
 
         public override string VisitFunctionTypeExpr(AstFunctionTypeExpr type, int data = 0)

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using Cheez;
 using Cheez.Ast;
 using Cheez.Ast.Expressions;
@@ -24,10 +25,16 @@ namespace CheezLanguageServer
     {
         public List<AstStatement> statements = new List<AstStatement>();
         public Uri uri;
+        public string text;
 
-        public SourceFile(Uri uri)
+        public SourceFile(Uri uri, string text)
         {
             this.uri = uri;
+            this.text = text;
+        }
+
+        internal void UpdateText(string text) {
+            this.text = text;
         }
 
         internal void Clear()
@@ -89,6 +96,13 @@ namespace CheezLanguageServer
                     textDocumentSync = TextDocumentSyncKind.Full,
                     documentSymbolProvider = true,
                     workspaceSymbolProvider = true,
+                    completionProvider = new CompletionOptions() {
+                        triggerCharacters = new string[] {
+                            "."
+                        }
+                    },
+                    definitionProvider = true,
+                    hoverProvider = true,
                     executeCommandProvider = new ExecuteCommandOptions
                     {
                         commands = new string[] { "reload_language_server" }
@@ -96,11 +110,11 @@ namespace CheezLanguageServer
                 }
             };
 
-            Proxy.Window.ShowMessage(new LanguageServer.Parameters.Window.ShowMessageParams
-            {
-                type = LanguageServer.Parameters.Window.MessageType.Info,
-                message = "CheezLanguageServer initialized"
-            });
+            // Proxy.Window.ShowMessage(new LanguageServer.Parameters.Window.ShowMessageParams
+            // {
+            //     type = LanguageServer.Parameters.Window.MessageType.Info,
+            //     message = "CheezLanguageServer initialized"
+            // });
 
             return Result<InitializeResult, ResponseError<InitializeErrorData>>.Success(result);
         }
@@ -114,7 +128,7 @@ namespace CheezLanguageServer
             var eh = new SilentErrorHandler();
             var lexer = Lexer.FromString(text, eh, path);
 
-            SourceFile file = new SourceFile(uri);
+            SourceFile file = new SourceFile(uri, text);
             files[path] = file;
 
             var parser = new Parser(lexer, eh);
@@ -236,80 +250,204 @@ namespace CheezLanguageServer
             });
         }
 
-        private void GetSymbolsInScope<T>(List<SymbolInformation> result, Uri uri, List<T> statements, string query, string containerName)
+
+        private List<(AstStatement stmt, Uri uri, string container)> FindSymbolsInAllFiles(string id) {
+            var result = new List<(AstStatement stmt, Uri uri, string container)>();
+            foreach (var file in files)
+                GetMatchingNodes(result, file.Value.uri, file.Value.statements, id, null, exactMatch: true);
+            return result;
+        }
+
+        private void GetSymbolsInScope<T>(List<SymbolInformation> result, Uri uri, List<T> statements, string query, string containerName, bool exactMatch = false)
+            where T : AstStatement
+        {
+            var symbols = new List<(AstStatement stmt, Uri uri, string container)>();
+            GetMatchingNodes(symbols, uri, statements, query, containerName, exactMatch: exactMatch);
+            result.AddRange(symbols.Select(sym => GetSymbolInformationForStatement(sym.stmt, sym.container, sym.uri)));
+            // foreach (var stmt in statements)
+            // {
+            //     string name = "";
+            //     SymbolKind kind = SymbolKind.Null;
+
+            //     switch (stmt)
+            //     {
+            //         case AstVariableDecl decl:
+            //             name = decl.Name.Name;
+            //             kind = SymbolKind.Variable;
+            //             break;
+
+            //         case AstConstantDeclaration decl:
+            //             name = decl.Name.Name;
+            //             switch (decl.Initializer)
+            //             {
+            //                 case AstStructTypeExpr _:
+            //                     kind = SymbolKind.Struct;
+            //                     break;
+            //                 case AstEnumTypeExpr _:
+            //                     kind = SymbolKind.Enum;
+            //                     break;
+            //                 case AstTraitTypeExpr _:
+            //                     kind = SymbolKind.Interface;
+            //                     break;
+            //                 case AstFuncExpr _:
+            //                     kind = SymbolKind.Function;
+            //                     break;
+            //                 case AstImportExpr _:
+            //                     kind = SymbolKind.Module;
+            //                     break;
+            //                 default:
+            //                     kind = SymbolKind.Constant;
+            //                     break;
+            //             }
+            //             break;
+
+            //         case AstImplBlock impl:
+            //             name = impl.ToString();
+            //             GetSymbolsInScope(result, uri, impl.Declarations, query, name, exactMatch);
+            //             break;
+
+            //         default:
+            //             continue;
+            //     }
+
+            //     if (exactMatch && name != query)
+            //         continue;
+            //     if (!exactMatch && !name.Contains(query, StringComparison.InvariantCultureIgnoreCase))
+            //         continue;
+            //     result.Add(new SymbolInformation
+            //     {
+            //         name = name,
+            //         kind = kind,
+            //         containerName = containerName,
+            //         location = new LanguageServer.Parameters.Location
+            //         {
+            //             uri = uri,
+            //             range = new LanguageServer.Parameters.Range
+            //             {
+            //                 start = new Position
+            //                 {
+            //                     line = stmt.Beginning.line - 1,
+            //                     character = stmt.Beginning.Column - 1
+            //                 },
+            //                 end = new Position
+            //                 {
+            //                     line = stmt.End.line - 1,
+            //                     character = stmt.End.Column - 1
+            //                 }
+            //             }
+            //         }
+            //     });
+            // }
+        }
+
+        private string GetNameForStatement(AstStatement statement) {
+            switch (statement)
+            {
+                case AstVariableDecl decl: return decl.Name.Name;
+                case AstConstantDeclaration decl: return  decl.Name.Name;
+                case AstImplBlock impl: return impl.ToString();
+                default: return "";
+            }
+        }
+
+        private SymbolKind GetSymbolKindForStatement(AstStatement statement) {
+            switch (statement)
+            {
+                case AstVariableDecl decl: return SymbolKind.Variable;
+
+                case AstConstantDeclaration decl:
+                    switch (decl.Initializer)
+                    {
+                        case AstStructTypeExpr _ : return SymbolKind.Struct;
+                        case AstEnumTypeExpr   _ : return SymbolKind.Enum;
+                        case AstTraitTypeExpr  _ : return SymbolKind.Interface;
+                        case AstFuncExpr       _ : return SymbolKind.Function;
+                        case AstImportExpr     _ : return SymbolKind.Module;
+                        default                  : return SymbolKind.Constant;
+                    }
+
+                default: return SymbolKind.Null;
+            }
+        }
+
+        private SymbolInformation GetSymbolInformationForStatement(AstStatement stmt, string containerName, Uri uri) {
+            string name = GetNameForStatement(stmt);
+            var kind = GetSymbolKindForStatement(stmt);
+            return new SymbolInformation
+            {
+                name = name,
+                kind = kind,
+                containerName = containerName,
+                location = new LanguageServer.Parameters.Location {
+                    uri = uri,
+                    range = new LanguageServer.Parameters.Range
+                    {
+                        start = new Position
+                        {
+                            line = stmt.Beginning.line - 1,
+                            character = stmt.Beginning.Column - 1
+                        },
+                        end = new Position
+                        {
+                            line = stmt.End.line - 1,
+                            character = stmt.End.Column - 1
+                        }
+                    }
+                }
+            };
+        }
+
+        private LanguageServer.Parameters.Location GetLocationForStatement(AstStatement stmt, Uri uri)
+        {
+            return new LanguageServer.Parameters.Location {
+                uri = uri,
+                range = new LanguageServer.Parameters.Range
+                {
+                    start = new Position
+                    {
+                        line = stmt.Beginning.line - 1,
+                        character = stmt.Beginning.Column - 1
+                    },
+                    end = new Position
+                    {
+                        line = stmt.End.line - 1,
+                        character = stmt.End.Column - 1
+                    }
+                }
+            };
+        }
+
+        private void GetMatchingNodes<T>(List<(AstStatement stmt, Uri uri, string container)> result, Uri uri, List<T> statements, string query, string containerName, bool exactMatch = false)
             where T : AstStatement
         {
             foreach (var stmt in statements)
             {
                 string name = "";
-                SymbolKind kind = SymbolKind.Null;
 
                 switch (stmt)
                 {
                     case AstVariableDecl decl:
                         name = decl.Name.Name;
-                        kind = SymbolKind.Variable;
                         break;
 
                     case AstConstantDeclaration decl:
                         name = decl.Name.Name;
-                        switch (decl.Initializer)
-                        {
-                            case AstStructTypeExpr _:
-                                kind = SymbolKind.Struct;
-                                break;
-                            case AstEnumTypeExpr _:
-                                kind = SymbolKind.Enum;
-                                break;
-                            case AstTraitTypeExpr _:
-                                kind = SymbolKind.Interface;
-                                break;
-                            case AstFuncExpr _:
-                                kind = SymbolKind.Function;
-                                break;
-                            case AstImportExpr _:
-                                kind = SymbolKind.Module;
-                                break;
-                            default:
-                                kind = SymbolKind.Constant;
-                                break;
-                        }
                         break;
 
                     case AstImplBlock impl:
                         name = impl.ToString();
-                        GetSymbolsInScope(result, uri, impl.Declarations, query, name);
+                        GetMatchingNodes(result, uri, impl.Declarations, query, name, exactMatch);
                         break;
 
                     default:
                         continue;
                 }
 
-                if (!name.Contains(query, StringComparison.InvariantCultureIgnoreCase))
+                if (exactMatch && name != query)
                     continue;
-                result.Add(new SymbolInformation
-                {
-                    name = name,
-                    kind = kind,
-                    containerName = containerName,
-                    location = new LanguageServer.Parameters.Location
-                    {
-                        uri = uri,
-                        range = new LanguageServer.Parameters.Range
-                        {
-                            start = new Position
-                            {
-                                line = stmt.Beginning.line - 1,
-                                character = stmt.Beginning.Column - 1
-                            },
-                            end = new Position
-                            {
-                                line = stmt.End.line - 1,
-                                character = stmt.End.Column - 1
-                            }
-                        }
-                    }
-                });
+                if (!exactMatch && !name.Contains(query, StringComparison.InvariantCultureIgnoreCase))
+                    continue;
+                result.Add((stmt, uri, containerName));
             }
         }
 
@@ -342,6 +480,165 @@ namespace CheezLanguageServer
                     message = $"File '{path}' not found"
                 });
             }
+        }
+
+        protected override Result<CompletionResult, ResponseError> Completion(CompletionParams @params) {
+            string path = GetFilePath(@params.textDocument.uri);
+            var result = new List<SymbolInformation>();
+            foreach (var file in files)
+            {
+                GetSymbolsInScope(result, file.Value.uri, file.Value.statements, "", null);
+            }
+
+            return Result<CompletionResult, ResponseError>.Success(
+                new CompletionResult(new CompletionList() {
+                    isIncomplete = true,
+                    items = result.Select(r => new CompletionItem {
+                        detail = r.containerName,
+                        kind  = SymbolKindToCompletionItemKind(r.kind),
+                        label = r.name
+                    }).ToArray()
+                })
+            );
+        }
+
+        protected override Result<LocationSingleOrArray, ResponseError> GotoDefinition(TextDocumentPositionParams @params) {
+            string path = GetFilePath(@params.textDocument.uri);
+            if (files.TryGetValue(path, out var file)) {
+                string id = GetIdentifierContainingPosition(@params.position, file);
+                if (id == null) {
+                    return Result<LocationSingleOrArray, ResponseError>.Success(
+                        new LocationSingleOrArray(new LanguageServer.Parameters.Location[0])
+                    );
+                }
+                var matchingSymbols = FindSymbolsInAllFiles(id);
+
+                return Result<LocationSingleOrArray, ResponseError>.Success(
+                    new LocationSingleOrArray(matchingSymbols.Select(sym => GetLocationForStatement(sym.stmt, sym.uri)).ToArray())
+                );
+            } else {
+                return Result<LocationSingleOrArray, ResponseError>.Error(new ResponseError{
+                    code = ErrorCodes.InvalidParams,
+                    message = $"File '{path}' not found"
+                });
+            }
+        }
+
+        protected override Result<Hover, ResponseError> Hover(TextDocumentPositionParams @params) {
+            string path = GetFilePath(@params.textDocument.uri);
+            if (files.TryGetValue(path, out var file)) {
+                string id = GetIdentifierContainingPosition(@params.position, file);
+                if (id == null) {
+                    return Result<Hover, ResponseError>.Success(new Hover());
+                }
+                var matchingSymbols = FindSymbolsInAllFiles(id);
+                if (matchingSymbols.Count == 0) {
+                    return Result<Hover, ResponseError>.Success(new Hover());
+                }
+
+                return Result<Hover, ResponseError>.Success(new Hover{
+                    contents = new HoverContents(matchingSymbols.Select(sym => {
+                        string container = "";
+                        if (string.IsNullOrWhiteSpace(sym.container)) {
+                            container = " --- " + Path.GetFileName(GetFilePath(sym.uri));
+                        } else {
+                            container = " --- " + sym.container + " --- " + Path.GetFileName(GetFilePath(sym.uri));
+                        }
+                        return sym.stmt.ToString() + container;
+                    }).ToArray())
+                });
+            } else {
+                return Result<Hover, ResponseError>.Error(new ResponseError{
+                    code = ErrorCodes.InvalidParams,
+                    message = $"File '{path}' not found"
+                });
+            }
+        }
+        
+        private string GetIdentifierContainingPosition(Position pos, SourceFile file) {
+            int offset = GetPosition(file.text, (int)pos.line, (int)pos.character);
+            if (offset < 0 || offset >= file.text.Length)
+                return null;
+            char c = file.text[offset];
+
+            bool IsIdChar(char c) => c == '_' || char.IsLetterOrDigit(c);
+            if (!IsIdChar(c))
+                return null;
+
+            // find start and end
+            int start = offset, end = offset;
+            while (start > 0 && IsIdChar(file.text[start - 1]))
+                start--;
+            while (end < file.text.Length - 1 && IsIdChar(file.text[end + 1]))
+                end++;
+            
+            string id = file.text.Substring(start, end - start + 1);
+            if (!Regex.IsMatch(id, "[_a-zA-Z]"))
+                return null;
+            return id;
+        }
+
+
+        /// returns the offset of (line, character) in text
+        private int GetPosition(string text, int line, int character)
+        {
+            var pos = 0;
+            for (; 0 < line; line--)
+            {
+                var lf = text.IndexOf('\n', pos);
+                if (lf < 0)
+                {
+                    return text.Length;
+                }
+                pos = lf + 1;
+            }
+            var linefeed = text.IndexOf('\n', pos);
+            var max = 0;
+            if (linefeed < 0)
+            {
+                max = text.Length;
+            }
+            else if (linefeed > 0 && text[linefeed - 1] == '\r')
+            {
+                max = linefeed - 1;
+            }
+            else
+            {
+                max = linefeed;
+            }
+            pos += character;
+            return (pos < max) ? pos : max;
+        }
+
+        private CompletionItemKind? SymbolKindToCompletionItemKind(SymbolKind kind) {
+            return kind switch {
+                SymbolKind.Array            => null,
+                SymbolKind.Boolean          => null,
+                SymbolKind.Class            => CompletionItemKind.Class,
+                SymbolKind.Constant         => CompletionItemKind.Constant,
+                SymbolKind.Constructor      => CompletionItemKind.Constructor,
+                SymbolKind.Enum             => CompletionItemKind.Enum,
+                SymbolKind.EnumMember       => CompletionItemKind.EnumMember,
+                SymbolKind.Event            => CompletionItemKind.Event,
+                SymbolKind.Field            => CompletionItemKind.Field,
+                SymbolKind.File             => CompletionItemKind.File,
+                SymbolKind.Function         => CompletionItemKind.Function,
+                SymbolKind.Interface        => CompletionItemKind.Interface,
+                SymbolKind.Key              => null,
+                SymbolKind.Method           => CompletionItemKind.Method,
+                SymbolKind.Module           => CompletionItemKind.Module,
+                SymbolKind.Namespace        => null,
+                SymbolKind.Null             => null,
+                SymbolKind.Number           => null,
+                SymbolKind.Object           => null,
+                SymbolKind.Operator         => CompletionItemKind.Operator,
+                SymbolKind.Package          => null,
+                SymbolKind.Property         => CompletionItemKind.Property,
+                SymbolKind.String           => null,
+                SymbolKind.Struct           => CompletionItemKind.Struct,
+                SymbolKind.TypeParameter    => CompletionItemKind.TypeParameter,
+                SymbolKind.Variable         => CompletionItemKind.Variable,
+            };
         }
 
         protected override VoidResult<ResponseError> Shutdown()

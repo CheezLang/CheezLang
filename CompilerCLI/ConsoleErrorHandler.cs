@@ -125,7 +125,6 @@ namespace CheezCLI
             int linesSpread = CountLines(text, index, end.end);
             linesSpread = Math.Min(linesSpread, 2);
 
-            var errorLineBackgroundColor = ConsoleColor.Black;
             int lineNumberWidth = (end.line + linesAfter).ToString(CultureInfo.InvariantCulture).Length;
 
             // lines before current line
@@ -165,9 +164,9 @@ namespace CheezCLI
 
                     LogInline(string.Format(CultureInfo.InvariantCulture, $"{{0,{lineNumberWidth}}}> ", line + firstLine), ConsoleColor.White);
 
-                    LogInline(part1, textColor, errorLineBackgroundColor);
-                    LogInline(part2, highlightColor, errorLineBackgroundColor);
-                    Log(part3, textColor, errorLineBackgroundColor);
+                    LogInline(part1, textColor);
+                    LogInline(part2, highlightColor);
+                    Log(part3, textColor);
 
                     ls = le + 1;
                     i = ls;
@@ -260,23 +259,23 @@ namespace CheezCLI
             return 0;
         }
 
-        private static void Log(string message, ConsoleColor foreground, ConsoleColor background = ConsoleColor.Black)
+        private static void Log(string message, ConsoleColor foreground)
         {
             var colf = Console.ForegroundColor;
             var colb = Console.BackgroundColor;
             Console.ForegroundColor = foreground;
-            Console.BackgroundColor = background;
+            // Console.BackgroundColor = background;
             Console.Error.WriteLine(message);
             Console.ForegroundColor = colf;
             Console.BackgroundColor = colb;
         }
 
-        private static void LogInline(string message, ConsoleColor foreground, ConsoleColor background = ConsoleColor.Black)
+        private static void LogInline(string message, ConsoleColor foreground)
         {
             var colf = Console.ForegroundColor;
             var colb = Console.BackgroundColor;
             Console.ForegroundColor = foreground;
-            Console.BackgroundColor = background;
+            // Console.BackgroundColor = background;
             Console.Error.Write(message);
             Console.ForegroundColor = colf;
             Console.BackgroundColor = colb;
