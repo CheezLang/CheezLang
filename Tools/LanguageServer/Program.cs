@@ -1,15 +1,35 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 namespace CheezLanguageServer
 {
     public static class CheezLanguageServerLauncher
     {
-        public static void RunLanguageServerOverStdInOut()
+        public static void RunLanguageServerOverStdInOut(long parentPid)
         {
+            if (parentPid >= 0) {
+                var killThread = new Thread(() => {
+                    while (true) {
+                        try {
+                            var parentProcess = Process.GetProcessById((int)parentPid);
+                        } catch (ArgumentException) {
+                            // process no longer exists
+                            System.Environment.Exit(1);
+                        }
+
+                        Thread.Sleep(2000);
+                    }
+                });
+                killThread.Start();
+            }
+            // var currentProcess = Process.GetCurrentProcess();
+            // if (Process.GetProcessById(123).)
+
             Console.OutputEncoding = Encoding.UTF8;
             using var _in = Console.OpenStandardInput();
             using var _out = Console.OpenStandardOutput();

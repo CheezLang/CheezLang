@@ -99,6 +99,9 @@ namespace CheezCLI
 
         [Option("language-server-console", Default = false)]
         public bool LaunchLanguageServerConsole { get; set; }
+
+        [Option("parent-pid", Default = -1)]
+        public long ParentPid { get; set; }
     }
 
     class Prog
@@ -133,7 +136,7 @@ namespace CheezCLI
                         }
                         else if (options.LaunchLanguageServerConsole)
                         {
-                            CheezLanguageServer.CheezLanguageServerLauncher.RunLanguageServerOverStdInOut();
+                            CheezLanguageServer.CheezLanguageServerLauncher.RunLanguageServerOverStdInOut(options.ParentPid);
                             return new CompilationResult { ExitCode = 0 };
                         }
                         else
