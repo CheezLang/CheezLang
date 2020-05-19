@@ -68,6 +68,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             // Console.WriteLine("[LINKER] " + string.Join(" ", lldArgs));
 
+            Console.WriteLine("[LINKER] " + string.Join(" ", lldArgs.Select(a => $"\"{a}\"")));
+
             var process = Utilities.StartProcess("clang", lldArgs,
                             stdout: (s, e) => { if (e.Data != null) Console.WriteLine(e.Data); },
                             stderr: (s, e) => { if (e.Data != null) Console.Error.WriteLine(e.Data); });

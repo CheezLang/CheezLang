@@ -1,11 +1,15 @@
 use import std.array
 use import std.string
-use import std.os.windows_functions
 use import std.mem.allocator
 use import std.util
+fs  :: import std.io.fs
 io  :: import std.io
 fmt :: import std.fmt
 C   :: import std.c
+
+if const @is_os("windows") {
+    use import std.os.windows_functions
+}
 
 console_debug_print :: false
 indent_size         :: 2
@@ -185,10 +189,29 @@ parse_arguments :: ($T: type, args: []String) -> ^T {
 }
 
 get_cmd_args :: () -> Array[String] {
-    cmdLineArgs := GetCommandLineW()
-    count := 0i32
-    args := CommandLineToArgvW(cmdLineArgs, ^count)
-    return to_ascii_strings(args, int(count))
+    if const @is_os("windows") {
+        cmdLineArgs := GetCommandLineW()
+        count := 0i32
+        args := CommandLineToArgvW(cmdLineArgs, ^count)
+        return to_ascii_strings(args, int(count))
+    }
+
+    if const @is_os("linux") {
+        args := Array[String].create()
+        args_binary := try_with(fs.read_file_binary("/proc/self/cmdline"), {return args})
+
+        arg_start := 0
+        for b in &args_binary {
+            if *b == 0 {
+                bytes := args_binary.slice()[arg_start .. it_index]
+                args.add(string(bytes.data, bytes.length).to_owned())
+
+                arg_start = it_index + 1
+            }
+        }
+
+        return args
+    }
 }
 
 get_help_message :: (type_info: ^TypeInfo) -> String {
