@@ -89,6 +89,19 @@ get_pretty_error_message :: (command: string, err: ClapError) -> String {
 }
 
 impl Clap {
+    tokenize_arr :: (arr: []String) -> Array[ClapToken] {
+        loc := Location(0, 0)
+        args := Array[ClapToken].create()
+
+        for(by_ref=true) arg in arr {
+            args.add(ClapToken(loc, arg.clone()))
+            // todo: location
+            // loc += arg.get_length() + 1
+        }
+
+        return args
+    }
+
     tokenize :: (str: string) -> Array[ClapToken] {
         args := Array[ClapToken].create()
 
