@@ -332,20 +332,10 @@ namespace Cheez
                     param.Type = arg.type;
                     param.Value = arg.value;
 
-                    // TODO: what if arg.value is not a type?
                     instance.SubScope.DefineConstant(param.Name.Name, arg.type, arg.value);
                 }
 
                 instance = InferType(instance, null) as AstStructTypeExpr;
-
-                //instance.Type = new StructType(instance);
-
-                //if (instances != null)
-                //    instances.Add(instance);
-                //else
-                //{
-                //    ResolveTypeDeclaration(instance);
-                //}
             }
 
             return instance;

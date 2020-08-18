@@ -191,6 +191,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (cc.GetFlag(ExprFlags.IgnoreInCodeGen))
                 return LLVM.GetUndef(CheezTypeToLLVMType(cc.Type));
 
+            //switch (cc.Name.Name)
+            //{
+            //    case "asm":
+            //        {
+            //            var type = cc.Arguments[0].Expr.Value as CheezType;
+            //            var asmString = cc.Arguments[1].Expr.Value as string;
+            //            var constraints = cc.Arguments[2].Expr.Value as string;
+            //            var hasSideeffects = (bool)cc.Arguments[3].Expr.Value;
+            //            var alignStack = (bool)cc.Arguments[4].Expr.Value;
+            //            var asm = LLVM.ConstInlineAsm(CheezTypeToLLVMType(type), asmString, constraints, hasSideeffects, alignStack);
+            //            return asm;
+            //        }
+            //}
+
             if (cc.Name.Name == "string_from_ptr_and_length")
             {
                 var ptr = GenerateExpression(cc.Arguments[0], true);

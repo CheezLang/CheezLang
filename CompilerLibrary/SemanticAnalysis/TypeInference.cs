@@ -2404,6 +2404,32 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                // case "asm":
+                //     {
+                //         if (expr.Arguments.Count != 5)
+                //         {
+                //             ReportError(expr.Location, "@asm takes 5 arguments");
+                //             return expr;
+                //         }
+                //         var type = InferArg(0, CheezType.Type);
+                //         var asmString = InferArg(1, CheezType.String);
+                //         var constraints = InferArg(2, CheezType.String);
+                //         var hasSideeffects = InferArg(3, CheezType.Bool);
+                //         var alignStack = InferArg(4, CheezType.Bool);
+
+                //         if (type.Type is ErrorType
+                //             || asmString.Type is ErrorType
+                //             || constraints.Type is ErrorType
+                //             || hasSideeffects.Type is ErrorType
+                //             || alignStack.Type is ErrorType)
+                //         {
+                //             return expr;
+                //         }
+
+                //         expr.Type = type.Value as CheezType;
+                //         return expr;
+                //     }
+
                 case "expected":
                     {
                         if (expr.Arguments.Count != 0)
@@ -6263,6 +6289,7 @@ namespace Cheez
             }
 
             ReportError(expr, errorMsg ?? $"Can't implicitly convert '{from}' to '{to}'");
+            // expr.Type = CheezType.Error;
             return expr;
         }
 
