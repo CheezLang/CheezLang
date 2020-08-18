@@ -656,25 +656,42 @@ namespace Cheez
 
         private AstExpression InferTypeRangeExpr(AstRangeExpr r, CheezType expected, TypeInferenceContext context)
         {
+            var type = r.From != null ? "@typeof(§start)" : "@typeof(§end)";
+            AstTypeRef expectedTypeRef = null;
+
+            if (expected is StructType str
+                && str.Name.Contains("Range")
+                && str.Declaration.IsPolyInstance
+                && str.Declaration.Parameters.Count == 1
+                && str.Declaration.Parameters[0].Type == CheezType.Type) {
+                type = "§expected";
+                expectedTypeRef = new AstTypeRef(str.Declaration.Parameters[0].Value as CheezType);
+            }
+
             var expr = (r.From, r.To, r.Inclusive) switch {
                 (null, null, _) when expected != null      => mCompiler.ParseExpression("@expected()()"),
                 (null, null, _)                            => mCompiler.ParseExpression("RangeFull()"),
-                (AstExpression from, null, _)              => mCompiler.ParseExpression("RangeFrom[@typeof(§start)](start=§start)", new Dictionary<string, AstExpression>{
+                (AstExpression from, null, _)              => mCompiler.ParseExpression($"RangeFrom[{type}](start=§start)", new Dictionary<string, AstExpression>{
                     { "start", r.From },
+                    { "expected", expectedTypeRef },
                 }),
-                (null, AstExpression to, true)                => mCompiler.ParseExpression("RangeToInclusive[@typeof(§end)](end=§end)", new Dictionary<string, AstExpression>{
+                (null, AstExpression to, true)                => mCompiler.ParseExpression($"RangeToInclusive[{type}](end=§end)", new Dictionary<string, AstExpression>{
                     { "end", r.To },
+                    { "expected", expectedTypeRef },
                 }),
-                (null, AstExpression to, false)                => mCompiler.ParseExpression("RangeTo[@typeof(§end)](end=§end)", new Dictionary<string, AstExpression>{
+                (null, AstExpression to, false)                => mCompiler.ParseExpression($"RangeTo[{type}](end=§end)", new Dictionary<string, AstExpression>{
                     { "end", r.To },
+                    { "expected", expectedTypeRef },
                 }),
-                (AstExpression from, AstExpression to, true)  => mCompiler.ParseExpression("RangeInclusive[@typeof(§start)](start=§start, end=§end)", new Dictionary<string, AstExpression>{
+                (AstExpression from, AstExpression to, true)  => mCompiler.ParseExpression($"RangeInclusive[{type}](start=§start, end=§end)", new Dictionary<string, AstExpression>{
                     { "start", r.From },
                     { "end", r.To },
+                    { "expected", expectedTypeRef },
                 }),
-                (AstExpression from, AstExpression to, false)  => mCompiler.ParseExpression("Range[@typeof(§start)](start=§start, end=§end)", new Dictionary<string, AstExpression>{
+                (AstExpression from, AstExpression to, false)  => mCompiler.ParseExpression($"Range[{type}](start=§start, end=§end)", new Dictionary<string, AstExpression>{
                     { "start", r.From },
                     { "end", r.To },
+                    { "expected", expectedTypeRef },
                 }),
             };
 
