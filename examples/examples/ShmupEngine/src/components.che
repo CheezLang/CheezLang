@@ -8,9 +8,9 @@ io   :: import std.io
 fmt  :: import std.fmt
 C    :: import std.c
 
-use import compiler.lexer
-use import compiler.error_handler
-serpa :: import serpa.serpa
+// use import compiler.lexer
+// use import compiler.error_handler
+// serpa :: import serpa.serpa
 glfw  :: import glfw.glfw_binding
 ImGui :: import imgui.imgui_binding
 
@@ -389,36 +389,36 @@ impl Component for Camera {
     }
 }
 
-impl serpa.IParser[Rc[Component]] for Rc[Component] {
-    parse :: (parser: &serpa.Parser, lexer: &Lexer, error_handler: ^ErrorHandler) -> Option[Self] {
-        eat_token :: (typ: TokenType) #macro {
-            if (ok, t) := @link(lexer).expect_token(typ), ok {
-                t
-            } else {
-                @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.typ])
-                return None
-            }
-        }
+// impl serpa.IParser[Rc[Component]] for Rc[Component] {
+//     parse :: (parser: &serpa.Parser, lexer: &Lexer, error_handler: ^ErrorHandler) -> Option[Self] {
+//         eat_token :: (typ: TokenType) #macro {
+//             if (ok, t) := @link(lexer).expect_token(typ), ok {
+//                 t
+//             } else {
+//                 @link(error_handler).report_error_at(t.location, "Expected '{}', got {}", [typ, t.typ])
+//                 return None
+//             }
+//         }
 
-        name_token := eat_token(TokenType.Identifier)
-        struct_name := name_token.data.String
+//         name_token := eat_token(TokenType.Identifier)
+//         struct_name := name_token.data.String
 
-        // io.printfln("parsing component {}", struct_name)
-        @for_trait_impls(Component, (T) => {
-            // io.printfln("trying with type {}", @typename(T))
-            if streq(@typename(T), struct_name) {
-                result := mem.alloc(T)
-                if !parser.parse_struct_into(result, lexer, error_handler) {
-                    mem.free(result)
-                    return None
-                }
+//         // io.printfln("parsing component {}", struct_name)
+//         @for_trait_impls(Component, (T) => {
+//             // io.printfln("trying with type {}", @typename(T))
+//             if streq(@typename(T), struct_name) {
+//                 result := mem.alloc(T)
+//                 if !parser.parse_struct_into(result, lexer, error_handler) {
+//                     mem.free(result)
+//                     return None
+//                 }
 
-                ptr := Rc[Component].from_pointer(result, true)
-                return Some(ptr)
-            }
-        })
+//                 ptr := Rc[Component].from_pointer(result, true)
+//                 return Some(ptr)
+//             }
+//         })
 
-        error_handler.report_error_at(name_token.location, "'{}' is not a valid component", [struct_name])
-        return None
-    }
-}
+//         error_handler.report_error_at(name_token.location, "'{}' is not a valid component", [struct_name])
+//         return None
+//     }
+// }

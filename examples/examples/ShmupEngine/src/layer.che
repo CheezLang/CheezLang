@@ -10,11 +10,11 @@ io   :: import std.io
 C    :: import std.c
 time :: import std.time
 
-use import compiler.lexer
-use import compiler.string_database
-use import compiler.error_handler
+// use import compiler.lexer
+// use import compiler.string_database
+// use import compiler.error_handler
 use import glfw.glfw_binding
-serpa :: import serpa.serpa
+// serpa :: import serpa.serpa
 ImGui :: import imgui.imgui_binding
 
 use import math
@@ -59,12 +59,6 @@ DebugLayer :: struct LayerBase {
     show_layer_output := false
     show_light_map    := false
     layer_index       := 0
-
-    last_time := 0
-    timer := 0.0f
-    playing := false
-
-    uiae : [20]float = default
 }
 
 impl DebugLayer {
@@ -96,58 +90,58 @@ impl Layer for DebugLayer {
 
     render :: (&Self, renderer: &Renderer) {
         // bind stuff
-        // target := &renderer.targets().color_map.get()
+        target := renderer.targets().color_map.get()
 
-        // if !show_layer_output {
-        //     renderer.targets(1).color_map.get().copy_to(target)
-        // } else {
-        //     data := engine.current_mode_data()
-        //     index := clamp(layer_index, 0, data.layer_stack.count() - 1)
-        //     if show_light_map {
-        //         renderer.targets(data.layer_stack.count() - 1 - index).light_map.get().copy_to(target)
-        //     } else {
-        //         renderer.targets(data.layer_stack.count() - 1 - index).color_map.get().copy_to(target)
-        //     }
+        if !show_layer_output {
+            renderer.targets(1).color_map.get().copy_to(target)
+        } else {
+            data := engine.current_mode_data()
+            index := clamp(layer_index, 0, data.layer_stack.count() - 1)
+            if show_light_map {
+                renderer.targets(data.layer_stack.count() - 1 - index).light_map.get().copy_to(target)
+            } else {
+                renderer.targets(data.layer_stack.count() - 1 - index).color_map.get().copy_to(target)
+            }
+        }
+
+        // t := time.get_time_milliseconds()
+        // if last_time == 0 {
+        //     last_time = t
+        // }
+        // dt := float(double(t - last_time) * 0.001)
+        // last_time = t
+
+        // if ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGui.ImGuiKey_.Space)) {
+        //     playing = !playing
+        // }
+        // if playing {
+        //     timer += dt
         // }
 
-        t := time.get_time_milliseconds()
-        if last_time == 0 {
-            last_time = t
-        }
-        dt := float(double(t - last_time) * 0.001)
-        last_time = t
+        // renderer.apply_light_shader.bind()
 
-        if ImGui.IsKeyPressed(ImGui.GetKeyIndex(ImGui.ImGuiKey_.Space)) {
-            playing = !playing
-        }
-        if playing {
-            timer += dt
-        }
+        // viewport := engine.current_viewport()
+        // if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Right) {
+        //     mouse_screen := ImGui.GetMousePos()
+        //     mouse := viewport.screen_to_local(mouse_screen.into()) / viewport.size.xy()
+        //     mouse.y = 1.0f - mouse.y
+        //     renderer.apply_light_shader.set_uniform_vec2("uMousePos", mouse)
+        // }
 
-        renderer.apply_light_shader.bind()
+        // if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Middle) {
+        //     mouse_screen := ImGui.GetMousePos()
+        //     mouse := viewport.screen_to_local(mouse_screen.into()) / viewport.size.xy()
+        //     mouse.y = 1.0f - mouse.y
+        //     renderer.apply_light_shader.set_uniform_float("uZoom", mouse.y)
+        // }
 
-        viewport := engine.current_viewport()
-        if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Right) {
-            mouse_screen := ImGui.GetMousePos()
-            mouse := viewport.screen_to_local(mouse_screen.into()) / viewport.size.xy()
-            mouse.y = 1.0f - mouse.y
-            renderer.apply_light_shader.set_uniform_vec2("uMousePos", mouse)
-        }
+        // scale := viewport.size_max / viewport.size
+        // renderer.apply_light_shader.set_uniform_vec2("uTexCoordScale", scale.xy())
+        // renderer.apply_light_shader.set_uniform_float("uAspectRatio", viewport.size.x / viewport.size.y)
+        // renderer.apply_light_shader.set_uniform_float("uTime", timer)
+        // renderer.apply_light_shader.set_uniform_floats("uValues", self.uiae[..])
 
-        if ImGui.IsMouseDown(ImGui.ImGuiMouseButton_.Middle) {
-            mouse_screen := ImGui.GetMousePos()
-            mouse := viewport.screen_to_local(mouse_screen.into()) / viewport.size.xy()
-            mouse.y = 1.0f - mouse.y
-            renderer.apply_light_shader.set_uniform_float("uZoom", mouse.y)
-        }
-
-        scale := viewport.size_max / viewport.size
-        renderer.apply_light_shader.set_uniform_vec2("uTexCoordScale", scale.xy())
-        renderer.apply_light_shader.set_uniform_float("uAspectRatio", viewport.size.x / viewport.size.y)
-        renderer.apply_light_shader.set_uniform_float("uTime", timer)
-        renderer.apply_light_shader.set_uniform_floats("uValues", self.uiae[..])
-
-        renderer.render_effect(renderer.apply_light_shader)
+        // renderer.render_effect(renderer.apply_light_shader)
     }
 
     imgui_render :: (&Self) {
@@ -454,64 +448,64 @@ impl Layer for EntityLayer {
     }
 
     load_from_file :: (&Self, file: string) {
-        console_error_handler := ConsoleErrorHandler.new(null)
-        string_db := StringDatabase.new()
+        // console_error_handler := ConsoleErrorHandler.new(null)
+        // string_db := StringDatabase.new()
 
-        lexer := try_with(
-            Lexer.from_file(file, &string_db)
-            {
-                io.println("Failed to read layer from file")
-                return
-            })
-        console_error_handler.text_provider = ^*lexer.get()
+        // lexer := try_with(
+        //     Lexer.from_file(file, &string_db)
+        //     {
+        //         io.println("Failed to read layer from file")
+        //         return
+        //     })
+        // console_error_handler.text_provider = ^*lexer.get()
 
-        parser := serpa.Parser(expect_struct_name=false)
-        result := parser.parse(Array[Rc[Entity]], lexer.get(), ^console_error_handler)
+        // parser := serpa.Parser(expect_struct_name=false)
+        // result := parser.parse(Array[Rc[Entity]], lexer.get(), ^console_error_handler)
 
-        match result {
-            Some($entities) -> {
-                self.entities = entities
+        // match result {
+        //     Some($entities) -> {
+        //         self.entities = entities
 
-                // find max entity id
-                self.next_entity_id = 0
-                for e in &self.entities {
-                    self.next_entity_id = max(self.next_entity_id, e.get().id + 1)
+        //         // find max entity id
+        //         self.next_entity_id = 0
+        //         for e in &self.entities {
+        //             self.next_entity_id = max(self.next_entity_id, e.get().id + 1)
 
-                    // set entity pointer in components
-                    for c in &e.get().components {
-                        c.get().base().entity = e.get()
-                    }
-                }
-            }
-            None -> {
-                io.println("[ERROR] Failed to parse layer file")
-            }
-        }
+        //             // set entity pointer in components
+        //             for c in &e.get().components {
+        //                 c.get().base().entity = e.get()
+        //             }
+        //         }
+        //     }
+        //     None -> {
+        //         io.println("[ERROR] Failed to parse layer file")
+        //     }
+        // }
     }
 
     save_to_file :: (&Self, file: &String) {
-        file.append_string("[`n")
-        for rc in &entities {
-            e := rc.get()
-            file.append_string("    {`n")
-            file.appendf("        id          = {}`n", e.id)
-            file.appendf("        name        = `"{}`"`n", e.name.slice())
-            file.appendf("        dead        = {}`n", e.dead)
-            file.appendf("        active      = {}`n", e.active)
-            file.appendf("        position    = ``{x={}, y={}, z={}}`n", (e.position.x, e.position.y, e.position.z))
-            file.appendf("        size        = ``{x={}, y={}, z={}}`n", (e.size.x, e.size.y, e.size.z))
-            file.appendf("        angle       = {}`n", e.angle)
-            file.appendf("        components  = [`n", ())
+        // file.append_string("[`n")
+        // for rc in &entities {
+        //     e := rc.get()
+        //     file.append_string("    {`n")
+        //     file.appendf("        id          = {}`n", e.id)
+        //     file.appendf("        name        = `"{}`"`n", e.name.slice())
+        //     file.appendf("        dead        = {}`n", e.dead)
+        //     file.appendf("        active      = {}`n", e.active)
+        //     file.appendf("        position    = ``{x={}, y={}, z={}}`n", (e.position.x, e.position.y, e.position.z))
+        //     file.appendf("        size        = ``{x={}, y={}, z={}}`n", (e.size.x, e.size.y, e.size.z))
+        //     file.appendf("        angle       = {}`n", e.angle)
+        //     file.appendf("        components  = [`n", ())
 
-            for cd in &e.components {
-                file.appendf("            {} ``{`n", @cast(^TypeInfoStruct, cd.get().get_type_info()).name)
-                cd.get().serialize(file)
-                file.append_string("            }`n")
-            }
+        //     for cd in &e.components {
+        //         file.appendf("            {} ``{`n", @cast(^TypeInfoStruct, cd.get().get_type_info()).name)
+        //         cd.get().serialize(file)
+        //         file.append_string("            }`n")
+        //     }
 
-            file.appendf("        ]`n", ())
-            file.append_string("    }`n")
-        }
-        file.append_string("]")
+        //     file.appendf("        ]`n", ())
+        //     file.append_string("    }`n")
+        // }
+        // file.append_string("]")
     }
 }

@@ -5,9 +5,9 @@ mem :: import std.mem.allocator
 io  :: import std.io
 fmt :: import std.fmt
 
-use import serpa.serpa
-use import compiler.lexer
-use import compiler.error_handler
+// use import serpa.serpa
+// use import compiler.lexer
+// use import compiler.error_handler
 
 use import shmup_engine
 use import math
@@ -66,11 +66,11 @@ impl Entity {
     }
 }
 
-impl IParser[Rc[Entity]] for Rc[Entity] {
-    parse :: (parser: &Parser, lexer: &Lexer, error_handler: ^ErrorHandler) -> Option[Self] {
-        return match parser.parse(Entity, lexer, error_handler) {
-            Some($i) -> Some(Rc[Entity].new(i))
-            None -> None
-        }
-    }
-}
+// impl IParser[Rc[Entity]] for Rc[Entity] {
+//     parse :: (parser: &Parser, lexer: &Lexer, error_handler: ^ErrorHandler) -> Option[Self] {
+//         return match parser.parse(Entity, lexer, error_handler) {
+//             Some($i) -> Some(Rc[Entity].new(i))
+//             None -> None
+//         }
+//     }
+// }
