@@ -6,8 +6,8 @@
 // import examples.signed_distance_field_renderer
 // import examples.snake.snake
 // import examples.pathtracer
-// import examples.pathtracer2.main
-import compiler.cli
+import examples.pathtracer2.main
+// import compiler.cli
 // import compiler.debugger
 // import examples.ShmupEngine.src.main // crashes sometimes
 
@@ -43,16 +43,6 @@ import compiler.cli
 // fs :: import std.io.fs
 
 // Main :: () {
-//     io.println(fs.Path.normalize("test.che"))
-//     io.println(fs.Path.normalize("foo/bar/test.che"))
-//     io.println(fs.Path.normalize("foo/./test.che"))
-//     io.println(fs.Path.normalize("foo/../test.che"))
-
-//     io.println(fs.Path.normalize("/test.che"))
-//     io.println(fs.Path.normalize("/foo/bar/test.che"))
-//     io.println(fs.Path.normalize("/foo/./test.che"))
-//     io.println(fs.Path.normalize("/foo/../bar/baz/../lol/../../uiae/../../test.che"))
-//     io.println(fs.Path.normalize("foo/../bar/baz/../lol/../../uiae/../../test.che"))
 // }
 
 // use import std.mem.allocator

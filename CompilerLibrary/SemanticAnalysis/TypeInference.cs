@@ -5428,6 +5428,9 @@ namespace Cheez
             var pairs = expr.Arguments.Select(arg => (arg.Index < decl.Parameters.Count ? decl.Parameters[arg.Index] : null, arg));
             (AstParameter param, AstArgument arg)[] args = pairs.ToArray();
 
+            var polyTypes = new Dictionary<string, (CheezType type, object value)>();
+            var constArgs = new Dictionary<string, (CheezType type, object value)>();
+
             // infer types of arguments
             foreach (var (param, arg) in args)
             {
@@ -5443,7 +5446,20 @@ namespace Cheez
 
                 var ex = param.Type;
                 if (ex.IsPolyType)
-                    ex = null;
+                {
+                    if (polyTypes.Count > 0)
+                    {
+                        var newType = InstantiatePolyType(ex, polyTypes, arg.Location) as CheezType;
+                        if (!newType.IsPolyType)
+                            ex = newType;
+                        else
+                            ex = null;
+                    }
+                    else
+                    {
+                        ex = null;
+                    }
+                }
                 
                 arg.IsConstArg = param.Name?.IsPolymorphic ?? false;
                 if (arg.IsDefaultArg && !arg.IsConstArg)
@@ -5451,11 +5467,28 @@ namespace Cheez
                 arg.Expr = InferTypeHelper(arg.Expr, ex, context);
                 ConvertLiteralTypeToDefaultType(arg.Expr, ex);
                 arg.Type = arg.Expr.Type;
+
+                // test
+                {
+                    if (!arg.IsDefaultArg)
+                        CollectPolyTypes(param.Type, arg.Type, polyTypes);
+
+                    if (param.Name?.IsPolymorphic ?? false)
+                    {
+                        if (arg.Expr.Value == null)
+                        {
+                            ReportError(arg, $"The expression must be a compile time constant");
+                            return expr; // :hack
+                        }
+                        else
+                        {
+                            constArgs[param.Name.Name] = (arg.Expr.Type, arg.Expr.Value);
+                        }
+                    }
+                }
             }
 
             // collect polymorphic types and const arguments
-            var polyTypes = new Dictionary<string, (CheezType type, object value)>();
-            var constArgs = new Dictionary<string, (CheezType type, object value)>();
             var newArgs = new List<AstArgument>();
 
             if (func.Declaration.ImplBlock != null)

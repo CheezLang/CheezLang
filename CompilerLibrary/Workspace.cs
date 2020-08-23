@@ -102,6 +102,7 @@ namespace Cheez
             }
 
             // new
+            Console.WriteLine("Resolving imports...");
             ResolveImports();
             ResolveDeclarations();
 
