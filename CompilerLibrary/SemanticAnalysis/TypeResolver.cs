@@ -582,13 +582,13 @@ namespace Cheez
                     }
 
                 case PointerType p:
-                    return PointerType.GetPointerType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType);
+                    return PointerType.GetPointerType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType, p.Mutable);
 
                 case ReferenceType p:
-                    return ReferenceType.GetRefType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType);
+                    return ReferenceType.GetRefType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType, p.Mutable);
 
                 case SliceType s:
-                    return SliceType.GetSliceType(InstantiatePolyType(s.TargetType, concreteTypes, location) as CheezType);
+                    return SliceType.GetSliceType(InstantiatePolyType(s.TargetType, concreteTypes, location) as CheezType, s.Mutable);
 
                 case ArrayType a:
                     return ArrayType.GetArrayType(

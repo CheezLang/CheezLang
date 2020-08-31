@@ -17,7 +17,7 @@ create_object :: ($T: type, val: $V) -> ^T {
 
 vec3 :: Vector3[real]
 
-global_random : ^MTwister = null
+mut global_random : ^mut MTwister = null
 
 Random :: MTwister
 
@@ -27,7 +27,7 @@ impl Random {
     }
 
     random_in_unit_sphere :: (&Self) -> vec3 {
-        p : vec3 = default
+        mut p : vec3 = default
         while true {
             r := vec3(self.random_real(), self.random_real(), self.random_real())
             p = r * real(2.0) - vec3(1, 1, 1)
@@ -40,7 +40,7 @@ impl Random {
     }
 
     random_in_unit_disk :: (&Self) -> vec3 {
-        p : vec3 = default
+        mut p : vec3 = default
         while true {
             r := vec3(self.random_real(), self.random_real(), 0.0)
             p = r * real(2.0) - vec3(1, 1, 0.0)
@@ -87,7 +87,7 @@ Camera :: struct {
 }
 
 impl Camera {
-    create :: (pos: vec3, lookat: vec3, fov: real, aspect_ratio: real, aperture: real = 0.0, focus_dist: real = -1.0) -> Self {
+    create :: (pos: vec3, lookat: vec3, fov: real, aspect_ratio: real, aperture: real = 0.0, mut focus_dist: real = -1.0) -> Self {
         theta := fov * 3.1415 / 180
         half_height := real(tan(theta / 2.0))
         half_width := aspect_ratio * half_height
@@ -140,10 +140,10 @@ impl AABB {
         return AABB(min, max)
     }
 
-    help :: (min_w: real, max_w: real, origin_w: real, dir_w: real, t_min: &real, t_max: &real) -> bool {
+    help :: (min_w: real, max_w: real, origin_w: real, dir_w: real, t_min: &mut real, t_max: &mut real) -> bool {
         inv_d := real(1.0) / dir_w
-        t0 := (min_w - origin_w) * inv_d
-        t1 := (max_w - origin_w) * inv_d
+        mut t0 := (min_w - origin_w) * inv_d
+        mut t1 := (max_w - origin_w) * inv_d
         if inv_d < real(0.0) {
             (t0, t1) = (t1, t0)
         }

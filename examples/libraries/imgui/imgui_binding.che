@@ -3167,15 +3167,15 @@ DebugCheckVersionAndDataLayout :: (_version_str: ^char8, _sz_io: size_t, _sz_sty
     __c__DebugCheckVersionAndDataLayout(^result, _version_str, _sz_io, _sz_style, _sz_vec2, _sz_vec4, _sz_drawvert, _sz_drawidx)
     return result
 }
-GetIO :: () -> &ImGuiIO {
+GetIO :: () -> &mut ImGuiIO {
     result : ^ImGuiIO = default
     __c__GetIO(^result)
-    return &*result
+    return &mut *result
 }
-GetStyle :: () -> &ImGuiStyle {
+GetStyle :: () -> &mut ImGuiStyle {
     result : ^ImGuiStyle = default
     __c__GetStyle(^result)
-    return &*result
+    return &mut *result
 }
 NewFrame :: () {
     __c__NewFrame()

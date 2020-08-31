@@ -200,10 +200,10 @@ namespace Cheez.Types.Primitive
         public const int PointerSize = 8;
         public const int PointerAlignment = 8;
 
-        private static Dictionary<CheezType, PointerType> sTypes = new Dictionary<CheezType, PointerType>();
-        public static PointerType NullLiteralType { get; } = new PointerType(null);
+        private static Dictionary<(CheezType, bool), PointerType> sTypes = new Dictionary<(CheezType, bool), PointerType>();
+        public static PointerType NullLiteralType { get; } = new PointerType(null, true);
 
-        private PointerType(CheezType target) : base(
+        private PointerType(CheezType target, bool mutable) : base(
             target switch {
                 AnyType t   => PointerSize * 3,
                 TraitType t => PointerSize * 2,
@@ -211,34 +211,37 @@ namespace Cheez.Types.Primitive
             }, PointerAlignment, true)
         {
             TargetType = target;
+            Mutable = mutable;
             IsFatPointer = target is TraitType || target is AnyType;
         }
 
         public bool IsFatPointer { get; set; }
 
         public CheezType TargetType { get; set; }
+        public bool Mutable { get; private set; }
         public override bool IsErrorType => TargetType?.IsErrorType ?? false;
         public override bool IsPolyType => TargetType?.IsPolyType ?? false;
 
-        public static PointerType GetPointerType(CheezType targetType)
+        public static PointerType GetPointerType(CheezType targetType, bool mutable)
         {
             if (targetType == null)
                 return null;
 
-            if (sTypes.ContainsKey(targetType))
+            if (sTypes.ContainsKey((targetType, mutable)))
             {
-                return sTypes[targetType];
+                return sTypes[(targetType, mutable)];
             }
 
-            var type = new PointerType(targetType);
+            var type = new PointerType(targetType, mutable);
 
-            sTypes[targetType] = type;
+            sTypes[(targetType, mutable)] = type;
             return type;
         }
 
         public override string ToString()
         {
-            return $"^{TargetType}";
+            if (Mutable) return $"^mut {TargetType}";
+            else return $"^{TargetType}";
         }
 
         public override bool Equals(object obj)
@@ -254,7 +257,14 @@ namespace Cheez.Types.Primitive
                 concrete = r.TargetType;
 
             if (concrete is PointerType p)
-                return this.TargetType.Match(p.TargetType, polyTypes);
+            {
+                var targetMatch = this.TargetType.Match(p.TargetType, polyTypes);
+                if (targetMatch == -1)
+                    return -1;
+                if (!this.Mutable && p.Mutable)
+                    return Math.Max(1, targetMatch);
+                return this.Mutable == p.Mutable ? targetMatch : -1;
+            }
             return -1;
         }
 
@@ -269,45 +279,55 @@ namespace Cheez.Types.Primitive
 
     public class ReferenceType : CheezType
     {
-        private static Dictionary<CheezType, ReferenceType> sTypes = new Dictionary<CheezType, ReferenceType>();
+        private static Dictionary<(CheezType, bool), ReferenceType> sTypes = new Dictionary<(CheezType, bool), ReferenceType>();
 
         public CheezType TargetType { get; set; }
+        public bool Mutable { get; private set; }
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
 
-        private ReferenceType(CheezType target) : base((target is TraitType || target is AnyType) ? PointerType.PointerSize * 2 : PointerType.PointerSize, PointerType.PointerAlignment, false)
+        private ReferenceType(CheezType target, bool mutable) : base((target is TraitType || target is AnyType) ? PointerType.PointerSize * 2 : PointerType.PointerSize, PointerType.PointerAlignment, false)
         {
             TargetType = target;
+            Mutable = mutable;
             IsFatReference = target is TraitType || target is AnyType;
         }
 
         public bool IsFatReference { get; set; }
 
-        public static ReferenceType GetRefType(CheezType targetType)
+        public static ReferenceType GetRefType(CheezType targetType, bool mutable)
         {
             if (targetType == null)
                 return null;
 
-            if (sTypes.ContainsKey(targetType))
+            if (sTypes.ContainsKey((targetType, mutable)))
             {
-                return sTypes[targetType];
+                return sTypes[(targetType, mutable)];
             }
 
-            var type = new ReferenceType(targetType);
+            var type = new ReferenceType(targetType, mutable);
 
-            sTypes[targetType] = type;
+            sTypes[(targetType, mutable)] = type;
             return type;
         }
 
         public override string ToString()
         {
-            return $"&{TargetType}";
+            if (Mutable) return $"&mut {TargetType}";
+            else return $"&{TargetType}";
         }
 
         public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
         {
             if (concrete is ReferenceType r)
-                return this.TargetType.Match(r.TargetType, polyTypes);
+            {
+                var targetMatch = this.TargetType.Match(r.TargetType, polyTypes);
+                if (targetMatch == -1)
+                    return -1;
+                if (!this.Mutable && r.Mutable)
+                    return Math.Max(1, targetMatch);
+                return this.Mutable == r.Mutable ? targetMatch : -1;
+            }
 
             return -1;
         }
@@ -372,7 +392,7 @@ namespace Cheez.Types.Primitive
 
         public PointerType ToPointerType()
         {
-            return PointerType.GetPointerType(TargetType);
+            return PointerType.GetPointerType(TargetType, true);
         }
 
         public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
@@ -403,39 +423,42 @@ namespace Cheez.Types.Primitive
 
     public class SliceType : CheezType
     {
-        private static Dictionary<CheezType, SliceType> sTypes = new Dictionary<CheezType, SliceType>();
+        private static Dictionary<(CheezType, bool), SliceType> sTypes = new Dictionary<(CheezType, bool), SliceType>();
 
         public CheezType TargetType { get; set; }
+        public bool Mutable { get; private set; }
         public override bool IsErrorType => TargetType.IsErrorType;
         public override bool IsPolyType => TargetType.IsPolyType;
 
-        private SliceType(CheezType target) : base(PointerType.PointerSize * 2, PointerType.PointerAlignment, true)
+        private SliceType(CheezType target, bool mutable) : base(PointerType.PointerSize * 2, PointerType.PointerAlignment, true)
         {
             TargetType = target;
+            Mutable = mutable;
         }
 
-        public static SliceType GetSliceType(CheezType targetType)
+        public static SliceType GetSliceType(CheezType targetType, bool mutable)
         {
             if (targetType == null)
                 return null;
 
-            if (sTypes.ContainsKey(targetType))
-                return sTypes[targetType];
+            if (sTypes.ContainsKey((targetType, mutable)))
+                return sTypes[(targetType, mutable)];
 
-            var type = new SliceType(targetType);
+            var type = new SliceType(targetType, mutable);
 
-            sTypes[targetType] = type;
+            sTypes[(targetType, mutable)] = type;
             return type;
         }
 
         public override string ToString()
         {
-            return $"[]{TargetType}";
+            if (Mutable) return $"[]mut {TargetType}";
+            else return $"[]{TargetType}";
         }
 
         public PointerType ToPointerType()
         {
-            return PointerType.GetPointerType(TargetType);
+            return PointerType.GetPointerType(TargetType, Mutable);
         }
 
         public override int Match(CheezType concrete, Dictionary<string, (CheezType type, object value)> polyTypes)
@@ -444,7 +467,14 @@ namespace Cheez.Types.Primitive
                 concrete = r.TargetType;
 
             if (concrete is SliceType p)
-                return this.TargetType.Match(p.TargetType, polyTypes);
+            {
+                var targetMatch = this.TargetType.Match(p.TargetType, polyTypes);
+                if (targetMatch == -1)
+                    return -1;
+                if (!this.Mutable && p.Mutable)
+                    return Math.Max(2, targetMatch);
+                return this.Mutable == p.Mutable ? targetMatch : -1;
+            }
             return -1;
         }
 

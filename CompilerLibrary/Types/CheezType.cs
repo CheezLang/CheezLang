@@ -11,7 +11,7 @@ namespace Cheez.Types
     {
         public static CheezType Void => VoidType.Instance;
         public static CheezType Impl => ImplType.Instance;
-        public static CheezType CString => PointerType.GetPointerType(CharType.GetCharType(1));
+        public static CheezType CString => PointerType.GetPointerType(CharType.GetCharType(1), false);
         public static CheezType String => StringType.Instance;
         public static CheezType StringLiteral => StringLiteralType.Instance;
         public static CheezType Bool => BoolType.Instance;

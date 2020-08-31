@@ -335,7 +335,7 @@ namespace Cheez.Types.Complex
                 if (_underlyingFuncType == null && IsFatFunction) {
                     var parameterTypes = Enumerable.Prepend(
                             Parameters, 
-                            ("_data", PointerType.GetPointerType(CheezType.Void), null))
+                            ("_data", PointerType.GetPointerType(CheezType.Void, true), null))
                         .ToArray();
                     _underlyingFuncType = new FunctionType(parameterTypes, ReturnType, false, CC);
                 }

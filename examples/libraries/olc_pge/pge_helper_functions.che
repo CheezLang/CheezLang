@@ -46,17 +46,17 @@ impl PixelGameEngine {
     // get_window_height :: (&Self) -> int { return window_height }
 
     //
-    set_draw_target :: (&Self, target: ^Sprite) {
+    set_draw_target :: (&mut Self, target: ^Sprite) {
         draw_target = if target == null { default_draw_target } else { target }
     }
 
-    set_pixel_blend :: (&Self, fBlend: float) {
+    set_pixel_blend :: (&mut Self, fBlend: float) {
         fBlendFactor = fBlend
         if fBlendFactor < 0.0f { fBlendFactor = 0.0f }
         if fBlendFactor > 1.0f { fBlendFactor = 1.0f }
     }
 
-    set_pixel_mode :: (&Self, m: PixelMode) {
+    set_pixel_mode :: (&mut Self, m: PixelMode) {
         nPixelMode = m
     }
 
@@ -65,7 +65,7 @@ impl PixelGameEngine {
     }
 
     //
-    olc_update_window_size :: (&Self, x: int, y: int) {
+    olc_update_window_size :: (&mut Self, x: int, y: int) {
         window_width = x
         window_height = y
         screen_width = x
@@ -81,11 +81,11 @@ impl PixelGameEngine {
         }
     }
 
-    olc_update_mouse_wheel :: (&Self, delta: int) {
+    olc_update_mouse_wheel :: (&mut Self, delta: int) {
         nMouseWheelDeltaCache += delta
     }
 
-    olc_update_mouse :: (&Self, x: int, y: int) {
+    olc_update_mouse :: (&mut Self, x: int, y: int) {
         nMousePosXcache = cast(int) (cast(float)x) / (cast(float) window_width) * (cast(float)screen_width)
         nMousePosYcache = cast(int) (cast(float)y) / (cast(float) window_height) * (cast(float)screen_height)
 
@@ -97,7 +97,7 @@ impl PixelGameEngine {
     }
 
     //
-    set_window_title :: (&Self, title: &String) {
+    set_window_title :: (&mut Self, title: &String) {
         auto_title = false
         
         fps_string.resize(0)

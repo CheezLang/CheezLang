@@ -25,9 +25,9 @@ Main :: () {
 }
 
 test4 :: () {
-    a := 5
-    ra : &int = &a
-    b := *ra
+    mut a := 5
+    ra : &mut int = &mut a
+    mut b := *ra
 
     C.printf("%lld`n", a)
     C.printf("%lld`n", ra)

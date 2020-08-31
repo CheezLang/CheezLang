@@ -30,7 +30,7 @@ num_add :: (a: Num, b: Num) -> Num #operator("+") {
     return Num(a.x + b.x)
 }
 
-num_inc :: (a: ^Num, b: Num) #operator("+=") {
+num_inc :: (a: ^mut Num, b: Num) #operator("+=") {
     a.x += b.x
 }
 
@@ -38,9 +38,9 @@ Vec2 :: Vector2[double]
 
 Main :: () {
     {
-        a := Num(1)
+        mut a := Num(1)
         b := Num(2)
-        c := a + b
+        mut c := a + b
 
         C.printf("%lld`n", a.x)
         C.printf("%lld`n", b.x)
@@ -55,11 +55,11 @@ Main :: () {
     }
 
     {
-        a := Vec2(1, 2)
+        mut a := Vec2(1, 2)
         b := Vec2(3, 4)
         c := a + b
 
-        d := Vec2(5, 6)
+        mut d := Vec2(5, 6)
         d += c
 
         C.printf("%f, %f`n", a.x, a.y)

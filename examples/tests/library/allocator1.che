@@ -51,7 +51,7 @@ Main :: () {
     }
 
     {
-        a := alloc_n(int, 3)
+        mut a := alloc_n(int, 3)
         for i in 0..a.length { *a[i] = i + 1 }
         io.printf("{}, {}, {}`n", (a[0], a[1], a[2]))
 
@@ -62,7 +62,7 @@ Main :: () {
     }
 
     {
-        a := alloc_raw(int, 3)
+        mut a := alloc_raw(int, 3)
         for i in 0..3 { a[i] = i + 1 }
         io.printf("{}, {}, {}`n", (a[0], a[1], a[2]))
 

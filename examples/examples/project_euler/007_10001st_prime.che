@@ -20,8 +20,8 @@ is_prime :: (i: int) -> bool {
 }
 
 Main :: () {
-    count := 0
-    while i := 0, true, i += 1 {
+    mut count := 0
+    while mut i := 0, true, i += 1 {
         if is_prime(i) {
             count += 1
         }

@@ -9,11 +9,11 @@ digits : string = "7316717653133062491922511967442657474235534919493496983520312
 
 Main :: () {
     num_length := 13
-    max_prod := 0
+    mut max_prod := 0
     for 0 ..= (digits.bytes.length - num_length) {
         num := digits[it..it+num_length]
 
-        prod := 1
+        mut prod := 1
         for num {
             int_val := int(it) - int('0')
             prod *= int_val

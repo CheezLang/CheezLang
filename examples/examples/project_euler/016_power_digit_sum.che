@@ -7,13 +7,13 @@ io :: import std.io
 Main :: () {
     digits := @dup(0, 1000)
     *digits[0] = 1
-    leftmost_digit := 0
+    mut leftmost_digit := 0
 
     // calculate 2^1000
     for 0..1000 {
-        carry := 0
+        mut carry := 0
         for i in 0 ..= leftmost_digit {
-            d := *digits[i]
+            mut d := *digits[i]
             d = d * 2 + carry
             *digits[i] = d % 10
             carry = d / 10
@@ -25,7 +25,7 @@ Main :: () {
     }
 
     // calculate sum of digits
-    sum := 0
+    mut sum := 0
     for(reverse=true) @cast([]int, digits) {
         sum += it
     }

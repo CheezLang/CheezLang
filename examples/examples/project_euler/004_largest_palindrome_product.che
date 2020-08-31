@@ -19,7 +19,7 @@ is_palindrome :: (str: &String) -> bool {
 Main :: () {
     str := String.empty()
 
-    longest := 0
+    mut longest := 0
 
     for a in{0..1000}.reverse() {
         if a * 999 < longest then break

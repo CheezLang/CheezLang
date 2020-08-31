@@ -3,7 +3,7 @@ io   :: import std.io
 time :: import std.time
 
 TestTrait :: trait {
-    traitFunction :: (&Self, n: u64);
+    traitFunction :: (&mut Self, n: u64);
 }
 
 Test :: struct #copy {
@@ -24,17 +24,17 @@ Test :: struct #copy {
 }
 
 impl Test {
-    normalFunction :: (Self, n: u64) {
-        counter += n
+    normalFunction :: (mut self: Self, n: u64) {
+        self.counter += n
     }
 
-    refFunction :: (&Self, n: u64) {
+    refFunction :: (&mut Self, n: u64) {
         counter += n
     }
 }
 
 impl TestTrait for Test {
-    traitFunction :: (&Self, n: u64) {
+    traitFunction :: (&mut Self, n: u64) {
         counter += n
     }
 }
@@ -46,7 +46,7 @@ Main :: () {
     C.puts("a")
     io.printf("iterations: {}, n: {}`n", (iterations, n))
 
-    t  : Test = default
+    mut t : Test = default
     tt : ^TestTrait = ^t
 
     // call normalFunction() on Test

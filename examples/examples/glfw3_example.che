@@ -67,7 +67,7 @@ gl_check_errors :: () {
 }
 
 igListBoxStringArray :: (label: c_string, current_index: ^i32, arr: &Array[String]) -> bool {
-    array_string_getter :: (data: ^void, idx: i32, out_text: ^c_string) -> bool {
+    array_string_getter :: (data: ^void, idx: i32, out_text: ^mut c_string) -> bool {
         arr := &*cast(^Array[String]) data
         if idx < 0 or int(idx) >= arr.get_length() {
             return false
@@ -85,8 +85,8 @@ igListBoxStringArray :: (label: c_string, current_index: ^i32, arr: &Array[Strin
     return ImGui.ListBoxFnPtr(label, current_index, array_string_getter, cast ^arr, cast arr.get_length())
 }
 
-width  := 0
-height := 0
+mut width  := 0
+mut height := 0
 
 Main :: () {
     glfwSetErrorCallback(glfw_error_callback)
@@ -151,11 +151,11 @@ Main :: () {
     C.memset(buff.data, 0, cast buff.length)
     defer free_n(buff)
 
-    last_frame_time := get_time_microseconds()
+    mut last_frame_time := get_time_microseconds()
 
-    frame_timer := 0.0
-    fps_counter := 0
-    current_fps := 0
+    mut frame_timer := 0.0
+    mut fps_counter := 0
+    mut current_fps := 0
 
     while glfwWindowShouldClose(window) == 0 {
         this_frame_time     := get_time_microseconds()
@@ -252,7 +252,7 @@ Main :: () {
 dockspace_flags := ImGui.ImGuiDockNodeFlags_.None
 
 create_dock_space :: () {
-    window_flags := @bin_or(ImGui.ImGuiWindowFlags_.MenuBar, ImGui.ImGuiWindowFlags_.NoDocking)
+    mut window_flags := @bin_or(ImGui.ImGuiWindowFlags_.MenuBar, ImGui.ImGuiWindowFlags_.NoDocking)
 
     opt_fullscreen := true
     if opt_fullscreen {

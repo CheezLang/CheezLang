@@ -41,7 +41,7 @@ impl Hittable for Sphere {
         if discriminant > 0 {
             sqrt_dis := real(sqrt(discriminant))
 
-            temp := -b - sqrt_dis
+            mut temp := -b - sqrt_dis
             if temp < t_max and temp > t_min {
                 point := r.at(temp)
                 return Some(HitRecord(
@@ -77,8 +77,8 @@ impl Hittable for Sphere {
 //
 impl Hittable for Array[^Hittable] {
     hit :: (&Self, r: &Ray, t_min: real, t_max: real, random: &Random) -> Option[HitRecord] {
-        hit := Option[HitRecord].None
-        closest := t_max
+        mut hit := Option[HitRecord].None
+        mut closest := t_max
         for self.slice() {
             match it.hit(r, t_min, closest, random) {
                 Some($h) -> {
@@ -96,7 +96,7 @@ impl Hittable for Array[^Hittable] {
             return None
         }
 
-        box := match self[0].bounding_box() {
+        mut box := match self[0].bounding_box() {
             Some($aabb) -> aabb
             None -> {
                 return None
@@ -133,12 +133,12 @@ test_macro :: (name: string, arr: []^Hittable) {
     }
 }
 
-quick_sort :: (arr: []^Hittable, cmp: fn (^Hittable, ^Hittable) -> int) {
+quick_sort :: (arr: []mut ^Hittable, cmp: fn (^Hittable, ^Hittable) -> int) {
         if arr.length <= 1 {
             return
         }
 
-        idx := 0
+        mut idx := 0
         pivot := *arr[arr.length - 1]
         for i in 0..arr.length-1 {
             if cmp(*arr[i], pivot) > 0 {

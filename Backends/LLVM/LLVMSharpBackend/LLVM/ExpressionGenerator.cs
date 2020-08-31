@@ -424,7 +424,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 if (eve.Argument != null)
                 {
                     ptr = builder.CreateStructGEP(v, 1, "");
-                    ptr = builder.CreatePointerCast(ptr, CheezTypeToLLVMType(PointerType.GetPointerType(eve.Argument.Type)), "");
+                    ptr = builder.CreatePointerCast(ptr, CheezTypeToLLVMType(PointerType.GetPointerType(eve.Argument.Type, true)), "");
 
                     val = GenerateExpression(eve.Argument, true);
                     builder.CreateStore(val, ptr);
@@ -1871,7 +1871,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             if (!valueMap.ContainsKey(t))
             {
                 var type = t.Type;
-                if (t.StorePointer) type = PointerType.GetPointerType(type);
+                if (t.StorePointer) type = PointerType.GetPointerType(type, true);
 
                 var x = CreateLocalVariable(type);
                 valueMap[t] = x;
@@ -2129,7 +2129,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                                     var dataOffset = builder.CreateMul(range_begin, LLVM.ConstInt(LLVM.Int64Type(), (ulong)s.TargetType.GetSize(), false), "");
                                     dataPtr = builder.CreatePtrToInt(dataPtr, LLVM.Int64Type(), "");
                                     dataPtr = builder.CreateAdd(dataPtr, dataOffset, "data_new");
-                                    dataPtr = builder.CreateIntToPtr(dataPtr, CheezTypeToLLVMType(PointerType.GetPointerType(s.TargetType)), "data_new_ptr");
+                                    dataPtr = builder.CreateIntToPtr(dataPtr, CheezTypeToLLVMType(PointerType.GetPointerType(s.TargetType, true)), "data_new_ptr");
                                     lengthPtr = builder.CreateSub(range_end, range_begin, "length_new");
 
                                     var result = builder.CreateInsertValue(LLVM.GetUndef(CheezTypeToLLVMType(s)), lengthPtr, 0, "result");
@@ -2264,7 +2264,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var memName = expr.Right.Name;
                         var mem = @enum.Declaration.Members.FirstOrDefault(m => m.Name == memName);
 
-                        var assType = CheezTypeToLLVMType(PointerType.GetPointerType(mem.AssociatedTypeExpr.Value as CheezType));
+                        var assType = CheezTypeToLLVMType(PointerType.GetPointerType(mem.AssociatedTypeExpr.Value as CheezType, true));
 
                         var subPtr = builder.CreateStructGEP(value, 1, "");
                         subPtr = builder.CreatePointerCast(subPtr, assType, "");

@@ -10,7 +10,7 @@ Test :: struct {
 }
 
 impl Test {
-    foo :: (&Self, a: $T) {
+    foo :: (&mut Self, a: $T) {
         self.x = cast a
     }
 

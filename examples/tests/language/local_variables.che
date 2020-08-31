@@ -19,11 +19,11 @@
 C :: import std.c
 
 Main :: () {
-    a := 123
-    b : bool = true
-    (c, d) : (int, bool) = (a, b)
-    f := (c, d)
-    (g, h) := f
+    mut a := 123
+    mut b : bool = true
+    mut (c, d) : (int, bool) = (a, b)
+    mut f := (c, d)
+    mut (g, h) := f
 
     C.printf("a: %lld`n", a)
     C.printf("b: %lld`n", cast(int)b)

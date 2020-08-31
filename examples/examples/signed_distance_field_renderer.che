@@ -71,7 +71,7 @@ impl SDF for Cube {
         dy := fabs(v.y) - radius
         dz := fabs(v.z) - radius
 
-        d : double = 0
+        mut d : double = 0
 
         if dx > 0 and dy > 0 and dz > 0 { // corner
             r := Vec3(
@@ -222,7 +222,7 @@ SubtractionSDF :: struct {
 impl SDF for SubtractionSDF {
     distance :: (&Self, v: Vec3) -> DistanceShaderPair {
         a := sdf1.distance(v)
-        b := sdf2.distance(v)
+        mut b := sdf2.distance(v)
 
         b.distance = -b.distance
         if a.distance > b.distance {
@@ -260,18 +260,18 @@ impl Shader for LambertianShader {
         normal := raymarcher.normal(ray.origin)
 
         i := Vec3.dot(normal, ld)
-        c := color * lc
+        mut c := color * lc
 
         sdfHit := ray.origin + ld * 0.001
-        shadowRay := Ray(sdfHit, ld)
-        distance := raymarcher.sdf.distance(shadowRay.origin).distance
+        mut shadowRay := Ray(sdfHit, ld)
+        mut distance := raymarcher.sdf.distance(shadowRay.origin).distance
 
         while shadowRay.origin.mag() < raymarcher.backgroundDistance and fabs(distance) > 0.00005 {
             shadowRay.origin = shadowRay.origin + shadowRay.direction * distance
             distance = raymarcher.sdf.distance(shadowRay.origin).distance
         }
 
-        shadow : double = 1.0
+        mut shadow : double = 1.0
         if shadowRay.origin.mag() < raymarcher.backgroundDistance {
             shadow = 0.3
         }
@@ -309,7 +309,7 @@ Background :: struct {
 
 impl Background {
     project :: (&Self, ray: Ray) -> Vec3 {
-        i := ray.direction.y + 0.5
+        mut i := ray.direction.y + 0.5
         i *= i
         return Vec3(i, i, i)
     }
@@ -322,8 +322,8 @@ Raymarcher :: struct {
 }
 
 impl Raymarcher {
-    project :: (&Self, ray: Ray) -> Vec3 {
-        ds := sdf.distance(ray.origin)
+    project :: (&Self, mut ray: Ray) -> Vec3 {
+        mut ds := sdf.distance(ray.origin)
 
         while fabs(ds.distance) > 0.0000001 {
             ray.origin = ray.origin + ray.direction * ds.distance
@@ -383,13 +383,13 @@ impl PerspectiveCamera {
 Film :: struct {
     width  : int
     height : int
-    pixels : []Vec3
+    pixels : []mut Vec3
 
     antiAliasingSteps: int
 }
 
 impl Film {
-    trigger :: (&Self, camera: &PerspectiveCamera, scene: &Raymarcher) {
+    trigger :: (&mut Self, camera: &PerspectiveCamera, scene: &Raymarcher) {
 
         io.printf("({}, {})`n", (width, height))
 
@@ -416,11 +416,11 @@ impl Film {
                 fx := cast(double) x
                 fy := cast(double) y
 
-                color := Vec3(0, 0, 0)
+                mut color := Vec3(0, 0, 0)
 
                 if antiAliasingSteps == 1 {
                     ray := camera.project((fx + 0.5) * fw, (fy + 0.5) * fh)
-                    color= scene.project(ray)
+                    color = scene.project(ray)
                 } else {
                     for i in 0..antiAliasingSteps {
                         ray := camera.project((fx + r.next_double()) * fw, (fy + r.next_double()) * fh)
@@ -539,7 +539,7 @@ impl SDFAllocator {
     }
 }
 
-renderImage :: (film: &Film) {
+renderImage :: (film: &mut Film) {
     for i in 0..film.pixels.length {
         *film.pixels[i] = Vec3(0, 0, 0)
     }
@@ -574,7 +574,7 @@ renderImage :: (film: &Film) {
 
     sdf := {
         sdf := {
-            sdf: ^SDF
+            mut sdf : ^SDF
             {
                 sdf = c1
                 sdf = all.subtract(sdf, s1)

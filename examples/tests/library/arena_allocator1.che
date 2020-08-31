@@ -36,7 +36,7 @@ Main :: () {
     a.dump(true)
 
     alloc(string, ^a)
-    x := alloc(i64, ^a)
+    mut x := alloc(i64, ^a)
     alloc(i32, ^a)
     alloc(i16, ^a)
     alloc(i8, ^a)
@@ -44,7 +44,7 @@ Main :: () {
     alloc(i16, ^a)
     alloc(i32, ^a)
     alloc(i64, ^a)
-    s := alloc(string, ^a)
+    mut s := alloc(string, ^a)
 
     *s = "lol"
     io.println(*s)

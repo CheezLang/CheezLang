@@ -47,8 +47,8 @@ namespace Cheez
 
     public class BuiltInPointerOperator : IBinaryOperator
     {
-        public CheezType LhsType => PointerType.GetPointerType(CheezType.Void);
-        public CheezType RhsType => PointerType.GetPointerType(CheezType.Void);
+        public CheezType LhsType => PointerType.GetPointerType(CheezType.Void, true);
+        public CheezType RhsType => PointerType.GetPointerType(CheezType.Void, true);
         public CheezType ResultType { get; private set; }
 
         public string Name { get; private set; }
@@ -61,7 +61,7 @@ namespace Cheez
                 case "==": ResultType = CheezType.Bool; break;
                 case "!=": ResultType = CheezType.Bool; break;
 
-                default: ResultType = PointerType.GetPointerType(CheezType.Void); break;
+                default: ResultType = PointerType.GetPointerType(CheezType.Void, true); break;
             }
         }
 

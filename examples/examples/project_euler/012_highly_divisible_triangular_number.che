@@ -7,7 +7,7 @@ io :: import std.io
 use import std.math
 
 count_divisors :: (num: int) -> int {
-    count := 0
+    mut count := 0
     max := int(sqrt(double(num)))
 
     for 1 ..= max {
@@ -20,8 +20,8 @@ count_divisors :: (num: int) -> int {
 }
 
 Main :: () {
-    current := 0
-    while i := 1, true, i += 1 {
+    mut current := 0
+    while mut i := 1, true, i += 1 {
         current += i
         divisors := count_divisors(current)
         if divisors > 500 then break

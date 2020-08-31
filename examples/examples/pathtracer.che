@@ -99,7 +99,7 @@ impl Object for Sphere {
         op := pos - ray.pos
         r2 := rad * rad
         b := op.dot(ray.dir)
-        det := b * b - op.magsq() + r2
+        mut det := b * b - op.magsq() + r2
         if det < 0 {
             return None
         }
@@ -164,7 +164,7 @@ impl PathTracer {
     }
 
     intersect :: (&Self, ray: Ray) -> Option[HitInfo] {
-        nearest : Option[HitInfo] = None
+        mut nearest : Option[HitInfo] = None
 
         for n in 0..objects.get_length() {
             hit := (*objects[n]).intersect(ray)
@@ -186,7 +186,7 @@ impl PathTracer {
         return match self.intersect(ray) {
             None -> Vec3()
             Some($hit) -> {
-                result := Vec3()
+                mut result := Vec3()
 
                 // emission
                 &result += hit.material.emission
@@ -220,10 +220,10 @@ impl PathTracer {
                 refract_max := hit.material.refraction.max_component()
                 if refract_max > 0 {
                     I := ray.dir.normalized()
-                    n := hit.normal.normalized()
+                    mut n := hit.normal.normalized()
 
-                    n1 := 1.0f
-                    n2 := hit.material.ior
+                    mut n1 := 1.0f
+                    mut n2 := hit.material.ior
 
 
                     outside := Vec3.dot(hit.normal, ray.dir) < 0
@@ -260,9 +260,9 @@ impl PathTracer {
     }
 
     fresnel :: (I: Vec3, N: Vec3, ior: float) -> kr: float {
-        cosi := clamp(Vec3.dot(I, N), -1.0f, 1.0f)
-        etai := 1.0f
-        etat := ior
+        mut cosi := clamp(Vec3.dot(I, N), -1.0f, 1.0f)
+        mut etai := 1.0f
+        mut etat := ior
         if cosi > 0 { (etai, etat) = (etat, etai) }
         // Compute sini using Snell's law
         sint := etai / etat * sqrtf(fmaxf(0.0f, 1.0f - cosi * cosi))
@@ -270,7 +270,7 @@ impl PathTracer {
         if sint >= 1 {
             kr = 1
         } else {
-            cost := sqrtf(fmaxf(0.0, 1.0f - sint * sint))
+            mut cost := sqrtf(fmaxf(0.0, 1.0f - sint * sint))
             cosi = float(fabs(cosi))
             Rs := ((etat * cosi) - (etai * cost)) / ((etat * cosi) + (etai * cost))
             Rp := ((etai * cosi) - (etat * cost)) / ((etai * cosi) + (etat * cost))
@@ -288,7 +288,7 @@ RenderContext :: struct {
     active  : bool
 }
 
-pathtracer_thread :: (data: ^RenderContext) {
+pathtracer_thread :: (data: ^mut RenderContext) {
     data.active = true
     for 0..samples_per_block {
         for current_y in data.min.y..data.max.y {
@@ -309,7 +309,7 @@ pathtracer_thread :: (data: ^RenderContext) {
                 // shoot ray into scene and calculate color
                 color := data.pt.calc_color(Ray(data.pt.cam_pos, dir), ^data.random, 1)
                 // println(color)
-                data.pt.buffer[index] += color
+                *data.pt.buffer[index] += color
             }
         }
 
@@ -326,7 +326,7 @@ pathtracer_thread :: (data: ^RenderContext) {
 }
 
 impl Game for PathTracer {
-    on_create :: (&Self, pge: ^PixelGameEngine) -> bool {
+    on_create :: (&mut Self, pge: ^PixelGameEngine) -> bool {
         self.pge = pge
 
         self.cam_fov = float.to_radians(60.0)
@@ -399,7 +399,7 @@ impl Game for PathTracer {
         return true
     }
 
-    enqueue_threads :: (&Self) {
+    enqueue_threads :: (&mut Self) {
         if paused {
             return
         }
@@ -409,12 +409,12 @@ impl Game for PathTracer {
         }
     }
 
-    on_destroy :: (&Self) -> bool {
+    on_destroy :: (&mut Self) -> bool {
         running = false
         return true
     }
 
-    on_update :: (&Self, dt: float) -> bool {
+    on_update :: (&mut Self, dt: float) -> bool {
         if pge.get_key(Key.Escape).pressed {
             return false
         }
@@ -454,7 +454,7 @@ impl Game for PathTracer {
                         // calculate color of pixel by taking the average of the color
                         // in the buffer
                         pixel := {
-                            bufferColor := *buffer[index] / float(sample)
+                            mut bufferColor := *buffer[index] / float(sample)
                             // println(bufferColor)
                             bufferColor = bufferColor.clamped(0.0, 1.0) * 255.0f
                             c := Vec3.change_type(bufferColor, u8)
@@ -519,7 +519,7 @@ impl Game for PathTracer {
                 if sample > 0 {
                     // calculate color of pixel by taking the average of the color
                     // in the buffer
-                    bufferColor := *buffer[index] / float(sample)
+                    mut bufferColor := *buffer[index] / float(sample)
                     bufferColor = bufferColor.clamped(0.0, 1.0)
                     data[index * 3 + 0] = bufferColor.x
                     data[index * 3 + 1] = bufferColor.y
@@ -532,8 +532,8 @@ impl Game for PathTracer {
     }
 }
 
-thread_pool_mut : ^Mutex      = null
-thread_pool     : ^ThreadPool = null
+mut thread_pool_mut : ^mut Mutex      = null
+mut thread_pool     : ^mut ThreadPool = null
 
 Main :: () {
     tp := ThreadPool.create(thread_count)
