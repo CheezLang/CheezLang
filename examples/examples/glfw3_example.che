@@ -68,12 +68,12 @@ gl_check_errors :: () {
 
 igListBoxStringArray :: (label: c_string, current_index: ^i32, arr: &Array[String]) -> bool {
     array_string_getter :: (data: ^void, idx: i32, out_text: ^mut c_string) -> bool {
-        arr := &*cast(^Array[String]) data
+        arr := &mut *cast(^mut Array[String]) data
         if idx < 0 or int(idx) >= arr.get_length() {
             return false
         }
 
-        *out_text = arr.access(idx).as_cstring()
+        *out_text = arr.access_mut(idx).as_cstring()
 
         return true
     }

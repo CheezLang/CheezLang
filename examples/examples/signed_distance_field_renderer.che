@@ -617,7 +617,7 @@ Main :: () {
 
     imageArr.resize(width * height)
 
-    film := Film(width, height, imageArr.slice(), antiAliasingSteps)
+    film := Film(width, height, imageArr.slice_mut(), antiAliasingSteps)
 
     start := get_time_milliseconds()
     renderImage(&film)

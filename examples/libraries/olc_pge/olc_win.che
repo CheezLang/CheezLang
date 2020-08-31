@@ -177,7 +177,7 @@ olc_window_event :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> L
         WM_CLOSE   -> { pixel_game_engine_ptr.active = false }
 
         WM_CREATE -> {
-            pixel_game_engine_ptr = cast(^PixelGameEngine) (cast(^CREATESTRUCTA)lparam).lpCreateParams
+            pixel_game_engine_ptr = cast(^mut PixelGameEngine) (cast(^CREATESTRUCTA)lparam).lpCreateParams
         }
 
         WM_MOUSEMOVE -> {

@@ -111,7 +111,7 @@ pathtracer2 :: () {
                 // io.printfln("thread {}: ({}, {}) -> ({}, {})", (context.id, context.min.x, context.min.y, context.max.x, context.max.y))
 
                 // if global_random.next_double() < 0.5 {
-                    thread_pool.enqueue(render_loop, context)
+                    thread_pool.enqueue(cast(fn(^RenderContext)) render_loop, context)
                 // }
 
                 id += 1
@@ -311,7 +311,7 @@ random_scene :: (cam: &mut Camera) -> ^Hittable {
     list.add(ConstantMedium.create(box, den, ConstantTexture.create(vec3(col, col, col))))
 
     if use_bhv {
-        bhv := BhvNode.create(list.slice())
+        bhv := BhvNode.create(list.slice_mut())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)
@@ -368,7 +368,7 @@ basic_scene :: (cam: &mut Camera) -> ^Hittable {
     list.add(ConstantMedium.create(box, den, ConstantTexture.create(vec3(col, col, col))))
 
     if use_bhv {
-        bhv := BhvNode.create(list.slice())
+        bhv := BhvNode.create(list.slice_mut())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)
@@ -410,7 +410,7 @@ simple_light :: (cam: &mut Camera) -> ^Hittable {
     )))
 
     if use_bhv {
-        bhv := BhvNode.create(list.slice())
+        bhv := BhvNode.create(list.slice_mut())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)
@@ -448,7 +448,7 @@ cornell_box :: (cam: &mut Camera) -> ^Hittable {
     Box.create_faces(vec3(265, 0, 295), vec3(430, 330, 460), white, &list)
 
     if use_bhv {
-        bhv := BhvNode.create(list.slice())
+        bhv := BhvNode.create(list.slice_mut())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)
@@ -570,7 +570,7 @@ big_scene :: (cam: &mut Camera) -> ^Hittable {
     }
 
     if use_bhv {
-        bhv := BhvNode.create(list.slice())
+        bhv := BhvNode.create(list.slice_mut())
         return create_object(Hittable, bhv)
     } else {
         return create_object(Hittable, list)

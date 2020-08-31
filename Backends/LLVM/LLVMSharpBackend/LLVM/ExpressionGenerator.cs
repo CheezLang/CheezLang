@@ -915,6 +915,13 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             switch (to, from)
             {
+                case (PointerType t, PointerType f) when t.TargetType == f.TargetType:
+                    return GenerateExpression(cast.SubExpression, deref);
+                case (ReferenceType t, ReferenceType f) when t.TargetType == f.TargetType:
+                    return GenerateExpression(cast.SubExpression, deref);
+                case (SliceType t, SliceType f) when t.TargetType == f.TargetType:
+                    return GenerateExpression(cast.SubExpression, deref);
+
                 case (EnumType e, IntType t) when e.Declaration.IsReprC && e.Declaration.TagType == t:
                     return GenerateExpression(cast.SubExpression, true);
 

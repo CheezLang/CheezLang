@@ -46,7 +46,7 @@ impl PixelGameEngine {
     // get_window_height :: (&Self) -> int { return window_height }
 
     //
-    set_draw_target :: (&mut Self, target: ^Sprite) {
+    set_draw_target :: (&mut Self, target: ^mut Sprite) {
         draw_target = if target == null { default_draw_target } else { target }
     }
 

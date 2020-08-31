@@ -22,11 +22,11 @@ mut global_random : ^mut MTwister = null
 Random :: MTwister
 
 impl Random {
-    random_real :: (&Self) -> real {
+    random_real :: (&mut Self) -> real {
         return real(self.next_double())
     }
 
-    random_in_unit_sphere :: (&Self) -> vec3 {
+    random_in_unit_sphere :: (&mut Self) -> vec3 {
         mut p : vec3 = default
         while true {
             r := vec3(self.random_real(), self.random_real(), self.random_real())
@@ -39,7 +39,7 @@ impl Random {
         return p
     }
 
-    random_in_unit_disk :: (&Self) -> vec3 {
+    random_in_unit_disk :: (&mut Self) -> vec3 {
         mut p : vec3 = default
         while true {
             r := vec3(self.random_real(), self.random_real(), 0.0)
@@ -111,7 +111,7 @@ impl Camera {
         )
     }
 
-    get_ray :: (&Self, s: real, t: real, random: &Random) -> Ray {
+    get_ray :: (&Self, s: real, t: real, random: &mut Random) -> Ray {
         rd := random.random_in_unit_disk() * lens_radius
         offset := u * rd.x + v * rd.y
         return Ray.from_to(origin + offset, lower_left_corner + horizontal * s + vertical * t)
@@ -119,13 +119,13 @@ impl Camera {
 }
 
 impl Printable for vec3 {
-    print :: (&Self, str: &String, format: string) {
+    print :: (&Self, str: &mut String, format: string) {
         str.appendf("v3({}, {}, {})", (x, y, z))
     }
 }
 
 impl Printable for Ray {
-    print :: (&Self, str: &String, format: string) {
+    print :: (&Self, str: &mut String, format: string) {
         str.appendf("ray({}, {})", (origin, direction))
     }
 }

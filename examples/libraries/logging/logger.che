@@ -17,7 +17,7 @@ Logger :: trait {
 }
 
 impl Logger {
-    set_global_logger :: (logger: ^Logger) {
+    set_global_logger :: (logger: ^mut Logger) {
         g_logger = logger
     }
 }

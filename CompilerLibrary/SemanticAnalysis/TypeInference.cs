@@ -1826,6 +1826,14 @@ namespace Cheez
                 case (PointerType _, PointerType f) when f.TargetType == CheezType.Void:
                     return cast;
 
+
+                case (PointerType t, PointerType f) when t.TargetType == f.TargetType:
+                    return InferType(cast, to);
+                case (ReferenceType t, ReferenceType f) when t.TargetType == f.TargetType:
+                    return InferType(cast, to);
+                case (SliceType t, SliceType f) when t.TargetType == f.TargetType:
+                    return InferType(cast, to);
+
                 case (PointerType t, PointerType f) when t.TargetType is AnyType && f.TargetType is TraitType trait:
                     {
                         MarkTypeAsRequiredAtRuntime(trait);
@@ -2707,7 +2715,7 @@ namespace Cheez
                             var sym = GlobalScope.GetSymbol("TypeInfo");
                             if (sym is AstConstantDeclaration c && c.Initializer is AstTraitTypeExpr s)
                             {
-                                expr.Type = PointerType.GetPointerType(s.TraitType, true);
+                                expr.Type = PointerType.GetPointerType(s.TraitType, false);
                             }
                             else
                             {
@@ -6264,6 +6272,14 @@ namespace Cheez
 
                 // cast(enum) int
                 case (EnumType e, IntType i) when e.Declaration.TagType == i && e.Declaration.IsReprC:
+                    return InferType(cast, to);
+
+                // mutability conversion
+                case (PointerType t, PointerType f) when t.TargetType == f.TargetType && (!t.Mutable || f.Mutable):
+                    return InferType(cast, to);
+                case (ReferenceType t, ReferenceType f) when t.TargetType == f.TargetType && (!t.Mutable || f.Mutable):
+                    return InferType(cast, to);
+                case (SliceType t, SliceType f) when t.TargetType == f.TargetType && (!t.Mutable || f.Mutable):
                     return InferType(cast, to);
 
                 // cast(&trait) T

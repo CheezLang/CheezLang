@@ -247,7 +247,7 @@ namespace Cheez.Types.Primitive
         public override bool Equals(object obj)
         {
             if (obj is PointerType p)
-                return TargetType == p.TargetType;
+                return TargetType == p.TargetType && Mutable == p.Mutable;
             return false;
         }
 
@@ -336,7 +336,7 @@ namespace Cheez.Types.Primitive
         {
             if (obj is ReferenceType r)
             {
-                return TargetType == r.TargetType;
+                return TargetType == r.TargetType && Mutable == r.Mutable;
             }
             return false;
         }
@@ -482,7 +482,7 @@ namespace Cheez.Types.Primitive
         {
             if (obj is SliceType r)
             {
-                return TargetType == r.TargetType;
+                return TargetType == r.TargetType && Mutable == r.Mutable;
             }
             return false;
         }

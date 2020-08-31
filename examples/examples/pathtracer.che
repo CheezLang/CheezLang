@@ -49,7 +49,7 @@ impl float {
 }
 
 impl Printable for Vec3 {
-    print :: (&Self, str: &String, format: string) {
+    print :: (&Self, str: &mut String, format: string) {
         str.appendf("{}, {}, {}", (x, y, z))
     }
 }
@@ -405,7 +405,7 @@ impl Game for PathTracer {
         }
         tds : []^RenderContext = thread_datas
         for context in tds {
-            thread_pool.enqueue(pathtracer_thread, context)
+            thread_pool.enqueue(cast(fn(^RenderContext)) pathtracer_thread, context)
         }
     }
 

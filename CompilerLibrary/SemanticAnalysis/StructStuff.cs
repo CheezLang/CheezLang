@@ -277,6 +277,11 @@ namespace Cheez
                 return null;
             }
 
+            if (decl.Name == "Array" && args[0].value is PointerType p && p.Mutable && p.TargetType is StructType s && s.Name == "AstArgument")
+            {
+
+            }
+
 
             AstStructTypeExpr instance = null;
 
