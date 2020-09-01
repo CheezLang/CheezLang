@@ -1130,6 +1130,13 @@ namespace Cheez
             if (value.Type is ReferenceType re)
                 expected = re.TargetType;
 
+            var enumType = (EnumType)expected;
+            if (enumType.Declaration.Untagged)
+            {
+                ReportError(value.Location, "Can't match on untagged enum");
+                return pattern;
+            }
+
             switch (pattern)
             {
                 case AstIdExpr _:
@@ -1453,7 +1460,7 @@ namespace Cheez
                 return expr;
             }
 
-            if (expected is EnumType e)
+            if (expected is EnumType e && !(e.Declaration.IsReprC || e.Declaration.Untagged))
             {
                 ReportError(expr, $"Can't default initialize an enum");
                 return expr;
@@ -2351,7 +2358,8 @@ namespace Cheez
                     case EnumType e:
                         {
                             ComputeEnumMembers(e.Declaration);
-                            MarkTypeAsRequiredAtRuntime(e.Declaration.TagType);
+                            if (!e.Declaration.Untagged)
+                                MarkTypeAsRequiredAtRuntime(e.Declaration.TagType);
                             foreach (var m in e.Declaration.Members)
                                 if (m.AssociatedType != null)
                                     MarkTypeAsRequiredAtRuntime(m.AssociatedType);
@@ -4129,6 +4137,7 @@ namespace Cheez
                     expr.SetFlag(ExprFlags.Breaks, true);
 
                 expr.LastExpr = exprStmt;
+                expr.Value = exprStmt.Expr.Value;
             }
             else
             {
@@ -4140,6 +4149,8 @@ namespace Cheez
             //    // copy initialized symbols
             //    expr.SubScope.ApplyInitializedSymbolsToParent();
             //}
+
+
 
             return expr;
         }

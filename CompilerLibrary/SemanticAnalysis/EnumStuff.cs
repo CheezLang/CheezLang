@@ -72,6 +72,13 @@ namespace Cheez
 
                 }
             }
+
+            if (expr.TryGetDirective("untagged", out var _))
+            {
+                expr.Untagged = true;
+                expr.TagType = null;
+            }
+
             if (expr.TryGetDirective("repr", out var repr))
             {
                 if (repr.Arguments.Count != 1 || !(repr.Arguments[0] is AstStringLiteral str))

@@ -98,7 +98,10 @@ namespace Cheez
                         {
                             ComputeEnumMembers(e.Declaration);
                             // @todo: force compute member types
-                            var (tagSize, tagAlign) = ComputeSizeAndAlignmentOfType(e.Declaration.TagType, path);
+                            var tagSize = 0;
+                            var tagAlign = 1;
+                            if (!e.Declaration.Untagged)
+                                (tagSize, tagAlign) = ComputeSizeAndAlignmentOfType(e.Declaration.TagType, path);
 
                             var alignment = tagAlign;
 

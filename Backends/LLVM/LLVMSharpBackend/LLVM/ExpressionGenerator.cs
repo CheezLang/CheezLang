@@ -418,15 +418,19 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             else
             {
                 var ptr = builder.CreateStructGEP(v, 0, "");
-                var val = LLVM.ConstInt(CheezTypeToLLVMType(eve.EnumDecl.TagType), eve.Member.Value.ToUlong(), false);
-                builder.CreateStore(val, ptr);
+
+                if (!eve.EnumDecl.Untagged)
+                {
+                    var val = LLVM.ConstInt(CheezTypeToLLVMType(eve.EnumDecl.TagType), eve.Member.Value.ToUlong(), false);
+                    builder.CreateStore(val, ptr);
+                }
 
                 if (eve.Argument != null)
                 {
                     ptr = builder.CreateStructGEP(v, 1, "");
                     ptr = builder.CreatePointerCast(ptr, CheezTypeToLLVMType(PointerType.GetPointerType(eve.Argument.Type, true)), "");
 
-                    val = GenerateExpression(eve.Argument, true);
+                    var val = GenerateExpression(eve.Argument, true);
                     builder.CreateStore(val, ptr);
                 }
 
@@ -1161,7 +1165,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var tag = v;
                 if (!e5.Declaration.IsReprC)
                     tag = builder.CreateExtractValue(v, 0, "");
-                return CreateIntCast(e5.Declaration.TagType, e5.Declaration.TagType.Signed, i5, i5.Signed, tag);
+                var tagType = (IntType)e5.Declaration.TagType;
+                return CreateIntCast(e5.Declaration.TagType, tagType.Signed, i5, i5.Signed, tag);
             }
 
             if (to is BoolType && from is FunctionType)
