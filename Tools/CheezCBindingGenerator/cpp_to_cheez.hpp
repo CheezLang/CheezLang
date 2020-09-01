@@ -89,6 +89,7 @@ private:
     static const luaL_Reg lua_lib[4];
     bool call_custom_handler(std::ostream& stream, const char* handler_name, CXCursor cursor, const char* decl_name, CXType decl_type);
     bool call_custom_handler(std::ostream& stream, const char* handler_name, CXCursor cursor, const char* decl_name);
+    const char* call_custom_transformer(std::ostream& stream, const char* name, CXCursor cursor, const char* decl_name, const char* member_name);
     void call_custom_handler(std::ostream& stream, const char* handler_name);
 
     int to_cheez_string_lua(lua_State* L);
