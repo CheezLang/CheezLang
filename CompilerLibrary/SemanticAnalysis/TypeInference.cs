@@ -5946,6 +5946,17 @@ namespace Cheez
 
                 var ops = expr.Scope.GetBinaryOperators(expr.Operator, leftType, rightType);
 
+                // search in scope where type is defined in
+                if (ops.Count == 0)
+                {
+                    switch (leftType)
+                    {
+                        case EnumType t: ops = t.Declaration.Scope.GetBinaryOperators(expr.Operator, leftType, rightType); break;
+                        case StructType t: ops = t.Declaration.Scope.GetBinaryOperators(expr.Operator, leftType, rightType); break;
+                        case TraitType t: ops = t.Declaration.Scope.GetBinaryOperators(expr.Operator, leftType, rightType); break;
+                    }
+                }
+
                 if (ops.Count == 0)
                 {
                     ReportError(expr, $"No operator '{expr.Operator}' matches the types {expr.Left.Type} and {expr.Right.Type}");

@@ -1502,8 +1502,12 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var left = GenerateExpression(bin.Left, true);
                 var right = GenerateExpression(bin.Right, true);
 
-                left = builder.CreateExtractValue(left, 0, "left.tag");
-                right = builder.CreateExtractValue(right, 0, "right.tag");
+                var enumType = (EnumType)bin.Left.Type;
+                if (!enumType.Declaration.IsReprC)
+                {
+                    left = builder.CreateExtractValue(left, 0, "left.tag");
+                    right = builder.CreateExtractValue(right, 0, "right.tag");
+                }
 
                 var op = eo.Name switch {
                     "==" => LLVMIntPredicate.LLVMIntEQ,
