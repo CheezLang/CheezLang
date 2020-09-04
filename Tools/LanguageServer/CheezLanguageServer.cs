@@ -251,93 +251,19 @@ namespace CheezLanguageServer
         }
 
 
-        private List<(AstStatement stmt, Uri uri, string container)> FindSymbolsInAllFiles(string id) {
-            var result = new List<(AstStatement stmt, Uri uri, string container)>();
+        private List<(AstStatement stmt, Uri uri, string container, TypeKind containerKind)> FindSymbolsInAllFiles(string id) {
+            var result = new List<(AstStatement stmt, Uri uri, string container, TypeKind containerKind)>();
             foreach (var file in files)
-                GetMatchingNodes(result, file.Value.uri, file.Value.statements, id, null, exactMatch: true);
+                GetMatchingNodes(result, file.Value.uri, file.Value.statements, id, null, TypeKind.None, exactMatch: true);
             return result;
         }
 
-        private void GetSymbolsInScope<T>(List<SymbolInformation> result, Uri uri, List<T> statements, string query, string containerName, bool exactMatch = false)
+        private void GetSymbolsInScope<T>(List<SymbolInformation> result, Uri uri, List<T> statements, string query, string containerName, TypeKind containerKind, bool exactMatch = false)
             where T : AstStatement
         {
-            var symbols = new List<(AstStatement stmt, Uri uri, string container)>();
-            GetMatchingNodes(symbols, uri, statements, query, containerName, exactMatch: exactMatch);
-            result.AddRange(symbols.Select(sym => GetSymbolInformationForStatement(sym.stmt, sym.container, sym.uri)));
-            // foreach (var stmt in statements)
-            // {
-            //     string name = "";
-            //     SymbolKind kind = SymbolKind.Null;
-
-            //     switch (stmt)
-            //     {
-            //         case AstVariableDecl decl:
-            //             name = decl.Name.Name;
-            //             kind = SymbolKind.Variable;
-            //             break;
-
-            //         case AstConstantDeclaration decl:
-            //             name = decl.Name.Name;
-            //             switch (decl.Initializer)
-            //             {
-            //                 case AstStructTypeExpr _:
-            //                     kind = SymbolKind.Struct;
-            //                     break;
-            //                 case AstEnumTypeExpr _:
-            //                     kind = SymbolKind.Enum;
-            //                     break;
-            //                 case AstTraitTypeExpr _:
-            //                     kind = SymbolKind.Interface;
-            //                     break;
-            //                 case AstFuncExpr _:
-            //                     kind = SymbolKind.Function;
-            //                     break;
-            //                 case AstImportExpr _:
-            //                     kind = SymbolKind.Module;
-            //                     break;
-            //                 default:
-            //                     kind = SymbolKind.Constant;
-            //                     break;
-            //             }
-            //             break;
-
-            //         case AstImplBlock impl:
-            //             name = impl.ToString();
-            //             GetSymbolsInScope(result, uri, impl.Declarations, query, name, exactMatch);
-            //             break;
-
-            //         default:
-            //             continue;
-            //     }
-
-            //     if (exactMatch && name != query)
-            //         continue;
-            //     if (!exactMatch && !name.Contains(query, StringComparison.InvariantCultureIgnoreCase))
-            //         continue;
-            //     result.Add(new SymbolInformation
-            //     {
-            //         name = name,
-            //         kind = kind,
-            //         containerName = containerName,
-            //         location = new LanguageServer.Parameters.Location
-            //         {
-            //             uri = uri,
-            //             range = new LanguageServer.Parameters.Range
-            //             {
-            //                 start = new Position
-            //                 {
-            //                     line = stmt.Beginning.line - 1,
-            //                     character = stmt.Beginning.Column - 1
-            //                 },
-            //                 end = new Position
-            //                 {
-            //                     line = stmt.End.line - 1,
-            //                     character = stmt.End.Column - 1
-            //                 }
-            //             }
-            //         }
-            //     });
-            // }
+            var symbols = new List<(AstStatement stmt, Uri uri, string container, TypeKind containerKind)>();
+            GetMatchingNodes(symbols, uri, statements, query, containerName, containerKind, exactMatch: exactMatch);
+            result.AddRange(symbols.Select(sym => GetSymbolInformationForStatement(sym.stmt, sym.containerKind, sym.container, sym.uri)));
         }
 
         private string GetNameForStatement(AstStatement statement) {
@@ -350,10 +276,24 @@ namespace CheezLanguageServer
             }
         }
 
-        private SymbolKind GetSymbolKindForStatement(AstStatement statement) {
+        enum TypeKind
+        {
+            None, Struct, Enum, Trait, Impl
+        }
+
+        private SymbolKind GetSymbolKindForStatement(AstStatement statement, TypeKind type) {
             switch (statement)
             {
-                case AstVariableDecl decl: return SymbolKind.Variable;
+                case AstVariableDecl decl:
+                    {
+                        switch (type)
+                        {
+                            case TypeKind.Struct: return SymbolKind.Field;
+                            case TypeKind.Enum: return SymbolKind.EnumMember;
+                            case TypeKind.Trait: return SymbolKind.Variable;
+                            default: return SymbolKind.Variable;
+                        } 
+                    }
 
                 case AstConstantDeclaration decl:
                     switch (decl.Initializer)
@@ -370,9 +310,9 @@ namespace CheezLanguageServer
             }
         }
 
-        private SymbolInformation GetSymbolInformationForStatement(AstStatement stmt, string containerName, Uri uri) {
+        private SymbolInformation GetSymbolInformationForStatement(AstStatement stmt, TypeKind containerKind, string containerName, Uri uri) {
             string name = GetNameForStatement(stmt);
-            var kind = GetSymbolKindForStatement(stmt);
+            var kind = GetSymbolKindForStatement(stmt, containerKind);
             return new SymbolInformation
             {
                 name = name,
@@ -417,7 +357,7 @@ namespace CheezLanguageServer
             };
         }
 
-        private void GetMatchingNodes<T>(List<(AstStatement stmt, Uri uri, string container)> result, Uri uri, List<T> statements, string query, string containerName, bool exactMatch = false)
+        private void GetMatchingNodes<T>(List<(AstStatement stmt, Uri uri, string container, TypeKind containerKind)> result, Uri uri, List<T> statements, string query, string containerName, TypeKind containerKind, bool exactMatch = false)
             where T : AstStatement
         {
             foreach (var stmt in statements)
@@ -432,11 +372,24 @@ namespace CheezLanguageServer
 
                     case AstConstantDeclaration decl:
                         name = decl.Name.Name;
+
+                        switch (decl.Initializer)
+                        {
+                            case AstEnumTypeExpr type:
+                                GetMatchingNodes(result, uri, type.Declarations, query, name, TypeKind.Enum, exactMatch);
+                                break;
+                            case AstStructTypeExpr type:
+                                GetMatchingNodes(result, uri, type.Declarations, query, name, TypeKind.Struct, exactMatch);
+                                break;
+                            case AstTraitTypeExpr type:
+                                GetMatchingNodes(result, uri, type.Declarations, query, name, TypeKind.Trait, exactMatch);
+                                break;
+                        }
                         break;
 
                     case AstImplBlock impl:
                         name = impl.ToString();
-                        GetMatchingNodes(result, uri, impl.Declarations, query, name, exactMatch);
+                        GetMatchingNodes(result, uri, impl.Declarations, query, name, TypeKind.Impl, exactMatch);
                         break;
 
                     default:
@@ -447,7 +400,7 @@ namespace CheezLanguageServer
                     continue;
                 if (!exactMatch && !name.Contains(query, StringComparison.InvariantCultureIgnoreCase))
                     continue;
-                result.Add((stmt, uri, containerName));
+                result.Add((stmt, uri, containerName, containerKind));
             }
         }
 
@@ -457,7 +410,7 @@ namespace CheezLanguageServer
             var result = new List<SymbolInformation>();
             foreach (var file in files)
             {
-                GetSymbolsInScope(result, file.Value.uri, file.Value.statements, query, null);
+                GetSymbolsInScope(result, file.Value.uri, file.Value.statements, query, null, TypeKind.None);
             }
 
             return Result<SymbolInformation[], ResponseError>.Success(result.ToArray());
@@ -469,7 +422,7 @@ namespace CheezLanguageServer
             if (files.TryGetValue(path, out var file))
             {
                 var result = new List<SymbolInformation>();
-                GetSymbolsInScope(result, file.uri, file.statements, "", null);
+                GetSymbolsInScope(result, file.uri, file.statements, "", null, TypeKind.None);
                 return Result<DocumentSymbolResult, ResponseError>.Success(new DocumentSymbolResult(result.ToArray()));
             }
             else
@@ -487,7 +440,7 @@ namespace CheezLanguageServer
             var result = new List<SymbolInformation>();
             foreach (var file in files)
             {
-                GetSymbolsInScope(result, file.Value.uri, file.Value.statements, "", null);
+                GetSymbolsInScope(result, file.Value.uri, file.Value.statements, "", null, TypeKind.None);
             }
 
             return Result<CompletionResult, ResponseError>.Success(
