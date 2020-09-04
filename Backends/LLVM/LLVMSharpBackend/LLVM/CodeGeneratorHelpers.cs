@@ -1358,8 +1358,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateStore(
                memberSlice,
                builder.CreateStructGEP(ptr, offset + 1, ""));
-            // tag_type
 
+            // tag_type
             if (enumType.Declaration.Untagged)
             {
                 builder.CreateStore(
@@ -1375,6 +1375,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                    RTTITypeInfoAsPtr(enumType.Declaration.TagType),
                    builder.CreateStructGEP(ptr, offset + 2, ""));
             }
+
+            // is_flags : bool
+            builder.CreateStore(
+               CheezValueToLLVMValue(CheezType.Bool, enumType.Declaration.IsFlags),
+               builder.CreateStructGEP(ptr, offset + 3, ""));
         }
 
         private LLVMValueRef GenerateRTTIForEnumMember(EnumType enumType, AstEnumMemberNew mem)

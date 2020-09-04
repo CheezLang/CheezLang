@@ -55,7 +55,7 @@ Main :: () {
     io.printfln("{:b}", int(b or c))
     io.printfln("{:b}", int(a or b or c))
     io.println("")
-    io.printfln("{}", d and a)
-    io.printfln("{}", d and b)
-    io.printfln("{}", d and c)
+    io.printfln("{}", (d and a) != .None)
+    io.printfln("{}", (d and b) != .None)
+    io.printfln("{}", (d and c) != .None)
 }

@@ -160,6 +160,7 @@ namespace Cheez
                 // GlobalScope.DefineBinaryOperator(new EnumFlagsCompineOperator(enumType));
                 // GlobalScope.DefineBinaryOperator(new EnumFlagsTestOperator(enumType));
                 expr.Scope.DefineBinaryOperator(new EnumFlagsCombineOperator(enumType));
+                expr.Scope.DefineBinaryOperator(new EnumFlagsAndOperator(enumType));
                 expr.Scope.DefineBinaryOperator(new EnumFlagsTestOperator(enumType));
             }
 

@@ -1538,6 +1538,28 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 }
                 return result;
             }
+            else if (bin.ActualOperator is EnumFlagsAndOperator eao)
+            {
+                var llvmEnumType = CheezTypeToLLVMType(bin.Type);
+                var llvmTagType = CheezTypeToLLVMType(eao.EnumType.Declaration.TagType);
+
+                var left = GenerateExpression(bin.Left, true);
+                var right = GenerateExpression(bin.Right, true);
+
+                if (!eao.EnumType.Declaration.IsReprC)
+                {
+                    left = builder.CreateExtractValue(left, 0, "left.tag");
+                    right = builder.CreateExtractValue(right, 0, "right.tag");
+                }
+
+                var result = builder.CreateAnd(left, right, "result.tag");
+
+                if (!eao.EnumType.Declaration.IsReprC)
+                {
+                    result = builder.CreateInsertValue(LLVM.GetUndef(llvmEnumType), result, 0, "result");
+                }
+                return result;
+            }
             else if (bin.ActualOperator is EnumFlagsTestOperator eto)
             {
                 var llvmEnumType = CheezTypeToLLVMType(bin.Type);
@@ -1553,7 +1575,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 }
 
                 var result = builder.CreateAnd(left, right, "result.tag");
-                result = builder.CreateICmp(LLVMIntPredicate.LLVMIntNE, result, LLVM.ConstInt(llvmTagType, 0, false), "result.bool");
+                result = builder.CreateICmp(LLVMIntPredicate.LLVMIntEQ, result, left, "result.bool");
                 return result;
             }
             else if (bin.ActualOperator is BuiltInTraitNullOperator tno)

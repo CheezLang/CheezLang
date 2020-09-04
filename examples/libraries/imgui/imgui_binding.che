@@ -4,7 +4,7 @@
 import std.alloca
 use import std.io.stdio
 
-use import glfw.glfw_binding
+use import glfw
 
 #export_scope
 

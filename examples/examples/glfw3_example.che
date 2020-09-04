@@ -7,7 +7,7 @@ fmt :: import std.fmt
 io  :: import std.io
 C   :: import std.c
 
-use import glfw.glfw_binding
+use import glfw
 use import opengl.glad_binding
 ImGui :: import imgui.imgui_binding
 
@@ -44,17 +44,17 @@ for_extension_vec4 :: (vec: &vec4, code: Code) #for {
 
 gladLoadGL :: () -> i32;
 
-onKeyDown :: (window: ^GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
+onKeyDown :: (window: ^mut GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
 }
 
-on_framebuffer_resize :: (window: ^GLFWwindow, w: i32, h: i32) {
+on_framebuffer_resize :: (window: ^mut GLFWwindow, w: i32, h: i32) {
     glViewport(0, 0, w, h)
 
     width  = cast w
     height = cast h
 }
 
-glfw_error_callback :: (error: i32, description: c_string) {
+glfw_error_callback :: (error: i32, description: ^mut char8) {
     C.printf("Glfw Error %d: %s\n", error, description)
 }
 

@@ -1344,18 +1344,44 @@ namespace Cheez.Parsing
             return sub;
         }
 
-        [DebuggerStepThrough]
+        //[DebuggerStepThrough]
         private AstExpression ParsePipeExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver errorMessage)
         {
-            var lhs = ParseOrExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
+            var lhs = ParseIsExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
             AstExpression rhs = null;
 
             while (CheckToken(TokenType.Pipe))
             {
                 NextToken();
                 SkipNewlines();
-                rhs = ParseOrExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
+                rhs = ParseIsExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
                 lhs = new AstPipeExpr(lhs, rhs, new Location(lhs.Beginning, rhs.End));
+            }
+
+            return lhs;
+        }
+
+        //[DebuggerStepThrough]
+        private AstExpression ParseIsExpression(bool allowCommaForTuple, bool allowFunctionExpression, ErrorMessageResolver errorMessage)
+        {
+            var lhs = ParseOrExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
+            AstExpression rhs = null;
+
+            while (CheckToken(TokenType.KwIs))
+            {
+                var _is = NextToken();
+                SkipNewlines();
+                if (CheckToken(TokenType.KwIn))
+                {
+                    NextToken();
+                    SkipNewlines();
+                    rhs = ParseOrExpression(allowCommaForTuple, allowFunctionExpression, errorMessage);
+                    lhs = new AstBinaryExpr("is in", lhs, rhs, new Location(lhs.Beginning, rhs.End));
+                }
+                else
+                {
+                    ReportError(_is.location, $"Expected 'in' after 'is'");
+                }
             }
 
             return lhs;

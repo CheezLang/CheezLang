@@ -515,6 +515,9 @@ namespace Cheez
                         case AstParameter param:
                             return param.Mutable;
 
+                        case null:
+                            return false;
+
                         default:
                             throw new Exception("Not implemented");
                     }

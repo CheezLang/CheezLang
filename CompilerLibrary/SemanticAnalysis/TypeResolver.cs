@@ -86,9 +86,7 @@ namespace Cheez
                 case PolyType i:
                     if (i.IsDeclaring && !result.ContainsKey(i.Name))
                     {
-                        if (arg is ReferenceType r)
-                            result[i.Name] = (CheezType.Type, r.TargetType);
-                        else if (arg is CheezType)
+                        if (arg is CheezType)
                             result[i.Name] = (CheezType.Type, arg);
                         else
                         {
