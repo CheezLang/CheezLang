@@ -12,6 +12,7 @@ using Cheez.Ast.Statements;
 using Cheez.Parsing;
 using Cheez.Types.Complex;
 using Cheez.Types.Primitive;
+using Cheez.Visitors;
 using LanguageServer;
 using LanguageServer.Json;
 using LanguageServer.Parameters;
@@ -103,18 +104,19 @@ namespace CheezLanguageServer
                     },
                     definitionProvider = true,
                     hoverProvider = true,
+                    //signatureHelpProvider = new SignatureHelpOptions
+                    //{
+                    //    triggerCharacters = new string[]
+                    //    {
+                    //        "."
+                    //    }
+                    //},
                     executeCommandProvider = new ExecuteCommandOptions
                     {
                         commands = new string[] { "reload_language_server" }
                     },
                 }
             };
-
-            // Proxy.Window.ShowMessage(new LanguageServer.Parameters.Window.ShowMessageParams
-            // {
-            //     type = LanguageServer.Parameters.Window.MessageType.Info,
-            //     message = "CheezLanguageServer initialized"
-            // });
 
             return Result<InitializeResult, ResponseError<InitializeErrorData>>.Success(result);
         }
@@ -207,12 +209,21 @@ namespace CheezLanguageServer
 
         private void _documents_Changed(object sender, TextDocumentChangedEventArgs e)
         {
-            var path = GetFilePath(e.Document.uri);
+            try
+            {
+                var path = GetFilePath(e.Document.uri);
 
-            if (files.TryGetValue(path, out var f))
-                files.Remove(path);
+                if (files.TryGetValue(path, out var f))
+                    files.Remove(path);
 
-            LoadFile(e.Document.uri, path, e.Document.text);
+                LoadFile(e.Document.uri, path, e.Document.text);
+            }
+            catch (Exception ex)
+            {
+                Logger.Instance.Log($"_documents_Changed({e.Document.uri}) threw Exception: {ex.Message}\n{ex.StackTrace}");
+                files.Remove(GetFilePath(e.Document.uri));
+                throw;
+            }
         }
 
         private static string GetFilePath(Uri uri)
@@ -410,7 +421,14 @@ namespace CheezLanguageServer
             var result = new List<SymbolInformation>();
             foreach (var file in files)
             {
-                GetSymbolsInScope(result, file.Value.uri, file.Value.statements, query, null, TypeKind.None);
+                try
+                {
+                    GetSymbolsInScope(result, file.Value.uri, file.Value.statements, query, null, TypeKind.None);
+                }
+                catch (Exception e)
+                {
+                    Logger.Instance.Log($"Symbol({@params.query}) threw Exception: {e.Message}\n{e.StackTrace}");
+                }
             }
 
             return Result<SymbolInformation[], ResponseError>.Success(result.ToArray());
@@ -418,96 +436,421 @@ namespace CheezLanguageServer
 
         protected override Result<DocumentSymbolResult, ResponseError> DocumentSymbols(DocumentSymbolParams @params)
         {
-            string path = GetFilePath(@params.textDocument.uri);
-            if (files.TryGetValue(path, out var file))
+            try
             {
-                var result = new List<SymbolInformation>();
-                GetSymbolsInScope(result, file.uri, file.statements, "", null, TypeKind.None);
-                return Result<DocumentSymbolResult, ResponseError>.Success(new DocumentSymbolResult(result.ToArray()));
-            }
-            else
-            {
+                string path = GetFilePath(@params.textDocument.uri);
+                if (files.TryGetValue(path, out var file))
+                {
+                    var result = new List<SymbolInformation>();
+                    GetSymbolsInScope(result, file.uri, file.statements, "", null, TypeKind.None);
+                    return Result<DocumentSymbolResult, ResponseError>.Success(new DocumentSymbolResult(result.ToArray()));
+                }
                 return Result<DocumentSymbolResult, ResponseError>.Error(new ResponseError
                 {
                     code = ErrorCodes.InvalidParams,
-                    message = $"File '{path}' not found"
+                    message = $"File '{@params.textDocument}' not found"
+                });
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log($"DocumentSymbols({@params.textDocument}) threw Exception: {e.Message}\n{e.StackTrace}");
+                return Result<DocumentSymbolResult, ResponseError>.Error(new ResponseError
+                {
+                    code = ErrorCodes.InternalError,
+                    message = $"{e.Message}"
                 });
             }
         }
 
-        protected override Result<CompletionResult, ResponseError> Completion(CompletionParams @params) {
-            string path = GetFilePath(@params.textDocument.uri);
-            var result = new List<SymbolInformation>();
-            foreach (var file in files)
+        private Documentation BuildDocumentation((AstStatement stmt, Uri uri, string container, TypeKind containerKind) sym, SymbolInformation symbolInfo)
+        {
+            var sb = new StringWriter();
+            void Indent(int level)
             {
-                GetSymbolsInScope(result, file.Value.uri, file.Value.statements, "", null, TypeKind.None);
+                for (int i = 0; i < level; i++)
+                    sb.Write("    ");
             }
 
-            return Result<CompletionResult, ResponseError>.Success(
-                new CompletionResult(new CompletionList() {
-                    isIncomplete = true,
-                    items = result.Select(r => new CompletionItem {
-                        detail = r.containerName,
-                        kind  = SymbolKindToCompletionItemKind(r.kind),
-                        label = r.name
-                    }).ToArray()
-                })
-            );
+            sb.Write("`");
+            sb.Write(Path.GetFileName(GetFilePath(sym.uri)));
+            sb.Write("`");
+
+            if (!string.IsNullOrWhiteSpace(sym.container))
+            {
+                sb.Write(" `");
+                sb.Write(sym.container);
+                sb.Write("`");
+            }
+
+            sb.WriteLine();
+            sb.WriteLine();
+
+            // append value
+            var printer = new RawAstPrinter(sb);
+            switch (sym.stmt)
+            {
+                case AstConstantDeclaration d:
+                    switch (d.Initializer)
+                    {
+                        case AstFuncExpr func:
+                            {
+                                Indent(1);
+                                sb.Write("fn");
+                                if (func.Parameters.Count == 0)
+                                    sb.Write("()");
+                                sb.Write(" -> ");
+                                if (func.ReturnTypeExpr != null)
+                                    sb.Write(func.ReturnTypeExpr.Accept(printer));
+                                else
+                                    sb.Write("void");
+
+                                if (func.Directives != null)
+                                {
+                                    foreach (var directive in func.Directives)
+                                    {
+                                        sb.Write(" ");
+                                        sb.Write(directive.Accept(printer));
+                                    }
+                                }
+
+                                if (func.Parameters.Count > 0)
+                                {
+                                    sb.WriteLine();
+                                    Indent(1);
+                                    sb.WriteLine("(");
+
+                                    foreach (var param in func.Parameters)
+                                    {
+                                        Indent(2);
+                                        sb.WriteLine(param.Accept(printer));
+                                    }
+
+                                    Indent(1);
+                                    sb.Write(")");
+                                }
+
+                                break;
+                            }
+
+                        case AstStructTypeExpr str:
+                            {
+                                Indent(1);
+                                sb.Write("struct");
+
+                                if (str.Parameters != null && str.Parameters.Count > 0)
+                                {
+                                    sb.Write("(");
+                                    int i = 0;
+                                    foreach (var param in str.Parameters)
+                                    {
+                                        if (i > 0)
+                                            sb.Write(", ");
+                                        sb.Write(param.Accept(printer));
+                                        i++;
+                                    }
+                                    sb.Write(")");
+                                }
+
+                                if (str.Directives != null)
+                                {
+                                    foreach (var directive in str.Directives)
+                                    {
+                                        sb.Write(" ");
+                                        sb.Write(directive.Accept(printer));
+                                    }
+                                }
+
+                                sb.WriteLine(" {");
+
+                                foreach (var decl in str.Declarations)
+                                {
+                                    Indent(2);
+                                    sb.WriteLine(decl.Accept(printer));
+                                }
+
+                                Indent(1);
+                                sb.Write("}");
+                                break;
+                            }
+
+                        case AstEnumTypeExpr str:
+                            {
+                                Indent(1);
+                                sb.Write("enum");
+
+                                if (str.Parameters != null && str.Parameters.Count > 0)
+                                {
+                                    sb.Write("(");
+                                    int i = 0;
+                                    foreach (var param in str.Parameters)
+                                    {
+                                        if (i > 0)
+                                            sb.Write(", ");
+                                        sb.Write(param.Accept(printer));
+                                        i++;
+                                    }
+                                    sb.Write(")");
+                                }
+
+                                if (str.Directives != null)
+                                {
+                                    foreach (var directive in str.Directives)
+                                    {
+                                        sb.Write(" ");
+                                        sb.Write(directive.Accept(printer));
+                                    }
+                                }
+
+                                sb.WriteLine(" {");
+
+                                foreach (var decl in str.Declarations)
+                                {
+                                    Indent(2);
+                                    sb.WriteLine(decl.Accept(printer));
+                                }
+
+                                Indent(1);
+                                sb.Write("}");
+                                break;
+                            }
+
+                        case AstTraitTypeExpr str:
+                            {
+                                Indent(1);
+                                sb.Write("trait");
+
+                                if (str.Parameters != null && str.Parameters.Count > 0)
+                                {
+                                    sb.Write("(");
+                                    int i = 0;
+                                    foreach (var param in str.Parameters)
+                                    {
+                                        if (i > 0)
+                                            sb.Write(", ");
+                                        sb.Write(param.Accept(printer));
+                                        i++;
+                                    }
+                                    sb.Write(")");
+                                }
+
+                                if (str.Directives != null)
+                                {
+                                    foreach (var directive in str.Directives)
+                                    {
+                                        sb.Write(" ");
+                                        sb.Write(directive.Accept(printer));
+                                    }
+                                }
+
+                                sb.WriteLine(" {");
+
+                                foreach (var decl in str.Declarations)
+                                {
+                                    Indent(2);
+                                    sb.WriteLine(decl.Accept(printer));
+                                }
+
+                                Indent(1);
+                                sb.Write("}");
+                                break;
+                            }
+
+                        default:
+                            Indent(1);
+                            printer.PrintExpression(d.Initializer);
+                            break;
+                    }
+                    break;
+
+                default:
+                    Indent(1);
+                    printer.PrintStatement(sym.stmt);
+                    break;
+            }
+
+            sb.WriteLine();
+            sb.WriteLine();
+            sb.WriteLine();
+            sb.WriteLine("### Documentation");
+
+            return new Documentation(new MarkupContent
+            {
+                kind = "markdown",
+                value = sb.ToString()
+            });
+        }
+
+        protected override Result<CompletionResult, ResponseError> Completion(CompletionParams @params) {
+            try
+            {
+                var result = new List<(AstStatement stmt, Uri uri, string container, TypeKind containerKind)>();
+                foreach (var file in files)
+                {
+
+                    try
+                    {
+                        var symbols = new List<(AstStatement stmt, Uri uri, string container, TypeKind containerKind)>();
+                        GetMatchingNodes(result, file.Value.uri, file.Value.statements, "", null, TypeKind.None, false);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Instance.Log($"Completion({@params.textDocument}, {@params.context}, {@params.position}) threw Exception: {e.Message}\n{e.StackTrace}");
+                    }
+                }
+
+                return Result<CompletionResult, ResponseError>.Success(
+                    new CompletionResult(new CompletionList() {
+                        isIncomplete = true,
+                        items = result.Select(sym =>
+                        {
+                            var symbolInfo = GetSymbolInformationForStatement(sym.stmt, sym.containerKind, sym.container, sym.uri);
+
+                            Documentation documentation = BuildDocumentation(sym, symbolInfo);
+
+                            return new CompletionItem
+                            {
+                                documentation = documentation,
+                                kind = SymbolKindToCompletionItemKind(symbolInfo.kind),
+                                label = symbolInfo.name
+                            };
+                        }).ToArray()
+                    })
+                );
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log($"Completion({@params.textDocument}, {@params.context}, {@params.position}) threw Exception: {e.Message}\n{e.StackTrace}");
+
+                return Result<CompletionResult, ResponseError>.Error(new ResponseError
+                {
+                    code = ErrorCodes.InternalError,
+                    message = $"{e.Message}"
+                });
+            }
         }
 
         protected override Result<LocationSingleOrArray, ResponseError> GotoDefinition(TextDocumentPositionParams @params) {
-            string path = GetFilePath(@params.textDocument.uri);
-            if (files.TryGetValue(path, out var file)) {
-                string id = GetIdentifierContainingPosition(@params.position, file);
-                if (id == null) {
+            try
+            {
+                string path = GetFilePath(@params.textDocument.uri);
+                if (files.TryGetValue(path, out var file)) {
+                    string id = GetIdentifierContainingPosition(@params.position, file);
+                    if (id == null) {
+                        return Result<LocationSingleOrArray, ResponseError>.Success(
+                            new LocationSingleOrArray(new LanguageServer.Parameters.Location[0])
+                        );
+                    }
+                    var matchingSymbols = FindSymbolsInAllFiles(id);
+
                     return Result<LocationSingleOrArray, ResponseError>.Success(
-                        new LocationSingleOrArray(new LanguageServer.Parameters.Location[0])
+                        new LocationSingleOrArray(matchingSymbols.Select(sym => GetLocationForStatement(sym.stmt, sym.uri)).ToArray())
                     );
                 }
-                var matchingSymbols = FindSymbolsInAllFiles(id);
 
-                return Result<LocationSingleOrArray, ResponseError>.Success(
-                    new LocationSingleOrArray(matchingSymbols.Select(sym => GetLocationForStatement(sym.stmt, sym.uri)).ToArray())
-                );
-            } else {
-                return Result<LocationSingleOrArray, ResponseError>.Error(new ResponseError{
+                return Result<LocationSingleOrArray, ResponseError>.Error(new ResponseError
+                {
                     code = ErrorCodes.InvalidParams,
-                    message = $"File '{path}' not found"
+                    message = $"File '{@params.textDocument}' not found"
+                });
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log($"GotoDefinition({@params.textDocument}, {@params.position}) threw Exception: {e.Message}\n{e.StackTrace}");
+                return Result<LocationSingleOrArray, ResponseError>.Error(new ResponseError
+                {
+                    code = ErrorCodes.InternalError,
+                    message = $"{e.Message}"
                 });
             }
         }
 
         protected override Result<Hover, ResponseError> Hover(TextDocumentPositionParams @params) {
-            string path = GetFilePath(@params.textDocument.uri);
-            if (files.TryGetValue(path, out var file)) {
-                string id = GetIdentifierContainingPosition(@params.position, file);
-                if (id == null) {
-                    return Result<Hover, ResponseError>.Success(new Hover());
-                }
-                var matchingSymbols = FindSymbolsInAllFiles(id);
-                if (matchingSymbols.Count == 0) {
-                    return Result<Hover, ResponseError>.Success(new Hover());
-                }
-
-                return Result<Hover, ResponseError>.Success(new Hover{
+            try
+            {
+                var matchingSymbols = GetSymbolInformationAtPosition(@params.textDocument.uri, @params.position);
+                return Result<Hover, ResponseError>.Success(new Hover
+                {
                     contents = new HoverContents(matchingSymbols.Select(sym => {
                         string container = "";
-                        if (string.IsNullOrWhiteSpace(sym.container)) {
+                        if (string.IsNullOrWhiteSpace(sym.container))
+                        {
                             container = " --- " + Path.GetFileName(GetFilePath(sym.uri));
-                        } else {
+                        }
+                        else
+                        {
                             container = " --- " + sym.container + " --- " + Path.GetFileName(GetFilePath(sym.uri));
                         }
                         return sym.stmt.ToString() + container;
                     }).ToArray())
                 });
-            } else {
-                return Result<Hover, ResponseError>.Error(new ResponseError{
-                    code = ErrorCodes.InvalidParams,
-                    message = $"File '{path}' not found"
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log($"Hover({@params.textDocument}, {@params.position}) threw Exception: {e.Message}\n{e.StackTrace}");
+                return Result<Hover, ResponseError>.Error(new ResponseError
+                {
+                    code = ErrorCodes.InternalError,
+                    message = $"{e.Message}"
+                });
+            }
+            return Result<Hover, ResponseError>.Error(new ResponseError{
+                code = ErrorCodes.InvalidParams,
+                message = $"File '{@params.textDocument}' not found"
+            });
+        }
+
+        protected override Result<SignatureHelp, ResponseError> SignatureHelp(TextDocumentPositionParams @params)
+        {
+            try
+            {
+                var matchingSymbols = GetSymbolInformationAtPosition(@params.textDocument.uri, @params.position);
+                return Result<SignatureHelp, ResponseError>.Success(new SignatureHelp
+                {
+                    signatures = matchingSymbols.Select(sym =>
+                    {
+                        string container = "";
+                        if (string.IsNullOrWhiteSpace(sym.container))
+                        {
+                            container = " --- " + Path.GetFileName(GetFilePath(sym.uri));
+                        }
+                        else
+                        {
+                            container = " --- " + sym.container + " --- " + Path.GetFileName(GetFilePath(sym.uri));
+                        }
+                        return new SignatureInformation
+                        {
+                            label = sym.stmt.ToString() + container
+                        };
+                    }).ToArray(),
+                });
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log($"SignatureHelp({@params.textDocument}, {@params.position}) threw Exception: {e.Message}\n{e.StackTrace}");
+                return Result<SignatureHelp, ResponseError>.Error(new ResponseError
+                {
+                    code = ErrorCodes.InternalError,
+                    message = $"{e.Message}"
                 });
             }
         }
-        
+
+        private List<(AstStatement stmt, Uri uri, string container, TypeKind containerKind)> GetSymbolInformationAtPosition(Uri uri, Position position)
+        {
+            string path = GetFilePath(uri);
+            if (files.TryGetValue(path, out var file))
+            {
+                string id = GetIdentifierContainingPosition(position, file);
+                if (id == null)
+                {
+                    return new List<(AstStatement stmt, Uri uri, string container, TypeKind containerKind)>();
+                }
+                var matchingSymbols = FindSymbolsInAllFiles(id);
+                return matchingSymbols;
+            }
+            return new List<(AstStatement stmt, Uri uri, string container, TypeKind containerKind)>();
+        }
+
         private string GetIdentifierContainingPosition(Position pos, SourceFile file) {
             int offset = GetPosition(file.text, (int)pos.line, (int)pos.character);
             if (offset < 0 || offset >= file.text.Length)
@@ -605,17 +948,38 @@ namespace CheezLanguageServer
 
         protected override void DidOpenTextDocument(DidOpenTextDocumentParams @params)
         {
-            _documents.Add(@params.textDocument);
+            try
+            {
+                _documents.Add(@params.textDocument);
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log($"DidOpenTextDocument({@params.textDocument}) threw Exception: {e.Message}\n{e.StackTrace}");
+            }
         }
 
         protected override void DidChangeTextDocument(DidChangeTextDocumentParams @params)
         {
-            _documents.Change(@params.textDocument.uri, @params.textDocument.version, @params.contentChanges);
+            try
+            {
+                _documents.Change(@params.textDocument.uri, @params.textDocument.version, @params.contentChanges);
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log($"DidChangeTextDocument({@params.textDocument}) threw Exception: {e.Message}\n{e.StackTrace}");
+            }
         }
 
         protected override void DidCloseTextDocument(DidCloseTextDocumentParams @params)
         {
-            _documents.Remove(@params.textDocument.uri);
+            try
+            {
+                _documents.Remove(@params.textDocument.uri);
+            }
+            catch (Exception e)
+            {
+                Logger.Instance.Log($"DitCloseTextDocument({@params.textDocument}) threw Exception: {e.Message}\n{e.StackTrace}");
+            }
         }
 
         protected override void DidChangeConfiguration(DidChangeConfigurationParams @params)

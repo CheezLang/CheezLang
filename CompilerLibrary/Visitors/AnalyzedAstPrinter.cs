@@ -30,7 +30,7 @@ namespace Cheez.Visitors
             }
         }
 
-        public string VisitDirective(AstDirective dir)
+        public override string VisitDirective(AstDirective dir, int data = 0)
         {
             var name = "#" + dir.Name.Accept(this);
             if (dir.Arguments.Count > 0)

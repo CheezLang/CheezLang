@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Cheez.Ast.Expressions;
+using Cheez.Visitors;
 
 namespace Cheez.Ast
 {
@@ -20,6 +22,9 @@ namespace Cheez.Ast
             this.Name = name;
             this.Arguments = args;
         }
+
+        [DebuggerStepThrough]
+        public T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitDirective(this, data);
 
         public AstDirective Clone()
         {
