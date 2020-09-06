@@ -211,19 +211,36 @@ namespace Cheez
         public List<AstFuncExpr> GetForExtensions(CheezType type)
         {
             var result = new List<AstFuncExpr>();
-            GetForExtensions(type, result);
+            int level = int.MaxValue;
+            GetForExtensions(type, result, ref level);
             return result;
         }
 
-        public void GetForExtensions(CheezType type, List<AstFuncExpr> result, bool localOnly = false)
+        public void GetForExtensions(CheezType type, List<AstFuncExpr> result, ref int level, bool localOnly = false)
         {
             if (mForExtensions != null)
             {
                 foreach (var func in mForExtensions)
                 {
                     var paramType = func.Parameters[0].Type;
-                    if (CheezType.TypesMatch(paramType, type))
+                    int l = paramType.Match(type, new Dictionary<string, (CheezType type, object value)>());
+                    if (l == -1)
+                        continue;
+
+
+                    if (l < level)
+                    {
+                        level = l;
+                        result.Clear();
                         result.Add(func);
+                    }
+                    else if (l == level)
+                    {
+                        result.Add(func);
+                    }
+
+                    //if (CheezType.TypesMatch(paramType, type))
+                    //result.Add(func);
                 }
             }
 
@@ -233,10 +250,10 @@ namespace Cheez
             if (mUsedScopes != null)
             {
                 foreach (var scope in mUsedScopes)
-                    scope.GetForExtensions(type, result, true);
+                    scope.GetForExtensions(type, result, ref level, true);
             }
 
-            Parent?.GetForExtensions(type, result);
+            Parent?.GetForExtensions(type, result, ref level);
         }
 
         public List<INaryOperator> GetNaryOperators(string name, params CheezType[] types)

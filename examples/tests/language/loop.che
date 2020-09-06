@@ -30,7 +30,7 @@ fizz_buzz :: (n: int) {
     }
 }
 
-test5 :: (n: int) {
+test5 :: (mut n: int) {
     while true, n = n - 1 {
         if n == 0 {
             break
@@ -57,7 +57,7 @@ test4 :: (n: int) {
 }
 
 test3 :: (n: int) {
-    while a := 0, true, a = a + 1 {
+    while mut a := 0, true, a = a + 1 {
         if a == n {
             break
         }
@@ -75,7 +75,7 @@ test2 :: (n: int) {
 }
 
 test1 :: (n: int) {
-    a := 0
+    mut a := 0
     while a < n {
         C.printf("%lld", a)
         a = a + 1

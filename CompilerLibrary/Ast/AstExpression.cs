@@ -655,18 +655,14 @@ namespace Cheez.Ast.Expressions
         public AstExpression SubExpression { get; set; }
         public override bool IsPolymorphic => SubExpression.IsPolymorphic;
         public bool Reference { get; set; } = false;
+        public bool Mutable { get; set; } = false;
 
         [DebuggerStepThrough]
-        public AstAddressOfExpr(AstExpression sub, ILocation Location = null) : base(Location)
-        {
-            SubExpression = sub;
-        }
-
-        [DebuggerStepThrough]
-        public AstAddressOfExpr(AstExpression sub, bool reference, ILocation Location = null) : base(Location)
+        public AstAddressOfExpr(AstExpression sub, bool reference, bool mutable, ILocation Location = null) : base(Location)
         {
             SubExpression = sub;
             Reference = reference;
+            Mutable = mutable;
         }
 
         [DebuggerStepThrough]
@@ -674,10 +670,7 @@ namespace Cheez.Ast.Expressions
 
         [DebuggerStepThrough]
         public override AstExpression Clone()
-            => CopyValuesTo(new AstAddressOfExpr(SubExpression.Clone())
-            {
-                Reference = Reference
-            });
+            => CopyValuesTo(new AstAddressOfExpr(SubExpression.Clone(), Reference, Mutable));
     }
 
     public class AstDereferenceExpr : AstExpression
@@ -796,7 +789,7 @@ namespace Cheez.Ast.Expressions
         public AstTupleExpr(List<AstExpression> values, ILocation Location)
             : base(Location)
         {
-            this.Types = values.Select(v => new AstParameter(null, v, null, v.Location)).ToList();
+            this.Types = values.Select(v => new AstParameter(null, v, null, false, v.Location)).ToList();
             this.Values = Types.Select(t => t.TypeExpr).ToList();
         }
 

@@ -511,7 +511,7 @@ namespace Cheez
                     if (c.Type is TraitType)
                         return true;
                     // any only borrow, so we dont move
-                    if (c.Type == PointerType.GetPointerType(CheezType.Any))
+                    if (c.Type == PointerType.GetPointerType(CheezType.Any, true))
                         return true;
 
                     return Move(c.Type, c.SubExpression, symStatTable, c.SubExpression.Location);

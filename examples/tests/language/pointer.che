@@ -9,7 +9,7 @@
 
 C :: import std.c
 
-swap :: (pa: ^int, pb: ^int) {
+swap :: (pa: ^mut int, pb: ^mut int) {
     a := *pa
     b := *pb
     (*pa, *pb) = (b, a)
@@ -17,8 +17,8 @@ swap :: (pa: ^int, pb: ^int) {
 
 Main :: () {
     {
-        a := 123
-        pa := ^a
+        mut a := 123
+        pa := ^mut a
 
         C.printf("%d`n", a)
         C.printf("%d`n", *pa)

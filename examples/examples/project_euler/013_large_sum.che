@@ -6,9 +6,9 @@ io :: import std.io
 use import std.string
 
 Main :: () {
-    res := String.empty()
+    mut res := String.empty()
 
-    carry := 0
+    mut carry := 0
     for c in {0..50}.reverse() {
         for r in 0..100 {
             digit := int(*numbers[r][c] - '0')

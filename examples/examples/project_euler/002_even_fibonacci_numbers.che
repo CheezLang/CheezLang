@@ -5,9 +5,9 @@
 io :: import std.io
 
 Main :: () {
-    a := 0
-    b := 1
-    sum := 0
+    mut a := 0
+    mut b := 1
+    mut sum := 0
 
     while true {
         current := a + b

@@ -16,8 +16,8 @@ use import pixel_game_engine
 #export_scope
 
 impl PixelGameEngine {
-    olc_window_create :: (&Self) -> HWND {
-        wc : WNDCLASS = default
+    olc_window_create :: (&mut Self) -> HWND {
+        mut wc : WNDCLASS = default
         wc.hIcon = LoadIconA(null, IDI_APPLICATION)
         wc.hCursor = LoadCursorA(null, IDC_ARROW)
         wc.style = @bin_or(CS_HREDRAW, CS_VREDRAW, CS_OWNDC)
@@ -170,14 +170,14 @@ impl PixelGameEngine {
     }
 }
 
-pixel_game_engine_ptr : ^PixelGameEngine = null
+mut pixel_game_engine_ptr : ^mut PixelGameEngine = null
 olc_window_event :: (hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     match msg {
         WM_DESTROY -> PostQuitMessage(0)
         WM_CLOSE   -> { pixel_game_engine_ptr.active = false }
 
         WM_CREATE -> {
-            pixel_game_engine_ptr = cast(^PixelGameEngine) (cast(^CREATESTRUCTA)lparam).lpCreateParams
+            pixel_game_engine_ptr = cast(^mut PixelGameEngine) (cast(^CREATESTRUCTA)lparam).lpCreateParams
         }
 
         WM_MOUSEMOVE -> {

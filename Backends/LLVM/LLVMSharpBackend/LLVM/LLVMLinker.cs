@@ -67,6 +67,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             var lldArgs = new List<string>();
             //lldArgs.Add("lld");
             lldArgs.Add($"/out:{filename}{OS.ExecutableFileExtension}");
+            lldArgs.Add("/errorlimit:0");
 
             // library paths
 

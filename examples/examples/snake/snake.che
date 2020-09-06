@@ -21,7 +21,7 @@ Direction :: enum #copy {
     Left
 }
 
-action : Direction = Direction.None
+mut action : Direction = Direction.None
 
 onKeyDown :: (window: ^GLFWwindow, key: i32, scancode: i32, a: i32, mods: i32) {
     if a == GLFW_PRESS {
@@ -44,7 +44,7 @@ gridSize : double = 10.0
 width : double = 640.0
 height : double = 480.0
 
-action_to_dir :: (dir: &Direction, action: Direction) {
+action_to_dir :: (dir: &mut Direction, action: Direction) {
     *dir = match (*dir, action) {
         (Direction.Up,      Direction.Down) -> *dir
         (Direction.Right,   Direction.Left) -> *dir
@@ -108,19 +108,19 @@ Main :: () {
         ))
     }
 
-    target := Quad(
+    mut target := Quad(
         Vec2i(rand.next_int(max=xMax), rand.next_int(max=yMax))
         Vec2(gridSize, gridSize)
         Vec3(0, 1, 0)
     )
 
-    dir := Direction.Up
+    mut dir := Direction.Up
 
-    timer := 0.0
-    fpsTimer := 0.0
-    fpsCounter := 0
+    mut timer := 0.0
+    mut fpsTimer := 0.0
+    mut fpsCounter := 0
 
-    lastTime := glfwGetTime()
+    mut lastTime := glfwGetTime()
     while glfwWindowShouldClose(window) == 0 {
         glClear(GL_COLOR_BUFFER_BIT)
 
@@ -156,7 +156,7 @@ Main :: () {
                 snake[i].pos = snake[i - 1].pos
             }
 
-            head : &Quad = snake[0]
+            head : &mut Quad = snake[0]
 
             &head.pos += match dir {
                 Direction.Up    -> Vec2i(0, 1)

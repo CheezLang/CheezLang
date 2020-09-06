@@ -8,7 +8,7 @@ Sprite :: struct {
     width: int
     height: int
     mode : SpriteMode = SpriteMode.Normal
-    data: ^Pixel = null
+    data: ^mut Pixel = null
 }
 
 SpriteMode :: enum #copy {
@@ -31,7 +31,7 @@ impl Sprite {
         )
     }
 
-    dispose :: (&Self) {
+    dispose :: (&mut Self) {
         free(data)
 
         width = 0
@@ -39,7 +39,7 @@ impl Sprite {
         data = null
     }
 
-    set_sample_mode :: (&Self, mode: SpriteMode) {
+    set_sample_mode :: (&mut Self, mode: SpriteMode) {
         self.mode = mode
     }
 
@@ -58,7 +58,7 @@ impl Sprite {
         }
     }
 
-    set_pixel :: (&Self, x: int, y: int, p: Pixel) -> bool {
+    set_pixel :: (&mut Self, x: int, y: int, p: Pixel) -> bool {
         if x >= 0 and x < width and y >= 0 and y < height {
             data[x + y * width] = p
             return true
@@ -77,7 +77,7 @@ impl Sprite {
         return get_pixel(sx, sy)
     }
 
-    get_data :: (&Self) -> ^Pixel {
+    get_data :: (&Self) -> ^mut Pixel {
         return data
     }
 }

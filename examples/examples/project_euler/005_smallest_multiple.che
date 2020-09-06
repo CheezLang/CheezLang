@@ -7,7 +7,7 @@ io :: import std.io
 Main :: () {
     start := 2 * 3 * 5 * 7 * 11 * 13 * 17 * 19
 
-    while n := start, true, n += 1 #label outer {
+    while mut n := start, true, n += 1 #label outer {
         // test if n is divisible by 2..20
         for 2 ..= 20 {
             if n % it != 0 then continue outer

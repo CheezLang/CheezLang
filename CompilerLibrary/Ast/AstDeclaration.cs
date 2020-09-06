@@ -38,6 +38,7 @@ namespace Cheez.Ast.Statements
         public TokenLocation End => Location?.End;
 
         public AstIdExpr Name { get; set; }
+        public bool Mutable { get; set; }
 
         string ISymbol.Name => Name?.Name;
         public CheezType Type { get; set; }
@@ -54,17 +55,18 @@ namespace Cheez.Ast.Statements
 
         public AstExpression ContainingFunction { get; set; }
 
-        public AstParameter(AstIdExpr name, AstExpression typeExpr, AstExpression defaultValue, ILocation Location = null)
+        public AstParameter(AstIdExpr name, AstExpression typeExpr, AstExpression defaultValue, bool mutable, ILocation Location = null)
         {
             this.Location = Location;
             this.Name = name;
             this.TypeExpr = typeExpr;
             this.DefaultValue = defaultValue;
+            this.Mutable = mutable;
         }
 
         public AstParameter Clone()
         {
-            return new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr?.Clone(), DefaultValue?.Clone(), Location);
+            return new AstParameter(Name?.Clone() as AstIdExpr, TypeExpr?.Clone(), DefaultValue?.Clone(), Mutable, Location);
         }
 
         [DebuggerStepThrough]
@@ -578,15 +580,22 @@ namespace Cheez.Ast.Statements
         public AstExpression Pattern { get; set; }
         public AstExpression TypeExpr { get; set; }
         public AstExpression Initializer { get; set; }
+        public bool Mutable { get; private set; }
 
         public AstFuncExpr ContainingFunction { get; set; }
 
-        public AstVariableDecl(AstExpression pattern, AstExpression typeExpr, AstExpression init, List<AstDirective> Directives = null, ILocation Location = null)
+        public AstVariableDecl(
+            AstExpression pattern,
+            AstExpression typeExpr,
+            AstExpression init,
+            bool mutable,
+            List<AstDirective> Directives = null, ILocation Location = null)
             : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), Directives, Location)
         {
             this.Pattern = pattern;
             this.TypeExpr = typeExpr;
             this.Initializer = init;
+            this.Mutable = mutable;
         }
 
         [DebuggerStepThrough]
@@ -596,7 +605,8 @@ namespace Cheez.Ast.Statements
             => CopyValuesTo(new AstVariableDecl(
                 Pattern.Clone(),
                 TypeExpr?.Clone(),
-                Initializer?.Clone()));
+                Initializer?.Clone(),
+                this.Mutable));
     }
 
     #endregion
@@ -611,7 +621,7 @@ namespace Cheez.Ast.Statements
         public List<AstEnumMemberNew> Members { get; set; }
 
         public EnumType EnumType => Value as EnumType;
-        public IntType TagType { get; set; }
+        public CheezType TagType { get; set; }
 
         public AstEnumTypeExpr Template { get; set; } = null;
 
@@ -631,6 +641,7 @@ namespace Cheez.Ast.Statements
 
         public bool IsReprC { get; set; }
         public bool IsFlags { get; set; }
+        public bool Untagged { get; internal set; } = false;
 
         public AstEnumTypeExpr(List<AstParameter> param, List<AstDecl> declarations, List<AstDirective> Directives = null, ILocation Location = null)
             : base(Location)
@@ -648,7 +659,10 @@ namespace Cheez.Ast.Statements
             new AstEnumTypeExpr(
                 Parameters.Select(p => p.Clone()).ToList(),
                 Declarations.Select(m => m.Clone() as AstDecl).ToList(),
-                Directives.Select(d => d.Clone()).ToList()));
+                Directives.Select(d => d.Clone()).ToList())
+            {
+                Untagged = this.Untagged
+            });
 
         public bool HasDirective(string name) => Directives?.Find(d => d.Name.Name == name) != null;
 

@@ -72,6 +72,13 @@ namespace Cheez
 
                 }
             }
+
+            if (expr.TryGetDirective("untagged", out var _))
+            {
+                expr.Untagged = true;
+                expr.TagType = null;
+            }
+
             if (expr.TryGetDirective("repr", out var repr))
             {
                 if (repr.Arguments.Count != 1 || !(repr.Arguments[0] is AstStringLiteral str))
@@ -153,6 +160,7 @@ namespace Cheez
                 // GlobalScope.DefineBinaryOperator(new EnumFlagsCompineOperator(enumType));
                 // GlobalScope.DefineBinaryOperator(new EnumFlagsTestOperator(enumType));
                 expr.Scope.DefineBinaryOperator(new EnumFlagsCombineOperator(enumType));
+                expr.Scope.DefineBinaryOperator(new EnumFlagsAndOperator(enumType));
                 expr.Scope.DefineBinaryOperator(new EnumFlagsTestOperator(enumType));
             }
 

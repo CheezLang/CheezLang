@@ -24,17 +24,17 @@ use import sprite
 #export_scope
 
 Game :: trait {
-    on_create  :: (&Self, pge: ^PixelGameEngine) -> bool;
-    on_destroy :: (&Self) -> bool;
-    on_update  :: (&Self, dt: float) -> bool;
+    on_create  :: (&mut Self, pge: ^PixelGameEngine) -> bool;
+    on_destroy :: (&mut Self) -> bool;
+    on_update  :: (&mut Self, dt: float) -> bool;
 }
 
 PixelGameEngine :: struct {
     game                : ^Game
 
 
-    default_draw_target : ^Sprite   = null
-    draw_target         : ^Sprite   = null
+    default_draw_target : ^mut Sprite   = null
+    draw_target         : ^mut Sprite   = null
 
     // windows specific
     olc_hWnd            : HWND      = null
@@ -102,7 +102,7 @@ compare_ints :: (a: int, b: int) -> bool {
 }
 
 impl Drop for PixelGameEngine {
-    drop :: (&Self) {
+    drop :: (&mut Self) {
         default_draw_target.dispose()
         free(default_draw_target)
         default_draw_target = null
@@ -137,7 +137,7 @@ impl PixelGameEngine {
         return pge
     }
 
-    start :: (&Self) {
+    start :: (&mut Self) {
         wnd := self.olc_window_create()
         if wnd == null {
             return
@@ -147,7 +147,7 @@ impl PixelGameEngine {
         engine_thread()
     }
 
-    engine_thread :: (&Self) {
+    engine_thread :: (&mut Self) {
         // Start OpenGL, the context is owned by the game thread
         olc_OpenGLCreate()
         self.olc_update_window_size(window_width, window_height)
@@ -171,12 +171,12 @@ impl PixelGameEngine {
             active = false
         }
 
-        tp1 := get_time_microseconds()
-        tp2 := get_time_microseconds()
+        mut tp1 := get_time_microseconds()
+        mut tp2 := get_time_microseconds()
 
         nMousePosXPrev = nMousePosX
         nMousePosYPrev = nMousePosY
-        total_frames := 0
+        mut total_frames := 0
         while active {
             // Run as fast as possible
             while active {
@@ -316,7 +316,7 @@ impl PixelGameEngine {
         PostMessageA(olc_hWnd, WM_DESTROY, 0, 0)
     }
 
-    olc_OpenGLCreate :: (&Self) -> bool {
+    olc_OpenGLCreate :: (&mut Self) -> bool {
         glDeviceContext = GetDC(olc_hWnd)
 
         pfd := PIXELFORMATDESCRIPTOR(

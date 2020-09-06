@@ -64,7 +64,7 @@ Main :: () {
     io.println("")
 
     {
-        a := alloc_n(int, 3, ^sa)
+        mut a := alloc_n(int, 3, ^sa)
         for i in 0..a.length { *a[i] = i + 1 }
         io.printfln("{}, {}, {}", (a[0], a[1], a[2]))
         sa.print_diagnostics()
@@ -77,7 +77,7 @@ Main :: () {
     io.println("")
 
     {
-        a := alloc_raw(int, 3, ^sa)
+        mut a := alloc_raw(int, 3, ^sa)
         for i in 0..3 { a[i] = i + 1 }
         io.printfln("{}, {}, {}", (a[0], a[1], a[2]))
         sa.print_diagnostics()

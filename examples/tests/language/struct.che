@@ -20,14 +20,14 @@ impl Test {
         return Test(a, b)
     }
 
-    set_val :: (Self, x: int, y: double) {
-        a = x
-        b = y
+    set_val :: (mut self: Self, x: int, y: double) {
+        self.a = x
+        self.b = y
     }
 
-    set_ref:: (&Self, x: int, y: double) {
-        a = x
-        b = y
+    set_ref:: (&mut Self, x: int, y: double) {
+        self.a = x
+        self.b = y
     }
 }
 

@@ -44,9 +44,9 @@ impl PixelGameEngine {
             return
         }
 
-        x0 := 0
-        y0 := r
-        d := 3 - 2 * r
+        mut x0 := 0
+        mut y0 := r
+        mut d := 3 - 2 * r
         while y0 >= x0 {
             if @bin_and(mask, 0x01u32) != 0 { draw(x + x0, y - y0, p) }
             if @bin_and(mask, 0x02u32) != 0 { draw(x + y0, y - x0, p) }
@@ -75,7 +75,7 @@ impl PixelGameEngine {
         draw_line(x, y+h, x, y, p)
     }
 
-    fill_rect :: (&Self, x: int, y: int, w: int, h: int, p: Pixel) {
+    fill_rect :: (&Self, mut x: int, mut y: int, mut w: int, mut h: int, p: Pixel) {
         if w < 0 {
             x += w
             w *= -1
@@ -85,8 +85,8 @@ impl PixelGameEngine {
             h *= -1
         }
 
-        x2 := x + w
-        y2 := y + h
+        mut x2 := x + w
+        mut y2 := y + h
 
         if x < 0 { x = 0 }
         if x >= screen_width { x = screen_width }
@@ -106,16 +106,16 @@ impl PixelGameEngine {
         }
     }
 
-    rol :: (pattern: &u32) -> bool {
-        p := *pattern
+    rol :: (pattern: &mut u32) -> bool {
+        mut p := *pattern
         *pattern = @bin_or(@bin_lsl(p, 1u32), @bin_lsr(p, 31u32))
         p = *pattern
         return @bin_and(p, 1u32) != 0
     }
 
-    draw_line :: (&Self, x1: int, y1: int, x2: int, y2: int, p: Pixel, pattern: u32 = 0xFFFFFFFF) {
-        dx := x2 - x1
-        dy := y2 - y1
+    draw_line :: (&Self, mut x1: int, mut y1: int, mut x2: int, mut y2: int, p: Pixel, pattern: u32 = 0xFFFFFFFF) {
+        mut dx := x2 - x1
+        mut dy := y2 - y1
 
         // vertical line
         if dx == 0 {
@@ -202,10 +202,10 @@ impl PixelGameEngine {
 
         dx1 := abs(dx)
         dy1 := abs(dy)
-        px := 2 * dy1 - dx1
-        py := 2 * dx1 - dy1
+        mut px := 2 * dy1 - dx1
+        mut py := 2 * dx1 - dy1
         if dy1 <= dx1 {
-            (x, y, xe) := if dx >= 0 {
+            mut (x, y, xe) := if dx >= 0 {
                 (x1, y1, x2)
             } else {
                 (x2, y2, x1)
@@ -232,7 +232,7 @@ impl PixelGameEngine {
                 }
             }
         } else {
-            (x, y, ye) := if dy >= 0 {
+            mut (x, y, ye) := if dy >= 0 {
                 (x1, y1, y2)
             } else {
                 (x2, y2, y1)

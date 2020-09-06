@@ -124,7 +124,7 @@ test_and_or :: () {
     C.printf("%hhd %hhd %hhd %hhd %hhd %hhd %hhd %hhd`n", a, b, c, d, e, f, g, h)
 }
 
-test_numbers :: ($T: type, a: T, b: T, c: T, $test_arith: bool = true, $arith_string: c_string = "%d, %d, %d, %d, %d`n"c) {
+test_numbers :: ($T: type, mut a: T, mut b: T, c: T, $test_arith: bool = true, $arith_string: c_string = "%d, %d, %d, %d, %d`n"c) {
     if test_arith {
         C.printf(arith_string, (a + b), (a - b), (a * b), (a / b), (a % b))
     }

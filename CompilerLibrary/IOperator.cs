@@ -47,8 +47,8 @@ namespace Cheez
 
     public class BuiltInPointerOperator : IBinaryOperator
     {
-        public CheezType LhsType => PointerType.GetPointerType(CheezType.Void);
-        public CheezType RhsType => PointerType.GetPointerType(CheezType.Void);
+        public CheezType LhsType => PointerType.GetPointerType(CheezType.Void, true);
+        public CheezType RhsType => PointerType.GetPointerType(CheezType.Void, true);
         public CheezType ResultType { get; private set; }
 
         public string Name { get; private set; }
@@ -61,7 +61,7 @@ namespace Cheez
                 case "==": ResultType = CheezType.Bool; break;
                 case "!=": ResultType = CheezType.Bool; break;
 
-                default: ResultType = PointerType.GetPointerType(CheezType.Void); break;
+                default: ResultType = PointerType.GetPointerType(CheezType.Void, true); break;
             }
         }
 
@@ -167,6 +167,40 @@ namespace Cheez
         }
     }
 
+    public class EnumFlagsAndOperator : IBinaryOperator
+    {
+        public EnumType EnumType { get; }
+        public CheezType LhsType => EnumType;
+        public CheezType RhsType => EnumType;
+        public CheezType ResultType => EnumType;
+
+        public string Name => "and";
+
+        public EnumFlagsAndOperator(EnumType type)
+        {
+            EnumType = type;
+        }
+
+        public int Accepts(CheezType lhs, CheezType rhs)
+        {
+            if (lhs == rhs && lhs == EnumType)
+                return 0;
+            return -1;
+        }
+
+        public object Execute(object left, object right)
+        {
+            var l = left as EnumValue;
+            var r = right as EnumValue;
+            if (l == null || r == null)
+                throw new ArgumentException($"'{nameof(left)}' and '{nameof(right)}' must be enum values, but are '{left}' and '{right}'");
+            if (l.Type != r.Type)
+                throw new ArgumentException($"'{nameof(left)}' and '{nameof(right)}' must have the same type, but have {l.Type} and {r.Type}");
+
+            return new EnumValue(l.Type, l.Members.Intersect(r.Members).ToArray());
+        }
+    }
+
     public class EnumFlagsTestOperator : IBinaryOperator
     {
         public EnumType EnumType { get; }
@@ -174,7 +208,7 @@ namespace Cheez
         public CheezType RhsType => EnumType;
         public CheezType ResultType => CheezType.Bool;
 
-        public string Name => "and";
+        public string Name => "is in";
 
         public EnumFlagsTestOperator(EnumType type)
         {
@@ -196,11 +230,12 @@ namespace Cheez
                 throw new ArgumentException($"'{nameof(left)}' and '{nameof(right)}' must be enum values, but are '{left}' and '{right}'");
             if (l.Type != r.Type)
                 throw new ArgumentException($"'{nameof(left)}' and '{nameof(right)}' must have the same type, but have {l.Type} and {r.Type}");
-            
+
             var contains = l.Members.Intersect(r.Members).Count() > 0;
             return contains;
         }
     }
+    
 
     public class BuiltInFunctionOperator : IBinaryOperator
     {

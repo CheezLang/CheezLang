@@ -287,7 +287,7 @@ impl Renderer {
         reload_shader(^point_light_shader, "../data/point_light_shader.shader")
         reload_shader(^area_light_shader, "../data/area_light.shader")
 
-        reload_shader(^apply_light_shader, "../data/gyroids.shader")
+        reload_shader(^apply_light_shader, "../data/apply_light.shader")
         apply_light_shader.bind()
         apply_light_shader.set_uniform_int("uColorTex", 0)
         apply_light_shader.set_uniform_int("uLightMap", 1)

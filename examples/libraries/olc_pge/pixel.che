@@ -21,7 +21,7 @@ impl Pixel {
 }
 
 impl Printable for Pixel {
-    print :: (&Self, str: &String, fmt: string) { 
+    print :: (&Self, str: &mut String, fmt: string) { 
         str.appendf("({}, {}, {}, {})", (r, g, b, a))
     }
 }

@@ -4,8 +4,8 @@
 
 io :: import std.io
 
-count_steps :: (n: int) -> int {
-    count := 1
+count_steps :: (mut n: int) -> int {
+    mut count := 1
     while n != 1, count += 1 {
         if n % 2 == 0 {
             n = n / 2
@@ -18,8 +18,8 @@ count_steps :: (n: int) -> int {
 }
 
 Main :: () {
-    max_steps := 0
-    max_n := 0
+    mut max_steps := 0
+    mut max_n := 0
     for n in 1..1000000 {
         count := count_steps(n)
         if count > max_steps {

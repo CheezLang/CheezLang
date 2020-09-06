@@ -10,17 +10,19 @@ namespace Cheez.Ast.Expressions.Types
         public override bool IsPolymorphic => Target.IsPolymorphic;
 
         public AstExpression Target { get; set; }
+        public bool Mutable { get; private set; }
 
-        public AstSliceTypeExpr(AstExpression target, ILocation Location = null) : base(Location)
+        public AstSliceTypeExpr(AstExpression target, bool mutable, ILocation Location = null) : base(Location)
         {
             this.Target = target;
+            this.Mutable = mutable;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitSliceTypeExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstSliceTypeExpr(Target.Clone()));
+        public override AstExpression Clone() => CopyValuesTo(new AstSliceTypeExpr(Target.Clone(), Mutable));
     }
 
     public class AstImplTraitTypeExpr : AstExpression
@@ -112,18 +114,20 @@ namespace Cheez.Ast.Expressions.Types
     {
         public override bool IsPolymorphic => Target.IsPolymorphic;
         public AstExpression Target { get; set; }
+        public bool Mutable { get; set; }
 
         [DebuggerStepThrough]
-        public AstReferenceTypeExpr(AstExpression target, ILocation Location = null) : base(Location)
+        public AstReferenceTypeExpr(AstExpression target, bool mutable, ILocation Location = null) : base(Location)
         {
             this.Target = target;
+            this.Mutable = mutable;
         }
 
         [DebuggerStepThrough]
         public override T Accept<T, D>(IVisitor<T, D> visitor, D data = default) => visitor.VisitReferenceTypeExpr(this, data);
 
         [DebuggerStepThrough]
-        public override AstExpression Clone() => CopyValuesTo(new AstReferenceTypeExpr(Target.Clone()));
+        public override AstExpression Clone() => CopyValuesTo(new AstReferenceTypeExpr(Target.Clone(), Mutable));
     }
 }
 

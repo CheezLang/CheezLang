@@ -25,7 +25,7 @@ impl Drop for Foo {
 }
 
 foo :: ($b: bool) {
-    f  := Foo(1)
+    mut f := Foo(1)
     f2 := Foo(2)
 
     io.println("a")

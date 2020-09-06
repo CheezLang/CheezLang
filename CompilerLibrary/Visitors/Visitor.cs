@@ -1,3 +1,4 @@
+using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
@@ -87,6 +88,7 @@ namespace Cheez.Visitors
 
         // other
         ReturnType VisitParameter(AstParameter param, DataType data = default);
+        ReturnType VisitDirective(AstDirective dir, DataType data = default);
     }
 
 
@@ -166,5 +168,6 @@ namespace Cheez.Visitors
 
         // other
         public virtual ReturnType VisitParameter(AstParameter param, DataType data = default) => default;
+        public virtual ReturnType VisitDirective(AstDirective dir, DataType data = default) => default;
     }
 }

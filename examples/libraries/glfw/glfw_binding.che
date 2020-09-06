@@ -1,5 +1,6 @@
 #lib("./lib/glfw3dll.lib")
 #lib("./lib/glfw_binding.lib")
+
 #export_scope
 
 GLFWglproc :: fn() -> void

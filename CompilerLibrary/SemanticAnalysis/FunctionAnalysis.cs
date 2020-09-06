@@ -130,6 +130,9 @@ namespace Cheez
                     }
                 }
 
+                if (func.ReturnTypeExpr != null)
+                    func.ReturnTypeExpr.Mutable = true;
+
                 if (func.ReturnTypeExpr?.Name != null)
                 {
                     func.ReturnTypeExpr.ContainingFunction = func;
@@ -148,6 +151,7 @@ namespace Cheez
                     foreach (var m in t.Types)
                     {
                         if (m.Name == null) continue;
+                        m.Mutable = true;
                         AstExpression access = new AstArrayAccessExpr(new AstSymbolExpr(func.ReturnTypeExpr), new AstNumberExpr(index, Location: func.ReturnTypeExpr.Location), func.ReturnTypeExpr.Location);
                         access = InferType(access, null);
                         var (ok, other) = func.SubScope.DefineUse(m.Name.Name, access, false, out var use);
@@ -335,7 +339,7 @@ namespace Cheez
             else if (matches.Count > 1)
             {
                 var candidates = matches.Select(f => ("This matches:", f.func.ParameterLocation));
-                ReportError(fo.Collection, $"Multible for extensions match type '{fo.Collection.Type}'", candidates);
+                ReportError(fo.Collection, $"Multiple for extensions match type '{fo.Collection.Type}'", candidates);
                 return fo;
             }
             else
@@ -352,7 +356,7 @@ namespace Cheez
                         { "it", name }
                     });
 
-                    var varDecl = new AstVariableDecl(name, type, link, Location: location);
+                    var varDecl = new AstVariableDecl(name, type, link, true, Location: location);
                     return varDecl;
                 }
 
@@ -485,6 +489,78 @@ namespace Cheez
             return whl;
         }
 
+        private bool TryBorrowMutable(AstExpression expr, bool deref)
+        {
+            if (deref)
+            {
+                switch (expr.Type)
+                {
+                    case ReferenceType t: return t.Mutable;
+                    case PointerType t: return t.Mutable;
+                    //case SliceType t: return t.Mutable;
+                }
+            }
+
+            switch (expr)
+            {
+                case AstIdExpr id:
+                    switch (id.Symbol)
+                    {
+                        case AstVariableDecl decl:
+                            return decl.Mutable;
+
+                        case Using use:
+                            return TryBorrowMutable(use.Expr, deref);
+
+                        case AstParameter param:
+                            return param.Mutable;
+
+                        case null:
+                            return false;
+
+                        default:
+                            throw new Exception("Not implemented");
+                    }
+
+                case AstSymbolExpr sym:
+                    switch (sym.Symbol)
+                    {
+                        case AstVariableDecl decl:
+                            return decl.Mutable;
+
+                        case Using use:
+                            return TryBorrowMutable(use.Expr, deref);
+
+                        case AstParameter param:
+                            return param.Mutable;
+
+                        default:
+                            throw new Exception("Not implemented");
+                    }
+
+                case AstDotExpr dot:
+                    return TryBorrowMutable(dot.Left, true);
+
+                case AstDereferenceExpr de:
+                    return TryBorrowMutable(de.SubExpression, true);
+
+                case AstArrayAccessExpr acc:
+                    return TryBorrowMutable(acc.SubExpression, true);
+
+                case AstTupleExpr tuple:
+                    return tuple.Values.All(v => TryBorrowMutable(v, deref));
+
+                case AstTempVarExpr temp:
+                    return TryBorrowMutable(temp.Expr, deref);
+                    //return true;
+
+                default:
+                    ReportError(expr.Location, $"Invalid pattern ({expr.Type})");
+                    //throw new Exception("Not implemented");
+                    return true;
+            }
+        }
+
         private AstAssignment AnalyseAssignStatement(AstAssignment ass)
         {
             ass.Pattern.SetFlag(ExprFlags.ValueRequired, true);
@@ -493,7 +569,6 @@ namespace Cheez
             ass.Pattern.SetFlag(ExprFlags.SetAccess, true);
             ass.Pattern.SetFlag(ExprFlags.RequireInitializedSymbol, ass.Operator != null);
             ass.Pattern = InferType(ass.Pattern, null);
-
 
             ass.Value.SetFlag(ExprFlags.ValueRequired, true);
             ass.Value.AttachTo(ass);
@@ -508,6 +583,14 @@ namespace Cheez
             if (!ass.Pattern.Type.IsErrorType && !ass.Value.Type.IsErrorType)
             {
                 ass.Value = MatchPatternWithExpression(ass, ass.Pattern, ass.Value);
+            }
+
+            if (!ass.OnlyGenerateValue)
+            {
+                if (!TryBorrowMutable(ass.Pattern, false))
+                {
+                    ReportError(ass.Pattern.Location, $"Can't assign to non-mutable pattern ({ass.Pattern.Type})");
+                }
             }
 
             return ass;
@@ -530,7 +613,7 @@ namespace Cheez
                     if (type is ReferenceType r)
                         type = r.TargetType;
                     else
-                        type = ReferenceType.GetRefType(type);
+                        type = ReferenceType.GetRefType(type, true);
                     ops = ass.Scope.GetNaryOperators("set[]", type, arr.Arguments[0].Type, value.Type);
                 }
 
@@ -579,7 +662,7 @@ namespace Cheez
                     if (type is ReferenceType r)
                         type = r.TargetType;
                     else
-                        type = ReferenceType.GetRefType(type);
+                        type = ReferenceType.GetRefType(type, true);
                     ops = ass.Scope.GetBinaryOperators(assOp, type, valType);
                 }
 
@@ -593,7 +676,7 @@ namespace Cheez
                 }
                 else if (ops.Count > 1)
                 {
-                    ReportError(ass, $"Multiple operators '{assOp}' match the types {PointerType.GetPointerType(pattern.Type)} and {value.Type}");
+                    ReportError(ass, $"Multiple operators '{assOp}' match the types {PointerType.GetPointerType(pattern.Type, true)} and {value.Type}");
                 }
             }
 

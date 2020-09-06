@@ -44,7 +44,7 @@ Test :: enum {
 
 Main :: () {
     {
-        a := OptionInt.None
+        mut a := OptionInt.None
         print_enum(a)
         
         a = OptionInt.Some(123)

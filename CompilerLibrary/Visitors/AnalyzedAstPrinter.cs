@@ -30,7 +30,7 @@ namespace Cheez.Visitors
             }
         }
 
-        public string VisitDirective(AstDirective dir)
+        public override string VisitDirective(AstDirective dir, int data = 0)
         {
             var name = "#" + dir.Name.Accept(this);
             if (dir.Arguments.Count > 0)
@@ -942,8 +942,15 @@ namespace Cheez.Visitors
         public override string VisitAddressOfExpr(AstAddressOfExpr add, int data = 0)
         {
             if (add.Reference)
-                return $"&{add.SubExpression.Accept(this)}";
-            return "^" + add.SubExpression.Accept(this);
+            {
+                if (add.Mutable) return $"&mut {add.SubExpression.Accept(this)}";
+                else return $"&{add.SubExpression.Accept(this)}";
+            }
+            else
+            {
+                if (add.Mutable) return "^mut " + add.SubExpression.Accept(this);
+                else return "^" + add.SubExpression.Accept(this);
+            }
         }
 
         public override string VisitDerefExpr(AstDereferenceExpr deref, int data = 0)
@@ -1040,7 +1047,8 @@ namespace Cheez.Visitors
 
         public override string VisitReferenceTypeExpr(AstReferenceTypeExpr type, int data = 0)
         {
-            return $"&{type.Target.Accept(this)}";
+            if (type.Mutable) return $"&mut {type.Target.Accept(this)}";
+            else return $"&{type.Target.Accept(this)}";
         }
         #endregion
     }

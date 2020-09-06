@@ -20,7 +20,7 @@ is_prime :: (i: int) -> bool {
 }
 
 Main :: () {
-    sum := 0
+    mut sum := 0
     for 0..2000000 {
         if is_prime(it) {
             sum += it

@@ -24,7 +24,7 @@ Main :: () {
 load_graph :: (str: string) -> Array[Array[int]] {
     res := Array[Array[int]].create()
 
-    while i := 0, i < str.bytes.length, i += 1 {
+    while mut i := 0, i < str.bytes.length, i += 1 {
         // parse one line
         line := Array[int].create()
 

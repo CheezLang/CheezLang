@@ -75,7 +75,7 @@ Main :: () {
     C.printf("string: `"%.*s`"`n", s.length, s.get_raw())
     C.printf("`n")
 
-    sub := s.slice()
+    mut sub := s.slice()
     C.printf(" slice: `"%.*s`"`n", sub.bytes.length, sub.bytes.data)
     sub = s.sliceF(5)
     C.printf(" slice: `"%.*s`"`n", sub.bytes.length, sub.bytes.data)

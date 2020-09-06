@@ -86,9 +86,7 @@ namespace Cheez
                 case PolyType i:
                     if (i.IsDeclaring && !result.ContainsKey(i.Name))
                     {
-                        if (arg is ReferenceType r)
-                            result[i.Name] = (CheezType.Type, r.TargetType);
-                        else if (arg is CheezType)
+                        if (arg is CheezType)
                             result[i.Name] = (CheezType.Type, arg);
                         else
                         {
@@ -582,18 +580,25 @@ namespace Cheez
                     }
 
                 case PointerType p:
-                    return PointerType.GetPointerType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType);
+                    return PointerType.GetPointerType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType, p.Mutable);
 
                 case ReferenceType p:
-                    return ReferenceType.GetRefType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType);
+                    return ReferenceType.GetRefType(InstantiatePolyType(p.TargetType, concreteTypes, location) as CheezType, p.Mutable);
 
                 case SliceType s:
-                    return SliceType.GetSliceType(InstantiatePolyType(s.TargetType, concreteTypes, location) as CheezType);
+                    return SliceType.GetSliceType(InstantiatePolyType(s.TargetType, concreteTypes, location) as CheezType, s.Mutable);
 
                 case ArrayType a:
                     return ArrayType.GetArrayType(
                         InstantiatePolyType(a.TargetType, concreteTypes, location) as CheezType,
                         InstantiatePolyType(a.Length, concreteTypes, location));
+
+                case FunctionType f:
+                    var newParams = f.Parameters
+                        .Select(p => (p.name, InstantiatePolyType(p.type, concreteTypes, location) as CheezType, p.defaultValue))
+                        .ToArray();
+                    var newReturn = InstantiatePolyType(f.ReturnType, concreteTypes, location) as CheezType;
+                    return new FunctionType(newParams, newReturn, f.IsFatFunction, f.CC);
 
                 default: throw new NotImplementedException();
             }

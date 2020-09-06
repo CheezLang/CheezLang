@@ -6,6 +6,32 @@ namespace Cheez
 {
     public partial class Workspace
     {
+        private ISymbol GetSymbolOfExpr(AstExpression expr, Scope scope)
+        {
+            switch (expr)
+            {
+                case AstIdExpr id: return scope.GetSymbol(id.Name);
+                case AstDotExpr dot:
+                    {
+                        var sym = GetSymbolOfExpr(dot.Left, scope);
+                        if (sym == null)
+                            return null;
+
+                        switch (sym)
+                        {
+                            case ModuleSymbol mod:
+                                return mod.Scope.GetSymbol(dot.Right.Name);
+
+                            default:
+                                return null;
+                        }
+                    }
+
+                default:
+                    return null;
+            }
+        }
+
         private void CollectTypeDependencies(AstDecl decl, AstExpression typeExpr)
         {
             switch (typeExpr)
@@ -54,14 +80,27 @@ namespace Cheez
                     }
 
                 case AstIdExpr id:
-                    var sym = decl.Scope.GetSymbol(id.Name);
-                    if (sym is AstDecl d)
+                    switch (decl.Scope.GetSymbol(id.Name))
                     {
-                        if (d is AstVariableDecl sv)
-                            d = sv;
-                        decl.Dependencies.Add(d);
+                        case AstDecl d: decl.Dependencies.Add(d); break;
                     }
+
+                    //if (sym is AstDecl d)
+                    //{
+                    //    if (d is AstVariableDecl sv)
+                    //        d = sv;
+                    //    decl.Dependencies.Add(d);
+                    //}
                     break;
+
+                case AstDotExpr dot:
+                    {
+                        switch (GetSymbolOfExpr(dot, decl.Scope))
+                        {
+                            case AstDecl d: decl.Dependencies.Add(d); break;
+                        }
+                        break;
+                    }
 
                 case AstVariableRef vr:
                     decl.Dependencies.Add(vr.Declaration);

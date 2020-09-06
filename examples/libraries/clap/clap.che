@@ -20,98 +20,6 @@ Clap :: struct {
 
 }
 
-Location :: struct #copy {
-    start   : int
-    end     : int
-}
-
-impl Location {
-    contains :: (&Self, pos: int) -> bool {
-        return pos >= start and pos <= end
-    }
-
-    before :: (&Self, pos: int) -> bool {
-        return pos >= end
-    }
-}
-
-ClapToken :: struct {
-    loc : Location
-    raw : String
-}
-
-impl Clap {
-    tokenize :: (str: string) -> Array[ClapToken] {
-        args := Array[ClapToken].create()
-
-        State :: enum #copy {
-            Unquoted, Whitespace, Escaped, Quoted
-        }
-        use State
-        state := Whitespace
-        start := 0
-
-        loc := Location(0, 0)
-        current := String.empty()
-
-        for c in str {
-            match state, c {
-                (Escaped, $c) -> {
-                    state = Quoted
-                    &current += c
-                }
-
-                (Unquoted, $c) if char.is_whitespace(c) -> {
-                    args.add(ClapToken(loc, current.clone()))
-                    current.clear()
-                    state = Whitespace
-                }
-                (Unquoted, $c) -> {
-                    &current += c
-                }
-
-                (Whitespace, '"') -> {
-                    state = Quoted
-
-                    loc.start = it_index + 1
-                    loc.end = loc.start
-                }
-                (Whitespace, $c) if !char.is_whitespace(c) -> {
-                    &current += c
-                    state = Unquoted
-
-                    loc.start = it_index
-                    loc.end = loc.start
-                }
-
-                (Quoted, '"') -> {
-                    loc.end -= 1
-                    args.add(ClapToken(loc, current.clone()))
-                    current.clear()
-                    state = Whitespace
-                }
-
-                (Quoted, '``') -> {
-                    state = Escaped
-                }
-
-                (Quoted, $c) -> {
-                    &current += c
-                }
-            }
-
-            loc.end += 1
-        }
-
-        if state == Unquoted {
-            args.add(ClapToken(loc, current.clone()))
-            current.clear()
-        }
-
-        return args
-    }
-}
-
 parse_arguments_from_string :: ($T: type, str: string) -> ^T {
     args := Array[String].create()
 
@@ -225,7 +133,7 @@ get_help_message :: (type_info: ^TypeInfo) -> String {
 
 #file_scope
 
-parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> bool {
+parse_arguments_help :: (type_info: ^TypeInfo, args: &mut []String, result: ^mut $T) -> bool {
     if const console_debug_print {
         io.formatln("parsing help: {}", [type_info.kind])
         log_args(args)
@@ -244,7 +152,7 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
         // String
         _ if type_info == @type_info(String) -> {
             if !require_arg(*args) { return false }
-            *cast(^String) result = args[0].clone()
+            *cast(^mut String) result = args[0].clone()
             *args = args[1..]
             true
         }
@@ -256,7 +164,7 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
         _ if type_info == @type_info(Option[String]) -> {
             temp := @alloca(String, 1)
             parse_arguments_help(@type_info(String), args, temp.data)
-            *cast(^Option[String]) result = Some(*temp.data)
+            *cast(^mut Option[String]) result = Some(*temp.data)
             true
         }
 
@@ -264,13 +172,13 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
         TypeInfoStruct($info) -> parse_arguments_struct(^*info, args, result)
         TypeInfoInt(_)    -> {
             if !require_arg(*args) { return false }
-            *cast(^int) result = fmt.parse_int(args[0].slice())
+            *cast(^mut int) result = fmt.parse_int(args[0].slice())
             *args = args[1..]
             true
         }
 
         TypeInfoBool(_) -> {
-            *cast(^bool) result = true
+            *cast(^mut bool) result = true
             true
         }
         _ -> {
@@ -280,13 +188,13 @@ parse_arguments_help :: (type_info: ^TypeInfo, args: &[]String, result: ^$T) -> 
     }
 }
 
-parse_arguments_string_array :: (args: &[]String, result: ^void) -> bool {
+parse_arguments_string_array :: (args: &mut []String, result: ^void) -> bool {
     if const console_debug_print {
         io.println("parse_arguments_string_array")
         log_args(args)
     }
 
-    array := cast(^Array[String]) result
+    array := cast(^mut Array[String]) result
     *array = Array[String].create()
 
     while args.length > 0 {
@@ -304,7 +212,7 @@ parse_arguments_string_array :: (args: &[]String, result: ^void) -> bool {
     return true
 }
 
-parse_arguments_enum :: (type_info: ^TypeInfoEnum, args: &[]String, result: ^void) -> bool {
+parse_arguments_enum :: (type_info: ^TypeInfoEnum, args: &mut []String, result: ^void) -> bool {
     if const console_debug_print {
         io.printfln("parsing into enum {}", type_info.name)
         log_args(args)
@@ -325,7 +233,7 @@ parse_arguments_enum :: (type_info: ^TypeInfoEnum, args: &[]String, result: ^voi
         mem_name := get_display_name_for_member(mem)
         if streq(command.slice(), mem_name) {
             // first store the tag
-            tag_ptr := cast(^int) result
+            tag_ptr := cast(^mut int) result
             *tag_ptr = mem.tag
 
             if mem.typ != null {
@@ -347,7 +255,7 @@ parse_arguments_enum :: (type_info: ^TypeInfoEnum, args: &[]String, result: ^voi
     return false
 }
 
-parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: ^void) -> bool {
+parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &mut []String, result: ^void) -> bool {
     if const console_debug_print {
         io.printfln("parsing into struct {}", type_info.name)
         log_args(args)
@@ -367,8 +275,8 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
         members.add((mem_name, ^*m, false))
     }
 
-    get_member :: (arr: &@typeof(members), name: string) -> ^MemberInfo {
-        for arr {
+    get_member :: (arr: &mut @typeof(members), name: string) -> ^mut MemberInfo {
+        for it in arr {
             if streq(it.name, name) {
                 return ^*it
             }
@@ -426,7 +334,7 @@ parse_arguments_struct :: (type_info: ^TypeInfoStruct, args: &[]String, result: 
     return true
 }
 
-get_help_message_helper :: (type_info: ^TypeInfo, result: &String, indent: int) {
+get_help_message_helper :: (type_info: ^TypeInfo, result: &mut String, indent: int) {
     match &*type_info {
         _ if ^type_info == @type_info(String) -> {
             indent_string(result, indent)
@@ -441,12 +349,12 @@ get_help_message_helper :: (type_info: ^TypeInfo, result: &String, indent: int) 
     }
 }
 
-get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent: int) {
+get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &mut String, mut indent: int) {
     old_indent := indent
     indent += indent_size
 
     description_indent := {
-        m := 0
+        mut m := 0
         for(by_ref=true) mem in type_info.members {
             if mem.name.bytes.length > m {
                 m = mem.name.bytes.length
@@ -497,12 +405,12 @@ get_help_message_struct :: (type_info: ^TypeInfoStruct, result: &String, indent:
     }
 }
 
-get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int) {
+get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &mut String, mut indent: int) {
     old_indent := indent
     indent += indent_size
 
     description_indent := {
-        m := 0
+        mut m := 0
         for(by_ref=true) mem in type_info.members {
             if mem.name.bytes.length > m {
                 m = mem.name.bytes.length
@@ -541,7 +449,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
     }
 
     // print detailed info (args)
-    printed_details_string := false
+    mut printed_details_string := false
     for(by_ref=true) mem in type_info.members {
         if mem.typ == null then continue
 
@@ -557,7 +465,7 @@ get_help_message_enum :: (type_info: ^TypeInfoEnum, result: &String, indent: int
     }
 }
 
-get_help_message_member :: (result: &String, type_info: ^TypeInfo, name: string, format: string, indent: int, indent2: int) {
+get_help_message_member :: (result: &mut String, type_info: ^TypeInfo, name: string, format: string, indent: int, indent2: int) {
     match &*type_info {
         $_ if type_info == @type_info(String) -> {
             indent_string(result, indent)
@@ -612,7 +520,7 @@ to_ascii_strings :: (argv: ^^u16, argc: int) -> Array[String] {
     array := Array[String].create(argc)
     for i in 0..argc {
         str := String.empty()
-        while k := 0, argv[i][k] != 0, k += 1 {
+        while mut k := 0, argv[i][k] != 0, k += 1 {
             &str += char(argv[i][k])
         }
 
@@ -621,7 +529,7 @@ to_ascii_strings :: (argv: ^^u16, argc: int) -> Array[String] {
     return array
 }
 
-indent_string :: (str: &String, amount: int) {
+indent_string :: (str: &mut String, amount: int) {
     str.reserve_more(amount)
     for 0..amount {
         str += " "

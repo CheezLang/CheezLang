@@ -10,14 +10,14 @@ CONSOLE_LOGGER : ConsoleLogger = ConsoleLogger()
 
 #export_scope
 
-g_logger : ^Logger = ^CONSOLE_LOGGER
+mut g_logger : ^mut Logger = ^CONSOLE_LOGGER
 
 Logger :: trait {
     log :: (&Self, format: string, args: []^any = [], prefix: string = "");
 }
 
 impl Logger {
-    set_global_logger :: (logger: ^Logger) {
+    set_global_logger :: (logger: ^mut Logger) {
         g_logger = logger
     }
 }

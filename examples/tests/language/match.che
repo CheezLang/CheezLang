@@ -16,7 +16,7 @@ Main :: () {
 }
 
 test2 :: () {
-    x := 1
+    mut x := 1
     match x {
         0 -> io.println("zero")
         1 -> io.println("one")
@@ -52,7 +52,7 @@ test1 :: () {
     }
 
     for i in 1..str.bytes.length {
-        c := char(*str[i])
+        mut c := char(*str[i])
         c = match (char(*str[i - 1]), char(*str[i])) {
             (' ', $x) if x >= 'a' and x <= 'z' -> x - 'a' + 'A'
             $x -> x[1]

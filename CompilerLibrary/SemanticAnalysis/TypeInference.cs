@@ -105,7 +105,7 @@ namespace Cheez
                 if (expected is TraitType)
                     return expected;
 
-                return PointerType.GetPointerType(CheezType.Void);
+                return PointerType.GetPointerType(CheezType.Void, true);
             }
 
             return literalType;
@@ -656,25 +656,42 @@ namespace Cheez
 
         private AstExpression InferTypeRangeExpr(AstRangeExpr r, CheezType expected, TypeInferenceContext context)
         {
+            var type = r.From != null ? "@typeof(§start)" : "@typeof(§end)";
+            AstTypeRef expectedTypeRef = null;
+
+            if (expected is StructType str
+                && str.Name.Contains("Range")
+                && str.Declaration.IsPolyInstance
+                && str.Declaration.Parameters.Count == 1
+                && str.Declaration.Parameters[0].Type == CheezType.Type) {
+                type = "§expected";
+                expectedTypeRef = new AstTypeRef(str.Declaration.Parameters[0].Value as CheezType);
+            }
+
             var expr = (r.From, r.To, r.Inclusive) switch {
                 (null, null, _) when expected != null      => mCompiler.ParseExpression("@expected()()"),
                 (null, null, _)                            => mCompiler.ParseExpression("RangeFull()"),
-                (AstExpression from, null, _)              => mCompiler.ParseExpression("RangeFrom[@typeof(§start)](start=§start)", new Dictionary<string, AstExpression>{
+                (AstExpression from, null, _)              => mCompiler.ParseExpression($"RangeFrom[{type}](start=§start)", new Dictionary<string, AstExpression>{
                     { "start", r.From },
+                    { "expected", expectedTypeRef },
                 }),
-                (null, AstExpression to, true)                => mCompiler.ParseExpression("RangeToInclusive[@typeof(§end)](end=§end)", new Dictionary<string, AstExpression>{
+                (null, AstExpression to, true)                => mCompiler.ParseExpression($"RangeToInclusive[{type}](end=§end)", new Dictionary<string, AstExpression>{
                     { "end", r.To },
+                    { "expected", expectedTypeRef },
                 }),
-                (null, AstExpression to, false)                => mCompiler.ParseExpression("RangeTo[@typeof(§end)](end=§end)", new Dictionary<string, AstExpression>{
+                (null, AstExpression to, false)                => mCompiler.ParseExpression($"RangeTo[{type}](end=§end)", new Dictionary<string, AstExpression>{
                     { "end", r.To },
+                    { "expected", expectedTypeRef },
                 }),
-                (AstExpression from, AstExpression to, true)  => mCompiler.ParseExpression("RangeInclusive[@typeof(§start)](start=§start, end=§end)", new Dictionary<string, AstExpression>{
+                (AstExpression from, AstExpression to, true)  => mCompiler.ParseExpression($"RangeInclusive[{type}](start=§start, end=§end)", new Dictionary<string, AstExpression>{
                     { "start", r.From },
                     { "end", r.To },
+                    { "expected", expectedTypeRef },
                 }),
-                (AstExpression from, AstExpression to, false)  => mCompiler.ParseExpression("Range[@typeof(§start)](start=§start, end=§end)", new Dictionary<string, AstExpression>{
+                (AstExpression from, AstExpression to, false)  => mCompiler.ParseExpression($"Range[{type}](start=§start, end=§end)", new Dictionary<string, AstExpression>{
                     { "start", r.From },
                     { "end", r.To },
+                    { "expected", expectedTypeRef },
                 }),
             };
 
@@ -1113,6 +1130,13 @@ namespace Cheez
             if (value.Type is ReferenceType re)
                 expected = re.TargetType;
 
+            var enumType = (EnumType)expected;
+            if (enumType.Declaration.Untagged)
+            {
+                ReportError(value.Location, "Can't match on untagged enum");
+                return pattern;
+            }
+
             switch (pattern)
             {
                 case AstIdExpr _:
@@ -1163,7 +1187,7 @@ namespace Cheez
                         else if (call.Arguments.Count > 1)
                         {
                             e.Argument = new AstTupleExpr(
-                                call.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList(),
+                                call.Arguments.Select(a => new AstParameter(null, a.Expr, null, false, a.Location)).ToList(),
                                 call.Location);
 
                             //e.Argument = MatchPatternWithType(cas, e.Argument, ...);
@@ -1245,7 +1269,7 @@ namespace Cheez
                                 {
                                     if (call.Arguments.Count == 1 && call.Arguments[0].Expr is AstIdExpr id && (id.IsPolymorphic || id.Name == "_"))
                                     {
-                                        AstExpression cast = new AstCastExpr(new AstTypeRef(ReferenceType.GetRefType(str), value.Location), value, value.Location);
+                                        AstExpression cast = new AstCastExpr(new AstTypeRef(ReferenceType.GetRefType(str, true), value.Location), value, value.Location);
                                         cast.Replace(value);
                                         cast = InferType(cast, null);
 
@@ -1294,12 +1318,12 @@ namespace Cheez
                             if (call.Arguments.Count == 1 && call.Arguments[0].Expr is AstIdExpr id && (id.IsPolymorphic || id.Name == "_"))
                             {
                                 var ptrOfTrait = new AstCompCallExpr(new AstIdExpr("ptr_of_trait", false, value.Location), new List<AstArgument>{ new AstArgument(value, Location: value.Location) }, value.Location);
-                                var cast = new AstCastExpr(new AstTypeRef(PointerType.GetPointerType(type), value.Location), ptrOfTrait, value.Location);
+                                var cast = new AstCastExpr(new AstTypeRef(PointerType.GetPointerType(type, true), value.Location), ptrOfTrait, value.Location);
                                 var deref = new AstDereferenceExpr(cast, cast.Location);
-                                AstExpression refe = new AstAddressOfExpr(deref, true, deref.Location);
+                                AstExpression refe = new AstAddressOfExpr(deref, true, true, deref.Location);
 
                                 refe.Replace(value);
-                                refe = InferType(refe, ReferenceType.GetRefType(type));
+                                refe = InferType(refe, ReferenceType.GetRefType(type, true));
 
                                 var tempVar = InferType(new AstTempVarExpr(refe), null);
                                 cas.SubScope.DefineUse(id.Name, tempVar, false, out var use);
@@ -1350,7 +1374,7 @@ namespace Cheez
                                     },
                                     value.Location);
                                 AstExpression cast = new AstCastExpr(
-                                    new AstTypeRef(PointerType.GetPointerType(type), value.Location),
+                                    new AstTypeRef(PointerType.GetPointerType(type, true), value.Location),
                                     ptrOfTrait,
                                     value.Location);
 
@@ -1390,7 +1414,7 @@ namespace Cheez
             {
                 case CheezType _ when (pattern is AstIdExpr id && (id.Name == "_" || id.IsPolymorphic)):
                     {
-                        var binding = new AstVariableDecl(pattern.Clone(), new AstTypeRef(value.Type, pattern.Location), value.Clone(), Location: pattern.Location);
+                        var binding = new AstVariableDecl(pattern.Clone(), new AstTypeRef(value.Type, pattern.Location), value.Clone(), true, Location: pattern.Location);
                         cas.AddBinding(binding);
                         pattern.Type = value.Type;
                         return id;
@@ -1436,7 +1460,7 @@ namespace Cheez
                 return expr;
             }
 
-            if (expected is EnumType e)
+            if (expected is EnumType e && !(e.Declaration.IsReprC || e.Declaration.Untagged))
             {
                 ReportError(expr, $"Can't default initialize an enum");
                 return expr;
@@ -1571,11 +1595,11 @@ namespace Cheez
             if (p.Target.Type == CheezType.Type)
             {
                 p.Type = CheezType.Type;
-                p.Value = ReferenceType.GetRefType(p.Target.Value as CheezType);
+                p.Value = ReferenceType.GetRefType(p.Target.Value as CheezType, p.Mutable);
             }
             else
             {
-                var r = new AstAddressOfExpr(p.Target, p);
+                var r = new AstAddressOfExpr(p.Target, false, p.Mutable, p.Location);
                 r.Replace(p);
                 r.Reference = true;
                 return InferTypeHelper(r, p.Target.Type, context);
@@ -1597,7 +1621,7 @@ namespace Cheez
                 else
                 {
                     p.Type = CheezType.Type;
-                    p.Value = SliceType.GetSliceType(p.Target.Value as CheezType);
+                    p.Value = SliceType.GetSliceType(p.Target.Value as CheezType, p.Mutable);
                 }
             }
             else
@@ -1621,7 +1645,7 @@ namespace Cheez
                 else
                 {
                     p.Type = CheezType.Type;
-                    p.Value = SliceType.GetSliceType(p.Target.Value as CheezType);
+                    p.Value = SliceType.GetSliceType(p.Target.Value as CheezType, true);
                 }
             }
             else
@@ -1808,6 +1832,14 @@ namespace Cheez
 
                 case (PointerType _, PointerType f) when f.TargetType == CheezType.Void:
                     return cast;
+
+
+                case (PointerType t, PointerType f) when t.TargetType == f.TargetType:
+                    return InferType(cast, to);
+                case (ReferenceType t, ReferenceType f) when t.TargetType == f.TargetType:
+                    return InferType(cast, to);
+                case (SliceType t, SliceType f) when t.TargetType == f.TargetType:
+                    return InferType(cast, to);
 
                 case (PointerType t, PointerType f) when t.TargetType is AnyType && f.TargetType is TraitType trait:
                     {
@@ -2043,7 +2075,7 @@ namespace Cheez
         private AstExpression InferTypeDeref(AstDereferenceExpr expr, CheezType expected, TypeInferenceContext context)
         {
             CheezType subExpect = null;
-            if (expected != null) subExpect = PointerType.GetPointerType(expected);
+            if (expected != null) subExpect = PointerType.GetPointerType(expected, true);
 
             expr.SubExpression.AttachTo(expr);
             expr.SubExpression.SetFlag(ExprFlags.ValueRequired, true);
@@ -2197,7 +2229,7 @@ namespace Cheez
             {
                 var subType = expr.SubExpression.Value as CheezType;
                 expr.Type = CheezType.Type;
-                expr.Value = PointerType.GetPointerType(subType);
+                expr.Value = PointerType.GetPointerType(subType, expr.Mutable);
                 return expr;
             }
 
@@ -2210,7 +2242,7 @@ namespace Cheez
                     return expr;
                 }
 
-                expr.Type = ReferenceType.GetRefType(expr.SubExpression.Type);
+                expr.Type = ReferenceType.GetRefType(expr.SubExpression.Type, true);
             }
             else
             {
@@ -2221,7 +2253,7 @@ namespace Cheez
                     return expr;
                 }
 
-                expr.Type = PointerType.GetPointerType(expr.SubExpression.Type);
+                expr.Type = PointerType.GetPointerType(expr.SubExpression.Type, true);
             }
 
             return expr;
@@ -2326,7 +2358,8 @@ namespace Cheez
                     case EnumType e:
                         {
                             ComputeEnumMembers(e.Declaration);
-                            MarkTypeAsRequiredAtRuntime(e.Declaration.TagType);
+                            if (!e.Declaration.Untagged)
+                                MarkTypeAsRequiredAtRuntime(e.Declaration.TagType);
                             foreach (var m in e.Declaration.Members)
                                 if (m.AssociatedType != null)
                                     MarkTypeAsRequiredAtRuntime(m.AssociatedType);
@@ -2387,6 +2420,32 @@ namespace Cheez
 
             switch (expr.Name.Name)
             {
+                // case "asm":
+                //     {
+                //         if (expr.Arguments.Count != 5)
+                //         {
+                //             ReportError(expr.Location, "@asm takes 5 arguments");
+                //             return expr;
+                //         }
+                //         var type = InferArg(0, CheezType.Type);
+                //         var asmString = InferArg(1, CheezType.String);
+                //         var constraints = InferArg(2, CheezType.String);
+                //         var hasSideeffects = InferArg(3, CheezType.Bool);
+                //         var alignStack = InferArg(4, CheezType.Bool);
+
+                //         if (type.Type is ErrorType
+                //             || asmString.Type is ErrorType
+                //             || constraints.Type is ErrorType
+                //             || hasSideeffects.Type is ErrorType
+                //             || alignStack.Type is ErrorType)
+                //         {
+                //             return expr;
+                //         }
+
+                //         expr.Type = type.Value as CheezType;
+                //         return expr;
+                //     }
+
                 case "expected":
                     {
                         if (expr.Arguments.Count != 0)
@@ -2460,7 +2519,7 @@ namespace Cheez
                             return expr;
                         }
 
-                        var ptr = InferArg(0, PointerType.GetPointerType(IntType.GetIntType(1, false)));
+                        var ptr = InferArg(0, PointerType.GetPointerType(IntType.GetIntType(1, false), true));
                         var len = InferArg(1, IntType.GetIntType(8, true));
 
                         expr.Type = CheezType.String;
@@ -2566,7 +2625,7 @@ namespace Cheez
                                 return expr;
                         }
 
-                        expr.Type = PointerType.GetPointerType(CheezType.Void);
+                        expr.Type = PointerType.GetPointerType(CheezType.Void, true);
                         break;
                     }
 
@@ -2595,7 +2654,7 @@ namespace Cheez
                         }
 
                         var type = GlobalScope.GetTrait("TypeInfo").TraitType;
-                        expr.Type = PointerType.GetPointerType(type);
+                        expr.Type = PointerType.GetPointerType(type, true);
                         break;
                     }
 
@@ -2620,7 +2679,7 @@ namespace Cheez
                                 return expr;
                         }
 
-                        expr.Type = PointerType.GetPointerType(CheezType.Void);
+                        expr.Type = PointerType.GetPointerType(CheezType.Void, true);
                         break;
                     }
 
@@ -2645,7 +2704,7 @@ namespace Cheez
                                 return expr;
                         }
 
-                        expr.Type = PointerType.GetPointerType(CheezType.Void);
+                        expr.Type = PointerType.GetPointerType(CheezType.Void, true);
                         break;
                     }
 
@@ -2664,7 +2723,7 @@ namespace Cheez
                             var sym = GlobalScope.GetSymbol("TypeInfo");
                             if (sym is AstConstantDeclaration c && c.Initializer is AstTraitTypeExpr s)
                             {
-                                expr.Type = PointerType.GetPointerType(s.TraitType);
+                                expr.Type = PointerType.GetPointerType(s.TraitType, false);
                             }
                             else
                             {
@@ -2681,7 +2740,7 @@ namespace Cheez
 
                 case "tuple":
                     {
-                        var tuple = new AstTupleExpr(expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList(), expr.Location);
+                        var tuple = new AstTupleExpr(expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, false, a.Location)).ToList(), expr.Location);
                         tuple.Replace(expr);
                         return InferType(tuple, expected);
                     }
@@ -2828,7 +2887,7 @@ namespace Cheez
                             }
                             {
                                 var acc = new AstArrayAccessExpr(tuple.Clone(), new AstNumberExpr(NumberData.FromBigInt(index), Location: param), param);
-                                var init = new AstVariableDecl(param.Name.Clone(), param.TypeExpr?.Clone(), acc, Location: param);
+                                var init = new AstVariableDecl(param.Name.Clone(), param.TypeExpr?.Clone(), acc, true, Location: param);
                                 stmts.Add(init);
                             }
 
@@ -3825,7 +3884,7 @@ namespace Cheez
                             return expr;
 
                         if (argType.Type is CheezType)
-                            expr.Type = SliceType.GetSliceType(argType.Value as CheezType);
+                            expr.Type = SliceType.GetSliceType(argType.Value as CheezType, true);
                             // expr.Type = PointerType.GetPointerType(argType.Value as CheezType);
                         else
                             ReportError(argSize, $"Argument must be a type");
@@ -4078,6 +4137,7 @@ namespace Cheez
                     expr.SetFlag(ExprFlags.Breaks, true);
 
                 expr.LastExpr = exprStmt;
+                expr.Value = exprStmt.Expr.Value;
             }
             else
             {
@@ -4089,6 +4149,8 @@ namespace Cheez
             //    // copy initialized symbols
             //    expr.SubScope.ApplyInitializedSymbolsToParent();
             //}
+
+
 
             return expr;
         }
@@ -4213,7 +4275,7 @@ namespace Cheez
                         if (ops.Count == 0)
                         {
                             UpdateTypeImplMap();
-                            ops = expr.Scope.GetBinaryOperators("[]", ReferenceType.GetRefType(left.Type), right.Type);
+                            ops = expr.Scope.GetBinaryOperators("[]", ReferenceType.GetRefType(left.Type, true), right.Type);
                             left = Ref(left, context);
                         }
 
@@ -4324,13 +4386,13 @@ namespace Cheez
                         if (name == "bytes")
                         {
                             if (deref) expr.Left = Deref(expr.Left, context);
-                            expr.Type = SliceType.GetSliceType(IntType.GetIntType(1, false));
+                            expr.Type = SliceType.GetSliceType(IntType.GetIntType(1, false), true);
                             return expr;
                         }
                         if (name == "ascii")
                         {
                             if (deref) expr.Left = Deref(expr.Left, context);
-                            expr.Type = SliceType.GetSliceType(CharType.GetCharType(1));
+                            expr.Type = SliceType.GetSliceType(CharType.GetCharType(1), true);
                             return expr;
                         }
                         return GetImplFunctions(expr, subType, expr.Right.Name, context);
@@ -4754,7 +4816,7 @@ namespace Cheez
                     // because this messes something up... idk :/
                     varDecl = new AstConstantDeclaration(param.Name, null, link, null, Location: arg.Location);
                 else
-                    varDecl = new AstVariableDecl(param.Name, new AstTypeRef(param.Type, param), link, Location: arg.Location);
+                    varDecl = new AstVariableDecl(param.Name, new AstTypeRef(param.Type, param), link, true, Location: arg.Location);
                 varDecl.SetFlag(StmtFlags.IsLocal, true);
                 //varDecl.SetFlag(StmtFlags.IsMacroFunction, true);
                 return varDecl;
@@ -4842,7 +4904,7 @@ namespace Cheez
                         }
                         else if (expr.Arguments.Count > 1)
                         {
-                            var p = expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList();
+                            var p = expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, false, a.Location)).ToList();
                             e.Argument = new AstTupleExpr(p, new Location(expr.Arguments));
                         }
 
@@ -4869,7 +4931,7 @@ namespace Cheez
                         }
                         else if (expr.Arguments.Count > 1)
                         {
-                            var p = expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, a.Location)).ToList();
+                            var p = expr.Arguments.Select(a => new AstParameter(null, a.Expr, null, false, a.Location)).ToList();
                             e.Argument = new AstTupleExpr(p, new Location(expr.Arguments));
                         }
 
@@ -5385,6 +5447,9 @@ namespace Cheez
             var pairs = expr.Arguments.Select(arg => (arg.Index < decl.Parameters.Count ? decl.Parameters[arg.Index] : null, arg));
             (AstParameter param, AstArgument arg)[] args = pairs.ToArray();
 
+            var polyTypes = new Dictionary<string, (CheezType type, object value)>();
+            var constArgs = new Dictionary<string, (CheezType type, object value)>();
+
             // infer types of arguments
             foreach (var (param, arg) in args)
             {
@@ -5400,7 +5465,20 @@ namespace Cheez
 
                 var ex = param.Type;
                 if (ex.IsPolyType)
-                    ex = null;
+                {
+                    if (polyTypes.Count > 0)
+                    {
+                        var newType = InstantiatePolyType(ex, polyTypes, arg.Location) as CheezType;
+                        if (!newType.IsPolyType)
+                            ex = newType;
+                        else
+                            ex = null;
+                    }
+                    else
+                    {
+                        ex = null;
+                    }
+                }
                 
                 arg.IsConstArg = param.Name?.IsPolymorphic ?? false;
                 if (arg.IsDefaultArg && !arg.IsConstArg)
@@ -5408,11 +5486,28 @@ namespace Cheez
                 arg.Expr = InferTypeHelper(arg.Expr, ex, context);
                 ConvertLiteralTypeToDefaultType(arg.Expr, ex);
                 arg.Type = arg.Expr.Type;
+
+                // test
+                {
+                    if (!arg.IsDefaultArg)
+                        CollectPolyTypes(param.Type, arg.Type, polyTypes);
+
+                    if (param.Name?.IsPolymorphic ?? false)
+                    {
+                        if (arg.Expr.Value == null)
+                        {
+                            ReportError(arg, $"The expression must be a compile time constant");
+                            return expr; // :hack
+                        }
+                        else
+                        {
+                            constArgs[param.Name.Name] = (arg.Expr.Type, arg.Expr.Value);
+                        }
+                    }
+                }
             }
 
             // collect polymorphic types and const arguments
-            var polyTypes = new Dictionary<string, (CheezType type, object value)>();
-            var constArgs = new Dictionary<string, (CheezType type, object value)>();
             var newArgs = new List<AstArgument>();
 
             if (func.Declaration.ImplBlock != null)
@@ -5851,6 +5946,17 @@ namespace Cheez
 
                 var ops = expr.Scope.GetBinaryOperators(expr.Operator, leftType, rightType);
 
+                // search in scope where type is defined in
+                if (ops.Count == 0)
+                {
+                    switch (leftType)
+                    {
+                        case EnumType t: ops = t.Declaration.Scope.GetBinaryOperators(expr.Operator, leftType, rightType); break;
+                        case StructType t: ops = t.Declaration.Scope.GetBinaryOperators(expr.Operator, leftType, rightType); break;
+                        case TraitType t: ops = t.Declaration.Scope.GetBinaryOperators(expr.Operator, leftType, rightType); break;
+                    }
+                }
+
                 if (ops.Count == 0)
                 {
                     ReportError(expr, $"No operator '{expr.Operator}' matches the types {expr.Left.Type} and {expr.Right.Type}");
@@ -6152,8 +6258,7 @@ namespace Cheez
 
         private AstExpression Ref(AstExpression expr, TypeInferenceContext context)
         {
-            var deref = new AstAddressOfExpr(expr, expr);
-            deref.Reference = true;
+            var deref = new AstAddressOfExpr(expr, true, true, expr.Location);
             deref.AttachTo(expr);
             deref.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
 
@@ -6189,6 +6294,14 @@ namespace Cheez
 
                 // cast(enum) int
                 case (EnumType e, IntType i) when e.Declaration.TagType == i && e.Declaration.IsReprC:
+                    return InferType(cast, to);
+
+                // mutability conversion
+                case (PointerType t, PointerType f) when t.TargetType == f.TargetType && (!t.Mutable || f.Mutable):
+                    return InferType(cast, to);
+                case (ReferenceType t, ReferenceType f) when t.TargetType == f.TargetType && (!t.Mutable || f.Mutable):
+                    return InferType(cast, to);
+                case (SliceType t, SliceType f) when t.TargetType == f.TargetType && (!t.Mutable || f.Mutable):
                     return InferType(cast, to);
 
                 // cast(&trait) T
@@ -6246,6 +6359,7 @@ namespace Cheez
             }
 
             ReportError(expr, errorMsg ?? $"Can't implicitly convert '{from}' to '{to}'");
+            // expr.Type = CheezType.Error;
             return expr;
         }
 

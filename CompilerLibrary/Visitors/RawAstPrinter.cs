@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Cheez.Ast;
 using Cheez.Ast.Expressions;
 using Cheez.Ast.Expressions.Types;
 using Cheez.Ast.Statements;
@@ -378,7 +379,18 @@ namespace Cheez.Visitors
 
         public override string VisitTupleExpr(AstTupleExpr expr, int data = 0)
         {
-            var members = string.Join(", ", expr.Values.Select(v => v.Accept(this)));
+            var members = string.Join(", ", expr.Types.Select(v =>
+            {
+                var sb = new StringBuilder();
+
+                if (v.Name != null)
+                    sb.Append(v.Name.Name).Append(": ");
+
+                sb.Append(v.TypeExpr.Accept(this));
+                if (v.DefaultValue != null)
+                    sb.Append(" = ").Append(v.DefaultValue.Accept(this));
+                return sb.ToString();
+            }));
             return "(" + members + ")";
         }
 
@@ -598,5 +610,16 @@ namespace Cheez.Visitors
             return $"&{type.Target.Accept(this)}";
         }
         #endregion
+
+
+        public override string VisitDirective(AstDirective dir, int data = 0)
+        {
+            var name = "#" + dir.Name.Accept(this);
+            if (dir.Arguments.Count > 0)
+            {
+                name += $"({string.Join(", ", dir.Arguments.Select(a => a.Accept(this)))})";
+            }
+            return name;
+        }
     }
 }

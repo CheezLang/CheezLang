@@ -4,7 +4,7 @@
 import std.alloca
 use import std.io.stdio
 
-use import glfw.glfw_binding
+use import glfw
 
 #export_scope
 
@@ -3167,15 +3167,15 @@ DebugCheckVersionAndDataLayout :: (_version_str: ^char8, _sz_io: size_t, _sz_sty
     __c__DebugCheckVersionAndDataLayout(^result, _version_str, _sz_io, _sz_style, _sz_vec2, _sz_vec4, _sz_drawvert, _sz_drawidx)
     return result
 }
-GetIO :: () -> &ImGuiIO {
+GetIO :: () -> &mut ImGuiIO {
     result : ^ImGuiIO = default
     __c__GetIO(^result)
-    return &*result
+    return &mut *result
 }
-GetStyle :: () -> &ImGuiStyle {
+GetStyle :: () -> &mut ImGuiStyle {
     result : ^ImGuiStyle = default
     __c__GetStyle(^result)
-    return &*result
+    return &mut *result
 }
 NewFrame :: () {
     __c__NewFrame()
@@ -4062,7 +4062,7 @@ ListBox :: (_label: ^char8, _current_item: ^i32, _items: ^^char8, _items_count: 
     __c__ListBox(^result, _label, _current_item, _items, _items_count, _height_in_items)
     return result
 }
-ListBoxFnPtr :: (_label: ^char8, _current_item: ^i32, _items_getter: fn(^void, i32, ^^char8) -> bool, _data: ^void, _items_count: i32, _height_in_items: i32 = -1) -> bool {
+ListBoxFnPtr :: (_label: ^char8, _current_item: ^i32, _items_getter: fn(^void, i32, ^mut ^char8) -> bool, _data: ^void, _items_count: i32, _height_in_items: i32 = -1) -> bool {
     result : bool = default
     __c__ListBox_2(^result, _label, _current_item, _items_getter, _data, _items_count, _height_in_items)
     return result
@@ -6201,7 +6201,7 @@ __c__SetNextItemOpen :: (_is_open: bool, _cond: ImGuiCond = 0);
 __c__Selectable :: (ret: ^bool, _label: ^char8, _selected: bool = false, _flags: ImGuiSelectableFlags = 0, _size: ^ImVec2);
 __c__Selectable_2 :: (ret: ^bool, _label: ^char8, _p_selected: ^bool, _flags: ImGuiSelectableFlags = 0, _size: ^ImVec2);
 __c__ListBox :: (ret: ^bool, _label: ^char8, _current_item: ^i32, _items: ^^char8, _items_count: i32, _height_in_items: i32 = -1);
-__c__ListBox_2 :: (ret: ^bool, _label: ^char8, _current_item: ^i32, _items_getter: fn(^void, i32, ^^char8) -> bool, _data: ^void, _items_count: i32, _height_in_items: i32 = -1);
+__c__ListBox_2 :: (ret: ^bool, _label: ^char8, _current_item: ^i32, _items_getter: fn(^void, i32, ^mut ^char8) -> bool, _data: ^void, _items_count: i32, _height_in_items: i32 = -1);
 __c__ListBoxHeader :: (ret: ^bool, _label: ^char8, _size: ^ImVec2);
 __c__ListBoxHeader_2 :: (ret: ^bool, _label: ^char8, _items_count: i32, _height_in_items: i32 = -1);
 __c__ListBoxFooter :: ();

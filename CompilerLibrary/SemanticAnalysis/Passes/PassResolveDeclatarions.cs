@@ -5,6 +5,7 @@ using Cheez.Ast.Expressions;
 using Cheez.Ast.Statements;
 using Cheez.Types;
 using Cheez.Types.Abstract;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -100,13 +101,16 @@ namespace Cheez
         private void ResolveDeclarations()
         {
             // handle constant declarations
+            Console.WriteLine("Resolving constant declarations...");
             ResolveConstantDeclarations();
 
             // handle uses
+            Console.WriteLine("Resolving global use declarations...");
             foreach (var use in mAllGlobalUses)
                 AnalyseUseStatement(use);
 
             // resolve impls (check if is polymorphic, setup scopes, check for self params in functions, etc.)
+            Console.WriteLine("Resolving impl blocks...");
             foreach (var impl in mAllImpls)
             {
                 if (impl.TraitExpr == null)
@@ -116,6 +120,7 @@ namespace Cheez
             }
 
             // global variables
+            Console.WriteLine("Resolving global variables...");
             ResolveGlobalVariables();
 
             MarkTypeAsRequiredAtRuntime(CheezType.Void);
@@ -123,14 +128,18 @@ namespace Cheez
             {
                 bool changes = false;
 
+                Console.WriteLine("Compiling bodies of declarations...");
                 changes |= ResolveGlobalDeclarationBodies();
+                Console.WriteLine("Computing sizes of types...");
                 changes |= ComputeSizeAndAlignmentOfRemainingTypes();
+                Console.WriteLine("Marking types as required for runtime...");
                 changes |= MarkTypeAsRequiredAtRuntimeFinish();
 
                 if (!changes)
                     break;
             }
 
+            Console.WriteLine("Finishing trait impl blocks...");
             foreach (var impl in mAllImpls)
             {
                 if (impl.TraitExpr != null)

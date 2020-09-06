@@ -44,13 +44,20 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 name += ".che";
 
             var linkname = function.GetDirective("linkname");
+
+            LLVMValueRef lfunc = new LLVMValueRef();
+
             if (linkname != null)
             {
                 name = linkname.Arguments[0].Value as string;
+
+                lfunc = module.GetNamedFunction(name);
             }
 
             LLVMTypeRef ltype = FuncTypeToLLVMType(function.FunctionType);
-            var lfunc = module.AddFunction(name, ltype);
+
+            if (lfunc.Pointer.ToInt64() == 0)
+                lfunc = module.AddFunction(name, ltype);
 
             // :temporary
             if (function.Body != null)

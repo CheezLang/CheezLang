@@ -277,6 +277,11 @@ namespace Cheez
                 return null;
             }
 
+            if (decl.Name == "Array" && args[0].value is PointerType p && p.Mutable && p.TargetType is StructType s && s.Name == "AstArgument")
+            {
+
+            }
+
 
             AstStructTypeExpr instance = null;
 
@@ -332,20 +337,10 @@ namespace Cheez
                     param.Type = arg.type;
                     param.Value = arg.value;
 
-                    // TODO: what if arg.value is not a type?
                     instance.SubScope.DefineConstant(param.Name.Name, arg.type, arg.value);
                 }
 
                 instance = InferType(instance, null) as AstStructTypeExpr;
-
-                //instance.Type = new StructType(instance);
-
-                //if (instances != null)
-                //    instances.Add(instance);
-                //else
-                //{
-                //    ResolveTypeDeclaration(instance);
-                //}
             }
 
             return instance;
