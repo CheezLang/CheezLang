@@ -1,0 +1,2 @@
+/home/nimaoth/dev/Cheez/StandardLibrary
+/home/nimaoth/dev/Cheez/CheezLang/examples/libraries
