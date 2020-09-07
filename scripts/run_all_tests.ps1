@@ -9,20 +9,28 @@ param (
     $Passthrough
 )
 
-$failed_tests = 0
-$successfull_tests = 0
-Get-ChildItem -Path $dir -Recurse -Include "*.che" |
-Foreach-Object {
+$failed_tests = New-Object System.Collections.ArrayList($null)
+$successfull_tests = New-Object System.Collections.ArrayList($null)
+
+Get-ChildItem -Path $dir -Recurse -Include "*.che" | Foreach-Object {
     ./scripts/build_file_and_run_as_test.ps1 $_.FullName @Passthrough
 
     if ($LASTEXITCODE -ne 0) {
-        $failed_tests += 1
+        [void]($failed_tests.Add($_.FullName))
     } else {
-        $successfull_tests += 1
+        [void]($successfull_tests.Add($_.FullName))
     }
 
     Write-Host ""
 }
 
+$num_of_ok_tests = $successfull_tests.count
+$num_of_bad_tests = $failed_tests.count
+
 Write-Host ""
-Write-Host "$successfull_tests ok. $failed_tests failed."
+Write-Host "$num_of_ok_tests ok. $num_of_bad_tests failed."
+
+Write-Host "Failed tests:"
+foreach ($item in $failed_tests) {
+    Write-Host $item
+}
