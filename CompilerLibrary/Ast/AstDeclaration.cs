@@ -25,9 +25,12 @@ namespace Cheez.Ast.Statements
 
         public bool IsUsed { get; set; }
 
-        public AstDecl(AstIdExpr name, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
+        public string Documentation { get; set; }
+
+        public AstDecl(AstIdExpr name, string doc, List<AstDirective> Directives = null, ILocation Location = null) : base(Directives, Location)
         {
             this.Name = name;
+            this.Documentation = doc;
         }
     }
 
@@ -90,10 +93,12 @@ namespace Cheez.Ast.Statements
             AstExpression pattern,
             AstExpression typeExpr,
             AstExpression init,
+            string documentation,
             List<AstDirective> directives,
             ILocation Location = null)
             : base(
                 pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)),
+                documentation,
                 directives,
                 Location)
         {
@@ -110,6 +115,7 @@ namespace Cheez.Ast.Statements
                 Pattern.Clone(),
                 TypeExpr?.Clone(),
                 Initializer.Clone(),
+                Documentation,
                 Directives?.Select(d => d.Clone()).ToList()));
     }
 
@@ -589,8 +595,9 @@ namespace Cheez.Ast.Statements
             AstExpression typeExpr,
             AstExpression init,
             bool mutable,
+            string documentation = null,
             List<AstDirective> Directives = null, ILocation Location = null)
-            : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), Directives, Location)
+            : base(pattern is AstIdExpr ? (pattern as AstIdExpr) : (new AstIdExpr(pattern.ToString(), false, pattern.Location)), documentation, Directives, Location)
         {
             this.Pattern = pattern;
             this.TypeExpr = typeExpr;
@@ -606,7 +613,8 @@ namespace Cheez.Ast.Statements
                 Pattern.Clone(),
                 TypeExpr?.Clone(),
                 Initializer?.Clone(),
-                this.Mutable));
+                this.Mutable,
+                Documentation));
     }
 
     #endregion

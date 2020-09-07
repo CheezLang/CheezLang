@@ -19,5 +19,5 @@ $out_dir = $out_dir.Replace("\\", "/")
 
 Write-Output "copy additional files to $project_dir/$out_dir"
 
-Copy-Item "$solution_dir/modules.txt" -Destination "$project_dir/$out_dir" -Force
+Copy-Item "$solution_dir/modules*.txt" -Destination "$project_dir/$out_dir" -Force
 Copy-Item "$solution_dir/lib" -Destination "$project_dir/$out_dir" -Recurse -Force

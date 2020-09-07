@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Collections.Generic;
 using Cheez.Ast;
 using Cheez.Extras;
+using System.Linq;
 
 namespace Cheez.Parsing
 {
@@ -22,6 +23,8 @@ namespace Cheez.Parsing
 
         NewLine,
         EOF,
+
+        DocComment,
 
         StringLiteral,
         CharLiteral,
@@ -137,6 +140,7 @@ namespace Cheez.Parsing
 
         private char Current => mLocation.index < mText.Length ? mText[mLocation.index] : (char)0;
         private char Next => mLocation.index < mText.Length - 1 ? mText[mLocation.index + 1] : (char)0;
+        private char GetChar(int offset) => mLocation.index + offset < mText.Length ? mText[mLocation.index + offset] : (char)0;
         private char Prev => mLocation.index > 0 ? mText[mLocation.index - 1] : (char)0;
         private Token peek = null;
 
@@ -211,6 +215,7 @@ namespace Cheez.Parsing
             return ReadToken();
         }
 
+        private StringBuilder tokenDataBuilder = new StringBuilder();
         private Token ReadToken()
         {
             var token = new Token();
@@ -219,6 +224,8 @@ namespace Cheez.Parsing
             token.type = TokenType.EOF;
             if (mLocation.index >= mText.Length)
                 return token;
+
+            tokenDataBuilder.Clear();
 
             switch (Current)
             {
@@ -236,6 +243,33 @@ namespace Cheez.Parsing
                 case '/' when Next == '=': SimpleToken(ref token, TokenType.DivEq, 2); break;
                 case '%' when Next == '=': SimpleToken(ref token, TokenType.ModEq, 2); break;
                 case '.' when Next == '.': SimpleToken(ref token, TokenType.PeriodPeriod, 2); break;
+                case '/' when (Next == '/' && GetChar(2) == '/'): {
+                    // doc comment
+
+                    if (GetChar(3) == ' ') {
+                        token.type = TokenType.DocComment;
+                        int index = 0;
+                        while (mLocation.index < mText.Length && Current != '\n') {
+                            if (index >= 4)
+                                tokenDataBuilder.Append(Current);
+                            mLocation.index += 1;
+                            index += 1;
+                        }
+                        if (mLocation.index < mText.Length && Current == '\n') {
+                            mLocation.index += 1;
+                            mLocation.line++;
+                            mLocation.lineStartIndex = mLocation.index;
+                        }
+                        token.data = tokenDataBuilder.ToString();
+                    } else if (GetChar(3) == '*') {
+                        token.type = TokenType.DocComment;
+                        token.data = ParseMultiLineDocComment();
+                    } else {
+                        throw new Exception("this shouldn't happen");
+                    }
+
+                    break;
+                }
                 case ':': SimpleToken(ref token, TokenType.Colon); break;
                 case ';': SimpleToken(ref token, TokenType.Semicolon); break;
                 case '.': SimpleToken(ref token, TokenType.Period); break;
@@ -751,6 +785,17 @@ namespace Cheez.Parsing
 
                 else if (c == '/' && Next == '/')
                 {
+                    if (GetChar(2) == '/') {
+                        // potentially doc comment
+
+                        if (GetChar(3) == ' ') {
+                            // single line doc comment
+                            break;
+                        } else if (GetChar(3) == '*') {
+                            // multi line doc comment
+                            break;
+                        }
+                    }
                     ParseSingleLineComment();
                 }
 
@@ -800,6 +845,7 @@ namespace Cheez.Parsing
 
         private void ParseMultiLineComment()
         {
+
             int level = 0;
             while (mLocation.index < mText.Length)
             {
@@ -828,6 +874,59 @@ namespace Cheez.Parsing
                     mLocation.lineStartIndex = mLocation.index;
                 }
             }
+        }
+
+        private string ParseMultiLineDocComment()
+        {
+            int startIndex = mLocation.index + 4;
+            int initialIndentation = mLocation.Column;
+
+            int level = 0;
+            while (mLocation.index < mText.Length)
+            {
+                char curr = Current;
+                char next = Next;
+                mLocation.index++;
+
+                if (curr == '/' && next == '*')
+                {
+                    mLocation.index++;
+                    level++;
+                }
+
+                else if (curr == '*' && next == '/')
+                {
+                    mLocation.index++;
+                    level--;
+
+                    if (level == 0)
+                        break;
+                }
+
+                else if (curr == '\n')
+                {
+                    mLocation.line++;
+                    mLocation.lineStartIndex = mLocation.index;
+                }
+
+
+            }
+
+            int endIndex = mLocation.index - 2;
+
+            if (startIndex >= mText.Length)
+                startIndex = mText.Length - 1;
+
+            if (endIndex >= mText.Length)
+                endIndex = mText.Length - 1;
+
+            return string.Join("\n", mText.Substring(startIndex, endIndex - startIndex)
+                .Split("\n")
+                .Select(part => {
+                    int i = 0;
+                    for (; i < initialIndentation - 1 && i < part.Length && part[i] == ' '; i++);
+                    return part.Substring(i);
+                }));
         }
     }
 }

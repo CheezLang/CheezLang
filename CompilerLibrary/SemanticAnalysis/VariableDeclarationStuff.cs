@@ -154,7 +154,7 @@ namespace Cheez
                                 var init = new AstArrayAccessExpr(
                                     new AstVariableRef(v, v.Initializer),
                                     new AstNumberExpr(NumberData.FromBigInt(index), Location: v.Initializer));
-                                var sub = new AstVariableDecl(subPattern, null, init, v.Mutable, Location: v);
+                                var sub = new AstVariableDecl(subPattern, null, init, v.Mutable, v.Documentation, Location: v);
                                 sub.Scope = v.Scope;
                                 sub.SetFlags(v.GetFlags());
 
@@ -196,7 +196,7 @@ namespace Cheez
                         var init = new AstArrayAccessExpr(
                             new AstConstantRef(v, v.Initializer),
                             new AstNumberExpr(NumberData.FromBigInt(index), Location: v.Initializer));
-                        var sub = new AstConstantDeclaration(subPattern, null, init, null, Location: v);
+                        var sub = new AstConstantDeclaration(subPattern, null, init, v.Documentation, null, Location: v);
                         sub.Scope = v.Scope;
                         sub.SetFlags(v.GetFlags());
 

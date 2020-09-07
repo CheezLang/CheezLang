@@ -1,0 +1,2 @@
+D:/dev/Cheez/StandardLibrary
+D:/dev/Cheez/CheezLang/examples/libraries

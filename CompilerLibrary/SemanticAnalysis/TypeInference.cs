@@ -2882,6 +2882,7 @@ namespace Cheez
                                     indexParam.TypeExpr?.Clone(),
                                     new AstNumberExpr(NumberData.FromBigInt(index)),
                                     null,
+                                    null,
                                     Location: indexParam);
                                 stmts.Add(idx);
                             }
@@ -3028,6 +3029,7 @@ namespace Cheez
                                     indexParam.TypeExpr?.Clone(),
                                     new AstNumberExpr(NumberData.FromBigInt(index)),
                                     null,
+                                    null,
                                     Location: indexParam);
                                 stmts.Add(idx);
                             }
@@ -3036,6 +3038,7 @@ namespace Cheez
                                     param.Name.Clone(),
                                     param.TypeExpr?.Clone(),
                                     new AstTypeRef(member.type, func.Location),
+                                    null,
                                     null,
                                     Location: param);
                                 stmts.Add(funcVar);
@@ -4814,7 +4817,7 @@ namespace Cheez
                 if (isConst)
                     // for some strange reason we cant pass a typeref as type expr for this constant declaration
                     // because this messes something up... idk :/
-                    varDecl = new AstConstantDeclaration(param.Name, null, link, null, Location: arg.Location);
+                    varDecl = new AstConstantDeclaration(param.Name, null, link, null, null, Location: arg.Location);
                 else
                     varDecl = new AstVariableDecl(param.Name, new AstTypeRef(param.Type, param), link, true, Location: arg.Location);
                 varDecl.SetFlag(StmtFlags.IsLocal, true);

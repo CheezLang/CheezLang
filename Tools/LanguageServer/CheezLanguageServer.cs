@@ -462,9 +462,9 @@ namespace CheezLanguageServer
             }
         }
 
-        private Documentation BuildDocumentation((AstStatement stmt, Uri uri, string container, TypeKind containerKind) sym, SymbolInformation symbolInfo)
+        private string BuildDocumentationMarkdown((AstStatement stmt, Uri uri, string container, TypeKind containerKind) sym, SymbolInformation symbolInfo, bool saveSpace)
         {
-            var sb = new StringWriter();
+var sb = new StringWriter();
             void Indent(int level)
             {
                 for (int i = 0; i < level; i++)
@@ -495,38 +495,60 @@ namespace CheezLanguageServer
                         case AstFuncExpr func:
                             {
                                 Indent(1);
-                                sb.Write("fn");
-                                if (func.Parameters.Count == 0)
-                                    sb.Write("()");
-                                sb.Write(" -> ");
-                                if (func.ReturnTypeExpr != null)
-                                    sb.Write(func.ReturnTypeExpr.Accept(printer));
-                                else
-                                    sb.Write("void");
 
-                                if (func.Directives != null)
-                                {
-                                    foreach (var directive in func.Directives)
+                                if (saveSpace) {
+                                    sb.Write("fn(");
+
+                                    sb.Write(string.Join(", ", func.Parameters.Select(param => param.Accept(printer))));
+
+                                    sb.Write(") -> ");
+                                    if (func.ReturnTypeExpr != null)
+                                        sb.Write(func.ReturnTypeExpr.Accept(printer));
+                                    else
+                                        sb.Write("void");
+
+                                    if (func.Directives != null)
                                     {
-                                        sb.Write(" ");
-                                        sb.Write(directive.Accept(printer));
+                                        foreach (var directive in func.Directives)
+                                        {
+                                            sb.Write(" ");
+                                            sb.Write(directive.Accept(printer));
+                                        }
                                     }
-                                }
+                                } else {
+                                    sb.Write("fn");
+                                    if (func.Parameters.Count == 0)
+                                        sb.Write("()");
+                                    sb.Write(" -> ");
+                                    if (func.ReturnTypeExpr != null)
+                                        sb.Write(func.ReturnTypeExpr.Accept(printer));
+                                    else
+                                        sb.Write("void");
 
-                                if (func.Parameters.Count > 0)
-                                {
-                                    sb.WriteLine();
-                                    Indent(1);
-                                    sb.WriteLine("(");
-
-                                    foreach (var param in func.Parameters)
+                                    if (func.Directives != null)
                                     {
-                                        Indent(2);
-                                        sb.WriteLine(param.Accept(printer));
+                                        foreach (var directive in func.Directives)
+                                        {
+                                            sb.Write(" ");
+                                            sb.Write(directive.Accept(printer));
+                                        }
                                     }
 
-                                    Indent(1);
-                                    sb.Write(")");
+                                    if (func.Parameters.Count > 0)
+                                    {
+                                        sb.WriteLine();
+                                        Indent(1);
+                                        sb.WriteLine("(");
+
+                                        foreach (var param in func.Parameters)
+                                        {
+                                            Indent(2);
+                                            sb.WriteLine(param.Accept(printer));
+                                        }
+
+                                        Indent(1);
+                                        sb.Write(")");
+                                    }
                                 }
 
                                 break;
@@ -669,15 +691,22 @@ namespace CheezLanguageServer
             }
 
             sb.WriteLine();
-            sb.WriteLine();
-            sb.WriteLine();
-            sb.WriteLine("### Documentation");
 
+            if (sym.stmt is AstDecl decl2 && !string.IsNullOrWhiteSpace(decl2.Documentation)) {
+                sb.WriteLine();
+                sb.WriteLine(decl2.Documentation);
+            }
+
+            return sb.ToString();
+        }
+
+        private Documentation BuildDocumentation((AstStatement stmt, Uri uri, string container, TypeKind containerKind) sym, SymbolInformation symbolInfo, bool saveSpace)
+        {
             return new Documentation(new MarkupContent
             {
                 kind = "markdown",
-                value = sb.ToString()
-            });
+                value = BuildDocumentationMarkdown(sym, symbolInfo, saveSpace)
+            }); 
         }
 
         protected override Result<CompletionResult, ResponseError> Completion(CompletionParams @params) {
@@ -705,7 +734,7 @@ namespace CheezLanguageServer
                         {
                             var symbolInfo = GetSymbolInformationForStatement(sym.stmt, sym.containerKind, sym.container, sym.uri);
 
-                            Documentation documentation = BuildDocumentation(sym, symbolInfo);
+                            Documentation documentation = BuildDocumentation(sym, symbolInfo, false);
 
                             return new CompletionItem
                             {
@@ -768,20 +797,15 @@ namespace CheezLanguageServer
             try
             {
                 var matchingSymbols = GetSymbolInformationAtPosition(@params.textDocument.uri, @params.position);
+                var contents = matchingSymbols.Select(
+                    sym => BuildDocumentationMarkdown(sym, GetSymbolInformationForStatement(sym.stmt, sym.containerKind, sym.container, sym.uri), true));
                 return Result<Hover, ResponseError>.Success(new Hover
                 {
-                    contents = new HoverContents(matchingSymbols.Select(sym => {
-                        string container = "";
-                        if (string.IsNullOrWhiteSpace(sym.container))
-                        {
-                            container = " --- " + Path.GetFileName(GetFilePath(sym.uri));
-                        }
-                        else
-                        {
-                            container = " --- " + sym.container + " --- " + Path.GetFileName(GetFilePath(sym.uri));
-                        }
-                        return sym.stmt.ToString() + container;
-                    }).ToArray())
+                    contents = new HoverContents(new MarkupContent
+                    {
+                        kind = "markdown",
+                        value = string.Join("\n---\n", contents)
+                    })
                 });
             }
             catch (Exception e)
@@ -793,10 +817,6 @@ namespace CheezLanguageServer
                     message = $"{e.Message}"
                 });
             }
-            return Result<Hover, ResponseError>.Error(new ResponseError{
-                code = ErrorCodes.InvalidParams,
-                message = $"File '{@params.textDocument}' not found"
-            });
         }
 
         protected override Result<SignatureHelp, ResponseError> SignatureHelp(TextDocumentPositionParams @params)

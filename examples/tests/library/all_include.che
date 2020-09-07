@@ -1,6 +1,5 @@
 // io
 import std.io
-import std.io.file
 import std.io.stdio
 
 // mem

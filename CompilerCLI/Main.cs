@@ -13,6 +13,7 @@ using Cheez;
 using Cheez.Ast.Expressions;
 using Cheez.Ast;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace CheezCLI
 {
@@ -215,15 +216,22 @@ namespace CheezCLI
             // load additional module paths from modules.txt if existent
             {
                 string exePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-                string modulesFile = Path.Combine(exePath, "modules.txt");
-                if (File.Exists(modulesFile))
-                {
-                    foreach (var modulePath in File.ReadAllLines(modulesFile))
+                void LoadModulesFile(string fileName) {
+                    string modulesFile = Path.Combine(exePath, fileName);
+                    if (File.Exists(modulesFile))
                     {
-                        if (!string.IsNullOrWhiteSpace(modulePath))
-                            compiler.ModulePaths.Add(modulePath);
+                        foreach (var modulePath in File.ReadAllLines(modulesFile))
+                        {
+                            if (!string.IsNullOrWhiteSpace(modulePath))
+                                compiler.ModulePaths.Add(modulePath);
+                        }
                     }
                 }
+                LoadModulesFile("modules.txt");
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                    LoadModulesFile("modules_linux.txt");
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    LoadModulesFile("modules_windows.txt");
             }
 
             foreach (var file in options.Files)
@@ -305,8 +313,14 @@ namespace CheezCLI
                         int currentExpectedOutput = 0;
                         int linesFailed = 0;
 
+                        string exeFileExtension = "";
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                            exeFileExtension = ".exe";
+                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                            exeFileExtension = "";
+
                         var testProc = Utilities.StartProcess(
-                            Path.Combine(options.OutDir, options.OutName + ".exe"),
+                            Path.Combine(options.OutDir, options.OutName + exeFileExtension),
                             "",
                             workingDirectory: options.OutDir,
                             stdout: (s, e) => {
