@@ -101,7 +101,8 @@
       <AdditionalDependencies>libclang.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetPath)" D:\dev\Cheez\CheezLang\examples\libraries\libclang\lib /y</Command>
+      <Command>xcopy "$(TargetPath)" D:\dev\Cheez\CheezLang\examples\libraries\libclang\lib /y
+xcopy "$(SolutionDir)" $(TargetPath) /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -120,7 +121,8 @@
       <AdditionalDependencies>libclang.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetPath)" D:\dev\Cheez\CheezLang\examples\libraries\libclang\lib /y</Command>
+      <Command>xcopy "$(TargetPath)" D:\dev\Cheez\CheezLang\examples\libraries\libclang\lib /y
+xcopy "$(TargetPath)" $(SolutionDir) /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -143,7 +145,8 @@
       <AdditionalDependencies>libclang.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetPath)" D:\dev\Cheez\CheezLang\examples\libraries\libclang\lib /y</Command>
+      <Command>xcopy "$(TargetPath)" D:\dev\Cheez\CheezLang\examples\libraries\libclang\lib /y
+xcopy "$(SolutionDir)" $(TargetPath) /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -166,7 +169,8 @@
       <AdditionalDependencies>libclang.lib;lua53.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(TargetPath)" D:\dev\Cheez\CheezLang\examples\libraries\libclang\lib /y</Command>
+      <Command>xcopy "$(TargetPath)" D:\dev\Cheez\CheezLang\examples\libraries\libclang\lib /y
+xcopy "$(TargetPath)" $(SolutionDir) /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

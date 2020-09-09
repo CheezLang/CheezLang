@@ -74,7 +74,7 @@ private:
     void emit_cheez_function_parameter_list(std::ostream& stream, CXCursor func, bool start_with_comma = false, bool prefer_pointers = false);
     void emit_cheez_function_argument_list(std::ostream& stream, CXCursor func, bool start_with_comma = false);
     void emit_param_name(std::ostream& stream, CXCursor cursor, int index);
-    void emit_cheez_type(std::ostream& stream, const CXType& type, bool is_func_param, bool behind_pointer = false, bool prefer_pointers = false);
+    void emit_cheez_type(std::ostream& stream, const CXType& type, bool is_func_param, bool behind_pointer = false, bool prefer_pointers = false, bool add_mutability_mod = false);
     void emit_c_type(std::ostream& stream, const CXType& type, const char* name, bool is_func_param, bool behind_pointer = false);
     void emit_namespace(std::ostream& stream, size_t ns);
     void emit_parameter_default_value(std::ostream& stream, CXCursor c, CXToken* tokens, int num_tokens, int default_value_start, bool emit_equals);
@@ -89,7 +89,9 @@ private:
     static const luaL_Reg lua_lib[4];
     bool call_custom_handler(std::ostream& stream, const char* handler_name, CXCursor cursor, const char* decl_name, CXType decl_type);
     bool call_custom_handler(std::ostream& stream, const char* handler_name, CXCursor cursor, const char* decl_name);
-    const char* call_custom_transformer(std::ostream& stream, const char* name, CXCursor cursor, const char* decl_name, const char* member_name);
+    bool call_macro_handler(std::ostream& stream, const char* handler_name, CXCursor cursor, const std::string& decl_name, const std::string& macro_text);
+    bool call_typedef_handler(std::ostream& stream, const char* handler_name, CXCursor cursor, const std::string& decl_name, const std::string& typedef_text);
+    std::string call_custom_transformer(std::ostream& stream, const char* name, CXCursor cursor, const char* decl_name, const char* member_name);
     void call_custom_handler(std::ostream& stream, const char* handler_name);
 
     int to_cheez_string_lua(lua_State* L);
