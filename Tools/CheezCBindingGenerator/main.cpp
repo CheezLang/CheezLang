@@ -40,8 +40,8 @@ int main(int argc, char** argv) {
     cheez_file_path.concat(".che");
     c_file_path.concat(".cpp");
 
-    std::ofstream cheez_file{ cheez_file_path };
-    std::ofstream c_file{ c_file_path };
+    std::ofstream cheez_file{ cheez_file_path, std::ios::binary };
+    std::ofstream c_file{ c_file_path, std::ios::binary };
 
     if (!cheez_file || !c_file) {
         std::cerr << "Failed to create output files '" << cheez_file_path << "' and '" << c_file_path << "'\n";
