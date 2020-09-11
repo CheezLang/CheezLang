@@ -7,7 +7,7 @@ Main :: () {
     s := String.empty()
     t := true
     p5 := 0.5
-    s.appendf("uiae {} {}", (t, p5))
+    s.appendf("uiae {} {:.1}", (t, p5))
 
     C.printf("`"%.*s`"`n", s.length, s.get_raw())
 }
