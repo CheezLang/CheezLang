@@ -61,6 +61,13 @@ impl JsonValue {
         }
     }
 
+    as_array_mut :: (&mut Self) -> &mut Array[JsonValue] {
+        return match self {
+            .JsonArray($arr) -> arr
+            _ -> @assert(false)
+        }
+    }
+
     as_array :: (&Self) -> &Array[JsonValue] {
         return match self {
             .JsonArray($arr) -> arr
@@ -69,6 +76,13 @@ impl JsonValue {
     }
 
     to_map :: (Self) -> Table[string, JsonValue] {
+        return match self {
+            .JsonObject($map) -> map
+            _ -> @assert(false)
+        }
+    }
+
+    as_map_mut :: (&mut Self) -> &mut Table[string, JsonValue] {
         return match self {
             .JsonObject($map) -> map
             _ -> @assert(false)
@@ -84,7 +98,7 @@ impl JsonValue {
 }
 
 impl Printable for JsonValue {
-    print :: (&Self, str: &String, format: string) {
+    print :: (&Self, str: &mut String, format: string) {
         s := fmt.format_any(self)
         str += &s
     }
@@ -104,13 +118,13 @@ impl Clone for JsonValue {
 }
 
 serialize_json_value :: (val: &JsonValue, pretty: bool = false) -> String {
-    result := String.empty()
+    mut result := String.empty()
     if pretty then serialize_json_value_helper_pretty(&result, val)
     else serialize_json_value_helper(&result, val)
     return result
 }
 
-serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
+serialize_json_value_helper_pretty :: (result: &mut String, val: &JsonValue) {
     match val {
         .JsonNull -> result.append_string("null")
         .JsonBool($val) -> result.appendf("{}", *val)
@@ -158,7 +172,7 @@ serialize_json_value_helper_pretty :: (result: &String, val: &JsonValue) {
     }
 }
 
-serialize_json_value_helper :: (result: &String, val: &JsonValue) {
+serialize_json_value_helper :: (result: &mut String, val: &JsonValue) {
     match val {
         .JsonNull -> result.append_string("null")
         .JsonBool($val) -> result.appendf("{}", *val)
@@ -211,7 +225,7 @@ parse_json :: ($T: type, json: string) -> Option[T] {
     return result
 }
 
-parse_json_into_json_value :: (json: string) -> Option[JsonValue], string {
+parse_json_into_json_value :: (mut json: string) -> Option[JsonValue], string {
     remaining, typ := next_json_token(json)
     json = remaining
 
@@ -340,9 +354,9 @@ escape_json_string :: (str: string) -> String {
 }
 
 unescape_json_string :: (str: string) -> String {
-    result := String.with_capacity(str.bytes.length)
+    mut result := String.with_capacity(str.bytes.length)
 
-    was_backslash := false
+    mut was_backslash := false
     for c in str {
         if was_backslash {
             result.append_char(match c {
@@ -377,7 +391,7 @@ JsonTokenType :: enum #copy {
     Colon
 }
 
-next_json_token :: (json: string) -> (string, JsonTokenType) {
+next_json_token :: (mut json: string) -> (string, JsonTokenType) {
     use JsonTokenType
 
     // skip whitespace and comments
@@ -402,7 +416,7 @@ next_json_token :: (json: string) -> (string, JsonTokenType) {
         return json, EndOfFile
     }
 
-    token_type, len := match char(*json[0]) {
+    mut token_type, len := match char(*json[0]) {
         '{' -> OpenBrace, 1
         '}' -> ClosingBrace, 1
         '[' -> OpenBracket, 1
@@ -413,8 +427,8 @@ next_json_token :: (json: string) -> (string, JsonTokenType) {
         // strings
         '"' -> {
             json = json[1..]
-            str := json
-            len := 0
+            mut str := json
+            mut len := 0
 
             while json.bytes.length > 0 {
                 c := char(*json[0])
@@ -439,8 +453,8 @@ next_json_token :: (json: string) -> (string, JsonTokenType) {
         }
 
         $c if c.is_alpha() -> {
-            str := json
-            len := 0
+            mut str := json
+            mut len := 0
 
             while json.bytes.length > 0 {
                 c, l := Utf8.decode(json.bytes)
@@ -482,14 +496,14 @@ next_json_token :: (json: string) -> (string, JsonTokenType) {
     return json, token_type
 }
 
-next_json_token_number :: (json: string) -> (string, JsonTokenType) {
-    str := json
+next_json_token_number :: (mut json: string) -> (string, JsonTokenType) {
+    mut str := json
 
     if char(*json[0]) == '-' {
         json = json[1..]
     }
 
-    int_digits := 0
+    mut int_digits := 0
     digits := json
     while json.bytes.length > 0 {
         c := char(*json[0])
@@ -511,7 +525,7 @@ next_json_token_number :: (json: string) -> (string, JsonTokenType) {
     if json.bytes.length > 0 and char(*json[0]) == '.' {
         json = json[1..]
 
-        float_digits := 0
+        mut float_digits := 0
         while json.bytes.length > 0 {
             c := char(*json[0])
             if !c.is_digit() then break
@@ -532,7 +546,7 @@ next_json_token_number :: (json: string) -> (string, JsonTokenType) {
             json = json[1..]
         }
 
-        exp_digits := 0
+        mut exp_digits := 0
 
         while json.bytes.length > 0 {
             c := char(*json[0])

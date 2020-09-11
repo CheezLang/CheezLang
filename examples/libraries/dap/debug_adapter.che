@@ -27,7 +27,7 @@ CONTENT_LENGTH  :: "Content-Length: "
 #export_scope
 
 CommandHandler :: trait {
-    adapter : ^DebugAdapter
+    adapter : ^mut DebugAdapter
 
     initialize      :: (&Self) -> Result[(), String];
     launch          :: (&Self, arguments: DapReqLaunch) -> Result[(), String];
@@ -48,7 +48,7 @@ DAEvent :: enum {
 }
 
 DebugAdapter :: struct {
-    Func :: fn(&CommandHandler, JsonValue) -> Result[JsonValue, String]
+    Func :: fn(&mut CommandHandler, JsonValue) -> Result[JsonValue, String]
 
     command_handler : Rc[CommandHandler]
     command_table   : Table[string, Func]
@@ -179,7 +179,7 @@ impl DebugAdapter {
             events              = RingQueue[DAEvent].new()
         ))
 
-        adapter.get().command_handler.get().adapter = ^*adapter.get()
+        adapter.get_mut().command_handler.get_mut().adapter = ^*adapter.get()
         return adapter
     }
 
@@ -187,24 +187,24 @@ impl DebugAdapter {
         events.push(event)
     }
 
-    run :: (&Self) {
+    run :: (&mut Self) {
         running = true
         command_loop()
         exit :: (i: i32);
         exit(0)
     }
 
-    handle_command :: (&Self, handler: &CommandHandler, command: String, arguments: JsonValue) -> Result[JsonValue, String] {
+    handle_command :: (&Self, handler: &mut CommandHandler, command: String, arguments: JsonValue) -> Result[JsonValue, String] {
         return match command_table.get(command.slice()) {
             Some($func) -> func(handler, arguments)
             None -> {
                 Memory.drop(arguments)
-                Err(fmt.format("Failed to handle command '{}'", [command]))
+                Err(fmt.format("Failed to handle command '{}'", [command.slice()]))
             }
         }
     }
 
-    command_loop :: (&Self) {
+    command_loop :: (&mut Self) {
         while running {
             request_text := read_request_string()
             if request_text.get_length() == 0 then break
@@ -232,7 +232,7 @@ impl DebugAdapter {
                     response["command"] = JsonValue.JsonString(command.clone())
                     response["request_seq"] = JsonValue.JsonNumber(cast(double) seq)
 
-                    match handle_command(command_handler.get(), command, JsonValue.JsonObject(arguments)) {
+                    match handle_command(command_handler.get_mut(), command, JsonValue.JsonObject(arguments)) {
                         Ok($body) -> {
                             response["success"] = JsonValue.JsonBool(true)
                             response["body"] = body
@@ -249,7 +249,7 @@ impl DebugAdapter {
 
                     response_obj := JsonValue.JsonObject(response)
                     response_string := serialize_json_value(&response_obj, pretty = true)
-                    g_logger.log("{}", [response_string], "<- (R) ")
+                    g_logger.log("{}", [response_string.slice()], "<- (R) ")
 
                     send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
 
@@ -268,7 +268,7 @@ impl DebugAdapter {
     }
 
     read_request_string :: (&Self) -> String {
-        read_char :: (c: ^char) -> bool {
+        read_char :: (c: ^mut char) -> bool {
             read := 0u32
 
             b := 0u8
@@ -311,8 +311,8 @@ impl DebugAdapter {
         io.formatln(format, args)
     }
     
-    emit_event :: (&Self, name: string, body: JsonValue) {
-        response := Table[string, JsonValue].create(strings_equal)
+    emit_event :: (&mut Self, name: string, body: JsonValue) {
+        mut response := Table[string, JsonValue].create(strings_equal)
         response["type"] = JsonValue.JsonString("event".to_owned())
         response["event"] = JsonValue.JsonString(name.to_owned())
         response["body"] = body
@@ -321,17 +321,17 @@ impl DebugAdapter {
 
         response_obj := JsonValue.JsonObject(response)
         response_string := serialize_json_value(&response_obj, pretty = true)
-        g_logger.log("{}", [response_string], "<- (E) ")
+        g_logger.log("{}", [response_string.slice()], "<- (E) ")
 
         send_message("{}{}{}{}", [CONTENT_LENGTH, response_string.get_length(), ENDLINE_CHARS, response_string])
     }
 
-    emit_initialized_event :: (&Self) {
+    emit_initialized_event :: (&mut Self) {
         body := Table[string, JsonValue].create(strings_equal)
         emit_event("initialized", JsonValue.JsonObject(body))
     }
 
-    emit_stop_event :: (&Self, reason: string, description: Option[string] = None, text: Option[string] = None) {
+    emit_stop_event :: (&mut Self, reason: string, description: Option[string] = None, text: Option[string] = None) {
         body := Table[string, JsonValue].create(strings_equal)
         body["reason"] = JsonValue.JsonString(reason.to_owned())
         body["threadId"] = JsonValue.JsonNumber(0)
@@ -346,19 +346,19 @@ impl DebugAdapter {
         emit_event("stopped", JsonValue.JsonObject(body))
     }
 
-    emit_continued_event :: (&Self) {
+    emit_continued_event :: (&mut Self) {
         body := Table[string, JsonValue].create(strings_equal)
         body["threadId"] = JsonValue.JsonNumber(0)
         body["allThreadsContinued"] = JsonValue.JsonBool(true)
         emit_event("continued", JsonValue.JsonObject(body))
     }
 
-    emit_terminated_event :: (&Self) {
+    emit_terminated_event :: (&mut Self) {
         body := Table[string, JsonValue].create(strings_equal)
         emit_event("terminated", JsonValue.JsonObject(body))
     }
 
-    emit_output_event :: (&Self, output: String, category: string = "console") {
+    emit_output_event :: (&mut Self, output: String, category: string = "console") {
         output += "`n"
         body := Table[string, JsonValue].create(strings_equal)
         body["output"] = JsonValue.JsonString(output)
@@ -375,7 +375,7 @@ DapReqLaunch :: struct {
 
 impl Into[DapReqLaunch] for JsonValue {
     into :: (json: &Self) -> DapReqLaunch {
-        map := json.as_map()
+        map := cast(&mut Table[string, JsonValue]) json.as_map()
         return DapReqLaunch(
             program = match map.get("program") {
                 Some($prog) -> prog.to_string()
@@ -432,7 +432,7 @@ DapSetBreakpoints :: struct {
 
 impl Into[DapSetBreakpoints] for JsonValue {
     into :: (&Self) -> DapSetBreakpoints {
-        map := self.as_map()
+        map := cast(&mut Table[string, JsonValue]) self.as_map()
         breakpoints : Array[DapBreakpoint] = match map.get("breakpoints") {
             Some($arr) -> arr.as_array().into()
             None -> Array[DapBreakpoint].create()
@@ -476,10 +476,10 @@ DapReqVariables :: struct {
 
 impl Into[DapReqVariables] for JsonValue {
     into :: (&Self) -> DapReqVariables {
-        map := self.as_map()
+        mut map := cast(&mut Table[string, JsonValue]) self.as_map()
         variablesReference := map.at("variablesReference").to_number()
-        start := map.get("start").map_ref((v: &JsonValue) => int(v.to_number()))
-        count := map.get("count").map_ref((v: &JsonValue) => int(v.to_number()))
+        start := map.get("start").map((v: &JsonValue) => int(v.to_number()))
+        count := map.get("count").map((v: &JsonValue) => int(v.to_number()))
         return DapReqVariables(
             variables_reference = cast(int) variablesReference
             start               = start
