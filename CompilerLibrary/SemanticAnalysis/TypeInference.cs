@@ -3519,7 +3519,7 @@ namespace Cheez
                         for (int i = 0; i < expr.Arguments.Count; i++)
                             InferArg(i, null);
 
-                        var text = string.Join("", expr.Arguments.Select(a => a.Value?.ToString()));
+                        var text = string.Join("", expr.Arguments.Select(a => a.Expr.Value?.ToString()));
                         Console.WriteLine($"[@log] {text}");
                         expr.Type = CheezType.Void;
                         break;

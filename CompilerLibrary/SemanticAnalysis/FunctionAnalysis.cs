@@ -489,14 +489,14 @@ namespace Cheez
             return whl;
         }
 
-        private bool TryBorrowMutable(AstExpression expr, bool deref)
+        private (bool isMutable, AstExpression failed) TryBorrowMutable(AstExpression expr, bool deref)
         {
             if (deref)
             {
                 switch (expr.Type)
                 {
-                    case ReferenceType t: return t.Mutable;
-                    case PointerType t: return t.Mutable;
+                    case ReferenceType t: return (t.Mutable, expr);
+                    case PointerType t: return (t.Mutable, expr);
                     //case SliceType t: return t.Mutable;
                 }
             }
@@ -507,16 +507,16 @@ namespace Cheez
                     switch (id.Symbol)
                     {
                         case AstVariableDecl decl:
-                            return decl.Mutable;
+                            return (decl.Mutable, expr);
 
                         case Using use:
                             return TryBorrowMutable(use.Expr, deref);
 
                         case AstParameter param:
-                            return param.Mutable;
+                            return (param.Mutable, expr);
 
                         case null:
-                            return false;
+                            return (false, expr);
 
                         default:
                             throw new Exception("Not implemented");
@@ -526,13 +526,13 @@ namespace Cheez
                     switch (sym.Symbol)
                     {
                         case AstVariableDecl decl:
-                            return decl.Mutable;
+                            return (decl.Mutable, expr);
 
                         case Using use:
                             return TryBorrowMutable(use.Expr, deref);
 
                         case AstParameter param:
-                            return param.Mutable;
+                            return (param.Mutable, expr);
 
                         default:
                             throw new Exception("Not implemented");
@@ -548,7 +548,12 @@ namespace Cheez
                     return TryBorrowMutable(acc.SubExpression, true);
 
                 case AstTupleExpr tuple:
-                    return tuple.Values.All(v => TryBorrowMutable(v, deref));
+                    {
+                        var subs = tuple.Values.Select(v => TryBorrowMutable(v, deref));
+                        if (subs.Any(v => !v.isMutable))
+                            return subs.FirstOrDefault(v => !v.isMutable);
+                        return (true, expr);
+                    }
 
                 case AstTempVarExpr temp:
                     return TryBorrowMutable(temp.Expr, deref);
@@ -557,7 +562,7 @@ namespace Cheez
                 default:
                     ReportError(expr.Location, $"Invalid pattern ({expr.Type})");
                     //throw new Exception("Not implemented");
-                    return true;
+                    return (true, expr);
             }
         }
 
@@ -587,9 +592,10 @@ namespace Cheez
 
             if (!ass.OnlyGenerateValue)
             {
-                if (!TryBorrowMutable(ass.Pattern, false))
+                var (isMutable, failed) = TryBorrowMutable(ass.Pattern, false);
+                if (!isMutable)
                 {
-                    ReportError(ass.Pattern.Location, $"Can't assign to non-mutable pattern ({ass.Pattern.Type})");
+                    ReportError(failed.Location, $"Can't assign to non-mutable pattern ({failed.Type}): '{failed}' is immutable");
                 }
             }
 
