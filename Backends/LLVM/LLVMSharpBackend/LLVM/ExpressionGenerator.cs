@@ -19,7 +19,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         //[DebuggerStepThrough()]
         private LLVMValueRef GenerateExpression(AstExpression expr, bool deref)
         {
-            if (expr.Value != null)
+            if (expr.Value != null && !(expr is AstBlockExpr))
             {
                 var result = CheezValueToLLVMValue(expr.Type, expr.Value);
                 if (result.Pointer.ToInt64() != 0)
