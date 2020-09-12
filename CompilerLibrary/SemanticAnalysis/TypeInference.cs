@@ -1809,12 +1809,14 @@ namespace Cheez
             cast.SubExpression.Scope = cast.Scope;
             cast.SubExpression = InferTypeHelper(cast.SubExpression, subExpected, context);
             ConvertLiteralTypeToDefaultType(cast.SubExpression, cast.Type);
-
             if (cast.SubExpression.Type.IsErrorType || cast.Type.IsErrorType)
                 return cast;
 
             if (cast.SubExpression.Type == cast.Type)
+            {
+                cast.Value = cast.SubExpression.Value;
                 return cast.SubExpression;
+            }
 
             var to = cast.Type;
             var from = cast.SubExpression.Type;
@@ -1921,6 +1923,22 @@ namespace Cheez
 
                 case (PointerType t, ReferenceType f)
                     when CheezType.TypesMatch(t.TargetType, f.TargetType):
+                    return cast;
+
+                case (IntType t, IntType f):
+                    if (cast.SubExpression.Value != null) cast.Value = cast.SubExpression.Value;
+                    return cast;
+
+                case (FloatType t, IntType f):
+                    if (cast.SubExpression.Value != null) cast.Value = NumberData.FromDouble((double)((NumberData)cast.SubExpression.Value).ToLong());
+                    return cast;
+
+                case (IntType t, FloatType f):
+                    if (cast.SubExpression.Value != null) cast.Value = NumberData.FromBigInt((long)((NumberData)cast.SubExpression.Value).ToDouble());
+                    return cast;
+
+                case (FloatType t, FloatType f):
+                    if (cast.SubExpression.Value != null) cast.Value = cast.SubExpression.Value;
                     return cast;
             }
 

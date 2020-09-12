@@ -16,7 +16,7 @@ $name = [System.IO.Path]::GetFileNameWithoutExtension($file)
 
 
 Write-Host "Testing '$name' ..."
-&$cheezc $file --out ./gen/tests --name $name --stdlib "./examples"  --run --test --error-source @Passthrough
+&$cheezc $file --out ./gen/tests --name $name --stdlib "./examples"  --run --test --error-source --print-ast-analysed ./gen/tests/int/$name.chea --emit-llvm-ir @Passthrough
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Test '$name' failed." -ForegroundColor Red

@@ -226,13 +226,15 @@ bool CppToCheezGenerator::call_typedef_handler(std::ostream& stream, const char*
         if (lua_isstring(lua_state, -1)) {
             auto str = lua_tostring(lua_state, -1);
             lua_pop(lua_state, 1);
-            if (*str)
+            if (*str) {
                 stream << str << "\n";
-            return true;
+                return true;
+            }
+            return false;
         }
         else {
             lua_pop(lua_state, 1);
-            return false;
+            return true;
         }
     }
     else if (!lua_isnil(lua_state, -1)) {
@@ -409,9 +411,43 @@ bool CppToCheezGenerator::do_generate_bindings(std::ostream& cheez_file, std::os
     return true;
 }
 
-void CppToCheezGenerator::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
-    auto visitAllChildren = [this, namespac](CXCursor c, CXCursor parent, CXClientData client_data)
+std::string tokensToString(CXTranslationUnit unit, CXCursor cursor, int offset = 0, std::string sep = "") {
+
+    auto range = clang_getCursorExtent(cursor);
+    CXToken* tokens;
+    unsigned num_tokens;
+    clang_tokenize(unit, range, &tokens, &num_tokens);
+
+    // first token should be the name of the macro
+    // if there is only one token, it's a macro like
+    // #define IDK
+    // so we don't need to translate it
+    if (num_tokens <= 1)
+        return "";
+
+    std::stringstream stream;
+
+    bool comma = false;
+    for (int i = offset; i < num_tokens; i++) {
+        if (comma)
+            stream << sep;
+        auto token_str = clang_getTokenSpelling(unit, tokens[i]);
+        auto token_str_c = clang_getCString(token_str);
+        stream << token_str;
+        clang_disposeString(token_str);
+
+        comma = true;
+    }
+    return stream.str();
+}
+
+
+bool CppToCheezGenerator::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
+    bool ok = true;
+    auto visitAllChildren = [&](CXCursor c, CXCursor parent, CXClientData client_data)
     {
+        std::string uiae = clang_getCString(clang_getCursorSpelling(c));
+        //BREAK_ON(uiae, "ImGui_ImplGlfw_InitForOpenGL")
         //if (strcmp("FILE", clang_getCString(name)) == 0) {
         //    int a = 0;
         //}
@@ -473,10 +509,41 @@ void CppToCheezGenerator::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
             break;
 
         case CXCursor_ClassTemplate:
-        case CXCursor_UnexposedDecl:
         case CXCursor_FunctionTemplate:
             // can't handle those
             break;
+
+        case CXCursor_UnexposedDecl:
+        {
+            std::string stringRepr = tokensToString(m_translation_unit, c, 0, " ");
+            // handle extern "C"
+            if (stringRepr.starts_with("extern \"C\"")) {
+                //sort_stuff_into_lists(c, m_namespaces.size() - 1);
+                return CXChildVisit_Recurse;
+            }
+            else {
+                //auto location = clang_getCursorLocation(c);
+                //CXFile file;
+                //unsigned line, column;
+                //clang_getFileLocation(location, &file, &line, &column, nullptr);
+                //std::cout << clang_getCursorKindSpelling(clang_getCursorKind(c)) << " at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+                //std::cout << stringRepr << "\n";
+            }
+
+            break;
+        }
+
+        case CXCursor_CXXBaseSpecifier:
+        {
+            //ok = false;
+            std::cout << "[WARNING] TODO: " << "Cursor '" << clang_getCursorSpelling(c) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(c)) << "'\n";
+            auto location = clang_getCursorLocation(c);
+            CXFile file;
+            unsigned line, column;
+            clang_getFileLocation(location, &file, &line, &column, nullptr);
+            std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
+            break;
+        }
 
         default: {
             std::cout << "[ERROR] TODO: " << "Cursor '" << clang_getCursorSpelling(c) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(c)) << "'\n";
@@ -494,6 +561,8 @@ void CppToCheezGenerator::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
 
     auto data = getFreeCallbackData(&visitAllChildren, nullptr);
     clang_visitChildren(tu, getFreeCallback(&visitAllChildren), &data);
+
+    return ok;
 }
 
 void CppToCheezGenerator::emit_typedef_decl(const Declaration& decl) {
@@ -599,38 +668,13 @@ void CppToCheezGenerator::emit_variable_decl(const Declaration& decl) {
     clang_disposeString(name);
 }
 
-std::string tokensToString(CXTranslationUnit unit, CXCursor cursor) {
-
-    auto range = clang_getCursorExtent(cursor);
-    CXToken* tokens;
-    unsigned num_tokens;
-    clang_tokenize(unit, range, &tokens, &num_tokens);
-
-    // first token should be the name of the macro
-    // if there is only one token, it's a macro like
-    // #define IDK
-    // so we don't need to translate it
-    if (num_tokens <= 1)
-        return "";
-
-    std::stringstream stream;
-
-    for (int i = 1; i < num_tokens; i++) {
-        auto token_str = clang_getTokenSpelling(unit, tokens[i]);
-        auto token_str_c = clang_getCString(token_str);
-        stream << token_str;
-        clang_disposeString(token_str);
-    }
-    return stream.str();
-}
-
 void CppToCheezGenerator::emit_macro(const Declaration& decl) {
     auto cursor = decl.declaration;
     auto name = clang_getCursorSpelling(cursor);
     auto name_c = clang_getCString(name);
 
     auto name_str = std::string(name_c);
-    auto macro_text = tokensToString(m_translation_unit, cursor);
+    auto macro_text = tokensToString(m_translation_unit, cursor, 1);
 
     // ignore macros starting with __, builtin macros and function like macros
     if (clang_Cursor_isMacroFunctionLike(cursor) || clang_Cursor_isMacroBuiltin(cursor))
@@ -745,7 +789,7 @@ void CppToCheezGenerator::emit_struct_decl(const Declaration& decl) {
                     emit_cheez_type(m_cheez_impls, return_type, false, true, true);
                     m_cheez_impls << " = default\n";
                 }
-                m_cheez_impls << "        __c__" << struct_name << "_" << name << "_" << member_index << "(^mut self";
+                m_cheez_impls << "        __c__" << struct_name << "_" << name << "_" << member_index << "(^mut *self";
                 if (return_type.kind != CXTypeKind::CXType_Void) {
                     m_cheez_impls << ", ^mut result";
                 }
@@ -754,7 +798,7 @@ void CppToCheezGenerator::emit_struct_decl(const Declaration& decl) {
                 if (return_type.kind != CXTypeKind::CXType_Void) {
                     m_cheez_impls << "        return ";
                     if (return_type.kind == CXTypeKind::CXType_LValueReference)
-                        m_cheez_impls << "<<";
+                        m_cheez_impls << "*";
                     m_cheez_impls << "result\n";
                 }
                 m_cheez_impls << "    }\n";
@@ -1238,8 +1282,10 @@ void CppToCheezGenerator::emit_function_decl(const Declaration& decl) {
         m_cheez_impls << ")\n";
         if (return_type.kind != CXTypeKind::CXType_Void) {
             m_cheez_impls << "    return ";
-            if (return_type.kind == CXTypeKind::CXType_LValueReference)
-                m_cheez_impls << "<<";
+            if (return_type.kind == CXTypeKind::CXType_LValueReference) {
+                m_cheez_impls << "&mut *";
+                //m_cheez_impls << "*";
+            }
             m_cheez_impls << "result\n";
         }
         m_cheez_impls << "}\n";
@@ -1430,7 +1476,7 @@ void CppToCheezGenerator::emit_cheez_function_parameter_list(std::ostream& strea
                     std::cout << "[ERROR] failed to get default value from parameter\n";
                     std::cout << "  at " << clang_getFileName(file) << ":" << line << ":" << column << "\n";
                 } else if (has_default_value) {
-                    emit_parameter_default_value(stream, c, tokens, num_tokens, default_value_start, true);
+                    //emit_parameter_default_value(stream, c, tokens, num_tokens, default_value_start, true);
                 }
             }
 
@@ -1455,8 +1501,18 @@ void CppToCheezGenerator::emit_cheez_function_argument_list(std::ostream& stream
                 stream << ", ";
 
             CXType type = clang_getCursorType(c);
-            if (pass_type_by_pointer(type) || type.kind == CXType_LValueReference)
-                stream << "&";
+            if (pass_type_by_pointer(type)) {
+                if (type.kind == CXType_LValueReference)
+                    stream << "^mut *";
+                else
+                    stream << "^mut ";
+            }
+            else {
+                if (type.kind == CXType_LValueReference)
+                    stream << "^mut *";
+                else
+                    stream << "";
+            }
             emit_param_name(stream, c, param_index);
             param_index += 1;
             break;
@@ -1525,6 +1581,7 @@ void CppToCheezGenerator::emit_cheez_type(std::ostream& stream, const CXType& ty
     auto is_const = strstr(spelling_c, "const ") == spelling_c;
     auto const_modifier = "mut ";
     if (is_const) {
+        spelling_c += strlen("const ");
         switch (type.kind) {
         case CXTypeKind::CXType_UChar:
         case CXTypeKind::CXType_UShort:
@@ -1667,7 +1724,7 @@ void CppToCheezGenerator::emit_cheez_type(std::ostream& stream, const CXType& ty
 
     // enum
     case CXTypeKind::CXType_Enum: {
-        stream << clang_getTypeSpelling(type);
+        stream << spelling_c;
         break;
     }
 
@@ -1688,10 +1745,10 @@ void CppToCheezGenerator::emit_cheez_type(std::ostream& stream, const CXType& ty
             case CXCursorKind::CXCursor_UnionDecl:
             case CXCursorKind::CXCursor_ClassDecl:
                 if (prefer_pointers && !behind_pointer) {
-                    stream << "^" << const_modifier << clang_getTypeSpelling(type);
+                    stream << "^" << const_modifier << spelling_c;
                 }
                 else {
-                    stream << clang_getTypeSpelling(type);
+                    stream << spelling_c;
                 }
                 break;
 
@@ -1704,15 +1761,28 @@ void CppToCheezGenerator::emit_cheez_type(std::ostream& stream, const CXType& ty
     }
 
     default: {
+        if (size <= 0) {
+            size = 0;
+        }
+
         auto unknown = m_unknown_types.find(size);
         if (unknown == m_unknown_types.end()) {
-            m_cheez_unknown_types << "__UNKNOWN_" << size << " :: struct #copy { _: [" << size << "]u8 = default }\n";
+            if (size == 0) {
+
+                m_cheez_unknown_types << "__UNKNOWN_0 :: struct {}\n";
+            }
+            else {
+                m_cheez_unknown_types << "__UNKNOWN_" << size << " :: struct #copy {\n    _: [" << size << "]u8 = default\n}\n";
+            }
             m_unknown_types.insert(size);
         }
 
-        auto spelling = clang_getTypeSpelling(type);
+        auto spelling = spelling_c;
         if (prefer_pointers && !behind_pointer)
             stream << "^" << const_modifier;
+        else if (size == 0) {
+            std::cerr << "[WARNING] Failed to translate type to cheez '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << "), size was negative. Replaced with __UNKNOWN_0\n";
+        }
         stream << "__UNKNOWN_" << size;
         //std::cerr << "[ERROR] Failed to translate type to cheez '" << spelling << "' (" << clang_getTypeKindSpelling(type.kind) << ") - replaced with __UNKNOWN_" << size << "\n";
         break;
@@ -1904,7 +1974,9 @@ void CppToCheezGenerator::emit_c_type(std::ostream& stream, const CXType& type, 
 
     default: {
         auto spelling = clang_getTypeSpelling(type);
-        stream << "__UNKNOWN__";
+        std::string actual_name = clang_getCString(spelling);
+        //stream << "__UNKNOWN__";
+        stream << actual_name;
         if (!behind_pointer)
             stream << "*";
         stream << " " << name;

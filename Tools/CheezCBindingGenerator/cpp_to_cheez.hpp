@@ -53,7 +53,7 @@ public:
     bool generate_bindings_from_lua(std::filesystem::path lua_file, std::ostream& cheez_file, std::ostream& cpp_file);
 
 private:
-    void sort_stuff_into_lists(CXCursor tu, size_t namespac);
+    bool sort_stuff_into_lists(CXCursor tu, size_t namespac);
     void reset();
 
     bool do_generate_bindings(std::ostream& cheez_file, std::ostream& cpp_file);
