@@ -3676,6 +3676,49 @@ namespace Cheez
                         return expr;
                     }
 
+                case "offsetof":
+                    {
+                        if (expr.Arguments.Count != 2)
+                        {
+                            ReportError(expr, $"@offsetof takes one argument");
+                            return expr;
+                        }
+
+                        var type = InferArg(0, CheezType.Type);
+                        if (type.Type.IsErrorType)
+                            return expr;
+
+                        var field = InferArg(1, CheezType.String);
+                        if (field.Type.IsErrorType)
+                            return expr;
+
+                        if (type.Type != CheezType.Type || !(type.Value is StructType))
+                        {
+                            ReportError(type, $"First argument must be a struct type but is '{type.Type}'");
+                            return expr;
+                        }
+
+                        if (field.Type != CheezType.String || !(field.Value is string))
+                        {
+                            ReportError(type, $"Second argument must be a string but is '{type.Type}'");
+                            return expr;
+                        }
+
+                        var str = (StructType)type.Value;
+                        var fieldName = field.Value as string;
+
+                        var member = str.Declaration.Members.FirstOrDefault(m => m.Name == fieldName);
+                        if (member == null)
+                        {
+                            ReportError(field.Location, $"'{fieldName}' is not a member of {str}");
+                            return expr;
+                        }
+
+                        expr.Type = IntType.GetIntType(8, false);
+                        expr.Value = NumberData.FromBigInt(member.Offset);
+                        return expr;
+                    }
+
                 case "tuple_type_member":
                     {
                         if (expr.Arguments.Count != 2)
