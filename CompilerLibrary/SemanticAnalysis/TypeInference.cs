@@ -4443,6 +4443,34 @@ namespace Cheez
             var sub = expr.Right.Name;
             switch (subType)
             {
+                case CodeType code:
+                    {
+                        expr.SetFlag(ExprFlags.IsLValue, false);
+                        var name = expr.Right.Name;
+
+                        var ast = (AstExpression)expr.Left.Value;
+
+                        if (name == "file")
+                        {
+                            expr.Type = CheezType.String;
+                            expr.Value = ast.Location.Beginning.file;
+                            return expr;
+                        }
+                        if (name == "line")
+                        {
+                            expr.Type = IntType.GetIntType(8, false);
+                            expr.Value = NumberData.FromBigInt(ast.Location.Beginning.line);
+                            return expr;
+                        }
+                        if (name == "column")
+                        {
+                            expr.Type = IntType.GetIntType(8, false);
+                            expr.Value = NumberData.FromBigInt(ast.Location.Beginning.Column);
+                            return expr;
+                        }
+                        return GetImplFunctions(expr, subType, expr.Right.Name, context);
+                    }
+
                 case StringType str:
                     {
                         expr.SetFlag(ExprFlags.IsLValue, false);

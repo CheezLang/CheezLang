@@ -345,7 +345,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var len = builder.CreateExtractValue(message, 0, "");
                 var str = builder.CreateExtractValue(message, 1, "");
 
-                UpdateStackTracePosition(cc);
+                UpdateStackTracePosition(builder, cc);
                 CreateExit($"[PANIC] {cc.Location.Beginning}: %.*s", 1, len, str);
                 return default;
             }
@@ -363,7 +363,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 builder.PositionBuilderAtEnd(bbFalse);
 
-                UpdateStackTracePosition(cc);
+                UpdateStackTracePosition(builder, cc);
                 CreateExit($"[ASSERT] {cc.Location.Beginning}: {msg}\n{cc.Arguments[0].ToString().Indent("> ")}", 1);
 
                 builder.PositionBuilderAtEnd(bbTrue);
@@ -941,8 +941,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         typeInfoPtr = builder.CreateLoad(typeInfoPtr, "type_info_ptr");
 
                         {
-                            CheckPointerNull(GetTraitPtr(typeInfoPtr), cast, $"Cast from trait pointer to any pointer resulted in null type pointer (cast({t}) {f})");
-                            CheckPointerNull(GetTraitVtable(typeInfoPtr), cast, $"Cast from trait pointer to any pointer resulted in null type pointer (cast({t}) {f})");
+                            CheckPointerNull(builder, GetTraitPtr(typeInfoPtr), cast, $"Cast from trait pointer to any pointer resulted in null type pointer (cast({t}) {f})");
+                            CheckPointerNull(builder, GetTraitVtable(typeInfoPtr), cast, $"Cast from trait pointer to any pointer resulted in null type pointer (cast({t}) {f})");
                         }
 
                         var result = LLVM.GetUndef(toLLVM);
@@ -1951,8 +1951,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 // check if pointer is null
                 if (checkForNullTraitObjects)
                 {
-                    CheckPointerNull(vtablePtr, c.Arguments[0].Expr, "vtable pointer of trait object is null");
-                    CheckPointerNull(toPointer, c.Arguments[0].Expr, "object pointer of trait object is null");
+                    CheckPointerNull(builder, vtablePtr, c.Arguments[0].Expr, "vtable pointer of trait object is null");
+                    CheckPointerNull(builder, toPointer, c.Arguments[0].Expr, "object pointer of trait object is null");
                 }
 
                 // load function pointer
@@ -1970,7 +1970,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 foreach (var a in c.Arguments.Skip(1))
                     arguments.Add(GenerateExpression(a, true));
 
-                UpdateStackTracePosition(c);
+                UpdateStackTracePosition(builder, c);
                 var traitCall = builder.CreateCall(funcPointer, arguments.ToArray(), "");
                 LLVM.SetInstructionCallConv(traitCall, LLVM.GetFunctionCallConv(funcPointer));
 
@@ -1987,7 +1987,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     return GenerateExpression(a, true);
                 }).ToArray();
 
-                UpdateStackTracePosition(c);
+                UpdateStackTracePosition(builder, c);
                 var call = builder.CreateCall(func, args, "");
                 var callConv = LLVM.GetFunctionCallConv(func);
                 LLVM.SetInstructionCallConv(call, callConv);
@@ -2022,8 +2022,8 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     func.SetFunctionCallConv((uint)LLVMCallConv.LLVMX86StdcallCallConv);
                 }
 
-                CheckPointerNull(func, c.FunctionExpr, "Attempting to call null function pointer");
-                UpdateStackTracePosition(c);
+                CheckPointerNull(builder, func, c.FunctionExpr, "Attempting to call null function pointer");
+                UpdateStackTracePosition(builder, c);
                 var call = builder.CreateCall(func, args, "");
                 var callConv = LLVM.GetFunctionCallConv(func);
                 LLVM.SetInstructionCallConv(call, callConv);
@@ -2491,7 +2491,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         // check if pointer is null
                         if (checkForNullTraitObjects)
                         {
-                            CheckPointerNull(ptr, expr.Right, "object pointer of trait object is null");
+                            CheckPointerNull(builder, ptr, expr.Right, "object pointer of trait object is null");
                         }
 
                         ptr = builder.CreatePtrToInt(ptr, LLVM.Int64Type(), "ptr.int");

@@ -88,6 +88,15 @@ namespace Cheez
                                 size = Utilities.GetNextAligned(size, ma);
                             }
 
+                            if (s.Declaration.TryGetDirective("align", out var dir))
+                            {
+                                if (dir.Arguments.Count != 0 && dir.Arguments[0] is AstNumberExpr num)
+                                {
+                                    var desired = ((NumberData)num.Value).ToUlong();
+                                    alignment = Math.Max(alignment, (int)desired);
+                                }
+                            }
+
                             size = Utilities.GetNextAligned(size, alignment);
 
                             s.SetSizeAndAlignment(size, alignment);

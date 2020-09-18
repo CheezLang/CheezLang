@@ -73,7 +73,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.CreateStore(previous, stackTraceTop);
         }
 
-        private void UpdateStackTracePosition(ILocation location)
+        private void UpdateStackTracePosition(IRBuilder builder, ILocation location)
         {
             if (!keepTrackOfStackTrace)
                 return;
@@ -161,7 +161,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             builder.PositionBuilderAtEnd(bbEnd);
         }
 
-        private void CheckPointerNull(LLVMValueRef pointer, ILocation location, string message)
+        private void CheckPointerNull(IRBuilder builder, LLVMValueRef pointer, ILocation location, string message)
         {
             if (!checkForNullTraitObjects)
                 return;
@@ -174,7 +174,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             builder.PositionBuilderAtEnd(bbNull);
 
-            UpdateStackTracePosition(location);
+            UpdateStackTracePosition(builder, location);
             CreateExit($"[{location.Beginning}] {message}", 2);
             builder.CreateUnreachable();
 
@@ -582,7 +582,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                         if (targetData.AlignmentOfType(llvmType) != (uint)s.GetAlignment())
                         {
-                            System.Console.WriteLine($"[ERROR] {s.Declaration.Name}: struct alignment mismatch: cheez {s.GetAlignment()}, llvm {targetData.AlignmentOfType(llvmType)}");
+                            System.Console.WriteLine($"[WARNING] {s.Declaration.Name}: struct alignment mismatch: cheez {s.GetAlignment()}, llvm {targetData.AlignmentOfType(llvmType)}");
                         }
 
                         return llvmType;
@@ -956,7 +956,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     var memDtor = GetDestructor(m.AssociatedType);
                     var memPtr = builder.CreateStructGEP(self, 1, "");
                     memPtr = builder.CreatePointerCast(memPtr, CheezTypeToLLVMType(m.AssociatedType).GetPointerTo(), "");
-                    UpdateStackTracePosition(m.Location);
+                    UpdateStackTracePosition(builder, m.Location);
                     builder.CreateCall(memDtor, new LLVMValueRef[] { memPtr }, "");
                 }
 
@@ -980,7 +980,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 {
                     var memDtor = GetDestructor(memType);
                     var memPtr = builder.CreateStructGEP(self, (uint)mem.Index, "");
-                    UpdateStackTracePosition(mem.Location);
+                    UpdateStackTracePosition(builder, mem.Location);
                     builder.CreateCall(memDtor, new LLVMValueRef[] { memPtr }, "");
                 }
             }
