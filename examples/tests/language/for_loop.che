@@ -1,0 +1,68 @@
+#test_expect_output("v: i64 = 1
+v: i64 = 2
+v: i64 = 3
+v: &i64 = 1
+v: &i64 = 2
+v: &i64 = 3
+v: &mut i64 = 1
+v: &mut i64 = 2
+v: &mut i64 = 3
+
+v: i64 = 1
+v: i64 = 2
+v: i64 = 3
+v: &i64 = 1
+v: &i64 = 2
+v: &i64 = 3
+
+v: i64 = 1
+v: i64 = 2
+v: i64 = 3
+v: &i64 = 1
+v: &i64 = 2
+v: &i64 = 3
+v: &mut i64 = 1
+v: &mut i64 = 2
+v: &mut i64 = 3")
+
+io :: import std.io
+
+Main :: () {
+    a := [1, 2, 3]
+    b : []int = a[..]
+    c : []mut int = a[..]
+
+    for v in a[..] {
+        io.formatln("v: {} = {}", [@typename(@typeof(v)), v])
+    }
+    for &v in a[..] {
+        io.formatln("v: {} = {}", [@typename(@typeof(v)), *v])
+    }
+    for &mut v in a[..] {
+        io.formatln("v: {} = {}", [@typename(@typeof(v)), *v])
+    }
+
+    io.println("")
+
+    for v in b {
+        io.formatln("v: {} = {}", [@typename(@typeof(v)), v])
+    }
+    for &v in b {
+        io.formatln("v: {} = {}", [@typename(@typeof(v)), *v])
+    }
+    // for &mut v in b {
+    //     io.formatln("v: {} = {}", [@typename(@typeof(v)), v])
+    // }
+
+    io.println("")
+
+    for v in c {
+        io.formatln("v: {} = {}", [@typename(@typeof(v)), v])
+    }
+    for &v in c {
+        io.formatln("v: {} = {}", [@typename(@typeof(v)), *v])
+    }
+    for &mut v in c {
+        io.formatln("v: {} = {}", [@typename(@typeof(v)), *v])
+    }
+}
