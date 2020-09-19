@@ -257,6 +257,7 @@ namespace Cheez
             }
 
             c.Initializer.AttachTo(c);
+            c.Initializer.SetFlag(ExprFlags.ValueRequired, true);
             c.Initializer = InferType(c.Initializer, c.Type);
 
             if (c.Type == null)

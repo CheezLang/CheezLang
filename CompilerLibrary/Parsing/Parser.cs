@@ -982,8 +982,10 @@ namespace Cheez.Parsing
             AstExpression body;
             AstIdExpr label = null;
 
+            AstExpression it = null;
+
             var beg = Consume(TokenType.KwFor, ErrMsg("keyword 'for'", "at beginning of for loop"));
-            SkipNewlines();
+            //SkipNewlines();
 
             // parse arguments
             if (CheckToken(TokenType.OpenParen))
@@ -996,31 +998,48 @@ namespace Cheez.Parsing
 
             var expr = ParseExpression(false);
 
-            if (expr is AstIdExpr vn)
+            if (CheckToken(TokenType.Comma))
             {
-                if (CheckToken(TokenType.Comma))
-                {
-                    varName = vn;
-                    NextToken();
-                    indexName = ParseIdentifierExpr();
+                it = expr;
+                NextToken();
+                indexName = ParseIdentifierExpr();
 
-                    ConsumeUntil(TokenType.KwIn, null);
-                    collection = ParseExpression(false);
-                }
-                else if (CheckToken(TokenType.KwIn))
-                {
-                    varName = vn;
-                    NextToken();
-                    collection = ParseExpression(false);
-                }
-                else
-                {
-                    collection = expr;
-                }
+                ConsumeUntil(TokenType.KwIn, null);
+                collection = ParseExpression(false);
+            }
+            else if (CheckToken(TokenType.KwIn))
+            {
+                it = expr;
+                NextToken();
+                collection = ParseExpression(false);
             }
             else
             {
                 collection = expr;
+            }
+
+            switch (it)
+            {
+                case AstIdExpr id:
+                    varName = id;
+                    break;
+
+                case AstReferenceTypeExpr add when add.Target is AstIdExpr id:
+                    varName = id;
+                    if (args == null) args = new List<AstArgument>();
+                    args.Add(new AstArgument(new AstBoolExpr(true, add.Beginning), new AstIdExpr("by_ref", false, add.Beginning), add.Beginning));
+                    if (add.Mutable)
+                        args.Add(new AstArgument(new AstBoolExpr(true, add.Beginning), new AstIdExpr("mutable", false, add.Beginning), add.Beginning));
+
+                    break;
+
+                case null:
+                    break;
+
+                default:
+                    varName = new AstIdExpr("_", false, it.Location);
+                    ReportError(it.Location, "Invalid for loop iterator name");
+                    break;
             }
 
             SkipNewlines();

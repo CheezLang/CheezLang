@@ -2146,6 +2146,9 @@ namespace Cheez
                     return expr;
                 }
 
+                expr.IfCase.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
+                expr.ElseCase.SetFlag(ExprFlags.ValueRequired, expr.GetFlag(ExprFlags.ValueRequired));
+
                 var cond = (bool)expr.Condition.Value;
                 if (cond)
                 {
@@ -4185,13 +4188,6 @@ namespace Cheez
                 ConvertLiteralTypeToDefaultType(exprStmt.Expr, expected);
                 expr.Type = exprStmt.Expr.Type;
 
-                //AnalyseExprStatement(exprStmt, true, false);
-
-                if (exprStmt.Expr.Type.IsComptimeOnly)
-                {
-                    ReportError(exprStmt.Expr, $"This type of expression is not allowed here");
-                }
-
                 expr.SetFlag(ExprFlags.IsLValue, exprStmt.Expr.GetFlag(ExprFlags.IsLValue));
 
                 if (exprStmt.GetFlag(StmtFlags.Returns))
@@ -4207,14 +4203,6 @@ namespace Cheez
             {
                 expr.Type = CheezType.Void;
             }
-
-            //if (!expr.GetFlag(ExprFlags.Anonymous) && !expr.GetFlag(ExprFlags.DontApplySymbolStatuses))
-            //{
-            //    // copy initialized symbols
-            //    expr.SubScope.ApplyInitializedSymbolsToParent();
-            //}
-
-
 
             return expr;
         }
