@@ -28,8 +28,8 @@ namespace Cheez.Types.Complex
         public AstTraitTypeExpr Declaration { get; }
         public AstTraitTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
-        public override bool IsErrorType => Arguments.Any(a => (a as CheezType).IsErrorType);
-        public override bool IsPolyType => Arguments.Any(a => (a as CheezType).IsPolyType);
+        public override bool IsErrorType => Arguments.Any(a => (a is CheezType t && t.IsErrorType));
+        public override bool IsPolyType => Arguments.Any(a => (a is CheezType t && t.IsPolyType) || (a is PolyValue));
 
         public object[] Arguments { get; }
 
