@@ -2,6 +2,7 @@ use import std.array
 use import std.string
 use import std.mem.allocator
 use import std.util
+use import std.printable
 fs  :: import std.io.fs
 io  :: import std.io
 fmt :: import std.fmt
@@ -84,12 +85,26 @@ parse_arguments_from_string :: ($T: type, str: string) -> ^T {
     return parse_arguments(T, args.slice())
 }
 
+parse_cmd_arguments :: ($T: type) -> Result[T, ()] {
+    args := get_cmd_args()
+    result := parse_arguments(T, args.slice()[1..])
+    if result != null {
+        defer free(result)
+        return Ok(*result)
+    } else {
+        return Err()
+    }
+}
+
 parse_arguments :: ($T: type, args: []String) -> ^T {
     result := alloc(T)
     ok := parse_arguments_help(@type_info(T), &args, result)
 
     if !ok {
-        Memory.drop(*result)
+        // This can cause the program to crash if the result was partially initialized
+        // But we leak memory.
+        // clap2 should fix this problem
+        // Memory.drop(*result)
         free(result)
         return null
     }
