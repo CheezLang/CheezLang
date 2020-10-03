@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -562,13 +563,40 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                         var llvmType = LLVM.StructCreateNamed(context, name);
                         typeMap[s] = llvmType;
 
-                        var memTypes = s.Declaration.Members.Select(m => CheezTypeToLLVMType(m.Type));
+                        var memTypes = new List<LLVMTypeRef>(s.Declaration.Members.Count);
+                        var offsets = new uint[s.Declaration.Members.Count];
+                        int currentSize = 0;
+                        int i = 0; 
+                        foreach (var mem in s.Declaration.Members)
+                        {
+                            if (currentSize % mem.Type.GetAlignment() != 0)
+                            {
+                                // add padding
+                                int padding = mem.Type.GetAlignment() - currentSize % mem.Type.GetAlignment();
+                                memTypes.Add(LLVM.ArrayType(LLVM.Int8Type(), (uint)padding));
+                                currentSize += padding;
+                            }
 
+                            offsets[i] = (uint)memTypes.Count;
+                            memTypes.Add(CheezTypeToLLVMType(mem.Type));
+                            currentSize += (int)((targetData.SizeOfTypeInBits(memTypes.Last()) + 7) / 8);
+                            i += 1;
+                        }
+                        if (currentSize % s.GetAlignment() != 0)
+                        {
+                            // add padding
+                            int padding = s.GetAlignment() - currentSize % s.GetAlignment();
+                            memTypes.Add(LLVM.ArrayType(LLVM.Int8Type(), (uint)padding));
+                            currentSize += padding;
+                        }
+
+                        structMemberOffsets[s] = offsets;
+                        
                         LLVM.StructSetBody(llvmType, memTypes.ToArray(), false);
 
                         foreach (var m in s.Declaration.Members) {
                             int myOffset = m.Offset;
-                            int llvmOffset = (int)LLVM.OffsetOfElement(targetData, llvmType, (uint)m.Index);
+                            int llvmOffset = (int)LLVM.OffsetOfElement(targetData, llvmType, offsets[m.Index]);
 
                             if (myOffset != llvmOffset) {
                                 System.Console.WriteLine($"[ERROR] {s.Declaration.Name}: offset mismatch at {m.Index}: cheez {myOffset}, llvm {llvmOffset}");
@@ -580,7 +608,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             System.Console.WriteLine($"[ERROR] {s.Declaration.Name}: struct size mismatch: cheez {s.GetSize()}, llvm {targetData.SizeOfTypeInBits(llvmType) / 8}");
                         }
 
-                        if (targetData.AlignmentOfType(llvmType) != (uint)s.GetAlignment())
+                        if (targetData.AlignmentOfType(llvmType) != (uint)s.GetAlignment() && !s.Declaration.HasDirective("align")) 
                         {
                             System.Console.WriteLine($"[WARNING] {s.Declaration.Name}: struct alignment mismatch: cheez {s.GetAlignment()}, llvm {targetData.AlignmentOfType(llvmType)}");
                         }
@@ -728,7 +756,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
                 StructType p => p.Declaration.Members.Aggregate(
                     LLVM.GetUndef(CheezTypeToLLVMType(p)),
-                    (str, m) => builder.CreateInsertValue(str, GenerateExpression(m.Decl.Initializer, true), (uint)m.Index, "")),
+                    (str, m) => builder.CreateInsertValue(str, GenerateExpression(m.Decl.Initializer, true), structMemberOffsets[p][m.Index], "")),
 
                 TraitType t => LLVM.ConstNamedStruct(CheezTypeToLLVMType(t), new LLVMValueRef[] {
                             LLVM.ConstPointerNull(LLVM.Int8Type().GetPointerTo()),
@@ -979,7 +1007,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 if (workspace.TypeHasDestructor(memType))
                 {
                     var memDtor = GetDestructor(memType);
-                    var memPtr = builder.CreateStructGEP(self, (uint)mem.Index, "");
+                    var memPtr = builder.CreateStructGEP(self, structMemberOffsets[type][mem.Index], "");
                     UpdateStackTracePosition(builder, mem.Location);
                     builder.CreateCall(memDtor, new LLVMValueRef[] { memPtr }, "");
                 }
@@ -1172,6 +1200,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 LLVMTypeKind.LLVMIntegerTypeKind => LLVM.ConstInt(rttiType, 0, false),
                 LLVMTypeKind.LLVMFloatTypeKind => LLVM.ConstReal(rttiType, 0),
 
+                LLVMTypeKind.LLVMArrayTypeKind => LLVM.ConstArray(
+                    LLVM.GetElementType(rttiType),
+                    Enumerable.Range(0, (int)LLVM.GetArrayLength(rttiType)).Select(_ => GetZeroInitializer(LLVM.GetElementType(rttiType))).ToArray()
+                ),
+
                 _ => throw new NotImplementedException(),
             };
         }
@@ -1204,7 +1237,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                             .Select(func => LLVM.ConstNamedStruct(rttiTypeInfoImplFunction, new LLVMValueRef[] {
                         RTTITypeInfoAsPtr(func.FunctionType),
                         CheezValueToLLVMValue(CheezType.String, func.Name),
-                        LLVM.ConstPointerCast(valueMap[func], LLVM.FunctionType(LLVM.VoidType(), new LLVMTypeRef[0], false).GetPointerTo())
+                        LLVM.ConstPointerCast(valueMap[func], LLVM.FunctionType(LLVM.VoidType(), Array.Empty<LLVMTypeRef>(), false).GetPointerTo())
                     }))
                 );
 
@@ -1460,7 +1493,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 GenerateRTTIForNullAny();
 
             //
-            var off = LLVM.OffsetOfElement(targetData, CheezTypeToLLVMType(s), (uint)m.Index);
+            var off = LLVM.OffsetOfElement(targetData, CheezTypeToLLVMType(s), structMemberOffsets[s][m.Index]);
             off = (ulong)m.Offset;
             var initializer = valueMap.GetValueOrDefault(m, LLVM.ConstNull(rttiTypeInfoStructMemberInitializer.GetPointerTo()));
 

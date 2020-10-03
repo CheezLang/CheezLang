@@ -2801,6 +2801,26 @@ namespace Cheez
                         return expr;
                     }
 
+                case "is_copy":
+                    {
+                        if (expr.Arguments.Count != 1)
+                        {
+                            ReportError(expr.Location, "@is_copy takes 1 argument");
+                            return expr;
+                        }
+
+                        var arg = InferArg(0, CheezType.Type);
+                        if (arg.Type != CheezType.Type || !(arg.Value is CheezType))
+                        {
+                            ReportError(expr, "Argument must be a type");
+                            return expr;
+                        }
+
+                        expr.Type = CheezType.Bool;
+                        expr.Value = (arg.Value as CheezType).IsCopy;
+                        return expr;
+                    }
+
                 case "impl":
                     {
                         if (expr.Arguments.Count != 2)
@@ -6116,6 +6136,10 @@ namespace Cheez
             }
 
             if (sym is AstConstantDeclaration con) {
+                if (con.Type == null || con.Value == null)
+                {
+                    throw new Exception($"Value or type of constant decl is null when using it with identifier '{expr.Name}' at {expr.Location}. This shouldn't happen.");
+                }
                 expr.Type = con.Type;
                 expr.Value = con.Value;
             }

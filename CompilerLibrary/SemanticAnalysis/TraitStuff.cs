@@ -217,7 +217,8 @@ namespace Cheez
 
         public bool TypeHasTrait(CheezType type, TraitType trait)
         {
-            UpdateTypeImplMap();
+            GetImplsForType(type);
+            //UpdateTypeImplMap();
             return trait.Declaration.Implementations.ContainsKey(type);
         }
     }

@@ -52,6 +52,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private Dictionary<object, int> vtableIndices = new Dictionary<object, int>();
         private Dictionary<object, ulong> vtableOffsets = new Dictionary<object, ulong>();
         private Dictionary<AstImplBlock, LLVMValueRef> vtableMap = new Dictionary<AstImplBlock, LLVMValueRef>();
+        private Dictionary<StructType, uint[]> structMemberOffsets = new Dictionary<StructType, uint[]>();
 
         // c lib
         private LLVMValueRef exit;

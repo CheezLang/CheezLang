@@ -45,6 +45,35 @@ namespace Cheez
                         break;
                     }
 
+                case AstTraitTypeExpr str:
+                    {
+                        if (str.Parameters != null)
+                        {
+                            foreach (var p in str.Parameters)
+                                CollectTypeDependencies(decl, p.TypeExpr);
+                        }
+
+                        foreach (var m in str.Declarations)
+                        {
+                            switch (m)
+                            {
+                                //case AstVariableDecl v:
+                                //    if (v.TypeExpr != null)
+                                //        CollectTypeDependencies(decl, v.TypeExpr, DependencyKind.Value); // or type?
+                                //    if (v.Initializer != null)
+                                //        CollectTypeDependencies(decl, v.Initializer, DependencyKind.Type); // or type?
+                                //    break;
+
+                                case AstConstantDeclaration v:
+                                    if (v.TypeExpr != null)
+                                        CollectTypeDependencies(decl, v.TypeExpr);
+                                    CollectTypeDependencies(decl, v.Initializer);
+                                    break;
+                            }
+                        }
+                        break;
+                    }
+
                 case AstStructTypeExpr str:
                     {
                         if (str.TryGetDirective("extend", out var dir))

@@ -2221,7 +2221,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
             foreach (var mem in expr.MemberInitializers)
             {
                 var v = GenerateExpression(mem.Value, true);
-                str = builder.CreateInsertValue(str, v, (uint)mem.Index, "");
+                str = builder.CreateInsertValue(str, v, structMemberOffsets[expr.Type as StructType][mem.Index], "");
             }
 
             return str;
@@ -2466,14 +2466,15 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case StructType @struct:
                     {
                         var index = @struct.GetIndexOfMember(expr.Right.Name);
-                        
+                        var llvmIndex = structMemberOffsets[@struct][index];
+
                         if (!expr.Left.GetFlag(ExprFlags.IsLValue))
                         {
-                            var data = builder.CreateExtractValue(value, (uint)index, "");
+                            var data = builder.CreateExtractValue(value, llvmIndex, "");
                             return data;
                         }
 
-                        var dataPtr = builder.CreateStructGEP(value, (uint)index, "");
+                        var dataPtr = builder.CreateStructGEP(value, llvmIndex, "");
 
                         var result = dataPtr;
                         if (deref) result = builder.CreateLoad(dataPtr, "");
