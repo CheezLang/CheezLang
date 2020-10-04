@@ -1,0 +1,195 @@
+use import std.os.windows_types
+use import std.os.windows_functions
+use import std.os.windows_constants
+
+use import std.array
+use import std.string
+
+io  :: import std.io
+fmt :: import std.fmt
+C   :: import std.c
+
+#export_scope
+
+REXB :: 0b0100_0001
+REXX :: 0b0100_0010
+REXR :: 0b0100_0100
+REXW :: 0b0100_1000
+
+Register64 :: enum {
+    rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi
+    r8, r9, r10, r11, r12, r13, r14, r15
+    rip
+}
+
+write_prolog :: (code: &mut Array[u8]) {
+    // write_inst(code, [0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54, 0x41, 0x53, 0x41, 0x52, 0x41, 0x51, 0x41, 0x50, 0x57, 0x56, 0x55, 0x54, 0x53, 0x52, 0x51, 0x50])
+    write_push_reg64(code, .r15)
+    write_push_reg64(code, .r14)
+    write_push_reg64(code, .r13)
+    write_push_reg64(code, .r12)
+    write_push_reg64(code, .r11)
+    write_push_reg64(code, .r10)
+    write_push_reg64(code, .r9)
+    write_push_reg64(code, .r8)
+    write_push_reg64(code, .rdi)
+    write_push_reg64(code, .rsi)
+    write_push_reg64(code, .rbp)
+    write_push_reg64(code, .rsp)
+    write_push_reg64(code, .rbx)
+    write_push_reg64(code, .rdx)
+    write_push_reg64(code, .rcx)
+    write_push_reg64(code, .rax)
+}
+
+write_epilog :: (code: &mut Array[u8]) {
+    // write_inst(code, [0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x41, 0x58, 0x41, 0x59, 0x41, 0x5A, 0x41, 0x5B, 0x41, 0x5C, 0x41, 0x5D, 0x41, 0x5E, 0x41, 0x5F])
+    write_pop_reg64(code, .rax)
+    write_pop_reg64(code, .rcx)
+    write_pop_reg64(code, .rdx)
+    write_pop_reg64(code, .rbx)
+    write_pop_reg64(code, .rsp)
+    write_pop_reg64(code, .rbp)
+    write_pop_reg64(code, .rsi)
+    write_pop_reg64(code, .rdi)
+    write_pop_reg64(code, .r8)
+    write_pop_reg64(code, .r9)
+    write_pop_reg64(code, .r10)
+    write_pop_reg64(code, .r11)
+    write_pop_reg64(code, .r12)
+    write_pop_reg64(code, .r13)
+    write_pop_reg64(code, .r14)
+    write_pop_reg64(code, .r15)
+}
+
+write_push_reg64 :: (code: &mut Array[u8], reg: Register64) {
+    match reg {
+        .rax -> write_inst(code, [0x50])
+        .rcx -> write_inst(code, [0x51])
+        .rdx -> write_inst(code, [0x52])
+        .rbx -> write_inst(code, [0x53])
+        .rsp -> write_inst(code, [0x54])
+        .rbp -> write_inst(code, [0x55])
+        .rsi -> write_inst(code, [0x56])
+        .rdi -> write_inst(code, [0x57])
+        .r8  -> write_inst(code, [0x50], prefix=[REXB])
+        .r9  -> write_inst(code, [0x51], prefix=[REXB])
+        .r10 -> write_inst(code, [0x52], prefix=[REXB])
+        .r11 -> write_inst(code, [0x53], prefix=[REXB])
+        .r12 -> write_inst(code, [0x54], prefix=[REXB])
+        .r13 -> write_inst(code, [0x55], prefix=[REXB])
+        .r14 -> write_inst(code, [0x56], prefix=[REXB])
+        .r15 -> write_inst(code, [0x57], prefix=[REXB])
+        _ -> @assert(false)
+    }
+}
+
+write_pop_reg64 :: (code: &mut Array[u8], reg: Register64) {
+    match reg {
+        .rax -> write_inst(code, [0x58])
+        .rcx -> write_inst(code, [0x59])
+        .rdx -> write_inst(code, [0x5a])
+        .rbx -> write_inst(code, [0x5b])
+        .rsp -> write_inst(code, [0x5c])
+        .rbp -> write_inst(code, [0x5d])
+        .rsi -> write_inst(code, [0x5e])
+        .rdi -> write_inst(code, [0x5f])
+        .r8  -> write_inst(code, [0x58], prefix=[REXB])
+        .r9  -> write_inst(code, [0x59], prefix=[REXB])
+        .r10 -> write_inst(code, [0x5a], prefix=[REXB])
+        .r11 -> write_inst(code, [0x5b], prefix=[REXB])
+        .r12 -> write_inst(code, [0x5c], prefix=[REXB])
+        .r13 -> write_inst(code, [0x5d], prefix=[REXB])
+        .r14 -> write_inst(code, [0x5e], prefix=[REXB])
+        .r15 -> write_inst(code, [0x5f], prefix=[REXB])
+        _ -> @assert(false)
+    }
+}
+
+write_mov_reg64_imm64 :: (code: &mut Array[u8], reg: Register64, value: u64) {
+    value_bytes := Slice.from_ptr_and_length(cast(^u8)^value, 8)
+    match reg {
+        .rax -> write_inst(code, [0xb8], prefix=[REXW], imm=value_bytes)
+        .rcx -> write_inst(code, [0xb9], prefix=[REXW], imm=value_bytes)
+        .rdx -> write_inst(code, [0xba], prefix=[REXW], imm=value_bytes)
+        .rbx -> write_inst(code, [0xbb], prefix=[REXW], imm=value_bytes)
+        .rsp -> write_inst(code, [0xbc], prefix=[REXW], imm=value_bytes)
+        .rbp -> write_inst(code, [0xbd], prefix=[REXW], imm=value_bytes)
+        .rsi -> write_inst(code, [0xbe], prefix=[REXW], imm=value_bytes)
+        .rdi -> write_inst(code, [0xbf], prefix=[REXW], imm=value_bytes)
+        .r8  -> write_inst(code, [0xb8], prefix=[@bin_or(REXW, REXB)], imm=value_bytes)
+        .r9  -> write_inst(code, [0xb9], prefix=[@bin_or(REXW, REXB)], imm=value_bytes)
+        .r10 -> write_inst(code, [0xba], prefix=[@bin_or(REXW, REXB)], imm=value_bytes)
+        .r11 -> write_inst(code, [0xbb], prefix=[@bin_or(REXW, REXB)], imm=value_bytes)
+        .r12 -> write_inst(code, [0xbc], prefix=[@bin_or(REXW, REXB)], imm=value_bytes)
+        .r13 -> write_inst(code, [0xbd], prefix=[@bin_or(REXW, REXB)], imm=value_bytes)
+        .r14 -> write_inst(code, [0xbe], prefix=[@bin_or(REXW, REXB)], imm=value_bytes)
+        .r15 -> write_inst(code, [0xbf], prefix=[@bin_or(REXW, REXB)], imm=value_bytes)
+        _ -> @assert(false)
+    }
+}
+
+write_inst :: (code: &mut Array[u8], opcode: []u8, prefix: []u8 = [], modrm: []u8 = [], sib: []u8 = [], disp: []u8 = [], imm: []u8 = []) {
+    code.add_slice(prefix)
+    code.add_slice(opcode)
+    code.add_slice(modrm)
+    code.add_slice(sib)
+    code.add_slice(disp)
+    code.add_slice(imm)
+}
+
+mod_rm :: (mod: u8, arg: u8, rm: u8) -> u8 {
+    return @bin_or(
+        @bin_lsl(@bin_and(mod, 0b11),  6),
+        @bin_lsl(@bin_and(arg, 0b111), 3),
+        @bin_lsl(@bin_and(rm,  0b111), 0)
+    )
+}
+
+Function :: struct(T: type) {
+    memory : ^void = null
+}
+
+impl(T: type) Function[T] {
+    from_x86_64 :: (code: []u8) -> Result[Function[T], String] {
+        PAGE_SIZE :: 4096
+
+        if code.length == 0 {
+            return Err(fmt.format("No instructions provided"))
+        }
+
+        pages := (u64(code.length) + PAGE_SIZE - 1) / PAGE_SIZE
+        size  := pages * PAGE_SIZE
+
+        // allocate memory
+        memory := VirtualAlloc(null, size, MEM_COMMIT, PAGE_READWRITE)
+        if memory == null {
+            return Err(fmt.format("Failed to allocate memory"))
+        }
+
+        // copy code to executable memory
+        C.memcpy(memory, code.data, u64(code.length))
+
+        // mark code as executable
+        mut dummy : DWORD = 0
+        if VirtualProtect(memory, size, PAGE_EXECUTE_READ, ^mut dummy) == 0 {
+            return Err(fmt.format("Failed to mark memory as executable: {:x}", [GetLastError()]))
+        }
+
+        if FlushInstructionCache(GetCurrentProcess(), null, 0) == 0 {
+            return Err(fmt.format("Failed to flush instruction cache: {:x}", [GetLastError()]))
+        }
+
+        return Ok(Function[T](memory))
+    }
+
+    get :: (&Self) -> T {
+        return cast(T) memory
+    }
+}
+
+impl(T: type) Drop for Function[T] {
+    drop :: (&Self) {
+        VirtualFree(self.memory, 0, MEM_RELEASE)
+    }
+}

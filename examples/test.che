@@ -11,14 +11,6 @@
 // import compiler.debugger
 // import examples.ShmupEngine.src.main // crashes sometimes
 
-// use import std.io
-// uiae :: import std.io
-
-// Foo :: struct {}
-// Bar :: trait {}
-// Baz :: enum {}
-// uiae :: () {}
-
 // examples which are not working currently
 // import examples.image_processing
 // import examples.postfix
@@ -37,348 +29,64 @@
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
-// use import std.string
-// io :: import std.io
-// fs :: import std.io.fs
-
-// Main :: () {
-// }
-
-// use import std.mem.allocator
-// use import std.mem.std_heap_allocator
-// use import std.array
-
-// io :: import std.io
-
-// use import compiler.ast
-// use import compiler.error_handler
-// use import compiler.lexer
-// use import compiler.parser
-// use import compiler.string_database
-// use import compiler.type
-// use import compiler.ast_dumper
-// use import compiler.interpreter
-// use import compiler.bytecode_generator
-
-// Main :: () {
-//     string_db     := StringDatabase.new()
-//     error_handler := ConsoleErrorHandler.new(null)
-//     lexer         := Lexer.from_file("P:/dev/CheezLang/data/basic_cheez.che", string_db)
-//     match lexer {
-//         Ok($lexer) -> {
-//             error_handler.text_provider = ^lexer
-//             allocator := DEFAULT_STD_HEAP_ALLOCATOR
-//             parser := Parser.new(lexer, ^error_handler, ^allocator)
-
-//             funcs := Array[^AstNode].create()
-
-//             loop {
-//                 decl := parser.parse_constant_declaration()
-//                 if decl == null then break
-//                 io.println(dump_ast(*decl))
-
-//                 funcs.add(decl)
-//             }
-
-//             compile_and_run(string_db, error_handler, ^allocator, funcs)
-//         }
-
-//         Err(_) -> {
-//             io.println("Failed to load file")
-//         }
-//     }
-// }
-
-// print :: (format: string, args: []^any = [], category: string = "console") {
-//     io.formatln(format, args)
-// }
-
-// compile_and_run :: (string_db: &StringDatabase, error_handler: &ErrorHandler, allocator: ^Allocator, nodes: Array[^AstNode]) {
-//     io.formatln("compile and run {} functions", [nodes.count()])
-
-//     code_generator := ByteCodeGenerator.new(string_db, error_handler, allocator)
-
-//     interp := Interpreter.new()
-//     interp.printer = cast print
-    
-//     for node in nodes {
-//         decl := cast(^AstConstDecl) node
-//         name := decl.name.value
-//         func := cast(^AstFunction) ^decl.value
-
-//         code_generator.get().generate_code_for_function(func, name)
-
-//         interp.register_function(name, func.bytecode)
-//     }
-
-//     interp.call("Main")
-//     interp.run()
-// }
-
-
-// io :: import std.io
-
-// Foo :: struct {
-//     x : int
-//     y : int
-//     z : int
-// }
-
-// Main :: () {
-//     b := FooBuilder.new()
-//     io.formatln(b)
-//     f1 := FooBuilder.new().build()                      // compiler error, FooBuilder[Empty] has no method build
-//     f2 := FooBuilder.new().z(1).build()                 // compiler error, FooBuilder[X] has no method build
-//     f3 := FooBuilder.new().x(1).y(2).build()            // compiler error, FooBuilder[X or Y] has no method build
-//     f4 := FooBuilder.new().x(1).y(2).z(3).build()       // works
-//     // f4 := FooBuilder.new().y(1).x(2).z(3).x(-1).build() // works
-
-//     // io.formatln(f4)
-// }
-
-// FooBuilder :: struct(Flags: int) {
-//     _x : int = default
-//     _y : int = default
-//     _z : int = default
-// }
-
-// impl FooBuilder {
-//     new :: () -> FooBuilder[0] {
-//         return FooBuilder[0]()
-//     }
-// }
-
-// impl(Flags: int) FooBuilder[Flags] {
-//     x :: (Self, v: int) -> FooBuilder[@bin_or(Flags, 1)] {
-//         return @expected()(v, _y, _z)
-//     }
-//     y :: (Self, v: int) -> FooBuilder[@bin_or(Flags, 2)] {
-//         return @expected()(_x, v, _z)
-//     }
-//     z :: (Self, v: int) -> FooBuilder[@bin_or(Flags, 4)] {
-//         return @expected()(_x, _y, v)
-//     }
-// }
-
-// impl FooBuilder[7] {
-//     build :: (Self) -> Foo {
-//         return Foo(_x, _y, _z)
-//     }
-// }
-
-// FooBuilderFlags :: enum #flags {
-//     Empty, X, Y, Z
-// }
-
-// FooBuilder :: struct(Flags: FooBuilderFlags) {
-//     _x : int = default
-//     _y : int = default
-//     _z : int = default
-// }
-
-// impl FooBuilder {
-//     new :: () -> FooBuilder[FooBuilderFlags.Empty] {
-//         return @expected()()
-//     }
-// }
-
-// impl(Flags: FooBuilderFlags) FooBuilder[Flags] {
-//     x :: (Self, v: int) -> FooBuilder[Flags or FooBuilderFlags.X] {
-//         return @expected()(v, _y, _z)
-//     }
-//     y :: (Self, v: int) -> FooBuilder[Flags or FooBuilderFlags.Y] {
-//         return @expected()(_x, v, _z)
-//     }
-//     z :: (Self, v: int) -> FooBuilder[Flags or FooBuilderFlags.Z] {
-//         return @expected()(_x, _y, v)
-//     }
-// }
-
-// impl FooBuilder[FooBuilderFlags.X or FooBuilderFlags.Y or FooBuilderFlags.Z] {
-//     build :: (Self) -> Foo {
-//         return Foo(_x, _y, _z)
-//     }
-// }
-
-// use import std.string
-// io   :: import std.io
-// fmt  :: import std.fmt
-
-// Expr :: trait {
-//     id  : int
-//     typ : string
-//     eval :: (&Self) -> int;
-//     to_string :: (&Self) -> String;
-// }
-
-// Const :: struct Expr {
-//     value   : int
-// }
-
-// Binary :: struct Expr {
-//     op      : enum #copy {Add, Sub, Mul, Div}
-//     left    : ^Expr
-//     right   : ^Expr
-// }
-
-// impl Expr for Const {
-//     eval :: (&Self) -> int {
-//         return value
-//     }
-
-//     to_string :: (&Self) -> String {
-//         return fmt.format("{}:{}", [value, typ])
-//     }
-// }
-
-// impl Expr for Binary {
-//     eval :: (&Self) -> int {
-//         return match op {
-//             .Add -> left.eval() + right.eval()
-//             .Sub -> left.eval() - right.eval()
-//             .Mul -> left.eval() * right.eval()
-//             .Div -> left.eval() / right.eval()
-//         }
-//     }
-
-//     to_string :: (&Self) -> String {
-//         l := left.to_string()
-//         r := right.to_string()
-//         o := match op {
-//             .Add -> "+"
-//             .Sub -> "-"
-//             .Mul -> "*"
-//             .Div -> "/"
-//         }
-//         return fmt.format("({}){}({}):{}", [l.slice(), o, r.slice(), typ])
-//     }
-// }
-
-// Main :: () {
-//     a := Const(id=0, typ="int", value=1)
-//     b := Const(id=1, typ="int", value=2)
-//     c := Const(id=2, typ="int", value=3)
-//     d := Binary(id=3, typ="int", op = .Mul, left=^b, right=^c)
-//     e := Binary(id=4, typ="int", op = .Add, left=^a, right=^d)
-
-//     expr : ^Expr = ^e
-
-//     io.println(expr.id)
-//     io.println(expr.typ)
-//     io.println(expr.to_string())
-//     io.println(expr.eval())
-
-// }
-
-/*
-
-use import std.string
-use import std.printable
 use import std.array
-use import std.box
-use import std.math
-io   :: import std.io
-fmt  :: import std.fmt
-mem  :: import std.mem.allocator
-util :: import std.util
-C    :: import std.c
+use import std.string
 
-use import clap.clap2
-use import clap.clap_printable
+io  :: import std.io
+fmt :: import std.fmt
+C   :: import std.c
 
-Command :: enum {
-    #name("star")   Star
-    #name("start")  Start
-    #name("stop")   Stop
-    #name("test")   Test    : Foo
-    #name("switch") Switch  : Mode
+use import x86_64
+
+foo :: () {
+    io.formatln("Called from JIT compiled code")
 }
-Foo :: struct {
-    mode   : Mode
-    banana : int
-    bazaza : String
-    baz    : Baz
-    array  := Array[string].create()
-}
-Baz :: struct {
-    name : String
-    age  : int
-}
-Mode :: enum {
-    #name("on") On
-    #name("off") Off
+
+get_function_address :: (func: $T) -> ^void {
+    return *cast(^^void)^func
 }
 
 Main :: () {
-    command := "test -mode of -baz -nam "
-    args := Clap.tokenize(command)
+    mut code := Array[u8].new()
 
-    io.println("Arguments`n==========")
-    for(by_ref=true) a in args {
-        io.formatln(a)
+    {
+        write_prolog(&mut code)
+
+        // C.puts("Hellow asm"c)
+        write_mov_reg64_imm64(&mut code, .rcx, u64("Hello asm"c))                   // mov rcx, ^message
+        write_mov_reg64_imm64(&mut code, .rax, u64(get_function_address(C.puts)))   // mov rax, ^C.puts
+        write_inst(&mut code, [0xff], modrm=[mod_rm(0b11, 0b010, 0b000)])           // call rax
+
+        // foo()
+        write_mov_reg64_imm64(&mut code, .rax, u64(get_function_address(foo)))  // mov rax, ^foo
+        write_inst(&mut code, [0xff], modrm=[mod_rm(0b11, 0b010, 0b000)])       // call rax
+
+        // return
+        write_epilog(&mut code)
+        write_inst(&mut code, [0xc3]) // ret
     }
-    io.println("==========")
 
-    result := parse_args(@type_info(Command), args.slice())
-    io.println("===")
-    io.println(fmt.format_any(result))
-    io.println("===")
+    print_instructions(code[..])
 
-    match &result {
-        Some($result) -> {
-            match get_value(Command, result.get()) {
-                Ok($result) -> io.formatln(result)
-                Err($err)   -> print_error_message(command, err)
-            }
+    function := match Function[fn() -> u64].from_x86_64(code[..]) {
+        Ok($func) -> func
+        Err($err) -> {
+            io.println(err.slice())
+            return
         }
     }
 
-    io.println("-------------------`n`n")
-
-    for at in 0 .. (command.bytes.length + 1) {
-        io.formatln(command)
-        for 0 .. at do io.print(" ")
-        io.println("^")
-        auto_completions := get_auto_completions_at(@type_info(Command), result, at)
-        for completion in auto_completions {
-            io.formatln("> {}", [completion.slice()])
-        }
-        io.println("---`n")
-    }
+    io.formatln("1")
+    result := function.get()()
+    io.formatln("2")
 }
 
-impl CustomParser for String {
-    parse :: (args: []ClapToken, loc: Location) -> Option[Box[Expr]], []ClapToken {
-        // io.println("String.parse")
-        result := mem.alloc(CustomExpr)
-        *result = CustomExpr(@type_info(Self), loc, create_empty_expr(null, loc))
-        if args.length == 0 {
-            return Some(Box[Expr].from_pointer(cast result)), args
-        }
-
-        result.sub = create_raw_expr(result.typ, args[0])
-        return Some(Box[Expr].from_pointer(cast result)), args[1..args.length]
+print_instructions :: (code: []u8) {
+    mut result := String.with_capacity(code.length * 3)
+    for inst in code {
+        if it_index > 0 then result.append_char(' ')
+        if inst < 0x10 then result.append_char('0')
+        fmt.format_into(&mut result, "{:x}", [inst])
     }
-
-    validate :: (expr: &CustomExpr) -> Result[(), ClapError] {
-        // io.println("String.validate")
-        return match &expr.sub.get() {
-            ValueExpr($v)   -> Ok(())
-            EmptyExpr($v)   -> Err(ClapError(v.loc, fmt.format("Missing value for string argument", [])))
-            _               -> @assert(false)
-        }
-    }
-
-    get_value :: (result: ^void, expr: &CustomExpr) {
-        // io.println("String.get_value")
-        match &expr.sub.get() {
-            ValueExpr($v) -> {
-                *cast(^String)result = v.raw.clone()
-            }
-
-            _ -> @assert(false)
-        }
-    }
+    io.println(result.slice())
 }
-
-// */
