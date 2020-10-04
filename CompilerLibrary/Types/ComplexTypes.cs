@@ -261,8 +261,8 @@ namespace Cheez.Types.Complex
 
         //public Dictionary<string, long> Members { get; private set; }
         public object[] Arguments { get; }
-        public override bool IsErrorType => Arguments.Any(a => (a as CheezType).IsErrorType);
-        public override bool IsPolyType => Arguments.Any(a => (a as CheezType).IsPolyType);
+        public override bool IsErrorType => Arguments.Any(a => (a as CheezType)?.IsErrorType ?? false);
+        public override bool IsPolyType => Arguments.Any(a => (a as CheezType)?.IsPolyType ?? false);
 
         public AstEnumTypeExpr DeclarationTemplate => Declaration.Template ?? Declaration;
 
@@ -284,7 +284,7 @@ namespace Cheez.Types.Complex
 
             if (Arguments?.Length > 0)
             {
-                var args = string.Join(", ", Arguments.Select(a => a.ToString()));
+                var args = string.Join(", ", Arguments.Select(a => a?.ToString()));
                 return $"{Declaration.Name}[{args}]";
             }
             return $"{Declaration.Name}";
