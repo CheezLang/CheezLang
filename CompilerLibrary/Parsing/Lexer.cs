@@ -881,6 +881,8 @@ namespace Cheez.Parsing
             int startIndex = mLocation.index + 4;
             int initialIndentation = mLocation.Column;
 
+            int endIndex = startIndex;
+
             int level = 0;
             while (mLocation.index < mText.Length)
             {
@@ -893,26 +895,31 @@ namespace Cheez.Parsing
                     mLocation.index++;
                     level++;
                 }
+                else if (curr == '/' && next == '/' && GetChar(1) == '*' && GetChar(2) == '/')
+                {
+                    mLocation.index += 3;
+                    level--;
 
+                    if (level == 0) {
+                        break;
+                    }
+                }
                 else if (curr == '*' && next == '/')
                 {
                     mLocation.index++;
                     level--;
 
-                    if (level == 0)
+                    if (level == 0) {
                         break;
+                    }
                 }
-
                 else if (curr == '\n')
                 {
+                    endIndex = mLocation.index - 1;
                     mLocation.line++;
                     mLocation.lineStartIndex = mLocation.index;
                 }
-
-
             }
-
-            int endIndex = mLocation.index - 2;
 
             if (startIndex >= mText.Length)
                 startIndex = mText.Length - 1;

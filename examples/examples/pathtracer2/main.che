@@ -111,7 +111,7 @@ pathtracer2 :: () {
                 // io.printfln("thread {}: ({}, {}) -> ({}, {})", (context.id, context.min.x, context.min.y, context.max.x, context.max.y))
 
                 // if global_random.next_double() < 0.5 {
-                    thread_pool.enqueue(cast(fn(^RenderContext)) render_loop, context)
+                    thread_pool.enqueue(cast(fn(&RenderContext)) render_loop, &*context)
                 // }
 
                 id += 1

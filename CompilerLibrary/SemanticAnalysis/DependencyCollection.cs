@@ -71,6 +71,8 @@ namespace Cheez
                                     break;
                             }
                         }
+
+                        decl.Dependencies.Remove(decl);
                         break;
                     }
 
