@@ -3444,42 +3444,30 @@ namespace Cheez
                         }
 
                         var _breaks = expr.Arguments.Where(a => a.Name?.Name == "_break").ToArray();
-                        if (_breaks.Count() == 0)
-                        {
-                            var action = new AstBreakExpr(Location: expr);
-                            action.AttachTo(expr);
-                            code.Scope.DefineBreak(null, action);
-                        }
-                        else if (_breaks.Length == 1)
+                        if (_breaks.Length == 1)
                         {
                             var _break = _breaks[0];
                             var action = _break.Expr;
                             action.AttachTo(expr);
                             code.Scope.DefineBreak(null, action);
                         }
-                        else
+                        else if (_breaks.Length > 1)
                         {
-                            ReportError(expr, $"Exactly one argument must be named '_break'");
+                            ReportError(expr, $"Zero one argument must be named '_break'");
                         }
 
                         // continue
                         var _continues = expr.Arguments.Where(a => a.Name?.Name == "_continue").ToArray();
-                        if (_continues.Count() == 0)
-                        {
-                            var action = new AstContinueExpr(Location: expr);
-                            action.AttachTo(expr);
-                            code.Scope.DefineContinue(null, action);
-                        }
-                        else if (_continues.Length == 1)
+                        if (_continues.Length == 1)
                         {
                             var _continue = _continues[0];
                             var action = _continue.Expr;
                             action.AttachTo(expr);
                             code.Scope.DefineContinue(null, action);
                         }
-                        else
+                        else if (_continues.Length > 1)
                         {
-                            ReportError(expr, $"Exactly one argument must be named '_continue'");
+                            ReportError(expr, $"Zero or one argument must be named '_continue'");
                         }
 
                         code.Parent = expr;

@@ -2230,6 +2230,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
         private LLVMValueRef GenerateDotExpr(AstDotExpr expr, bool deref)
         {
             var type = expr.Left.Type;
+
+            if (type is ModuleType) {
+                return GenerateExpression(expr.Right, deref);
+            }
+
             var value = GenerateExpression(expr.Left, false);
 
             //switch (type)
@@ -2245,6 +2250,11 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
             switch (type)
             {
+                case ModuleType _:
+                    {
+                        throw new Exception("Compiler bug");
+                    }
+
                 case AnyType _:
                     {
                         uint index = 0;
