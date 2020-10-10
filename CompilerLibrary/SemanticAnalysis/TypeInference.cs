@@ -2422,6 +2422,17 @@ namespace Cheez
 
         private AstExpression InferTypeCompCall(AstCompCallExpr expr, CheezType expected, TypeInferenceContext context)
         {
+            var result = InferTypeCompCallHelper(expr, expected, context);
+            foreach (var arg in expr.Arguments)
+            {
+                arg.Type = arg.Expr.Type;
+                arg.Value = arg.Expr.Value;
+            }
+            return result;
+        }
+
+        private AstExpression InferTypeCompCallHelper(AstCompCallExpr expr, CheezType expected, TypeInferenceContext context)
+        {
             AstExpression InferArg(int index, CheezType e)
             {
                 var arg = expr.Arguments[index];

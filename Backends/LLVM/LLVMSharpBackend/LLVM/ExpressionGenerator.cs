@@ -26,6 +26,9 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                     return result;
             }
 
+            if (expr.Type.IsComptimeOnly && !(expr is AstBlockExpr))
+                return new LLVMValueRef();
+
             switch (expr)
             {
                 case AstMoveAssignExpr ma: return GenerateMoveAssignExpr(ma);
@@ -62,8 +65,14 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstRangeExpr r: return GenerateRangeExpr(r);
                 case AstVariableRef v: return GenerateVariableRefExpr(v, deref);
                 case AstConstantRef v: return GenerateConstantRefExpr(v);
+                case AstReferenceTypeExpr v: return new LLVMValueRef();
+
+                default:
+                    {
+                        Console.WriteLine($"{expr} not implemented");
+                        return new LLVMValueRef();
+                    }
             }
-            throw new NotImplementedException();
         }
 
         private LLVMValueRef GenerateMoveAssignExpr(AstMoveAssignExpr expr)

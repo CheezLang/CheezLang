@@ -201,6 +201,7 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 case AstReturnStmt ret: GenerateReturnStatement(ret); break;
                 case AstExprStmt expr: GenerateExprStatement(expr); break;
                 case AstVariableDecl decl: GenerateVariableDecl(decl); break;
+                case AstConstantDeclaration decl when decl.Initializer is AstBlockExpr && decl.Initializer.Type != CheezType.Code: GenerateExpression(decl.Initializer, false); break; // the initializer can contain code for runtime
                 case AstAssignment ass: GenerateAssignment(ass); break;
                 case AstWhileStmt whl: GenerateWhile(whl); break;
                 case AstUsingStmt use:
