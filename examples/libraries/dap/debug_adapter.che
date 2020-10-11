@@ -41,6 +41,7 @@ CommandHandler :: trait {
     set_breakpoints :: (&Self, arguments: DapSetBreakpoints) -> Result[(), String];
     scopes          :: (&Self, arguments: DapReqScopes) -> Result[Array[DapScope], String];
     variables       :: (&Self, arguments: DapReqVariables) -> Result[Array[DapVariable], String];
+    evaluate        :: (&Self, arguments: DapReqEvaluate) -> Result[DapResEvaluate, String];
 }
 
 DAEvent :: enum {
@@ -165,6 +166,24 @@ impl DebugAdapter {
                 Err($msg) -> Err(msg)
             }
         }
+        commands["evaluate"] = cast(Func) (handler, arguments) => {
+            match handler.evaluate(arguments.into()) {
+                Ok($result) -> {
+                    body := Table[string, JsonValue].create(strings_equal)
+                    body["result"] = JsonValue.JsonString(result.result.clone())
+                    match &result.typ {
+                        Some($typ) -> {
+                            body["type"] = JsonValue.JsonString(typ.clone())
+                        }
+                        None -> {}
+                    }
+                    // @todo: presentationHint, variablesReference, namedVariables, indexedVariables, memoryReference
+                    Ok(JsonValue.JsonObject(body))
+                }
+                Err($msg) -> Err(msg)
+            }
+        }
+
 
         commands["configurationDone"] = cast(Func) (handler, arguments) => Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
         commands["setExceptionBreakpoints"] = cast(Func) (handler, arguments) => Ok(JsonValue.JsonObject(Table[string, JsonValue].create(strings_equal)))
@@ -370,17 +389,29 @@ impl DebugAdapter {
 // 
 
 DapReqLaunch :: struct {
-    program : String
+    program     : String
+    arguments   : Array[String]
 }
 
 impl Into[DapReqLaunch] for JsonValue {
     into :: (json: &Self) -> DapReqLaunch {
         map := cast(&mut Table[string, JsonValue]) json.as_map()
-        return DapReqLaunch(
-            program = match map.get("program") {
-                Some($prog) -> prog.to_string()
-                None -> "".to_owned()
+        program := match map.get("program") {
+            Some($prog) -> prog.to_string()
+            None -> "".to_owned()
+        }
+        mut arguments := Array[String].new()
+        match map.get("args") {
+            None -> {}
+            Some($args) -> {
+                for &arg in args.as_array().slice() {
+                    arguments.add(arg.to_string())
+                }
             }
+        }
+        return DapReqLaunch(
+            program     = program
+            arguments   = arguments
         )
     }
 }
@@ -542,6 +573,63 @@ impl Into[JsonValue] for DapVariable {
         }
         return JsonValue.JsonObject(json)
     }
+}
+
+DapValueFormat :: struct {
+    hex := Option[bool].None
+}
+
+DapReqEvaluateContext :: enum {
+    Unknown
+    Watch
+    Repl
+    Hover
+    Clipboard
+}
+
+DapReqEvaluate :: struct {
+    expression  : String
+    frame_id    := Option[int].None
+    context     := DapReqEvaluateContext.Unknown
+    format      := DapValueFormat()
+}
+
+impl Into[DapReqEvaluate] for JsonValue {
+    into :: (&Self) -> DapReqEvaluate {
+        map := self.as_map()
+        expression := map.at("expression").to_string()
+        frame_id : Option[int] = match map.get("frameId") {
+            Some($id)   -> Some(int(id.to_number()))
+            None        -> None
+        }
+        context : DapReqEvaluateContext = match map.get("context") {
+            Some($id) -> {
+                context := id.to_string()
+                if context.slice() == "watch" {
+                    DapReqEvaluateContext.Watch
+                } else if context.slice() == "repl" {
+                    DapReqEvaluateContext.Repl
+                } else if context.slice() == "hover" {
+                    DapReqEvaluateContext.Hover
+                } else if context.slice() == "clipboard" {
+                    DapReqEvaluateContext.Clipboard
+                } else {
+                    DapReqEvaluateContext.Unknown
+                }
+            }
+            None -> DapReqEvaluateContext.Unknown
+        }
+        return DapReqEvaluate(
+            expression  = expression
+            frame_id    = frame_id
+            context     = context
+        )
+    }
+}
+
+DapResEvaluate :: struct {
+    result  : String
+    typ     : Option[String]
 }
 
 #file_scope
