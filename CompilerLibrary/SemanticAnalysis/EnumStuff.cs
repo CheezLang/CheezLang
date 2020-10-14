@@ -162,6 +162,7 @@ namespace Cheez
                 expr.Scope.DefineBinaryOperator(new EnumFlagsCombineOperator(enumType));
                 expr.Scope.DefineBinaryOperator(new EnumFlagsAndOperator(enumType));
                 expr.Scope.DefineBinaryOperator(new EnumFlagsTestOperator(enumType));
+                expr.Scope.DefineUnaryOperator(new EnumFlagsNotOperator(enumType));
             }
 
             expr.Type = CheezType.Type;

@@ -481,7 +481,7 @@ namespace Cheez
             DefineUnaryOperator(new BuiltInUnaryOperator(name, type, type, exe));
         }
 
-        private void DefineUnaryOperator(IUnaryOperator op)
+        public void DefineUnaryOperator(IUnaryOperator op)
         {
             List<IUnaryOperator>? list = null;
             if (mUnaryOperatorTable.ContainsKey(op.Name))

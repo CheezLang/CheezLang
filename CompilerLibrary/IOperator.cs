@@ -235,7 +235,37 @@ namespace Cheez
             return contains;
         }
     }
-    
+
+    public class EnumFlagsNotOperator : IUnaryOperator
+    {
+        public EnumType EnumType { get; }
+        public CheezType SubExprType => EnumType;
+        public CheezType ResultType => EnumType;
+
+        public string Name => "!";
+
+        public EnumFlagsNotOperator(EnumType type)
+        {
+            EnumType = type;
+        }
+
+        public int Accepts(CheezType sub)
+        {
+            if (SubExprType == sub)
+                return 0;
+            return -1;
+        }
+
+        public object Execute(object sub)
+        {
+            var l = sub as EnumValue;
+            if (l == null)
+                throw new ArgumentException($"'{nameof(sub)}' must be an enum value, but is '{sub}'");
+
+            return new EnumValue(EnumType, EnumType.Declaration.Members.Except(l.Members).ToArray());
+        }
+    }
+
 
     public class BuiltInFunctionOperator : IBinaryOperator
     {

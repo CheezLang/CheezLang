@@ -1658,6 +1658,28 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
                 var val = bo(GetRawBuilder(), left, "");
                 return val;
             }
+            else if (expr.ActualOperator is EnumFlagsNotOperator eao)
+            {
+                var llvmEnumType = CheezTypeToLLVMType(expr.Type);
+                var llvmTagType = CheezTypeToLLVMType(eao.EnumType.Declaration.TagType);
+
+                var sub = GenerateExpression(expr.SubExpr, true);
+
+                if (!eao.EnumType.Declaration.IsReprC)
+                {
+                    sub = builder.CreateExtractValue(sub, 0, "sub.tag");
+                }
+
+                // @todo: this will cause a lot of bits to be set even though they are not used
+                // is this actually a problem?
+                var result = builder.CreateNot(sub, "result.tag");
+
+                if (!eao.EnumType.Declaration.IsReprC)
+                {
+                    result = builder.CreateInsertValue(LLVM.GetUndef(llvmEnumType), result, 0, "result");
+                }
+                return result;
+            }
             else
             {
                 throw new NotImplementedException();

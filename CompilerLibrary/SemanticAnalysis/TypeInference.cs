@@ -5955,6 +5955,17 @@ namespace Cheez
             {
                 var ops = expr.Scope.GetUnaryOperators(expr.Operator, expr.SubExpr.Type);
 
+                // search in scope where type is defined in
+                if (ops.Count == 0)
+                {
+                    switch (expr.SubExpr.Type)
+                    {
+                        case EnumType t: ops = t.Declaration.Scope.GetUnaryOperators(expr.Operator, expr.SubExpr.Type); break;
+                        case StructType t: ops = t.Declaration.Scope.GetUnaryOperators(expr.Operator, expr.SubExpr.Type); break;
+                        case TraitType t: ops = t.Declaration.Scope.GetUnaryOperators(expr.Operator, expr.SubExpr.Type); break;
+                    }
+                }
+
                 if (ops.Count == 0)
                 {
                     ReportError(expr, $"No operator '{expr.Operator}' matches the type {expr.SubExpr.Type}");
