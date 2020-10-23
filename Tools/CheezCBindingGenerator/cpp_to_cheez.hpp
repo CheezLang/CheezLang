@@ -14,6 +14,7 @@ struct lua_State;
 struct Declaration {
     CXCursor declaration;
     size_t namespac = 0;
+    std::string name;
 };
 
 class CppToCheezGenerator {

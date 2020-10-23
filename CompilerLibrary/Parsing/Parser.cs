@@ -1892,6 +1892,10 @@ namespace Cheez.Parsing
                 else
                 {
                     ReportError(next.location, "Unexpected token in array expression");
+                    if (next.type == TokenType.ClosingBrace || next.type == TokenType.ClosingParen)
+                        break;
+                    else
+                        NextToken();
                 }
             }
 

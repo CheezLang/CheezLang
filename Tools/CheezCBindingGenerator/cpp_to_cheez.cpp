@@ -441,7 +441,6 @@ std::string tokensToString(CXTranslationUnit unit, CXCursor cursor, int offset =
     return stream.str();
 }
 
-
 bool CppToCheezGenerator::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
     bool ok = true;
     auto visitAllChildren = [&](CXCursor c, CXCursor parent, CXClientData client_data)
@@ -454,46 +453,51 @@ bool CppToCheezGenerator::sort_stuff_into_lists(CXCursor tu, size_t namespac) {
 
         //std::cout << "[ERROR] TODO: " << "Cursor '" << clang_getCursorSpelling(c) << "' of kind '" << clang_getCursorKindSpelling(clang_getCursorKind(c)) << "'\n";
 
+        auto cursor_spelling = clang_getCursorSpelling(c);
+        auto name = std::string(clang_getCString(cursor_spelling));
+        clang_disposeString(cursor_spelling);
+
+
         switch (c.kind) {
         case CXCursor_Namespace:
-            m_namespaces.push_back({ c, namespac });
+            m_namespaces.push_back({ c, namespac, name });
             sort_stuff_into_lists(c, m_namespaces.size() - 1);
             break;
 
         case CXCursor_FunctionDecl:
-            m_functions.push_back({ c, namespac });
+            m_functions.push_back({ c, namespac, name });
             break;
 
         case CXCursor_ClassDecl:
         case CXCursor_StructDecl:
-            m_namespaces.push_back({ c, namespac });
-            m_structs.push_back({ c, namespac });
+            m_namespaces.push_back({ c, namespac, name });
+            m_structs.push_back({ c, namespac, name });
             sort_stuff_into_lists(c, m_namespaces.size() - 1);
             break;
         case CXCursor_UnionDecl:
-            m_namespaces.push_back({ c, namespac });
-            m_unions.push_back({ c, namespac });
+            m_namespaces.push_back({ c, namespac, name });
+            m_unions.push_back({ c, namespac, name });
             sort_stuff_into_lists(c, m_namespaces.size() - 1);
             break;
 
         case CXCursor_TypedefDecl:
-            m_typedefs.push_back({ c, namespac });
+            m_typedefs.push_back({ c, namespac, name });
             break;
 
         case CXCursor_EnumDecl:
-            m_enums.push_back({ c, namespac });
+            m_enums.push_back({ c, namespac, name });
             break;
 
         case CXCursor_MacroDefinition:
-            m_macros.push_back({ c, namespac });
+            m_macros.push_back({ c, namespac, name });
             break;
 
         case CXCursor_VarDecl:
-            m_variables.push_back({ c, namespac });
+            m_variables.push_back({ c, namespac, name });
             break;
 
         case CXCursor_MacroExpansion:
-            m_macro_expansions.push_back({ c, namespac });
+            m_macro_expansions.push_back({ c, namespac, name });
             break;
 
         case CXCursor_InclusionDirective:
@@ -576,28 +580,51 @@ void CppToCheezGenerator::emit_typedef_decl(const Declaration& decl) {
     std::stringstream typedefTypeStringStream;
     emit_cheez_type(typedefTypeStringStream, elo, false);
     auto typedefTypeString = typedefTypeStringStream.str();
-    if (call_typedef_handler(m_cheez_buffer, "on_typedef", decl.declaration, clang_getCString(name), typedefTypeString)) {
+    if (call_typedef_handler(m_cheez_buffer, "on_typedef", decl.declaration, name_c, typedefTypeString)) {
         clang_disposeString(name);
         return;
     }
 
     switch (type_decl.kind) {
     case CXCursor_StructDecl: {
-        //m_cheez_buffer << name << " :: struct #copy {}\n";
-
-        //Declaration struct_decl = {
-        //    type_decl, // struct decl
-        //    0, // namespace
-        //};
-        //emit_struct_decl(struct_decl);
+        auto type_name = clang_getCursorSpelling(type_decl);
+        auto type_name_c = clang_getCString(type_name);
+        if (strlen(type_name_c) == 0) {
+            Declaration decl = {
+                type_decl, // decl
+                0, // namespace
+                name_c,
+            };
+            emit_struct_decl(decl);
+        }
         break;
     }
 
     case CXCursor_EnumDecl: {
+        auto type_name = clang_getCursorSpelling(type_decl);
+        auto type_name_c = clang_getCString(type_name);
+        if (strlen(type_name_c) == 0) {
+            Declaration decl = {
+                type_decl, // decl
+                0, // namespace
+                name_c,
+            };
+            emit_enum_decl(decl);
+        }
         break;
     }
 
     case CXCursor_UnionDecl: {
+        auto type_name = clang_getCursorSpelling(type_decl);
+        auto type_name_c = clang_getCString(type_name);
+        if (strlen(type_name_c) == 0) {
+            Declaration decl = {
+                type_decl, // decl
+                0, // namespace
+                name_c,
+            };
+            emit_union_decl(decl);
+        }
         break;
     }
 
@@ -727,26 +754,21 @@ void CppToCheezGenerator::emit_macro(const Declaration& decl) {
 
 void CppToCheezGenerator::emit_struct_decl(const Declaration& decl) {
     auto cursor = decl.declaration;
-    auto name = clang_getCursorSpelling(cursor);
-    auto name_c = clang_getCString(name);
 
-    if (strlen(name_c) == 0) {
-        clang_disposeString(name);
+    if (decl.name.length() == 0) {
         return;
     }
 
     if (!clang_isCursorDefinition(cursor)) {
-        clang_disposeString(name);
         return;
     }
 
-    if (call_custom_handler(m_cheez_buffer, "on_struct", decl.declaration, name_c)) {
-        clang_disposeString(name);
+    if (call_custom_handler(m_cheez_buffer, "on_struct", decl.declaration, decl.name.c_str())) {
         return;
     }
 
     // type declaration
-    m_cheez_buffer << name << " :: struct #copy {\n";
+    m_cheez_buffer << decl.name << " :: struct #copy {\n";
     auto visitAllChildren = [this, &decl, member_index = 0]
         (CXCursor c, CXCursor parent, CXClientData client_data) mutable {
         auto struct_name = clang_getCursorSpelling(parent);
@@ -945,18 +967,17 @@ void CppToCheezGenerator::emit_struct_decl(const Declaration& decl) {
     // function implementations
     auto impl = m_cheez_impls.str();
     if (impl.size() > 0) {
-        m_cheez_buffer << "impl " << name << " {\n";
+        m_cheez_buffer << "impl " << decl.name << " {\n";
         m_cheez_buffer << impl;
         m_cheez_buffer << "}\n";
     }
 
     auto drop_impl = m_cheez_drop_impls.str();
     if (drop_impl.size() > 0) {
-        m_cheez_buffer << "impl Drop for " << name << " {\n";
+        m_cheez_buffer << "impl Drop for " << decl.name << " {\n";
         m_cheez_buffer << drop_impl;
         m_cheez_buffer << "}\n";
     }
-    clang_disposeString(name);
 }
 
 void CppToCheezGenerator::emit_union_decl(const Declaration& decl) {

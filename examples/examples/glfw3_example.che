@@ -9,7 +9,9 @@ C   :: import std.c
 
 use import glfw
 use import opengl.glad_binding
-ImGui :: import imgui.imgui_binding
+use import imgui_opengl
+use import imgui_glfw
+ImGui :: import imgui
 
 #export_scope
 
@@ -45,6 +47,7 @@ for_extension_vec4 :: (vec: &vec4, code: Code) #for {
 gladLoadGL :: () -> i32;
 
 onKeyDown :: (window: ^mut GLFWwindow, key: i32, scancode: i32, action: i32, mods: i32) {
+    io.formatln("{}, {}, {}, {}", [key, scancode, action, mods])
 }
 
 on_framebuffer_resize :: (window: ^mut GLFWwindow, w: i32, h: i32) {
@@ -66,24 +69,24 @@ gl_check_errors :: () {
     }
 }
 
-igListBoxStringArray :: (label: c_string, current_index: ^i32, arr: &Array[String]) -> bool {
-    array_string_getter :: (data: ^void, idx: i32, out_text: ^mut c_string) -> bool {
-        arr := &mut *cast(^mut Array[String]) data
-        if idx < 0 or int(idx) >= arr.get_length() {
-            return false
-        }
+// iglistboxstringarray :: (label: c_string, current_index: ^i32, arr: &array[string]) -> bool {
+//     array_string_getter :: (data: ^void, idx: i32, out_text: ^mut c_string) -> bool {
+//         arr := &mut *cast(^mut array[string]) data
+//         if idx < 0 or int(idx) >= arr.get_length() {
+//             return false
+//         }
 
-        *out_text = arr.access_mut(idx).as_cstring()
+//         *out_text = arr.access_mut(idx).as_cstring()
 
-        return true
-    }
+//         return true
+//     }
 
-    if arr.get_length() == 0 {
-        return false
-    }
+//     if arr.get_length() == 0 {
+//         return false
+//     }
 
-    return ImGui.ListBoxFnPtr(label, current_index, array_string_getter, cast ^arr, cast arr.get_length())
-}
+//     return imgui.listboxfnptr(label, current_index, array_string_getter, cast ^arr, cast arr.get_length())
+// }
 
 mut width  := 0
 mut height := 0
@@ -180,7 +183,7 @@ Main :: () {
         //
         begin_frame()
 
-        // 
+        //
         // create_dock_space()
 
         // {
@@ -202,43 +205,43 @@ Main :: () {
         //     }
         // }
 
-        {
-            open := true
+        // {
+        //     open := true
 
-            ImGui.Begin("Settings", ^open, ImGui.ImGuiWindowFlags_.None)
+        //     ImGui.Begin("Settings", ^open, ImGui.ImGuiWindowFlags.None)
 
-            {
-                delta_time_str := fmt.format_any(delta_time)
-                ImGui.LabelText("Frame duration", delta_time_str.as_cstring())
-                fps_str := fmt.format_any(1 / delta_time)
-                ImGui.LabelText("Fps", fps_str.as_cstring())
-                fps_counted_str := fmt.format_any(current_fps)
-                ImGui.LabelText("Fps", fps_counted_str.as_cstring())
-            }
+        //     {
+        //         delta_time_str := fmt.format_any(delta_time)
+        //         ImGui.LabelText("Frame duration", delta_time_str.as_cstring())
+        //         fps_str := fmt.format_any(1 / delta_time)
+        //         ImGui.LabelText("Fps", fps_str.as_cstring())
+        //         fps_counted_str := fmt.format_any(current_fps)
+        //         ImGui.LabelText("Fps", fps_counted_str.as_cstring())
+        //     }
 
-            ImGui.ColorPicker3("clear color", cast(^float)^clear_color, 0)
-            ImGui.Separator()
-            
-            for component in &clear_color {
-                ImGui.PushIDInt(i32(it_index))
-                ImGui.InputFloat("##", ^*component)
-                ImGui.PopID()
-            }
+        //     ImGui.ColorPicker3("clear color", cast(^mut float)^clear_color, .None)
+        //     ImGui.Separator()
 
-            ImGui.Separator()
-            ImGui.InputText("String to add", buff.data, cast buff.length)
-            if ImGui.SmallButton("Add String") {
-                strings.add(String.from_cstring(buff.data))
-                *buff[0] = char8(0)
-            }
-            ImGui.Separator()
+        //     for component in &clear_color {
+        //         ImGui.PushIDInt(i32(it_index))
+        //         ImGui.InputFloat("##", ^*component)
+        //         ImGui.PopID()
+        //     }
 
-            igListBoxStringArray("strings", ^strings_selected, &strings)
-            ImGui.End()
-        }
+        //     ImGui.Separator()
+        //     ImGui.InputText("String to add", buff.data, cast buff.length)
+        //     if ImGui.SmallButton("Add String") {
+        //         strings.add(String.from_cstring(buff.data))
+        //         *buff[0] = char8(0)
+        //     }
+        //     ImGui.Separator()
 
-        // if show_demo_window then
-        //     ImGui.ShowDemoWindow(^show_demo_window)
+        //     igListBoxStringArray("strings", ^strings_selected, &strings)
+        //     ImGui.End()
+        // }
+
+        if show_demo_window then
+            ImGui.ShowDemoWindow(^show_demo_window)
 
         end_frame()
 
@@ -249,36 +252,36 @@ Main :: () {
     }
 }
 
-dockspace_flags := ImGui.ImGuiDockNodeFlags_.None
+dockspace_flags := ImGui.ImGuiDockNodeFlags.None
 
 create_dock_space :: () {
-    mut window_flags := @bin_or(ImGui.ImGuiWindowFlags_.MenuBar, ImGui.ImGuiWindowFlags_.NoDocking)
+    mut window_flags := @bin_or(ImGui.ImGuiWindowFlags.MenuBar, ImGui.ImGuiWindowFlags.NoDocking)
 
     opt_fullscreen := true
     if opt_fullscreen {
         pivot := ImGui.ImVec2(0, 0)
 
         viewport := ImGui.GetMainViewport()
-        ImGui.SetNextWindowPos(&viewport.Pos, 0, &pivot)
-        ImGui.SetNextWindowSize(&viewport.Size)
+        ImGui.SetNextWindowPos(&viewport.Pos, .None, &pivot)
+        ImGui.SetNextWindowSize(&viewport.Size, .None)
         ImGui.SetNextWindowViewport(viewport.ID)
-        ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowRounding, 0.0f)
-        ImGui.PushStyleVar(ImGui.ImGuiStyleVar_.WindowBorderSize, 0.0f)
+        ImGui.PushStyleVar(ImGui.ImGuiStyleVar.WindowRounding, 0.0f)
+        ImGui.PushStyleVar(ImGui.ImGuiStyleVar.WindowBorderSize, 0.0f)
         window_flags = @bin_or(
             window_flags,
-            ImGui.ImGuiWindowFlags_.NoTitleBar,
-            ImGui.ImGuiWindowFlags_.NoCollapse,
-            ImGui.ImGuiWindowFlags_.NoResize,
-            ImGui.ImGuiWindowFlags_.NoMove,
-            ImGui.ImGuiWindowFlags_.NoBringToFrontOnFocus,
-            ImGui.ImGuiWindowFlags_.NoNavFocus
+            ImGui.ImGuiWindowFlags.NoTitleBar,
+            ImGui.ImGuiWindowFlags.NoCollapse,
+            ImGui.ImGuiWindowFlags.NoResize,
+            ImGui.ImGuiWindowFlags.NoMove,
+            ImGui.ImGuiWindowFlags.NoBringToFrontOnFocus,
+            ImGui.ImGuiWindowFlags.NoNavFocus
         )
     }
 
-    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background 
+    // When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background
     // and handle the pass-thru hole, so we ask Begin() to not render a background.
-    if int(@bin_and(dockspace_flags, ImGui.ImGuiDockNodeFlags_.PassthruCentralNode)) != 0 {
-        window_flags = @bin_or(window_flags, ImGui.ImGuiWindowFlags_.NoBackground)
+    if int(@bin_and(dockspace_flags, ImGui.ImGuiDockNodeFlags.PassthruCentralNode)) != 0 {
+        window_flags = @bin_or(window_flags, ImGui.ImGuiWindowFlags.NoBackground)
     }
 
     // Important: note that we proceed even if Begin() returns false (aka window is collapsed).
@@ -287,20 +290,20 @@ create_dock_space :: () {
     // We cannot preserve the docking relationship between an active window and an inactive docking, otherwise
     // any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
     window_padding := ImGui.ImVec2(0.0f, 0.0f)
-    ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar_.WindowPadding, &window_padding)
+    ImGui.PushStyleVarVec(ImGui.ImGuiStyleVar.WindowPadding, &window_padding)
 
     open := true
     ImGui.Begin("DockSpace Demo", ^open, window_flags)
-    ImGui.PopStyleVar()
+    ImGui.PopStyleVar(1)
 
     if opt_fullscreen then ImGui.PopStyleVar(2)
 
     // DockSpace
     io := ImGui.GetIO()
-    if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.DockingEnable)) != 0 {
+    if ImGui.ImGuiConfigFlags.DockingEnable is in io.ConfigFlags {
         dockspace_id := ImGui.GetID("MyDockSpace")
         size := ImGui.ImVec2(0.0f, 0.0f)
-        ImGui.DockSpace(dockspace_id, &size, dockspace_flags)
+        ImGui.DockSpace(dockspace_id, &size, dockspace_flags, null)
     } else {
         @assert(false)
     }
@@ -343,74 +346,74 @@ create_dock_space :: () {
     ImGui.End()
 }
 
-ShowExampleMenuFile :: () {
-    ImGui.MenuItem("(dummy menu)", null, false, false)
-    if ImGui.MenuItem("New") {}
-    if ImGui.MenuItem("Open", "Ctrl+O") {}
-    if ImGui.BeginMenu("Open Recent") {
-        ImGui.MenuItem("fish_hat.c")
-        ImGui.MenuItem("fish_hat.inl")
-        ImGui.MenuItem("fish_hat.h")
-        if ImGui.BeginMenu("More..") {
-            ImGui.MenuItem("Hello")
-            ImGui.MenuItem("Sailor")
-            if ImGui.BeginMenu("Recurse..") {
-                ShowExampleMenuFile()
-                ImGui.EndMenu()
-            }
-            ImGui.EndMenu()
-        }
-        ImGui.EndMenu()
-    }
-    if (ImGui.MenuItem("Save", "Ctrl+S")) {}
-    if (ImGui.MenuItem("Save As..")) {}
-    ImGui.Separator()
-    if ImGui.BeginMenu("Options") {
-        enabled := true #static
-        ImGui.MenuItem_2("Enabled", "", ^enabled)
+// ShowExampleMenuFile :: () {
+//     ImGui.MenuItem("(dummy menu)", null, false, false)
+//     if ImGui.MenuItem("New") {}
+//     if ImGui.MenuItem("Open", "Ctrl+O") {}
+//     if ImGui.BeginMenu("Open Recent") {
+//         ImGui.MenuItem("fish_hat.c")
+//         ImGui.MenuItem("fish_hat.inl")
+//         ImGui.MenuItem("fish_hat.h")
+//         if ImGui.BeginMenu("More..") {
+//             ImGui.MenuItem("Hello")
+//             ImGui.MenuItem("Sailor")
+//             if ImGui.BeginMenu("Recurse..") {
+//                 ShowExampleMenuFile()
+//                 ImGui.EndMenu()
+//             }
+//             ImGui.EndMenu()
+//         }
+//         ImGui.EndMenu()
+//     }
+//     if (ImGui.MenuItem("Save", "Ctrl+S")) {}
+//     if (ImGui.MenuItem("Save As..")) {}
+//     ImGui.Separator()
+//     if ImGui.BeginMenu("Options") {
+//         enabled := true #static
+//         ImGui.MenuItem_2("Enabled", "", ^enabled)
 
-        size := ImGui.ImVec2(0, 60)
-        ImGui.BeginChildStr("child", &size, true)
+//         size := ImGui.ImVec2(0, 60)
+//         ImGui.BeginChildStr("child", &size, true)
 
-        for i in 0..10 {
-            text := fmt.format("Scrolling Text {}", [i])
-            ImGui.Text(text.as_cstring())
-        }
-        ImGui.EndChild()
-        f := 0.5f #static
-        n := 0i32 #static
-        b := true #static
-        ImGui.SliderFloat("Value", ^f, 0.0f, 1.0f)
-        ImGui.InputFloat("Input", ^f, 0.1f)
-        ImGui.Combo_2("Combo", ^n, "Yes\0No\0Maybe\0\0")
-        ImGui.Checkbox("Check", ^b)
-        ImGui.EndMenu()
-    }
-    if (ImGui.BeginMenu("Colors"))
-    {
-        sz := ImGui.GetTextLineHeight()
-        for i in 0..int(ImGui.ImGuiCol_.COUNT) {
-            name := ImGui.GetStyleColorName(cast i)
-            p := ImGui.GetCursorScreenPos()
-            // ImGui.GetWindowDrawList().AddRectFilled(p, ImVec2(p.x+sz, p.y+sz), ImGui.GetColorU32((ImGuiCol)i))
-            size := ImGui.ImVec2(sz, sz)
-            ImGui.Dummy(&size)
-            ImGui.SameLine()
-            ImGui.MenuItem(name)
-        }
-        ImGui.EndMenu()
-    }
-    if (ImGui.BeginMenu("Disabled", false)) {
-        @assert(false)
-    }
-    if (ImGui.MenuItem("Checked", null, true)) {}
-    if (ImGui.MenuItem("Quit", "Alt+F4")) {}
-}
+//         for i in 0..10 {
+//             text := fmt.format("Scrolling Text {}", [i])
+//             ImGui.Text(text.as_cstring())
+//         }
+//         ImGui.EndChild()
+//         f := 0.5f #static
+//         n := 0i32 #static
+//         b := true #static
+//         ImGui.SliderFloat("Value", ^f, 0.0f, 1.0f)
+//         ImGui.InputFloat("Input", ^f, 0.1f)
+//         ImGui.Combo_2("Combo", ^n, "Yes\0No\0Maybe\0\0")
+//         ImGui.Checkbox("Check", ^b)
+//         ImGui.EndMenu()
+//     }
+//     if (ImGui.BeginMenu("Colors"))
+//     {
+//         sz := ImGui.GetTextLineHeight()
+//         for i in 0..int(ImGui.ImGuiCol.COUNT) {
+//             name := ImGui.GetStyleColorName(cast i)
+//             p := ImGui.GetCursorScreenPos()
+//             // ImGui.GetWindowDrawList().AddRectFilled(p, ImVec2(p.x+sz, p.y+sz), ImGui.GetColorU32((ImGuiCol)i))
+//             size := ImGui.ImVec2(sz, sz)
+//             ImGui.Dummy(&size)
+//             ImGui.SameLine()
+//             ImGui.MenuItem(name, null, true)
+//         }
+//         ImGui.EndMenu()
+//     }
+//     if (ImGui.BeginMenu("Disabled", false)) {
+//         @assert(false)
+//     }
+//     if (ImGui.MenuItem("Checked", null, true)) {}
+//     if (ImGui.MenuItem("Quit", "Alt+F4", true)) {}
+// }
 
 
 begin_frame :: () {
-    ImGui.ImGui_ImplOpenGL3_NewFrame()
-    ImGui.ImGui_ImplGlfw_NewFrame()
+    ImGui_ImplOpenGL3_NewFrame()
+    ImGui_ImplGlfw_NewFrame()
     ImGui.NewFrame()
 }
 
@@ -420,12 +423,12 @@ end_frame :: () {
     // rendering
     ImGui.EndFrame()
     ImGui.Render()
-    ImGui.ImGui_ImplOpenGL3_RenderDrawData(ImGui.GetDrawData())
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui.GetDrawData())
 
-    if @bin_and(io.ConfigFlags, i32(ImGui.ImGuiConfigFlags_.ViewportsEnable)) != 0 {	
+    if ImGui.ImGuiConfigFlags.ViewportsEnable is in io.ConfigFlags {
         backup_current_context := glfwGetCurrentContext()
         ImGui.UpdatePlatformWindows()
-        ImGui.RenderPlatformWindowsDefault()
+        ImGui.RenderPlatformWindowsDefault(null, null)
         glfwMakeContextCurrent(backup_current_context)
     }
 }
@@ -439,24 +442,23 @@ init_imgui :: (window: ^GLFWwindow) -> bool {
     }
 
     imgui_io := ImGui.GetIO()
-    imgui_io.ConfigFlags = @bin_or(
-        imgui_io.ConfigFlags,
-        i32(ImGui.ImGuiConfigFlags_.DockingEnable),
-        i32(ImGui.ImGuiConfigFlags_.ViewportsEnable))
+    imgui_io.ConfigFlags = imgui_io.ConfigFlags or
+        ImGui.ImGuiConfigFlags.DockingEnable or
+        ImGui.ImGuiConfigFlags.ViewportsEnable
 
     ImGui.StyleColorsDark(null)
 
     // change corners so they are right angles instead of rounded
-    style := ImGui.GetStyle()	
-    style.WindowRounding = 0.0	
+    style := ImGui.GetStyle()
+    style.WindowRounding = 0.0
 
     //
-    if !ImGui.ImGui_ImplGlfw_InitForOpenGL(cast window, true) {
-        io.println("[ERROR] ImGui.ImGui_ImplGlfw_InitForOpenGL failed")
+    if !ImGui_ImplGlfw_InitForOpenGL(cast window, true) {
+        io.println("[ERROR] ImGui_ImplGlfw_InitForOpenGL failed")
         return false
     }
-    if !ImGui.ImGui_ImplOpenGL3_Init("#version 130") {
-        io.println("[ERROR] ImGui.ImGui_ImplOpenGL3_Init failed")
+    if !ImGui_ImplOpenGL3_Init("#version 130") {
+        io.println("[ERROR] ImGui_ImplOpenGL3_Init failed")
         return false
     }
 
@@ -464,7 +466,7 @@ init_imgui :: (window: ^GLFWwindow) -> bool {
 }
 
 shutdown_imgui :: () {
-    ImGui.ImGui_ImplOpenGL3_Shutdown()
-    ImGui.ImGui_ImplGlfw_Shutdown()
+    ImGui_ImplOpenGL3_Shutdown()
+    ImGui_ImplGlfw_Shutdown()
     ImGui.DestroyContext(null)
 }
