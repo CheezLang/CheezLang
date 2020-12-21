@@ -2,7 +2,7 @@
   "profiles": {
     "CompilerCLI": {
       "commandName": "Project",
-      "commandLineArgs": "examples/test.che --out gen  --stdlib examples --time --run  --print-ast-analysed ./gen/int/ast_analyzed.che --emit-llvm-ir --opt",
+      "commandLineArgs": "D:\\dev\\Cheez\\Examples\\vulkan_window\\src\\main.che --out gen  --stdlib examples --time --run  --print-ast-analysed ./gen/int/ast_analyzed.che --emit-llvm-ir --opt --modules ../Examples/libraries/vulkan/vulkan ../Examples/libraries/GLFW/glfw ../Examples/libraries/imgui/src --trace-stack",
       "workingDirectory": ".."
     },
     "Debug Language Server": {

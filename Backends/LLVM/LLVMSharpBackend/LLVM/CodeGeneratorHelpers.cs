@@ -1558,18 +1558,25 @@ namespace Cheez.CodeGeneration.LLVMCodeGen
 
         private LLVMValueRef GenerateRTTIForAny(AstExpression expr)
         {
-            var valueGlobal = module.AddGlobal(CheezTypeToLLVMType(expr.Type), "any");
+            var valueGlobal = module.AddGlobal(CheezTypeToLLVMType(expr.Type), "rtti_any_value");
 
             LLVMValueRef init = default;
             if (expr is AstEnumValueExpr ev)
             {
                 if (ev.Member.AssociatedTypeExpr != null)
                     throw new Exception("ev.Member.AssociatedTypeExpr != null");
-                init = LLVM.ConstNamedStruct(CheezTypeToLLVMType(expr.Type), new LLVMValueRef[]
+                if (ev.EnumDecl.IsReprC)
                 {
-                    CheezValueToLLVMValue(ev.EnumDecl.TagType, ev.Member.Value),
-                    LLVM.GetUndef(LLVM.ArrayType(LLVM.Int8Type(), (uint)(ev.EnumDecl.EnumType.GetSize() - ev.EnumDecl.TagType.GetSize())))
-                });
+                    init = CheezValueToLLVMValue(ev.EnumDecl.TagType, ev.Member.Value);
+                }
+                else
+                {
+                    init = LLVM.ConstNamedStruct(CheezTypeToLLVMType(expr.Type), new LLVMValueRef[]
+                    {
+                        CheezValueToLLVMValue(ev.EnumDecl.TagType, ev.Member.Value),
+                        LLVM.GetUndef(LLVM.ArrayType(LLVM.Int8Type(), (uint)(ev.EnumDecl.EnumType.GetSize() - ev.EnumDecl.TagType.GetSize())))
+                    });
+                }
             }
             else
             {

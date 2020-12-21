@@ -1,6 +1,6 @@
 // examples which should be working
 // import examples.trait_function_call_performance
-// import examples.glfw3_example
+import examples.glfw3_example
 // // import examples.graphyfier.graphyfier
 // import examples.geometry_draw_thingy
 // import examples.signed_distance_field_renderer
@@ -29,64 +29,64 @@
 //////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////
 
-use import std.array
-use import std.string
+// use import std.array
+// use import std.string
 
-io  :: import std.io
-fmt :: import std.fmt
-C   :: import std.c
+// io  :: import std.io
+// fmt :: import std.fmt
+// C   :: import std.c
 
-use import x86_64
+// use import x86_64
 
-foo :: () {
-    io.formatln("Called from JIT compiled code")
-}
+// foo :: () {
+//     io.formatln("Called from JIT compiled code")
+// }
 
-get_function_address :: (func: $T) -> ^void {
-    return *cast(^^void)^func
-}
+// get_function_address :: (func: $T) -> ^void {
+//     return *cast(^^void)^func
+// }
 
-Main :: () {
-    mut code := Array[u8].new()
+// Main :: () {
+//     mut code := Array[u8].new()
 
-    {
-        write_prolog(&mut code)
+//     {
+//         write_prolog(&mut code)
 
-        // C.puts("Hellow asm"c)
-        write_mov_reg64_imm64(&mut code, .rcx, u64("Hello asm"c))                   // mov rcx, ^message
-        write_mov_reg64_imm64(&mut code, .rax, u64(get_function_address(C.puts)))   // mov rax, ^C.puts
-        write_inst(&mut code, [0xff], modrm=[mod_rm(0b11, 0b010, 0b000)])           // call rax
+//         // C.puts("Hellow asm"c)
+//         write_mov_reg64_imm64(&mut code, .rcx, u64("Hello asm"c))                   // mov rcx, ^message
+//         write_mov_reg64_imm64(&mut code, .rax, u64(get_function_address(C.puts)))   // mov rax, ^C.puts
+//         write_inst(&mut code, [0xff], modrm=[mod_rm(0b11, 0b010, 0b000)])           // call rax
 
-        // foo()
-        write_mov_reg64_imm64(&mut code, .rax, u64(get_function_address(foo)))  // mov rax, ^foo
-        write_inst(&mut code, [0xff], modrm=[mod_rm(0b11, 0b010, 0b000)])       // call rax
+//         // foo()
+//         write_mov_reg64_imm64(&mut code, .rax, u64(get_function_address(foo)))  // mov rax, ^foo
+//         write_inst(&mut code, [0xff], modrm=[mod_rm(0b11, 0b010, 0b000)])       // call rax
 
-        // return
-        write_epilog(&mut code)
-        write_inst(&mut code, [0xc3]) // ret
-    }
+//         // return
+//         write_epilog(&mut code)
+//         write_inst(&mut code, [0xc3]) // ret
+//     }
 
-    print_instructions(code[..])
+//     print_instructions(code[..])
 
-    function := match Function[fn() -> u64].from_x86_64(code[..]) {
-        Ok($func) -> func
-        Err($err) -> {
-            io.println(err.slice())
-            return
-        }
-    }
+//     function := match Function[fn() -> u64].from_x86_64(code[..]) {
+//         Ok($func) -> func
+//         Err($err) -> {
+//             io.println(err.slice())
+//             return
+//         }
+//     }
 
-    io.formatln("1")
-    result := function.get()()
-    io.formatln("2")
-}
+//     io.formatln("1")
+//     result := function.get()()
+//     io.formatln("2")
+// }
 
-print_instructions :: (code: []u8) {
-    mut result := String.with_capacity(code.length * 3)
-    for inst in code {
-        if it_index > 0 then result.append_char(' ')
-        if inst < 0x10 then result.append_char('0')
-        fmt.format_into(&mut result, "{:x}", [inst])
-    }
-    io.println(result.slice())
-}
+// print_instructions :: (code: []u8) {
+//     mut result := String.with_capacity(code.length * 3)
+//     for inst in code {
+//         if it_index > 0 then result.append_char(' ')
+//         if inst < 0x10 then result.append_char('0')
+//         fmt.format_into(&mut result, "{:x}", [inst])
+//     }
+//     io.println(result.slice())
+// }

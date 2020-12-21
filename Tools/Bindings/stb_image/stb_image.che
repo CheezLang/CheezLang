@@ -1,0 +1,632 @@
+
+#lib("./lib/binding.lib")
+
+#export_scope
+
+
+uintptr_t :: u64
+va_list :: ^mut char8
+size_t :: u64
+ptrdiff_t :: i64
+intptr_t :: i64
+__vcrt_bool :: bool
+stbi_uc :: u8
+stbi_us :: u16
+stbi_io_callbacks :: struct #copy {
+    read : fn(^mut void, ^mut char8, i32) -> i32 = default
+    skip : fn(^mut void, i32) -> void = default
+    eof : fn(^mut void) -> i32 = default
+}
+stbi__uint16 :: u16
+stbi__int16 :: i16
+stbi__uint32 :: u32
+stbi__int32 :: i32
+validate_uint32 :: [1]u8
+__mmask8 :: u8
+__mmask16 :: u16
+__mmask32 :: u32
+__mmask64 :: u64
+__m128bh :: __m128i
+__m256bh :: __m256i
+__m512bh :: __m512i
+stbi__context :: struct #copy {
+    img_x : stbi__uint32 = default
+    img_y : stbi__uint32 = default
+    img_n : i32 = default
+    img_out_n : i32 = default
+    io : stbi_io_callbacks = default
+    io_user_data : ^mut void = default
+    read_from_callbacks : i32 = default
+    buflen : i32 = default
+    buffer_start : [128]stbi_uc = default
+    callback_already_read : i32 = default
+    img_buffer : ^mut stbi_uc = default
+    img_buffer_end : ^mut stbi_uc = default
+    img_buffer_original : ^mut stbi_uc = default
+    img_buffer_original_end : ^mut stbi_uc = default
+}
+stbi__result_info :: struct #copy {
+    bits_per_channel : i32 = default
+    num_channels : i32 = default
+    channel_order : i32 = default
+}
+stbi__huffman :: struct #copy {
+    fast : [512]stbi_uc = default
+    code : [256]stbi__uint16 = default
+    values : [256]stbi_uc = default
+    size : [257]stbi_uc = default
+    maxcode : [18]u32 = default
+    delta : [17]i32 = default
+}
+stbi__jpeg :: struct #copy {
+    s : ^mut stbi__context = default
+    huff_dc : [4]stbi__huffman = default
+    huff_ac : [4]stbi__huffman = default
+    dequant : [4][64]stbi__uint16 = default
+    fast_ac : [4][512]stbi__int16 = default
+    img_h_max : i32 = default
+    img_v_max : i32 = default
+    img_mcu_x : i32 = default
+    img_mcu_y : i32 = default
+    img_mcu_w : i32 = default
+    img_mcu_h : i32 = default
+    img_comp : [4] = default
+    code_buffer : stbi__uint32 = default
+    code_bits : i32 = default
+    marker : u8 = default
+    nomore : i32 = default
+    progressive : i32 = default
+    spec_start : i32 = default
+    spec_end : i32 = default
+    succ_high : i32 = default
+    succ_low : i32 = default
+    eob_run : i32 = default
+    jfif : i32 = default
+    app14_color_transform : i32 = default
+    rgb : i32 = default
+    scan_n : i32 = default
+    order : [4]i32 = default
+    restart_interval : i32 = default
+    todo : i32 = default
+    idct_block_kernel : fn(^mut stbi_uc, i32, ^mut i16) -> void = default
+    YCbCr_to_RGB_kernel : fn(^mut stbi_uc, ^mut stbi_uc, ^mut stbi_uc, ^mut stbi_uc, i32, i32) -> void = default
+    resample_row_hv_2_kernel : fn(^mut stbi_uc, ^mut stbi_uc, ^mut stbi_uc, i32, i32) -> ^mut stbi_uc = default
+}
+resample_row_func :: fn(^mut stbi_uc, ^mut stbi_uc, ^mut stbi_uc, i32, i32) -> ^mut stbi_uc
+stbi__resample :: struct #copy {
+    resample : resample_row_func = default
+    line0 : ^mut stbi_uc = default
+    line1 : ^mut stbi_uc = default
+    hs : i32 = default
+    vs : i32 = default
+    w_lores : i32 = default
+    ystep : i32 = default
+    ypos : i32 = default
+}
+stbi__zhuffman :: struct #copy {
+    fast : [512]stbi__uint16 = default
+    firstcode : [16]stbi__uint16 = default
+    maxcode : [17]i32 = default
+    firstsymbol : [16]stbi__uint16 = default
+    size : [288]stbi_uc = default
+    value : [288]stbi__uint16 = default
+}
+stbi__zbuf :: struct #copy {
+    zbuffer : ^mut stbi_uc = default
+    zbuffer_end : ^mut stbi_uc = default
+    num_bits : i32 = default
+    code_buffer : stbi__uint32 = default
+    zout : ^mut char8 = default
+    zout_start : ^mut char8 = default
+    zout_end : ^mut char8 = default
+    z_expandable : i32 = default
+    z_length : stbi__zhuffman = default
+    z_distance : stbi__zhuffman = default
+}
+stbi__pngchunk :: struct #copy {
+    length : stbi__uint32 = default
+    type : stbi__uint32 = default
+}
+stbi__png :: struct #copy {
+    s : ^mut stbi__context = default
+    idata : ^mut stbi_uc = default
+    expanded : ^mut stbi_uc = default
+    out : ^mut stbi_uc = default
+    depth : i32 = default
+}
+stbi__bmp_data :: struct #copy {
+    bpp : i32 = default
+    offset : i32 = default
+    hsz : i32 = default
+    mr : u32 = default
+    mg : u32 = default
+    mb : u32 = default
+    ma : u32 = default
+    all_a : u32 = default
+    extra_read : i32 = default
+}
+stbi__pic_packet :: struct #copy {
+    size : stbi_uc = default
+    type : stbi_uc = default
+    channel : stbi_uc = default
+}
+stbi__gif_lzw :: struct #copy {
+    prefix : stbi__int16 = default
+    first : stbi_uc = default
+    suffix : stbi_uc = default
+}
+stbi__gif :: struct #copy {
+    w : i32 = default
+    h : i32 = default
+    out : ^mut stbi_uc = default
+    background : ^mut stbi_uc = default
+    history : ^mut stbi_uc = default
+    flags : i32 = default
+    bgindex : i32 = default
+    ratio : i32 = default
+    transparent : i32 = default
+    eflags : i32 = default
+    pal : [256][4]stbi_uc = default
+    lpal : [256][4]stbi_uc = default
+    codes : [8192]stbi__gif_lzw = default
+    color_table : ^mut stbi_uc = default
+    parse : i32 = default
+    step : i32 = default
+    lflags : i32 = default
+    start_x : i32 = default
+    start_y : i32 = default
+    max_x : i32 = default
+    max_y : i32 = default
+    cur_x : i32 = default
+    cur_y : i32 = default
+    line_size : i32 = default
+    delay : i32 = default
+}
+__m128d :: struct #copy {
+    m128d_f64 : [2]f64 = default
+}
+__m256d :: struct #copy {
+    m256d_f64 : [4]f64 = default
+}
+__m512d :: struct #copy {
+    m512d_f64 : [8]f64 = default
+}
+rmp_seg :: struct #copy {
+    rmp_gpa : u64 = default
+    rmp_entry : char8 = default
+    rmp_pageSize : char8 = default
+    rmp_pageMark : char8 = default
+    rmp_reserved : char8 = default
+    rmp_ASID : i32 = default
+}
+stbi_load_from_memory :: (_buffer: ^mut stbi_uc, _len: i32, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut stbi_uc {
+    mut result : ^mut stbi_uc = default
+    __c__stbi_load_from_memory(^result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_from_callbacks :: (_clbk: ^mut stbi_io_callbacks, _user: ^mut void, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut stbi_uc {
+    mut result : ^mut stbi_uc = default
+    __c__stbi_load_from_callbacks(^result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load :: (_filename: ^char8, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut stbi_uc {
+    mut result : ^mut stbi_uc = default
+    __c__stbi_load(^result, _filename, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_from_file :: (_f: ^mut FILE, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut stbi_uc {
+    mut result : ^mut stbi_uc = default
+    __c__stbi_load_from_file(^result, _f, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_gif_from_memory :: (_buffer: ^mut stbi_uc, _len: i32, _delays: ^mut ^mut i32, _x: ^mut i32, _y: ^mut i32, _z: ^mut i32, _comp: ^mut i32, _req_comp: i32) -> ^mut stbi_uc {
+    mut result : ^mut stbi_uc = default
+    __c__stbi_load_gif_from_memory(^result, _buffer, _len, _delays, _x, _y, _z, _comp, _req_comp)
+    return result
+}
+stbi_load_16_from_memory :: (_buffer: ^mut stbi_uc, _len: i32, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut stbi_us {
+    mut result : ^mut stbi_us = default
+    __c__stbi_load_16_from_memory(^result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_16_from_callbacks :: (_clbk: ^mut stbi_io_callbacks, _user: ^mut void, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut stbi_us {
+    mut result : ^mut stbi_us = default
+    __c__stbi_load_16_from_callbacks(^result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_16 :: (_filename: ^char8, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut stbi_us {
+    mut result : ^mut stbi_us = default
+    __c__stbi_load_16(^result, _filename, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_load_from_file_16 :: (_f: ^mut FILE, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut stbi_us {
+    mut result : ^mut stbi_us = default
+    __c__stbi_load_from_file_16(^result, _f, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_loadf_from_memory :: (_buffer: ^mut stbi_uc, _len: i32, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut f32 {
+    mut result : ^mut f32 = default
+    __c__stbi_loadf_from_memory(^result, _buffer, _len, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_loadf_from_callbacks :: (_clbk: ^mut stbi_io_callbacks, _user: ^mut void, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut f32 {
+    mut result : ^mut f32 = default
+    __c__stbi_loadf_from_callbacks(^result, _clbk, _user, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_loadf :: (_filename: ^char8, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut f32 {
+    mut result : ^mut f32 = default
+    __c__stbi_loadf(^result, _filename, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_loadf_from_file :: (_f: ^mut FILE, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32) -> ^mut f32 {
+    mut result : ^mut f32 = default
+    __c__stbi_loadf_from_file(^result, _f, _x, _y, _channels_in_file, _desired_channels)
+    return result
+}
+stbi_hdr_to_ldr_gamma :: (_gamma: f32) {
+    __c__stbi_hdr_to_ldr_gamma(_gamma)
+}
+stbi_hdr_to_ldr_scale :: (_scale: f32) {
+    __c__stbi_hdr_to_ldr_scale(_scale)
+}
+stbi_ldr_to_hdr_gamma :: (_gamma: f32) {
+    __c__stbi_ldr_to_hdr_gamma(_gamma)
+}
+stbi_ldr_to_hdr_scale :: (_scale: f32) {
+    __c__stbi_ldr_to_hdr_scale(_scale)
+}
+stbi_is_hdr_from_callbacks :: (_clbk: ^mut stbi_io_callbacks, _user: ^mut void) -> i32 {
+    mut result : i32 = default
+    __c__stbi_is_hdr_from_callbacks(^result, _clbk, _user)
+    return result
+}
+stbi_is_hdr_from_memory :: (_buffer: ^mut stbi_uc, _len: i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi_is_hdr_from_memory(^result, _buffer, _len)
+    return result
+}
+stbi_is_hdr :: (_filename: ^char8) -> i32 {
+    mut result : i32 = default
+    __c__stbi_is_hdr(^result, _filename)
+    return result
+}
+stbi_is_hdr_from_file :: (_f: ^mut FILE) -> i32 {
+    mut result : i32 = default
+    __c__stbi_is_hdr_from_file(^result, _f)
+    return result
+}
+stbi_failure_reason :: () -> ^char8 {
+    mut result : ^char8 = default
+    __c__stbi_failure_reason(^result)
+    return result
+}
+stbi_image_free :: (_retval_from_stbi_load: ^mut void) {
+    __c__stbi_image_free(_retval_from_stbi_load)
+}
+stbi_info_from_memory :: (_buffer: ^mut stbi_uc, _len: i32, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi_info_from_memory(^result, _buffer, _len, _x, _y, _comp)
+    return result
+}
+stbi_info_from_callbacks :: (_clbk: ^mut stbi_io_callbacks, _user: ^mut void, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi_info_from_callbacks(^result, _clbk, _user, _x, _y, _comp)
+    return result
+}
+stbi_is_16_bit_from_memory :: (_buffer: ^mut stbi_uc, _len: i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi_is_16_bit_from_memory(^result, _buffer, _len)
+    return result
+}
+stbi_is_16_bit_from_callbacks :: (_clbk: ^mut stbi_io_callbacks, _user: ^mut void) -> i32 {
+    mut result : i32 = default
+    __c__stbi_is_16_bit_from_callbacks(^result, _clbk, _user)
+    return result
+}
+stbi_info :: (_filename: ^char8, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi_info(^result, _filename, _x, _y, _comp)
+    return result
+}
+stbi_info_from_file :: (_f: ^mut FILE, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi_info_from_file(^result, _f, _x, _y, _comp)
+    return result
+}
+stbi_is_16_bit :: (_filename: ^char8) -> i32 {
+    mut result : i32 = default
+    __c__stbi_is_16_bit(^result, _filename)
+    return result
+}
+stbi_is_16_bit_from_file :: (_f: ^mut FILE) -> i32 {
+    mut result : i32 = default
+    __c__stbi_is_16_bit_from_file(^result, _f)
+    return result
+}
+stbi_set_unpremultiply_on_load :: (_flag_true_if_should_unpremultiply: i32) {
+    __c__stbi_set_unpremultiply_on_load(_flag_true_if_should_unpremultiply)
+}
+stbi_convert_iphone_png_to_rgb :: (_flag_true_if_should_convert: i32) {
+    __c__stbi_convert_iphone_png_to_rgb(_flag_true_if_should_convert)
+}
+stbi_set_flip_vertically_on_load :: (_flag_true_if_should_flip: i32) {
+    __c__stbi_set_flip_vertically_on_load(_flag_true_if_should_flip)
+}
+stbi_set_flip_vertically_on_load_thread :: (_flag_true_if_should_flip: i32) {
+    __c__stbi_set_flip_vertically_on_load_thread(_flag_true_if_should_flip)
+}
+stbi_zlib_decode_malloc_guesssize :: (_buffer: ^char8, _len: i32, _initial_size: i32, _outlen: ^mut i32) -> ^mut char8 {
+    mut result : ^mut char8 = default
+    __c__stbi_zlib_decode_malloc_guesssize(^result, _buffer, _len, _initial_size, _outlen)
+    return result
+}
+stbi_zlib_decode_malloc_guesssize_headerflag :: (_buffer: ^char8, _len: i32, _initial_size: i32, _outlen: ^mut i32, _parse_header: i32) -> ^mut char8 {
+    mut result : ^mut char8 = default
+    __c__stbi_zlib_decode_malloc_guesssize_headerflag(^result, _buffer, _len, _initial_size, _outlen, _parse_header)
+    return result
+}
+stbi_zlib_decode_malloc :: (_buffer: ^char8, _len: i32, _outlen: ^mut i32) -> ^mut char8 {
+    mut result : ^mut char8 = default
+    __c__stbi_zlib_decode_malloc(^result, _buffer, _len, _outlen)
+    return result
+}
+stbi_zlib_decode_buffer :: (_obuffer: ^mut char8, _olen: i32, _ibuffer: ^char8, _ilen: i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi_zlib_decode_buffer(^result, _obuffer, _olen, _ibuffer, _ilen)
+    return result
+}
+stbi_zlib_decode_noheader_malloc :: (_buffer: ^char8, _len: i32, _outlen: ^mut i32) -> ^mut char8 {
+    mut result : ^mut char8 = default
+    __c__stbi_zlib_decode_noheader_malloc(^result, _buffer, _len, _outlen)
+    return result
+}
+stbi_zlib_decode_noheader_buffer :: (_obuffer: ^mut char8, _olen: i32, _ibuffer: ^char8, _ilen: i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi_zlib_decode_noheader_buffer(^result, _obuffer, _olen, _ibuffer, _ilen)
+    return result
+}
+stbi__refill_buffer :: (_s: ^mut stbi__context) {
+    __c__stbi__refill_buffer(_s)
+}
+stbi__jpeg_test :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__jpeg_test(^result, _s)
+    return result
+}
+stbi__jpeg_load :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info) -> ^mut void {
+    mut result : ^mut void = default
+    __c__stbi__jpeg_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
+    return result
+}
+stbi__jpeg_info :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi__jpeg_info(^result, _s, _x, _y, _comp)
+    return result
+}
+stbi__png_test :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__png_test(^result, _s)
+    return result
+}
+stbi__png_load :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info) -> ^mut void {
+    mut result : ^mut void = default
+    __c__stbi__png_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
+    return result
+}
+stbi__png_info :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi__png_info(^result, _s, _x, _y, _comp)
+    return result
+}
+stbi__png_is16 :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__png_is16(^result, _s)
+    return result
+}
+stbi__bmp_test :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__bmp_test(^result, _s)
+    return result
+}
+stbi__bmp_load :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info) -> ^mut void {
+    mut result : ^mut void = default
+    __c__stbi__bmp_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
+    return result
+}
+stbi__bmp_info :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi__bmp_info(^result, _s, _x, _y, _comp)
+    return result
+}
+stbi__tga_test :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__tga_test(^result, _s)
+    return result
+}
+stbi__tga_load :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info) -> ^mut void {
+    mut result : ^mut void = default
+    __c__stbi__tga_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
+    return result
+}
+stbi__tga_info :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi__tga_info(^result, _s, _x, _y, _comp)
+    return result
+}
+stbi__psd_test :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__psd_test(^result, _s)
+    return result
+}
+stbi__psd_load :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info, _bpc: i32) -> ^mut void {
+    mut result : ^mut void = default
+    __c__stbi__psd_load(^result, _s, _x, _y, _comp, _req_comp, _ri, _bpc)
+    return result
+}
+stbi__psd_info :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi__psd_info(^result, _s, _x, _y, _comp)
+    return result
+}
+stbi__psd_is16 :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__psd_is16(^result, _s)
+    return result
+}
+stbi__hdr_test :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__hdr_test(^result, _s)
+    return result
+}
+stbi__hdr_load :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info) -> ^mut f32 {
+    mut result : ^mut f32 = default
+    __c__stbi__hdr_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
+    return result
+}
+stbi__hdr_info :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi__hdr_info(^result, _s, _x, _y, _comp)
+    return result
+}
+stbi__pic_test :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__pic_test(^result, _s)
+    return result
+}
+stbi__pic_load :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info) -> ^mut void {
+    mut result : ^mut void = default
+    __c__stbi__pic_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
+    return result
+}
+stbi__pic_info :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi__pic_info(^result, _s, _x, _y, _comp)
+    return result
+}
+stbi__gif_test :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__gif_test(^result, _s)
+    return result
+}
+stbi__gif_load :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info) -> ^mut void {
+    mut result : ^mut void = default
+    __c__stbi__gif_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
+    return result
+}
+stbi__load_gif_main :: (_s: ^mut stbi__context, _delays: ^mut ^mut i32, _x: ^mut i32, _y: ^mut i32, _z: ^mut i32, _comp: ^mut i32, _req_comp: i32) -> ^mut void {
+    mut result : ^mut void = default
+    __c__stbi__load_gif_main(^result, _s, _delays, _x, _y, _z, _comp, _req_comp)
+    return result
+}
+stbi__gif_info :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi__gif_info(^result, _s, _x, _y, _comp)
+    return result
+}
+stbi__pnm_test :: (_s: ^mut stbi__context) -> i32 {
+    mut result : i32 = default
+    __c__stbi__pnm_test(^result, _s)
+    return result
+}
+stbi__pnm_load :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info) -> ^mut void {
+    mut result : ^mut void = default
+    __c__stbi__pnm_load(^result, _s, _x, _y, _comp, _req_comp, _ri)
+    return result
+}
+stbi__pnm_info :: (_s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32) -> i32 {
+    mut result : i32 = default
+    __c__stbi__pnm_info(^result, _s, _x, _y, _comp)
+    return result
+}
+stbi__ldr_to_hdr :: (_data: ^mut stbi_uc, _x: i32, _y: i32, _comp: i32) -> ^mut f32 {
+    mut result : ^mut f32 = default
+    __c__stbi__ldr_to_hdr(^result, _data, _x, _y, _comp)
+    return result
+}
+stbi__hdr_to_ldr :: (_data: ^mut f32, _x: i32, _y: i32, _comp: i32) -> ^mut stbi_uc {
+    mut result : ^mut stbi_uc = default
+    __c__stbi__hdr_to_ldr(^result, _data, _x, _y, _comp)
+    return result
+}
+
+// ==========================================================
+// ==========================================================
+// ==========================================================
+
+#file_scope
+
+__c__stbi_load_from_memory :: (ret: ^mut ^mut stbi_uc, _buffer: ^mut stbi_uc, _len: i32, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_load_from_callbacks :: (ret: ^mut ^mut stbi_uc, _clbk: ^mut stbi_io_callbacks, _user: ^mut void, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_load :: (ret: ^mut ^mut stbi_uc, _filename: ^char8, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_load_from_file :: (ret: ^mut ^mut stbi_uc, _f: ^mut FILE, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_load_gif_from_memory :: (ret: ^mut ^mut stbi_uc, _buffer: ^mut stbi_uc, _len: i32, _delays: ^mut ^mut i32, _x: ^mut i32, _y: ^mut i32, _z: ^mut i32, _comp: ^mut i32, _req_comp: i32);
+__c__stbi_load_16_from_memory :: (ret: ^mut ^mut stbi_us, _buffer: ^mut stbi_uc, _len: i32, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_load_16_from_callbacks :: (ret: ^mut ^mut stbi_us, _clbk: ^mut stbi_io_callbacks, _user: ^mut void, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_load_16 :: (ret: ^mut ^mut stbi_us, _filename: ^char8, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_load_from_file_16 :: (ret: ^mut ^mut stbi_us, _f: ^mut FILE, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_loadf_from_memory :: (ret: ^mut ^mut f32, _buffer: ^mut stbi_uc, _len: i32, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_loadf_from_callbacks :: (ret: ^mut ^mut f32, _clbk: ^mut stbi_io_callbacks, _user: ^mut void, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_loadf :: (ret: ^mut ^mut f32, _filename: ^char8, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_loadf_from_file :: (ret: ^mut ^mut f32, _f: ^mut FILE, _x: ^mut i32, _y: ^mut i32, _channels_in_file: ^mut i32, _desired_channels: i32);
+__c__stbi_hdr_to_ldr_gamma :: (_gamma: f32);
+__c__stbi_hdr_to_ldr_scale :: (_scale: f32);
+__c__stbi_ldr_to_hdr_gamma :: (_gamma: f32);
+__c__stbi_ldr_to_hdr_scale :: (_scale: f32);
+__c__stbi_is_hdr_from_callbacks :: (ret: ^mut i32, _clbk: ^mut stbi_io_callbacks, _user: ^mut void);
+__c__stbi_is_hdr_from_memory :: (ret: ^mut i32, _buffer: ^mut stbi_uc, _len: i32);
+__c__stbi_is_hdr :: (ret: ^mut i32, _filename: ^char8);
+__c__stbi_is_hdr_from_file :: (ret: ^mut i32, _f: ^mut FILE);
+__c__stbi_failure_reason :: (ret: ^mut ^char8);
+__c__stbi_image_free :: (_retval_from_stbi_load: ^mut void);
+__c__stbi_info_from_memory :: (ret: ^mut i32, _buffer: ^mut stbi_uc, _len: i32, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi_info_from_callbacks :: (ret: ^mut i32, _clbk: ^mut stbi_io_callbacks, _user: ^mut void, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi_is_16_bit_from_memory :: (ret: ^mut i32, _buffer: ^mut stbi_uc, _len: i32);
+__c__stbi_is_16_bit_from_callbacks :: (ret: ^mut i32, _clbk: ^mut stbi_io_callbacks, _user: ^mut void);
+__c__stbi_info :: (ret: ^mut i32, _filename: ^char8, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi_info_from_file :: (ret: ^mut i32, _f: ^mut FILE, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi_is_16_bit :: (ret: ^mut i32, _filename: ^char8);
+__c__stbi_is_16_bit_from_file :: (ret: ^mut i32, _f: ^mut FILE);
+__c__stbi_set_unpremultiply_on_load :: (_flag_true_if_should_unpremultiply: i32);
+__c__stbi_convert_iphone_png_to_rgb :: (_flag_true_if_should_convert: i32);
+__c__stbi_set_flip_vertically_on_load :: (_flag_true_if_should_flip: i32);
+__c__stbi_set_flip_vertically_on_load_thread :: (_flag_true_if_should_flip: i32);
+__c__stbi_zlib_decode_malloc_guesssize :: (ret: ^mut ^mut char8, _buffer: ^char8, _len: i32, _initial_size: i32, _outlen: ^mut i32);
+__c__stbi_zlib_decode_malloc_guesssize_headerflag :: (ret: ^mut ^mut char8, _buffer: ^char8, _len: i32, _initial_size: i32, _outlen: ^mut i32, _parse_header: i32);
+__c__stbi_zlib_decode_malloc :: (ret: ^mut ^mut char8, _buffer: ^char8, _len: i32, _outlen: ^mut i32);
+__c__stbi_zlib_decode_buffer :: (ret: ^mut i32, _obuffer: ^mut char8, _olen: i32, _ibuffer: ^char8, _ilen: i32);
+__c__stbi_zlib_decode_noheader_malloc :: (ret: ^mut ^mut char8, _buffer: ^char8, _len: i32, _outlen: ^mut i32);
+__c__stbi_zlib_decode_noheader_buffer :: (ret: ^mut i32, _obuffer: ^mut char8, _olen: i32, _ibuffer: ^char8, _ilen: i32);
+__c__stbi__refill_buffer :: (_s: ^mut stbi__context);
+__c__stbi__jpeg_test :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__jpeg_load :: (ret: ^mut ^mut void, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info);
+__c__stbi__jpeg_info :: (ret: ^mut i32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi__png_test :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__png_load :: (ret: ^mut ^mut void, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info);
+__c__stbi__png_info :: (ret: ^mut i32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi__png_is16 :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__bmp_test :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__bmp_load :: (ret: ^mut ^mut void, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info);
+__c__stbi__bmp_info :: (ret: ^mut i32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi__tga_test :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__tga_load :: (ret: ^mut ^mut void, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info);
+__c__stbi__tga_info :: (ret: ^mut i32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi__psd_test :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__psd_load :: (ret: ^mut ^mut void, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info, _bpc: i32);
+__c__stbi__psd_info :: (ret: ^mut i32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi__psd_is16 :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__hdr_test :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__hdr_load :: (ret: ^mut ^mut f32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info);
+__c__stbi__hdr_info :: (ret: ^mut i32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi__pic_test :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__pic_load :: (ret: ^mut ^mut void, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info);
+__c__stbi__pic_info :: (ret: ^mut i32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi__gif_test :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__gif_load :: (ret: ^mut ^mut void, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info);
+__c__stbi__load_gif_main :: (ret: ^mut ^mut void, _s: ^mut stbi__context, _delays: ^mut ^mut i32, _x: ^mut i32, _y: ^mut i32, _z: ^mut i32, _comp: ^mut i32, _req_comp: i32);
+__c__stbi__gif_info :: (ret: ^mut i32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi__pnm_test :: (ret: ^mut i32, _s: ^mut stbi__context);
+__c__stbi__pnm_load :: (ret: ^mut ^mut void, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32, _req_comp: i32, _ri: ^mut stbi__result_info);
+__c__stbi__pnm_info :: (ret: ^mut i32, _s: ^mut stbi__context, _x: ^mut i32, _y: ^mut i32, _comp: ^mut i32);
+__c__stbi__ldr_to_hdr :: (ret: ^mut ^mut f32, _data: ^mut stbi_uc, _x: i32, _y: i32, _comp: i32);
+__c__stbi__hdr_to_ldr :: (ret: ^mut ^mut stbi_uc, _data: ^mut f32, _x: i32, _y: i32, _comp: i32);
