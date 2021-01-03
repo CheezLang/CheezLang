@@ -25,7 +25,7 @@ namespace CheezCLI
 
     public class CompilerOptions
     {
-        [Option('r', "run", HelpText = "Specifies whether the code should be run immediatly", Default = false, Required = false, Hidden = false, MetaValue = "STRING", SetName = "run")]
+        [Option('r', "run", HelpText = "Specifies whether the code should be run immediatly", Default = false)]
         public bool RunCode { get; set; }
 
         [Value(0, Min = 1)]
@@ -46,7 +46,7 @@ namespace CheezCLI
         [Option("print-ast-analysed", Default = null, HelpText = "Print the analysed abstract syntax tree to a file: --print-ast-analysed <filepath>")]
         public string PrintAnalysedAst { get; set; }
 
-        [Option("no-code", Default = false, HelpText = "Don't generate exe")]
+        [Option("no-code", Default = false, HelpText = "Don't generate an executable")]
         public bool DontEmitCode { get; set; }
 
         [Option("no-errors", Default = false, HelpText = "Don't show error messages")]
@@ -82,7 +82,7 @@ namespace CheezCLI
         [Option("trace-stack", Default = false, HelpText = "Enable stacktrace (potentially big impact on performance): --trace-stack")]
         public bool EnableStackTrace { get; set; }
 
-        [Option("error-source", Default = false, HelpText = "When reporting an error, print the the line which contains the error")]
+        [Option("error-source", Default = false, HelpText = "When reporting an error, print the line which contains the error")]
         public bool PrintSourceInErrorMessage { get; set; }
 
         [Option("preload", Default = null, HelpText = "Path to a .che file used to import by default")]
@@ -91,17 +91,16 @@ namespace CheezCLI
         [Option("print-linker-args", Default = false, HelpText = "Print arguments passed to linker")]
         public bool PrintLinkerArguments { get; set; }
 
-
-        [Option("language-server-tcp", Default = false)]
+        [Option("language-server-tcp", Default = false, HelpText = "Launch language server over tcp")]
         public bool LaunchLanguageServerTcp { get; set; }
 
-        [Option("port", Default = 5007)]
+        [Option("port", Default = 5007, HelpText = "Port to use for language server")]
         public int Port { get; set; }
 
-        [Option("language-server-console", Default = false)]
+        [Option("language-server-console", Default = false, HelpText = "Launch language server over standard input/output")]
         public bool LaunchLanguageServerConsole { get; set; }
 
-        [Option("parent-pid", Default = -1)]
+        [Option("parent-pid", Default = -1, HelpText = "Process id of process launching this program. Used in language server mode to exit language server when parent exits")]
         public long ParentPid { get; set; }
     }
 

@@ -38,7 +38,7 @@ fib :: (x: int) -> int {
 
 Main :: () {
     x := fib(5)
-    io.printfln("fib(5) = {}", x)
+    io.formatln("fib(5) = {}", [x])
 }
 ```
 
@@ -47,7 +47,7 @@ Greatest common divisor:
 io :: import std.io
 
 // iterative implementation
-gcd_it :: (a: int, b: int) -> int {
+gcd_it :: (mut a: int, mut b: int) -> int {
     if a == 0 {
         return b
     }
@@ -73,8 +73,8 @@ gcd_rec :: (a: int, b: int) -> int {
 }
 
 Main :: () {
-    io.printfln("gcd_it(9, 6) = {}", gcd_it(9, 6))
-    io.printfln("gcd_rec(9, 6) = {}", gcd_rec(9, 6))
+    io.formatln("gcd_it(9, 6) = {}", [gcd_it(9, 6)])
+    io.formatln("gcd_rec(9, 6) = {}", [gcd_rec(9, 6)])
 }
 ```
 
@@ -82,7 +82,9 @@ Vectors and trait implementation:
 ```rust
 use import std.string
 use import std.printable
-io :: import std.io
+
+io  :: import std.io
+fmt :: import std.fmt
 
 Vec3 :: struct #copy {
     x : double
@@ -101,8 +103,8 @@ impl Vec3 {
 }
 
 impl Printable for Vec3 {
-    print :: (ref Self, str: ref String, format: string) {
-        str.appendf("({}, {}, {})", (self.x, self.y, self.z))
+    print :: (&Self, str: &mut String, format: string) {
+        fmt.format_into(str, "({}, {}, {})", [self.x, self.y, self.z])
     }
 }
 
@@ -112,65 +114,66 @@ Main :: () {
 
     c := a + b
 
-    io.printfln("
+    io.formatln("
   {}
 + {}
   ------------------------------
-= {}", (a, b, c))
+= {}", [a, b, c])
 }
 ```
 
 Generic dynamic array:
 ```rust
-use import std.mem.allocator
-io :: import std.io
+mem :: import std.mem.allocator
+fmt :: import std.fmt
+io  :: import std.io
 
 Main :: () {
-    ints := IntArray.create()
+    mut ints := Array[int].new()
 
     ints.add(3)
     ints.add(2)
     ints.add(1)
 
-    for i : 0..ints.length {
+    for i in 0..ints.length {
         v := ints[i]
-        io.printfln("ints[{}] = {}", (i, v))
+        io.formatln("ints[{}] = {}", [i, v])
     }
-
-    ints.dispose()
 }
 
-IntArray :: struct {
-    data    : &int
-    length  : int
-    capacity: int
+Array :: struct(T: type) {
+    data     : ^mut T
+    length   : int
+    capacity : int
 }
 
-impl IntArray {
-    create :: () -> Self {
-        return IntArray(
+impl(T: type) Array[T] {
+    new :: () -> Self {
+        return Array[T](
             length   = 0
             capacity = 10
-            data     = alloc_raw(int, 10)
+            data     = mem.alloc_raw(T, 10)
         )
     }
 
-    dispose :: (ref Self) {
-        free(data)
-    }
-
-    add :: (ref Self, val: int) {
+    add :: (&mut Self, val: int) {
         if capacity <= length {
             capacity = capacity * 2
-            data = realloc_raw(data, u64(capacity))
+            data = mem.realloc_raw(data, u64(capacity))
         }
 
         data[length] = val
         length += 1
     }
 
-    get :: (ref Self, index: int) -> int #operator("[]") {
-        return data[index]
+    get :: (&Self, index: int) -> int #operator("[]") {
+        return self.data[index]
+    }
+}
+
+impl(T: type) Drop for Array[T] {
+    drop :: (&Self) {
+        mem.free(self.data)
     }
 }
 ```
@@ -187,4 +190,34 @@ Powershell
 .\test.exe
 ```
 
-- -help - display help screen
+Compiler options:
+| Option                    | Description                                                                                                                        |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| -r, --run                 | (Default: false) Specifies whether the code should be run immediatly                                                               |
+| -o, --out                 | (Default: .) Output directory: --out <directory>                                                                                   |
+| --int                     | Intermediate directory: --int <directory>                                                                                          |
+| -n, --name                | Name of the executable generated: <name>                                                                                           |
+| --print-ast-raw           | Print the raw abstract syntax tree to a file: --print-ast-raw <filepath>                                                           |
+| --print-ast-analysed      | Print the analysed abstract syntax tree to a file: --print-ast-analysed <filepath>                                                 |
+| --no-code                 | (Default: false) Don't generate an executable                                                                                      |
+| --no-errors               | (Default: false) Don't show error messages                                                                                         |
+| --ld                      | Additional include directories: --ld [<path> [<path>]...]                                                                          |
+| --libs                    | Additional Libraries to link to: --libs [<path> [<path>]...]                                                                       |
+| --subsystem               | (Default: console) Sub system: --subsystem [windows                                                                                |console]
+| --modules                 | Additional modules: --modules [<name>:<path> [<name>:<path>]...]                                                                   |
+| --stdlib                  | Path to the standard library: --stdlib <path>                                                                                      |
+| --opt                     | (Default: false) Perform optimizations: --opt                                                                                      |
+| --emit-llvm-ir            | (Default: false) Output .ll file containing LLVM IR: --emit-llvm-ir                                                                |
+| --time                    | (Default: false) Print how long the compilation takes: --time                                                                      |
+| --test                    | (Default: false) Run the program as a test.                                                                                        |
+| --trace-stack             | (Default: false) Enable stacktrace (potentially big impact on performance): --trace-stack                                          |
+| --error-source            | (Default: false) When reporting an error, print the line which contains the error                                                  |
+| --preload                 | Path to a .che file used to import by default                                                                                      |
+| --print-linker-args       | (Default: false) Print arguments passed to linker                                                                                  |
+| --language-server-tcp     | (Default: false) Launch language server over tcp                                                                                   |
+| --port                    | (Default: 5007) Port to use for language server                                                                                    |
+| --language-server-console | (Default: false) Launch language server over standard input/output                                                                 |
+| --parent-pid              | (Default: -1) Process id of process launching this program. Used in language server mode to exit language server when parent exits |
+| --help                    | Display this help screen.                                                                                                          |
+| --version                 | Display version information.                                                                                                       |
+
