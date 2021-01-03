@@ -135,8 +135,7 @@ Main :: () {
     ints.add(2)
     ints.add(1)
 
-    for i in 0..ints.length {
-        v := ints[i]
+    for v, i in &ints {
         io.formatln("ints[{}] = {}", [i, v])
     }
 }
@@ -174,6 +173,14 @@ impl(T: type) Array[T] {
 impl(T: type) Drop for Array[T] {
     drop :: (&Self) {
         mem.free(self.data)
+    }
+}
+
+for_extension_array :: (self: &Array[$T], body: Code) #for {
+    for i in 0..self.length {
+        it_index := i
+        it := self[i]
+        @insert(body, _break=break, _continue=continue)
     }
 }
 ```
